@@ -416,11 +416,3 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-
-# ==============================
-# 自定義補強
-# ==============================
-node_modules/
-appsettings.Development.json
-wwwroot/uploads/*
-!wwwroot/uploads/.gitkeep
