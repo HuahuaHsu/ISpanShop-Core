@@ -12,7 +12,7 @@ namespace ISpanShop
 			// 2. 加入這段 (註冊資料庫連線)
 			// 這裡的 "DefaultConnection" 必須跟您 appsettings.json 裡的名字一模一樣
 			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
-				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+	            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 			// Add services to the container.
 			builder.Services.AddControllersWithViews();
