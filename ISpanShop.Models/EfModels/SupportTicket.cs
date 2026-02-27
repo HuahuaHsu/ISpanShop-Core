@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ISpanShop.EfModels.Models;
+namespace ISpanShop.Models.EfModels;
 
 public partial class SupportTicket
 {

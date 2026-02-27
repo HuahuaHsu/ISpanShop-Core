@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace ISpanShop.EfModels.Models;
+namespace ISpanShop.Models.EfModels;
 
 public partial class ISpanShopDBContext : DbContext
 {
