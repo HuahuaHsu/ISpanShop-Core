@@ -1,4 +1,4 @@
-using ISpanShop.EfModels.Models;
+using ISpanShop.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace ISpanShop.MVC

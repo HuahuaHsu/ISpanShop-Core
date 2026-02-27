@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36811.4 d17.14
+VisualStudioVersion = 17.14.36811.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ISpanShop.EfModels", "ISpanShop.EfModels\ISpanShop.EfModels.csproj", "{DF6541BB-F39D-48F8-B68A-EFD81302ECA3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ISpanShop.Repositories", "ISpanShop.Repositories\ISpanShop.Repositories.csproj", "{491C4241-1611-4D6E-89AD-5307D07A8F02}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ISpanShop.Services", "ISpanShop.Services\ISpanShop.Services.csproj", "{5E97A5D6-B17F-4A29-9130-358B7261A24F}"
@@ -15,16 +13,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ISpanShop.WebAPI", "ISpanSh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ISpanShop.Common", "ISpanShop.Common\ISpanShop.Common.csproj", "{940ADA64-8032-4BD0-9324-734B4B830DAB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ISpanShop.Models", "ISpanShop.Models\ISpanShop.Models.csproj", "{9C416E53-662E-48CD-808B-04E6714A070C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DF6541BB-F39D-48F8-B68A-EFD81302ECA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DF6541BB-F39D-48F8-B68A-EFD81302ECA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DF6541BB-F39D-48F8-B68A-EFD81302ECA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DF6541BB-F39D-48F8-B68A-EFD81302ECA3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{491C4241-1611-4D6E-89AD-5307D07A8F02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{491C4241-1611-4D6E-89AD-5307D07A8F02}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{491C4241-1611-4D6E-89AD-5307D07A8F02}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -45,6 +41,10 @@ Global
 		{940ADA64-8032-4BD0-9324-734B4B830DAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{940ADA64-8032-4BD0-9324-734B4B830DAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{940ADA64-8032-4BD0-9324-734B4B830DAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C416E53-662E-48CD-808B-04E6714A070C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C416E53-662E-48CD-808B-04E6714A070C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C416E53-662E-48CD-808B-04E6714A070C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C416E53-662E-48CD-808B-04E6714A070C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

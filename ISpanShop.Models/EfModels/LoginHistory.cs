@@ -3,15 +3,19 @@
 using System;
 using System.Collections.Generic;
 
-namespace ISpanShop.EfModels.Models;
+namespace ISpanShop.Models.EfModels;
 
-public partial class Cart
+public partial class LoginHistory
 {
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     public int UserId { get; set; }
 
-    public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+    public DateTime? LoginTime { get; set; }
+
+    public string Ipaddress { get; set; }
+
+    public bool? IsSuccessful { get; set; }
 
     public virtual User User { get; set; }
 }

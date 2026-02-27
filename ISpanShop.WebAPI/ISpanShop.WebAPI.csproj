@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ISpanShop.Common\ISpanShop.Common.csproj" />
-    <ProjectReference Include="..\ISpanShop.EfModels\ISpanShop.EfModels.csproj" />
+    <ProjectReference Include="..\ISpanShop.Models\ISpanShop.Models.csproj" />
     <ProjectReference Include="..\ISpanShop.Services\ISpanShop.Services.csproj" />
   </ItemGroup>
 
