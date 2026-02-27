@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ISpanShop.Common\ISpanShop.Common.csproj" />
+    <ProjectReference Include="..\ISpanShop.EfModels\ISpanShop.EfModels.csproj" />
+    <ProjectReference Include="..\ISpanShop.Repositories\ISpanShop.Repositories.csproj" />
+  </ItemGroup>
+
+</Project>
