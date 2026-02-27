@@ -1,0 +1,8 @@
+[on]建立資料庫連線
+	EF core 反向工程
+	appsettings.json
+		"ConnectionStrings": {
+			"DefaultConnection": "Server=localhost;Database=TodoList;User Id=sa;Password=your_password;"
+		}
+	在program.cs 註冊DbContext 連線字串
+	
