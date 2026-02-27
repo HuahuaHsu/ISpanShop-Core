@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace ISpanShop.Models.EfModels;
 
-public partial class ChatMessage
+public partial class ChatMessage    //chat
 {
     public long Id { get; set; }
 
