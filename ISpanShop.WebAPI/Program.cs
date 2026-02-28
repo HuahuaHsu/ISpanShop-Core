@@ -1,4 +1,7 @@
 
+using ISpanShop.Models.EfModels;
+using Microsoft.EntityFrameworkCore;
+
 namespace ISpanShop.WebAPI
 {
 	public class Program
@@ -6,6 +9,9 @@ namespace ISpanShop.WebAPI
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
+
+			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
+			options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 			// Add services to the container.
 
