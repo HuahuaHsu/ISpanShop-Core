@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ISpanShop.Models.EfModels;
 
 namespace ISpanShop.Repositories.Interfaces
@@ -19,5 +20,18 @@ namespace ISpanShop.Repositories.Interfaces
         /// <param name="skuCode">SKU 代碼</param>
         /// <returns>true 表示已存在，false 表示不存在</returns>
         bool IsSkuExists(string skuCode);
+
+        /// <summary>
+        /// 取得待審核商品列表 (Status == 2)
+        /// </summary>
+        /// <returns>待審核商品集合</returns>
+        IEnumerable<Product> GetPendingProducts();
+
+        /// <summary>
+        /// 更新商品狀態
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        /// <param name="status">新的狀態值</param>
+        void UpdateProductStatus(int id, byte status);
     }
 }

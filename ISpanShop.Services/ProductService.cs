@@ -121,5 +121,35 @@ namespace ISpanShop.Services
             // 不包含違禁詞，回傳 1 表示自動審核通過，允許上架
             return 1;
         }
+
+        /// <summary>
+        /// 取得待審核商品列表 - 轉換為 DTO
+        /// </summary>
+        /// <returns>待審核商品 DTO 集合</returns>
+        public IEnumerable<ProductReviewDto> GetPendingProducts()
+        {
+            var pendingProducts = _productRepository.GetPendingProducts();
+
+            return pendingProducts.Select(p => new ProductReviewDto
+            {
+                Id = p.Id,
+                StoreId = p.StoreId,
+                CategoryName = p.Category?.Name ?? "未分類",
+                BrandName = p.Brand?.Name ?? "未設定",
+                Name = p.Name,
+                Status = p.Status ?? 0,
+                CreatedAt = p.CreatedAt
+            }).ToList();
+        }
+
+        /// <summary>
+        /// 變更商品狀態
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        /// <param name="newStatus">新的狀態值</param>
+        public void ChangeProductStatus(int id, byte newStatus)
+        {
+            _productRepository.UpdateProductStatus(id, newStatus);
+        }
     }
 }

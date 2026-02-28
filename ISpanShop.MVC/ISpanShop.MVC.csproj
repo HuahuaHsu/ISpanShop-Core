@@ -12,4 +12,8 @@
     <ProjectReference Include="..\ISpanShop.Services\ISpanShop.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Views\Products\" />
+  </ItemGroup>
+
 </Project>

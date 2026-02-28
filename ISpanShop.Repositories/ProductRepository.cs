@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Interfaces;
 
@@ -37,6 +40,31 @@ namespace ISpanShop.Repositories
         public bool IsSkuExists(string skuCode)
         {
             return _context.ProductVariants.Any(pv => pv.SkuCode == skuCode);
+        }
+
+        /// <summary>
+        /// 取得待審核商品列表 (Status == 2)
+        /// </summary>
+        /// <returns>待審核商品集合</returns>
+        public IEnumerable<Product> GetPendingProducts()
+        {
+            return _context.Products.Where(p => p.Status == 2).ToList();
+        }
+
+        /// <summary>
+        /// 更新商品狀態
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        /// <param name="status">新的狀態值</param>
+        public void UpdateProductStatus(int id, byte status)
+        {
+            var product = _context.Products.Find(id);
+            if (product != null)
+            {
+                product.Status = status;
+                product.UpdatedAt = DateTime.Now;
+                _context.SaveChanges();
+            }
         }
     }
 }
