@@ -151,5 +151,30 @@ namespace ISpanShop.Services
         {
             _productRepository.UpdateProductStatus(id, newStatus);
         }
+
+        /// <summary>
+        /// 取得所有商品列表 - 轉換為 DTO
+        /// </summary>
+        /// <returns>商品列表 DTO 集合</returns>
+        public IEnumerable<ProductListDto> GetAllProducts()
+        {
+            var allProducts = _productRepository.GetAllProducts();
+
+            return allProducts.Select(p => new ProductListDto
+            {
+                Id = p.Id,
+                StoreName = p.Store?.StoreName ?? "未知商店",
+                CategoryName = p.Category?.Name ?? "未分類",
+                BrandName = p.Brand?.Name ?? "未設定",
+                Name = p.Name,
+                MinPrice = p.MinPrice,
+                MaxPrice = p.MaxPrice,
+                Status = p.Status,
+                MainImageUrl = p.ProductImages
+                    ?.FirstOrDefault(img => img.IsMain==true)?.ImageUrl 
+                    ?? p.ProductImages?.FirstOrDefault()?.ImageUrl 
+                    ?? "https://via.placeholder.com/400x400?text=No+Image"
+            }).ToList();
+        }
     }
 }

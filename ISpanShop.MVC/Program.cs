@@ -47,6 +47,16 @@ namespace ISpanShop.MVC
 				name: "default",
 				pattern: "{controller=Home}/{action=Index}/{id?}");
 
+			// 在應用程式啟動時執行資料播種
+			using (var scope = app.Services.CreateScope())
+			{
+				var services = scope.ServiceProvider;
+				var context = services.GetRequiredService<ISpanShop.Models.EfModels.ISpanShopDBContext>();
+
+				// 呼叫我們剛剛寫好的播種程式
+				ISpanShop.Models.DataSeeder.Seed(context);
+			}
+
 			app.Run();
 		}
 	}

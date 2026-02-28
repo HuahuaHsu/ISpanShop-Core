@@ -33,5 +33,11 @@ namespace ISpanShop.Repositories.Interfaces
         /// <param name="id">商品 ID</param>
         /// <param name="status">新的狀態值</param>
         void UpdateProductStatus(int id, byte status);
+
+        /// <summary>
+        /// 取得所有商品列表
+        /// </summary>
+        /// <returns>所有商品集合</returns>
+        IEnumerable<Product> GetAllProducts();
     }
 }

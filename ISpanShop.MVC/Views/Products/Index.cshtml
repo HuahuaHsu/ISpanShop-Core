@@ -1,0 +1,84 @@
+@model IEnumerable<ISpanShop.MVC.Models.ViewModels.ProductListVm>
+
+@{
+    ViewData["Title"] = "商品列表";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>全站商品總覽</h2>
+            <p class="text-muted">共計 @Model.Count() 個商品</p>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>主圖</th>
+                        <th>商品 ID</th>
+                        <th>商品名稱</th>
+                        <th>商店名稱</th>
+                        <th>分類</th>
+                        <th>品牌</th>
+                        <th>最低價</th>
+                        <th>最高價</th>
+                        <th>狀態</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(product.MainImageUrl))
+                                {
+                                    <img src="@product.MainImageUrl" width="50" height="50" style="object-fit: cover;" alt="@product.Name" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>@product.Id</td>
+                            <td>@product.Name</td>
+                            <td>@product.StoreName</td>
+                            <td>@product.CategoryName</td>
+                            <td>@product.BrandName</td>
+                            <td>@(product.MinPrice?.ToString("C0") ?? "-")</td>
+                            <td>@(product.MaxPrice?.ToString("C0") ?? "-")</td>
+                            <td>
+                                @if (product.Status == 1)
+                                {
+                                    <span class="badge bg-success">已上架</span>
+                                }
+                                else if (product.Status == 2)
+                                {
+                                    <span class="badge bg-warning text-dark">待審核</span>
+                                }
+                                else if (product.Status == 0)
+                                {
+                                    <span class="badge bg-danger">已下架</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">未知</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <h5>目前沒有商品。</h5>
+            <p>請先建立商品或執行資料播種。</p>
+        </div>
+    }
+</div>

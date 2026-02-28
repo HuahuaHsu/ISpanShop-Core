@@ -22,6 +22,32 @@ namespace ISpanShop.MVC.Controllers
         }
 
         /// <summary>
+        /// 商品列表 - 全站商品總覽
+        /// </summary>
+        /// <returns>商品列表 View</returns>
+        public IActionResult Index()
+        {
+            // 從 Service 取得 DTO 集合
+            var productDtos = _productService.GetAllProducts();
+
+            // 將 DTO 轉換為 ViewModel
+            var viewModels = productDtos.Select(dto => new ProductListVm
+            {
+                Id = dto.Id,
+                StoreName = dto.StoreName,
+                CategoryName = dto.CategoryName,
+                BrandName = dto.BrandName,
+                Name = dto.Name,
+                MinPrice = dto.MinPrice,
+                MaxPrice = dto.MaxPrice,
+                Status = dto.Status,
+                MainImageUrl = dto.MainImageUrl
+            }).ToList();
+
+            return View(viewModels);
+        }
+
+        /// <summary>
         /// 待審核商品列表
         /// </summary>
         /// <returns>待審核商品列表 View</returns>

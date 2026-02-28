@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Interfaces;
 
@@ -65,6 +66,20 @@ namespace ISpanShop.Repositories
                 product.UpdatedAt = DateTime.Now;
                 _context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// 取得所有商品列表 - 包含關聯資料
+        /// </summary>
+        /// <returns>所有商品集合</returns>
+        public IEnumerable<Product> GetAllProducts()
+        {
+            return _context.Products
+                .Include(p => p.Store)
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.ProductImages)
+                .ToList();
         }
     }
 }

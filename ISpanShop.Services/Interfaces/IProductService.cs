@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using ISpanShop.Models.DTOs;
-using ISpanShop.Models.EfModels;
 
 namespace ISpanShop.Services.Interfaces
 {
@@ -27,5 +26,11 @@ namespace ISpanShop.Services.Interfaces
         /// <param name="id">商品 ID</param>
         /// <param name="newStatus">新的狀態值</param>
         void ChangeProductStatus(int id, byte newStatus);
+
+        /// <summary>
+        /// 取得所有商品列表
+        /// </summary>
+        /// <returns>商品列表 DTO 集合</returns>
+        IEnumerable<ProductListDto> GetAllProducts();
     }
 }
