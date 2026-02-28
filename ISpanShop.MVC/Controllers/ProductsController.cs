@@ -83,5 +83,45 @@ namespace ISpanShop.MVC.Controllers
             _productService.ChangeProductStatus(id, newStatus);
             return RedirectToAction(nameof(PendingReview));
         }
+
+        /// <summary>
+        /// 商品詳情 - 顯示完整的商品資訊、圖片與規格
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        /// <returns>商品詳情 View</returns>
+        public IActionResult Details(int id)
+        {
+            // 從 Service 取得 DTO
+            var productDto = _productService.GetProductDetail(id);
+
+            // 若找不到資料，返回 NotFound
+            if (productDto == null)
+            {
+                return NotFound();
+            }
+
+            // 將 DTO 轉換為 ViewModel
+            var viewModel = new ProductDetailVm
+            {
+                Id = productDto.Id,
+                Name = productDto.Name,
+                StoreName = productDto.StoreName,
+                CategoryName = productDto.CategoryName,
+                BrandName = productDto.BrandName,
+                Description = productDto.Description,
+                Status = productDto.Status,
+                Images = productDto.Images,
+                Variants = productDto.Variants.Select(v => new ProductVariantDetailVm
+                {
+                    SkuCode = v.SkuCode,
+                    VariantName = v.VariantName,
+                    Price = v.Price,
+                    Stock = v.Stock,
+                    SpecValueJson = v.SpecValueJson
+                }).ToList()
+            };
+
+            return View(viewModel);
+        }
     }
 }

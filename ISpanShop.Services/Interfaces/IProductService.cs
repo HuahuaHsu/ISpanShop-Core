@@ -32,5 +32,12 @@ namespace ISpanShop.Services.Interfaces
         /// </summary>
         /// <returns>商品列表 DTO 集合</returns>
         IEnumerable<ProductListDto> GetAllProducts();
+
+        /// <summary>
+        /// 根據 ID 取得商品詳情（包含圖片與規格）
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        /// <returns>商品詳情 DTO，若不存在則返回 null</returns>
+        ProductDetailDto? GetProductDetail(int id);
     }
 }

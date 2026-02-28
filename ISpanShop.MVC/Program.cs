@@ -9,7 +9,7 @@ namespace ISpanShop.MVC
 {
 	public class Program
 	{
-		public static void Main(string[] args)
+		public static async Task Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
@@ -51,10 +51,10 @@ namespace ISpanShop.MVC
 			using (var scope = app.Services.CreateScope())
 			{
 				var services = scope.ServiceProvider;
-				var context = services.GetRequiredService<ISpanShop.Models.EfModels.ISpanShopDBContext>();
+				var context = services.GetRequiredService<ISpanShop.Models.EfModels.ISpanShopDBContext>(); // 確認你的 DbContext 名稱
 
-				// 呼叫我們剛剛寫好的播種程式
-				ISpanShop.Models.DataSeeder.Seed(context);
+				// 改成呼叫非同步的 SeedAsync
+				await ISpanShop.Models.DataSeeder.SeedAsync(context);
 			}
 
 			app.Run();

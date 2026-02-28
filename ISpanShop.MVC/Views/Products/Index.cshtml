@@ -19,7 +19,6 @@
                 <thead class="table-dark">
                     <tr>
                         <th>主圖</th>
-                        <th>商品 ID</th>
                         <th>商品名稱</th>
                         <th>商店名稱</th>
                         <th>分類</th>
@@ -27,6 +26,7 @@
                         <th>最低價</th>
                         <th>最高價</th>
                         <th>狀態</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,7 +43,6 @@
                                     <span class="text-muted">-</span>
                                 }
                             </td>
-                            <td>@product.Id</td>
                             <td>@product.Name</td>
                             <td>@product.StoreName</td>
                             <td>@product.CategoryName</td>
@@ -67,6 +66,11 @@
                                 {
                                     <span class="badge bg-secondary">未知</span>
                                 }
+                            </td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i> 查看詳情
+                                </a>
                             </td>
                         </tr>
                     }

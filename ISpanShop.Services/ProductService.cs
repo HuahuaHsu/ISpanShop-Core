@@ -176,5 +176,46 @@ namespace ISpanShop.Services
                     ?? "https://via.placeholder.com/400x400?text=No+Image"
             }).ToList();
         }
+
+        /// <summary>
+        /// 根據 ID 取得商品詳情 - 轉換為 DTO（包含完整圖片與規格列表）
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        /// <returns>商品詳情 DTO，若不存在則返回 null</returns>
+        public ProductDetailDto? GetProductDetail(int id)
+        {
+            var product = _productRepository.GetProductById(id);
+
+            if (product == null)
+            {
+                return null;
+            }
+
+            return new ProductDetailDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                StoreName = product.Store?.StoreName ?? "未知商店",
+                CategoryName = product.Category?.Name ?? "未分類",
+                BrandName = product.Brand?.Name ?? "未設定",
+                Description = product.Description,
+                Status = product.Status,
+                Images = product.ProductImages?
+                    .OrderBy(img => img.SortOrder)
+                    .Select(img => img.ImageUrl)
+                    .ToList() ?? new List<string>(),
+                Variants = product.ProductVariants?
+                    .Where(v => !v.IsDeleted==false)
+                    .Select(v => new ProductVariantDetailDto
+                    {
+                        SkuCode = v.SkuCode,
+                        VariantName = v.VariantName,
+                        Price = v.Price,
+                        Stock = v.Stock ?? 0,
+                        SpecValueJson = v.SpecValueJson
+                    })
+                    .ToList() ?? new List<ProductVariantDetailDto>()
+            };
+        }
     }
 }

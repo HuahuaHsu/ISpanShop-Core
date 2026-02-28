@@ -39,5 +39,12 @@ namespace ISpanShop.Repositories.Interfaces
         /// </summary>
         /// <returns>所有商品集合</returns>
         IEnumerable<Product> GetAllProducts();
+
+        /// <summary>
+        /// 根據 ID 取得商品詳情（包含圖片與規格）
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        /// <returns>商品實體，若不存在則返回 null</returns>
+        Product? GetProductById(int id);
     }
 }

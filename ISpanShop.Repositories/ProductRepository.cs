@@ -81,5 +81,21 @@ namespace ISpanShop.Repositories
                 .Include(p => p.ProductImages)
                 .ToList();
         }
+
+        /// <summary>
+        /// 根據 ID 取得商品詳情（包含圖片與規格）
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        /// <returns>商品實體，若不存在則返回 null</returns>
+        public Product? GetProductById(int id)
+        {
+            return _context.Products
+                .Include(p => p.Store)
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.ProductImages)
+                .Include(p => p.ProductVariants)
+                .FirstOrDefault(p => p.Id == id);
+        }
     }
 }
