@@ -46,7 +46,7 @@ namespace ISpanShop.WebAPI.Hubs
 			}
 			catch (Exception ex)
 			{
-				// 把真正的 Exception 錯誤細節 (包含內部錯誤) 傳給前端，方便我們抓蟲
+				// 把真正的 Exception 錯誤細節 (包含內部錯誤) 傳給前端，方便我們抓蟲.
 				string realError = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
 				await Clients.Caller.SendAsync("ErrorMessage", $"系統出錯啦：{realError}");
 			}
