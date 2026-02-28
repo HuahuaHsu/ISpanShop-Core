@@ -1,8 +1,305 @@
-[on]建立資料庫連線
+[V]建立資料庫連線
 	EF core 反向工程
 	appsettings.json
 		"ConnectionStrings": {
 			"DefaultConnection": "Server=localhost;Database=TodoList;User Id=sa;Password=your_password;"
 		}
 	在program.cs 註冊DbContext 連線字串
-	
+	  
+
+【後台使用者管理開發】
+[ ] 1. 建立 UserDto
+
+        位置：ISpanShop.Models專案 -> DTOs 資料夾 -> UserDto.cs
+
+        程式碼範例：
+
+        C#
+        using System;
+
+        namespace ISpanShop.Models.DTOs
+        {
+            public class UserDto
+            {
+                public int Id { get; set; }
+                public string Account { get; set; }
+                public string Email { get; set; }
+                public string RoleName { get; set; } // 從 Roles 資料表關聯取得
+                public bool? IsBlacklisted { get; set; }
+                public DateTime? CreatedAt { get; set; }
+            }
+        }
+        Phase 2: 資料存取層 (ISpanShop.Repositories)
+        目的：直接與資料庫對話，負責寫 LINQ 指令。
+
+        [ ] 2. 建立介面 IUserRepository
+
+        位置：ISpanShop.Repositories專案 -> Interfaces 資料夾 -> IUserRepository.cs
+
+        說明：定義「搜尋使用者」的方法合約。
+
+        程式碼範例：
+
+        C#
+        using ISpanShop.Models.EfModels; // 引用 Entity
+        using System.Collections.Generic;
+
+        namespace ISpanShop.Repositories.Interfaces
+        {
+            public interface IUserRepository
+            {
+                // 搜尋使用者，回傳 Entity 集合
+                IEnumerable<User> Search(string keyword);
+            }
+        }
+        [ ] 3. 實作 UserRepository
+
+        位置：ISpanShop.Repositories專案 -> (根目錄) -> UserRepository.cs
+
+        說明：實作介面，使用 EF Core 進行查詢。
+
+        程式碼範例：
+
+        C#
+        using ISpanShop.Models.EfModels;
+        using ISpanShop.Repositories.Interfaces;
+        using Microsoft.EntityFrameworkCore;
+        using System.Collections.Generic;
+        using System.Linq;
+
+        namespace ISpanShop.Repositories
+        {
+            public class UserRepository : IUserRepository
+            {
+                private readonly ISpanShopContext _context; // 你的 DbContext
+
+                public UserRepository(ISpanShopContext context)
+                {
+                    _context = context;
+                }
+
+                public IEnumerable<User> Search(string keyword)
+                {
+                    var query = _context.Users
+                                .Include(u => u.Role) // 記得做關聯載入 (Eager Loading)
+                                .AsQueryable();
+
+                    if (!string.IsNullOrEmpty(keyword))
+                    {
+                        query = query.Where(u => u.Account.Contains(keyword) || u.Email.Contains(keyword));
+                    }
+
+                    return query.ToList();
+                }
+            }
+        }
+        Phase 3: 商務邏輯層 (ISpanShop.Services)
+        目的：處理資料轉換 (Entity -> DTO) 與商業規則。
+
+        [ ] 4. 建立介面 IUserService
+
+        位置：ISpanShop.Services專案 -> Interfaces 資料夾 -> IUserService.cs
+
+        說明：定義給 MVC Controller 呼叫的方法。
+
+        程式碼範例：
+
+        C#
+        using ISpanShop.Models.DTOs;
+        using System.Collections.Generic;
+
+        namespace ISpanShop.Services.Interfaces
+        {
+            public interface IUserService
+            {
+                IEnumerable<UserDto> Search(string keyword);
+            }
+        }
+        [ ] 5. 實作 UserService
+
+        位置：ISpanShop.Services專案 -> (根目錄) -> UserService.cs
+
+        說明：注入 Repository，取得資料後轉換為 DTO。
+
+        程式碼範例：
+
+        C#
+        using ISpanShop.Models.DTOs;
+        using ISpanShop.Repositories.Interfaces;
+        using ISpanShop.Services.Interfaces;
+        using System.Collections.Generic;
+        using System.Linq;
+
+        namespace ISpanShop.Services
+        {
+            public class UserService : IUserService
+            {
+                private readonly IUserRepository _repo;
+
+                public UserService(IUserRepository repo)
+                {
+                    _repo = repo;
+                }
+
+                public IEnumerable<UserDto> Search(string keyword)
+                {
+                    var entities = _repo.Search(keyword);
+
+                    // 將 Entity 轉換為 DTO
+                    return entities.Select(e => new UserDto
+                    {
+                        Id = e.Id,
+                        Account = e.Account,
+                        Email = e.Email,
+                        RoleName = e.Role?.RoleName, // 避免 Null Reference
+                        IsBlacklisted = e.IsBlacklisted,
+                        CreatedAt = e.CreatedAt
+                    });
+                }
+            }
+        }
+        Phase 4: 依賴注入設定 (ISpanShop.MVC)
+        目的：將上述寫好的 Service 與 Repository 註冊到容器中，讓系統知道 Interface 對應哪個 Class。
+
+        [ ] 6. 註冊服務
+
+        位置：ISpanShop.MVC專案 -> Program.cs
+
+        動作：在 var app = builder.Build(); 這一行之前加入。
+
+        程式碼範例：
+
+        C#
+        using ISpanShop.Repositories;
+        using ISpanShop.Repositories.Interfaces;
+        using ISpanShop.Services;
+        using ISpanShop.Services.Interfaces;
+
+        // ... 其他程式碼 ...
+
+        // 註冊 Repositories
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+        // 註冊 Services
+        builder.Services.AddScoped<IUserService, UserService>();
+
+        // ... 其他程式碼 ...
+        Phase 5: 展示層 (ISpanShop.MVC)
+        目的：負責接收請求、組裝 ViewModel 並呈現網頁。
+
+        [ ] 7. 建立 ViewModel (UserIndexVm)
+
+        位置：ISpanShop.MVC專案 -> Models -> Users 資料夾 (需新增) -> UserIndexVm.cs
+
+        說明：專門給 View 顯示用的模型 (可能包含顯示格式化)。
+
+        程式碼範例：
+
+        C#
+        using System.ComponentModel.DataAnnotations;
+
+        namespace ISpanShop.MVC.Models.Users
+        {
+            public class UserIndexVm
+            {
+                public int Id { get; set; }
+
+                [Display(Name = "帳號")]
+                public string Account { get; set; }
+
+                [Display(Name = "電子郵件")]
+                public string Email { get; set; }
+
+                [Display(Name = "角色")]
+                public string RoleName { get; set; }
+
+                [Display(Name = "狀態")]
+                public string StatusText { get; set; } // 例如將 True 轉為 "黑名單"
+            }
+        }
+        [ ] 8. 建立 Controller (UsersController)
+
+        位置：ISpanShop.MVC專案 -> Controllers 資料夾 -> UsersController.cs
+
+        說明：注入 Service，建立 Index Action。
+
+        程式碼範例：
+
+        C#
+        using ISpanShop.MVC.Models.Users;
+        using ISpanShop.Services.Interfaces;
+        using Microsoft.AspNetCore.Mvc;
+        using System.Linq;
+
+        namespace ISpanShop.MVC.Controllers
+        {
+            public class UsersController : Controller
+            {
+                private readonly IUserService _service;
+
+                public UsersController(IUserService service)
+                {
+                    _service = service;
+                }
+
+                public IActionResult Index(string keyword)
+                {
+                    var dtos = _service.Search(keyword);
+
+                    // DTO 轉 ViewModel
+                    var vms = dtos.Select(d => new UserIndexVm
+                    {
+                        Id = d.Id,
+                        Account = d.Account,
+                        Email = d.Email,
+                        RoleName = d.RoleName,
+                        StatusText = (d.IsBlacklisted == true) ? "停權中" : "正常"
+                    });
+
+                    return View(vms);
+                }
+            }
+        }
+        [ ] 9. 建立 View (Index.cshtml)
+
+        位置：ISpanShop.MVC專案 -> Views -> Users 資料夾 (需新增) -> Index.cshtml
+
+        說明：繪製表格。
+
+        程式碼範例：
+
+        HTML
+        @model IEnumerable<ISpanShop.MVC.Models.Users.UserIndexVm>
+
+        <h2>會員管理列表</h2>
+
+        <form method="get">
+            <input type="text" name="keyword" placeholder="搜尋帳號或Email..." />
+            <button type="submit">搜尋</button>
+        </form>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.Account)</th>
+                    <th>@Html.DisplayNameFor(model => model.Email)</th>
+                    <th>@Html.DisplayNameFor(model => model.RoleName)</th>
+                    <th>@Html.DisplayNameFor(model => model.StatusText)</th>
+                    <th>管理</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Account</td>
+                        <td>@item.Email</td>
+                        <td>@item.RoleName</td>
+                        <td>@item.StatusText</td>
+                        <td>
+                            <a href="#">編輯</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
