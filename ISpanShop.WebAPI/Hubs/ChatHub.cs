@@ -23,7 +23,8 @@ namespace ISpanShop.WebAPI.Hubs
 			// 1. 取得當下發送者的 ID
 			// (實務上，使用者登入後 SignalR 會把 ID 放在 Context.UserIdentifier)
 			// 這裡我們先假設已經成功取得使用者的 ID
-			int senderId = int.Parse(Context.UserIdentifier ?? "0");
+			//int senderId = int.Parse(Context.UserIdentifier ?? "0");
+			int senderId = 1;
 
 			if (senderId == 0)
 			{
@@ -45,8 +46,9 @@ namespace ISpanShop.WebAPI.Hubs
 			}
 			catch (Exception ex)
 			{
-				// 如果存入資料庫失敗，回傳錯誤給發送者
-				await Clients.Caller.SendAsync("ErrorMessage", "訊息發送失敗，請稍後再試。");
+				// 把真正的 Exception 錯誤細節 (包含內部錯誤) 傳給前端，方便我們抓蟲
+				string realError = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+				await Clients.Caller.SendAsync("ErrorMessage", $"系統出錯啦：{realError}");
 			}
 		}
 	}
