@@ -1,4 +1,8 @@
 using ISpanShop.Models.EfModels;
+using ISpanShop.Repositories;
+using ISpanShop.Repositories.Interfaces;
+using ISpanShop.Services;
+using ISpanShop.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace ISpanShop.MVC
@@ -15,6 +19,13 @@ namespace ISpanShop.MVC
 			// 這裡的 "DefaultConnection" 必須跟您 appsettings.json或appsettings.Development裡的名字一模一樣
 			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+			// 註冊倉儲層 (Repositories)
+			builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+			// 註冊服務層 (Services)
+			builder.Services.AddScoped<IOrderService, OrderService>();
+
 
 			var app = builder.Build();
 

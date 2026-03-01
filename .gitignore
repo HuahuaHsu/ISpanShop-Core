@@ -432,3 +432,10 @@ appsettings.Development.json
 # 3. 執行期檔案 (忽略 uploads 內容，但透過保留 .gitkeep 來保留資料夾)
 wwwroot/uploads/*
 !wwwroot/uploads/.gitkeep
+
+
+
+===
+
+
+prompts_grape/
