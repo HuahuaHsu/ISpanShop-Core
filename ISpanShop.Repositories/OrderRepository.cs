@@ -61,5 +61,33 @@ namespace ISpanShop.Repositories
 
 			return (items, totalCount);
 		}
+
+		public async Task<Order> GetOrderByIdAsync(long id)
+		{
+			return await _context.Orders
+				.Include(o => o.User)
+				.Include(o => o.Store)
+				.Include(o => o.OrderDetails)
+					.ThenInclude(od => od.Product) // 如果明細需要產品關聯
+				.FirstOrDefaultAsync(o => o.Id == id);
+		}
+
+		public async Task UpdateStatusAsync(long id, byte status)
+		{
+			var order = await _context.Orders.FindAsync(id);
+			if (order != null)
+			{
+				order.Status = status;
+
+				// 如果狀態更新為「已完成」，可同步設定 CompletedAt
+				if (status == 3) // 假設 3 是 Completed
+				{
+					order.CompletedAt = DateTime.Now;
+				}
+
+				await _context.SaveChangesAsync();
+			}
+		}
+
 	}
 }

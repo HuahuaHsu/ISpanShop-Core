@@ -47,6 +47,7 @@
             <th>狀態</th>
             <th>下單時間</th>
             <th>收件人</th>
+            <th>操作</th>
         </tr>
     </thead>
     <tbody>
@@ -62,6 +63,9 @@
                 </td>
                 <td>@order.CreatedAt?.ToString("yyyy/MM/dd HH:mm")</td>
                 <td>@order.RecipientName</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-info">查看明細</a>
+                </td>
             </tr>
         }
     </tbody>

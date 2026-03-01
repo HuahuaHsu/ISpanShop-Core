@@ -1,0 +1,109 @@
+﻿@model ISpanShop.MVC.Models.Orders.OrderDetailsVm
+@using ISpanShop.Common.Enums
+
+@{
+    ViewData["Title"] = "訂單明細 - " + Model.Order.OrderNumber;
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>訂單明細: @Model.Order.OrderNumber</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">返回列表</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- 訂單基本資訊 -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">基本資訊</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <p><strong>客戶名稱:</strong> @Model.Order.UserName</p>
+                            <p><strong>下單時間:</strong> @Model.Order.CreatedAt?.ToString("yyyy-MM-dd HH:mm")</p>
+                            <p><strong>目前狀態:</strong> <span class="badge bg-info text-dark">@Model.Order.Status</span></p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>收件人:</strong> @Model.Order.RecipientName</p>
+                            <p><strong>收件電話:</strong> @Model.Order.RecipientPhone</p>
+                            <p><strong>收件地址:</strong> @Model.Order.RecipientAddress</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 商品明細 -->
+            <div class="card">
+                <div class="card-header bg-dark text-white">商品明細</div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>商品</th>
+                                <th>規格</th>
+                                <th class="text-end">單價</th>
+                                <th class="text-center">數量</th>
+                                <th class="text-end">小計</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Order.Details)
+                            {
+                                <tr>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.VariantName</td>
+                                    <td class="text-end">@item.Price.ToString("C0")</td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-end">@item.SubTotal.ToString("C0")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>總計:</strong></td>
+                                <td class="text-end text-danger"><strong>@Model.Order.FinalAmount.ToString("C0")</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 狀態修改區 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">修改訂單狀態</div>
+                <div class="card-body">
+                    <form asp-action="UpdateStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Order.Id" />
+                        <div class="mb-3">
+                            <label class="form-label">選擇新狀態</label>
+                            <select name="status" class="form-select">
+                                @foreach (var status in Enum.GetValues(typeof(OrderStatus)))
+                                {
+                                    <option value="@((byte)status)" selected="@(Model.Order.Status == (OrderStatus)status)">@status</option>
+                                }
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" onclick="return confirm('確定要修改狀態嗎?')">更新狀態</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">備註</div>
+                <div class="card-body">
+                    <p class="text-muted">@(string.IsNullOrEmpty(Model.Order.Note) ? "無備註" : Model.Order.Note)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
