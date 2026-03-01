@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ISpanShop.Models.DTOs;
 using ISpanShop.Models.EfModels;
 
 namespace ISpanShop.Repositories.Interfaces
@@ -46,5 +47,18 @@ namespace ISpanShop.Repositories.Interfaces
         /// <param name="id">商品 ID</param>
         /// <returns>商品實體，若不存在則返回 null</returns>
         Product? GetProductById(int id);
+
+        /// <summary>
+        /// 分頁取得商品列表，支援分類篩選
+        /// </summary>
+        /// <param name="criteria">搜尋條件（分類篩選 + 分頁）</param>
+        /// <returns>商品集合與總筆數</returns>
+        (IEnumerable<Product> Items, int TotalCount) GetProductsPaged(ProductSearchCriteria criteria);
+
+        /// <summary>
+        /// 取得所有分類（含父子關聯）
+        /// </summary>
+        /// <returns>所有分類實體集合</returns>
+        IEnumerable<Category> GetAllCategories();
     }
 }

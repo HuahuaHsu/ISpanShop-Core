@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using ISpanShop.Models.DTOs;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Interfaces;
 
@@ -96,6 +97,49 @@ namespace ISpanShop.Repositories
                 .Include(p => p.ProductImages)
                 .Include(p => p.ProductVariants)
                 .FirstOrDefault(p => p.Id == id);
+        }
+
+        /// <summary>
+        /// 分頁取得商品列表，支援分類篩選
+        /// </summary>
+        /// <param name="criteria">搜尋條件</param>
+        /// <returns>商品集合與總筆數</returns>
+        public (IEnumerable<Product> Items, int TotalCount) GetProductsPaged(ProductSearchCriteria criteria)
+        {
+            var query = _context.Products
+                .Include(p => p.Store)
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.ProductImages)
+                .AsQueryable();
+
+            // 優先以子分類篩選，否則以主分類篩選所有子分類商品
+            if (criteria.CategoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == criteria.CategoryId.Value);
+            }
+            else if (criteria.ParentCategoryId.HasValue)
+            {
+                query = query.Where(p => p.Category.ParentId == criteria.ParentCategoryId.Value);
+            }
+
+            int totalCount = query.Count();
+
+            var items = query
+                .Skip((criteria.PageNumber - 1) * criteria.PageSize)
+                .Take(criteria.PageSize)
+                .ToList();
+
+            return (items, totalCount);
+        }
+
+        /// <summary>
+        /// 取得所有分類（含父子關聯）
+        /// </summary>
+        /// <returns>所有分類集合</returns>
+        public IEnumerable<Category> GetAllCategories()
+        {
+            return _context.Categories.ToList();
         }
     }
 }

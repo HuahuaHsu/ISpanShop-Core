@@ -1,18 +1,69 @@
-@model IEnumerable<ISpanShop.MVC.Models.ViewModels.ProductListVm>
+@model ISpanShop.Models.DTOs.PagedResult<ISpanShop.MVC.Models.ViewModels.ProductListVm>
+@using System.Text.Json
 
 @{
     ViewData["Title"] = "商品列表";
+    var parentCategories = ViewBag.ParentCategories as IEnumerable<ISpanShop.Models.DTOs.CategoryDto> ?? Enumerable.Empty<ISpanShop.Models.DTOs.CategoryDto>();
+    var allSubCategories = ViewBag.AllSubCategories as IEnumerable<ISpanShop.Models.DTOs.CategoryDto> ?? Enumerable.Empty<ISpanShop.Models.DTOs.CategoryDto>();
+    int? currentParentId = ViewBag.CurrentParentCategoryId;
+    int? currentCategoryId = ViewBag.CurrentCategoryId;
 }
 
 <div class="container-fluid">
-    <div class="row mb-4">
+    <div class="row mb-3">
         <div class="col-md-12">
             <h2>全站商品總覽</h2>
-            <p class="text-muted">共計 @Model.Count() 個商品</p>
+            <p class="text-muted">
+                共計 <strong>@Model.TotalCount</strong> 個商品，
+                第 <strong>@Model.CurrentPage</strong> / <strong>@Model.TotalPages</strong> 頁
+            </p>
         </div>
     </div>
 
-    @if (Model != null && Model.Any())
+    @* 篩選表單 *@
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">主分類</label>
+                    <select id="parentCategoryId" name="parentCategoryId" class="form-select">
+                        <option value="">-- 所有主分類 --</option>
+                        @foreach (var parent in parentCategories)
+                        {
+                            <option value="@parent.Id" selected="@(currentParentId == parent.Id)">
+                                @parent.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">子分類</label>
+                    <select id="categoryId" name="categoryId" class="form-select">
+                        <option value="">-- 所有子分類 --</option>
+                        @foreach (var sub in allSubCategories)
+                        {
+                            <option value="@sub.Id"
+                                    data-parent="@sub.ParentId"
+                                    selected="@(currentCategoryId == sub.Id)"
+                                    style="@(currentParentId.HasValue && sub.ParentId != currentParentId ? "display:none" : "")">
+                                @sub.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> 搜尋
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> 清除條件
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Data.Any())
     {
         <div class="table-responsive">
             <table class="table table-striped table-hover">
@@ -30,7 +81,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var product in Model)
+                    @foreach (var product in Model.Data)
                     {
                         <tr>
                             <td>
@@ -77,12 +128,106 @@
                 </tbody>
             </table>
         </div>
+
+        @* Bootstrap 5 分頁 *@
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="商品分頁">
+                <ul class="pagination justify-content-center flex-wrap">
+                    @* 上一頁 *@
+                    <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=@(Model.CurrentPage - 1)">
+                            &laquo;
+                        </a>
+                    </li>
+
+                    @{
+                        int startPage = Math.Max(1, Model.CurrentPage - 2);
+                        int endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+                    }
+
+                    @if (startPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=1">1</a>
+                        </li>
+                        @if (startPage > 2)
+                        {
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        }
+                    }
+
+                    @for (int i = startPage; i <= endPage; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link"
+                               href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=@i">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    @if (endPage < Model.TotalPages)
+                    {
+                        @if (endPage < Model.TotalPages - 1)
+                        {
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        }
+                        <li class="page-item">
+                            <a class="page-link" href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=@Model.TotalPages">@Model.TotalPages</a>
+                        </li>
+                    }
+
+                    @* 下一頁 *@
+                    <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=@(Model.CurrentPage + 1)">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
     }
     else
     {
         <div class="alert alert-info" role="alert">
-            <h5>目前沒有商品。</h5>
-            <p>請先建立商品或執行資料播種。</p>
+            <h5>目前沒有符合條件的商品。</h5>
+            <p>請調整篩選條件或先建立商品。</p>
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        // 子分類資料（來自 Server）
+        const allSubCategories = @Html.Raw(JsonSerializer.Serialize(allSubCategories.Select(c => new { id = c.Id, name = c.Name, parentId = c.ParentId })));
+
+        const parentSelect = document.getElementById('parentCategoryId');
+        const subSelect = document.getElementById('categoryId');
+
+        parentSelect.addEventListener('change', function () {
+            const selectedParentId = this.value ? parseInt(this.value) : null;
+            const currentSubValue = subSelect.value;
+
+            // 重建子分類選項
+            subSelect.innerHTML = '<option value="">-- 所有子分類 --</option>';
+
+            const filtered = selectedParentId
+                ? allSubCategories.filter(c => c.parentId === selectedParentId)
+                : allSubCategories;
+
+            filtered.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.id;
+                option.textContent = c.name;
+                if (c.id === parseInt(currentSubValue)) {
+                    option.selected = true;
+                }
+                subSelect.appendChild(option);
+            });
+        });
+    </script>
+}
+

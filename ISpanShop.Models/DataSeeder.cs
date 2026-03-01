@@ -540,16 +540,16 @@ namespace ISpanShop.Models
 
 				// 1. 處理主分類 (Parent)
 				var parentCategory = context.Categories.FirstOrDefault(c => c.Name == parentName);
-				if (parentCategory == null)
-				{
-					parentCategory = new Category
-					{
-						Name = parentName,
-						Sort = 0,
-						IsVisible = true,
-						// ParentCategoryId = null // 如果你的資料表有這個欄位，主分類的 Parent 就是 null
-					};
-					context.Categories.Add(parentCategory);
+                if (parentCategory == null)
+                {
+                    parentCategory = new Category
+                    {
+                        Name = parentName,
+                        Sort = 0,
+                        IsVisible = true,
+                        ParentId = null // ★ 告訴資料庫：主分類沒有爸爸
+                    };
+                    context.Categories.Add(parentCategory);
 					context.SaveChanges(); // 先存檔才能拿到主分類的 ID
 				}
 
@@ -558,22 +558,16 @@ namespace ISpanShop.Models
 
 				// 2. 處理子分類 (Child)
 				var childCategory = context.Categories.FirstOrDefault(c => c.Name == childName);
-				if (childCategory == null)
-				{
-					childCategory = new Category
-					{
-						Name = childName,
-						Sort = 0,
-						IsVisible = true,
-
-						/* ==========================================================
-                           💡 重要提醒：
-                           如果你們的 Category 資料表裡面有設計 ParentCategoryId，
-                           請把下面這行的註解拿掉，這樣就能建立真正的資料庫關聯！
-                           ========================================================== */
-						// ParentCategoryId = parentCategory.Id 
-					};
-					context.Categories.Add(childCategory);
+                if (childCategory == null)
+                {
+                    childCategory = new Category
+                    {
+                        Name = childName,
+                        Sort = 0,
+                        IsVisible = true,
+                        ParentId = parentCategory.Id // ★ 告訴資料庫：這個子分類的爸爸是剛剛建好的主分類
+                    };
+                    context.Categories.Add(childCategory);
 					context.SaveChanges();
 				}
 

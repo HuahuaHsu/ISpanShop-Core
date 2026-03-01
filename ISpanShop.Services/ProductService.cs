@@ -178,6 +178,50 @@ namespace ISpanShop.Services
         }
 
         /// <summary>
+        /// 分頁取得商品列表，支援分類篩選
+        /// </summary>
+        /// <param name="criteria">搜尋條件</param>
+        /// <returns>分頁商品列表 DTO</returns>
+        public PagedResult<ProductListDto> GetProductsPaged(ProductSearchCriteria criteria)
+        {
+            var (items, totalCount) = _productRepository.GetProductsPaged(criteria);
+
+            var dtos = items.Select(p => new ProductListDto
+            {
+                Id = p.Id,
+                StoreName = p.Store?.StoreName ?? "未知商店",
+                CategoryName = p.Category?.Name ?? "未分類",
+                BrandName = p.Brand?.Name ?? "未設定",
+                Name = p.Name,
+                MinPrice = p.MinPrice,
+                MaxPrice = p.MaxPrice,
+                Status = p.Status,
+                MainImageUrl = p.ProductImages
+                    ?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
+                    ?? p.ProductImages?.FirstOrDefault()?.ImageUrl
+                    ?? "https://via.placeholder.com/400x400?text=No+Image"
+            }).ToList();
+
+            return PagedResult<ProductListDto>.Create(dtos, totalCount, criteria.PageNumber, criteria.PageSize);
+        }
+
+        /// <summary>
+        /// 取得所有分類清單（含主分類與子分類）
+        /// </summary>
+        /// <returns>分類 DTO 集合</returns>
+        public IEnumerable<CategoryDto> GetAllCategories()
+        {
+            return _productRepository.GetAllCategories()
+                .Select(c => new CategoryDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    ParentId = c.ParentId
+                })
+                .ToList();
+        }
+
+        /// <summary>
         /// 根據 ID 取得商品詳情 - 轉換為 DTO（包含完整圖片與規格列表）
         /// </summary>
         /// <param name="id">商品 ID</param>

@@ -34,6 +34,19 @@ namespace ISpanShop.Services.Interfaces
         IEnumerable<ProductListDto> GetAllProducts();
 
         /// <summary>
+        /// 分頁取得商品列表，支援分類篩選
+        /// </summary>
+        /// <param name="criteria">搜尋條件（分類篩選 + 分頁）</param>
+        /// <returns>分頁商品列表 DTO</returns>
+        PagedResult<ProductListDto> GetProductsPaged(ProductSearchCriteria criteria);
+
+        /// <summary>
+        /// 取得所有分類清單（含主分類與子分類）
+        /// </summary>
+        /// <returns>分類 DTO 集合</returns>
+        IEnumerable<CategoryDto> GetAllCategories();
+
+        /// <summary>
         /// 根據 ID 取得商品詳情（包含圖片與規格）
         /// </summary>
         /// <param name="id">商品 ID</param>

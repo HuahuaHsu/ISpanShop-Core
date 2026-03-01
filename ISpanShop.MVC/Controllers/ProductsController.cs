@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using ISpanShop.Models.DTOs;
 using ISpanShop.Services.Interfaces;
 using ISpanShop.MVC.Models.ViewModels;
 
@@ -22,29 +23,52 @@ namespace ISpanShop.MVC.Controllers
         }
 
         /// <summary>
-        /// 商品列表 - 全站商品總覽
+        /// 商品列表 - 全站商品總覽（支援分類篩選與分頁）
         /// </summary>
+        /// <param name="parentCategoryId">主分類 ID</param>
+        /// <param name="categoryId">子分類 ID</param>
+        /// <param name="page">頁碼（從 1 開始）</param>
         /// <returns>商品列表 View</returns>
-        public IActionResult Index()
+        public IActionResult Index(int? parentCategoryId, int? categoryId, int page = 1)
         {
-            // 從 Service 取得 DTO 集合
-            var productDtos = _productService.GetAllProducts();
+            var criteria = new ProductSearchCriteria
+            {
+                ParentCategoryId = parentCategoryId,
+                CategoryId = categoryId,
+                PageNumber = page,
+                PageSize = 10
+            };
+
+            // 取得分頁商品列表
+            var pagedDtos = _productService.GetProductsPaged(criteria);
 
             // 將 DTO 轉換為 ViewModel
-            var viewModels = productDtos.Select(dto => new ProductListVm
-            {
-                Id = dto.Id,
-                StoreName = dto.StoreName,
-                CategoryName = dto.CategoryName,
-                BrandName = dto.BrandName,
-                Name = dto.Name,
-                MinPrice = dto.MinPrice,
-                MaxPrice = dto.MaxPrice,
-                Status = dto.Status,
-                MainImageUrl = dto.MainImageUrl
-            }).ToList();
+            var pagedVm = PagedResult<ProductListVm>.Create(
+                pagedDtos.Data.Select(dto => new ProductListVm
+                {
+                    Id = dto.Id,
+                    StoreName = dto.StoreName,
+                    CategoryName = dto.CategoryName,
+                    BrandName = dto.BrandName,
+                    Name = dto.Name,
+                    MinPrice = dto.MinPrice,
+                    MaxPrice = dto.MaxPrice,
+                    Status = dto.Status,
+                    MainImageUrl = dto.MainImageUrl
+                }).ToList(),
+                pagedDtos.TotalCount,
+                pagedDtos.CurrentPage,
+                pagedDtos.PageSize
+            );
 
-            return View(viewModels);
+            // 取得所有分類並區分主/子分類
+            var allCategories = _productService.GetAllCategories().ToList();
+            ViewBag.ParentCategories = allCategories.Where(c => c.ParentId == null).ToList();
+            ViewBag.AllSubCategories = allCategories.Where(c => c.ParentId != null).ToList();
+            ViewBag.CurrentParentCategoryId = parentCategoryId;
+            ViewBag.CurrentCategoryId = categoryId;
+
+            return View(pagedVm);
         }
 
         /// <summary>
