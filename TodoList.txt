@@ -28,7 +28,7 @@
                 public bool? IsBlacklisted { get; set; }
                 public DateTime? CreatedAt { get; set; }
             }
-        }
+        }  
         Phase 2: 資料存取層 (ISpanShop.Repositories)
         目的：直接與資料庫對話，負責寫 LINQ 指令。
 
