@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using ISpanShop.Models.DTOs;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories;
@@ -91,35 +92,27 @@ namespace ISpanShop.Services
         }
 
         /// <summary>
-        /// 自動化商品審核機制 - 檢查是否包含違禁詞
+        /// 自動化商品審核機制
+        /// 規則：含違禁詞 → 3(退回)；描述過短 → 2(待手動審核)；正常 → 1(自動通過上架)
         /// </summary>
-        /// <param name="name">商品名稱</param>
-        /// <param name="description">商品描述</param>
-        /// <returns>審核狀態：1 = 自動通過允許上架，2 = 需要人工審核</returns>
         private byte AutoReviewProduct(string name, string description)
         {
-            // 定義電商違禁詞
-            var bannedKeywords = new[]
+            var badWords = new[]
             {
                 "高仿", "原單", "槍械", "毒品", "贗品", "假貨", "冒牌", "盜版",
                 "走私", "非法", "詐騙", "傳銷", "洗錢", "賭博", "色情",
-                "暴力", "恐怖", "炸藥", "刀具", "槍", "彈藥"
+                "暴力", "恐怖", "炸藥", "大麻", "槍", "彈藥", "仿冒"
             };
 
-            // 檢查商品名稱與描述是否包含違禁詞
-            string combined = (name + " " + description).ToLower();
+            string combined = (name + " " + (description ?? "")).ToLower();
 
-            foreach (var keyword in bannedKeywords)
-            {
-                if (combined.Contains(keyword.ToLower()))
-                {
-                    // 包含違禁詞，回傳 2 表示需要人工審核
-                    return 2;
-                }
-            }
+            if (badWords.Any(w => combined.Contains(w.ToLower())))
+                return 3; // 自動退回
 
-            // 不包含違禁詞，回傳 1 表示自動審核通過，允許上架
-            return 1;
+            if (string.IsNullOrWhiteSpace(description) || description.Trim().Length < 10)
+                return 2; // 描述過短，待手動審核
+
+            return 1; // 自動通過，直接上架
         }
 
         /// <summary>
@@ -132,13 +125,18 @@ namespace ISpanShop.Services
 
             return pendingProducts.Select(p => new ProductReviewDto
             {
-                Id = p.Id,
-                StoreId = p.StoreId,
+                Id          = p.Id,
+                StoreId     = p.StoreId,
                 CategoryName = p.Category?.Name ?? "未分類",
-                BrandName = p.Brand?.Name ?? "未設定",
-                Name = p.Name,
-                Status = p.Status ?? 0,
-                CreatedAt = p.CreatedAt
+                BrandName   = p.Brand?.Name ?? "未設定",
+                StoreName   = p.Store?.StoreName ?? "未知商店",
+                Name        = p.Name,
+                Description = p.Description,
+                Status      = p.Status ?? 0,
+                CreatedAt   = p.CreatedAt,
+                UpdatedAt   = p.UpdatedAt,
+                MainImageUrl = p.ProductImages
+                    ?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
             }).ToList();
         }
 
@@ -199,7 +197,8 @@ namespace ISpanShop.Services
                 MainImageUrl = p.ProductImages
                     ?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
                     ?? p.ProductImages?.FirstOrDefault()?.ImageUrl
-                    ?? "https://via.placeholder.com/400x400?text=No+Image"
+                    ?? "https://via.placeholder.com/400x400?text=No+Image",
+                CreatedAt = p.CreatedAt
             }).ToList();
 
             return PagedResult<ProductListDto>.Create(dtos, totalCount, criteria.PageNumber, criteria.PageSize);
@@ -260,6 +259,83 @@ namespace ISpanShop.Services
                     })
                     .ToList() ?? new List<ProductVariantDetailDto>()
             };
+        }
+
+        /// <summary>
+        /// 取得所有商家清單
+        /// </summary>
+        /// <returns>商家清單 (Id, Name)</returns>
+        public IEnumerable<(int Id, string Name)> GetStoreOptions()
+        {
+            return _productRepository.GetStoreOptions();
+        }
+
+        /// <summary>
+        /// 取得所有品牌清單
+        /// </summary>
+        /// <returns>品牌清單 (Id, Name)</returns>
+        public IEnumerable<(int Id, string Name)> GetBrandOptions()
+        {
+            return _productRepository.GetBrandOptions();
+        }
+
+        /// <summary>
+        /// 根據子分類取得該分類下商品涵蓋的品牌清單
+        /// </summary>
+        /// <param name="categoryId">子分類 ID；為 null 時回傳全部品牌</param>
+        /// <returns>品牌清單 (Id, Name)</returns>
+        public IEnumerable<(int Id, string Name)> GetBrandsByCategory(int? categoryId)
+        {
+            return _productRepository.GetBrandsByCategory(categoryId);
+        }
+
+        /// <summary>
+        /// 批次更新商品上下架狀態
+        /// </summary>
+        public async Task<int> UpdateBatchStatusAsync(List<int> productIds, byte targetStatus)
+        {
+            if (productIds == null || productIds.Count == 0) return 0;
+            return await _productRepository.UpdateBatchStatusAsync(productIds, targetStatus);
+        }
+
+        /// <summary>
+        /// 核准商品審核 - 將狀態設為 1 (上架)
+        /// </summary>
+        public void ApproveProduct(int id)
+        {
+            _productRepository.ApproveProduct(id);
+        }
+
+        /// <summary>
+        /// 退回商品審核 - 將狀態設為 3 (審核退回)
+        /// </summary>
+        public void RejectProduct(int id, string? reason)
+        {
+            _productRepository.RejectProduct(id, reason);
+        }
+
+        /// <summary>
+        /// 取得最近退回的商品清單（Status == 3）
+        /// </summary>
+        public IEnumerable<ProductReviewDto> GetRecentRejectedProducts(int top = 10)
+        {
+            return _productRepository.GetRecentRejectedProducts(top)
+                .Select(p => new ProductReviewDto
+                {
+                    Id          = p.Id,
+                    StoreId     = p.StoreId,
+                    CategoryName = p.Category?.Name ?? "未分類",
+                    BrandName   = p.Brand?.Name ?? "未設定",
+                    StoreName   = p.Store?.StoreName ?? "未知商店",
+                    Name        = p.Name,
+                    Description = p.Description,
+                    Status      = p.Status ?? 3,
+                    RejectReason = p.RejectReason,
+                    CreatedAt   = p.CreatedAt,
+                    UpdatedAt   = p.UpdatedAt,
+                    MainImageUrl = p.ProductImages
+                        ?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
+                }).ToList();
         }
     }
 }

@@ -51,5 +51,10 @@ namespace ISpanShop.Models.DTOs
         /// 主圖 URL
         /// </summary>
         public required string MainImageUrl { get; set; }
+
+        /// <summary>
+        /// 建檔日期
+        /// </summary>
+        public DateTime? CreatedAt { get; set; }
     }
 }

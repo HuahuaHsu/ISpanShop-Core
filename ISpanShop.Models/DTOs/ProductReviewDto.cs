@@ -28,12 +28,22 @@ namespace ISpanShop.Models.DTOs
         public string? BrandName { get; set; }
 
         /// <summary>
+        /// 商店名稱
+        /// </summary>
+        public string? StoreName { get; set; }
+
+        /// <summary>
         /// 商品名稱
         /// </summary>
         public required string Name { get; set; }
 
         /// <summary>
-        /// 商品狀態 (1=已上架, 2=待審核, 其他值)
+        /// 商品描述
+        /// </summary>
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// 商品狀態 (0=下架, 1=上架, 2=待審核, 3=審核退回)
         /// </summary>
         public byte Status { get; set; }
 
@@ -41,5 +51,20 @@ namespace ISpanShop.Models.DTOs
         /// 建立時間
         /// </summary>
         public DateTime? CreatedAt { get; set; }
+
+        /// <summary>
+        /// 退回原因（Status==3 時填入）
+        /// </summary>
+        public string? RejectReason { get; set; }
+
+        /// <summary>
+        /// 最後更新時間（退回時間）
+        /// </summary>
+        public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// 主圖 URL
+        /// </summary>
+        public string? MainImageUrl { get; set; }
     }
 }

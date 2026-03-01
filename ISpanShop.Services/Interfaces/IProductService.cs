@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ISpanShop.Models.DTOs;
 
 namespace ISpanShop.Services.Interfaces
@@ -52,5 +53,51 @@ namespace ISpanShop.Services.Interfaces
         /// <param name="id">商品 ID</param>
         /// <returns>商品詳情 DTO，若不存在則返回 null</returns>
         ProductDetailDto? GetProductDetail(int id);
+
+        /// <summary>
+        /// 取得所有商家清單 (Id, Name)
+        /// </summary>
+        /// <returns>商家清單</returns>
+        IEnumerable<(int Id, string Name)> GetStoreOptions();
+
+        /// <summary>
+        /// 取得所有品牌清單 (Id, Name)
+        /// </summary>
+        /// <returns>品牌清單</returns>
+        IEnumerable<(int Id, string Name)> GetBrandOptions();
+
+        /// <summary>
+        /// 根據子分類取得該分類下商品涵蓋的品牌清單
+        /// </summary>
+        /// <param name="categoryId">子分類 ID；為 null 時回傳全部品牌</param>
+        /// <returns>品牌清單</returns>
+        IEnumerable<(int Id, string Name)> GetBrandsByCategory(int? categoryId);
+
+        /// <summary>
+        /// 批次更新商品上下架狀態
+        /// </summary>
+        /// <param name="productIds">要更新的商品 ID 集合</param>
+        /// <param name="targetStatus">目標狀態：1 為上架，0 為下架</param>
+        /// <returns>實際更新的筆數</returns>
+        Task<int> UpdateBatchStatusAsync(List<int> productIds, byte targetStatus);
+
+        /// <summary>
+        /// 核准商品（待審核 → 上架）
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        void ApproveProduct(int id);
+
+        /// <summary>
+        /// 退回商品（待審核 → 審核退回）
+        /// </summary>
+        /// <param name="id">商品 ID</param>
+        /// <param name="reason">退回原因（記錄於回應訊息，不持久化）</param>
+        void RejectProduct(int id, string? reason);
+
+        /// <summary>
+        /// 取得最近退回的商品清單（Status == 3），依 UpdatedAt 降冪排序
+        /// </summary>
+        /// <param name="top">最多取幾筆，預設 10</param>
+        IEnumerable<ProductReviewDto> GetRecentRejectedProducts(int top = 10);
     }
 }

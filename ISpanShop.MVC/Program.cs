@@ -16,14 +16,14 @@ namespace ISpanShop.MVC
 			// Add services to the container.
 			builder.Services.AddControllersWithViews();
 
-			// ³o¸Ìªº "DefaultConnection" ¥²¶·¸ò±z appsettings.json©Îappsettings.Development¸Ìªº¦W¦r¤@¼Ò¤@¼Ë
+			// ï¿½oï¿½Ìªï¿½ "DefaultConnection" ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½z appsettings.jsonï¿½ï¿½appsettings.Developmentï¿½Ìªï¿½ï¿½Wï¿½rï¿½@ï¿½Ò¤@ï¿½ï¿½
 			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-			//µù¥U²£«~ªA°È
+			//ï¿½ï¿½ï¿½Uï¿½ï¿½ï¿½~ï¿½Aï¿½ï¿½
 			builder.Services.AddScoped<IProductService, ProductService>();
 
-			//µù¥U²£«~¸ê®Æ®w¦s¨ú
+			//ï¿½ï¿½ï¿½Uï¿½ï¿½ï¿½~ï¿½ï¿½Æ®wï¿½sï¿½ï¿½
 			builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 			var app = builder.Build();
@@ -47,14 +47,16 @@ namespace ISpanShop.MVC
 				name: "default",
 				pattern: "{controller=Home}/{action=Index}/{id?}");
 
-			// ¦bÀ³¥Îµ{¦¡±Ò°Ê®É°õ¦æ¸ê®Æ¼½ºØ
+			// ï¿½bï¿½ï¿½ï¿½Îµ{ï¿½ï¿½ï¿½Ò°Ê®É°ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½
 			using (var scope = app.Services.CreateScope())
 			{
 				var services = scope.ServiceProvider;
-				var context = services.GetRequiredService<ISpanShop.Models.EfModels.ISpanShopDBContext>(); // ½T»{§Aªº DbContext ¦WºÙ
+				var context = services.GetRequiredService<ISpanShop.Models.EfModels.ISpanShopDBContext>(); // ï¿½Tï¿½{ï¿½Aï¿½ï¿½ DbContext ï¿½Wï¿½ï¿½
 
-				// §ï¦¨©I¥s«D¦P¨Bªº SeedAsync
+				// ï¿½ï¦¨ï¿½Iï¿½sï¿½Dï¿½Pï¿½Bï¿½ï¿½ SeedAsync
 				await ISpanShop.Models.DataSeeder.SeedAsync(context);
+				// æ¯æ¬¡å•Ÿå‹•ç¢ºä¿æœ‰ 15 ç­†å¾…å¯©æ ¸å•†å“ï¼ˆä¾›æ¸¬è©¦ä½¿ç”¨ï¼‰
+				await ISpanShop.Models.DataSeeder.EnsurePendingProductsAsync(context);
 			}
 
 			app.Run();

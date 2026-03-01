@@ -5,229 +5,628 @@
     ViewData["Title"] = "商品列表";
     var parentCategories = ViewBag.ParentCategories as IEnumerable<ISpanShop.Models.DTOs.CategoryDto> ?? Enumerable.Empty<ISpanShop.Models.DTOs.CategoryDto>();
     var allSubCategories = ViewBag.AllSubCategories as IEnumerable<ISpanShop.Models.DTOs.CategoryDto> ?? Enumerable.Empty<ISpanShop.Models.DTOs.CategoryDto>();
+    var stores = ViewBag.Stores as IEnumerable<(int Id, string Name)> ?? Enumerable.Empty<(int, string)>();
+    var brands = ViewBag.Brands as IEnumerable<(int Id, string Name)> ?? Enumerable.Empty<(int, string)>();
     int? currentParentId = ViewBag.CurrentParentCategoryId;
     int? currentCategoryId = ViewBag.CurrentCategoryId;
+    string? currentKeyword = ViewBag.CurrentKeyword;
+    int? currentStoreId = ViewBag.CurrentStoreId;
+    int? currentBrandId = ViewBag.CurrentBrandId;
+    int? currentStatus = ViewBag.CurrentStatus;
+    string? currentStartDate = ViewBag.CurrentStartDate;
+    string? currentEndDate = ViewBag.CurrentEndDate;
 }
 
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-md-12">
-            <h2>全站商品總覽</h2>
-            <p class="text-muted">
-                共計 <strong>@Model.TotalCount</strong> 個商品，
-                第 <strong>@Model.CurrentPage</strong> / <strong>@Model.TotalPages</strong> 頁
+<div class="container-fluid py-4 font-noto">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="fw-bold text-dark tracking-tight mb-1">全站商品總覽</h2>
+            <p class="text-muted mb-0 fs-7">
+                共計 <span class="fw-bold text-primary">@Model.TotalCount</span> 個商品，
+                第 <span class="fw-bold text-primary">@Model.CurrentPage</span> / @Model.TotalPages 頁
             </p>
         </div>
-    </div>
+        <div class="d-flex align-items-center gap-2">
+            @* 已選取工具列（預設隱藏，有選取時才顯示） *@
+            <div id="selection-toolbar" class="d-none d-flex align-items-center gap-2 me-1
+                 px-3 py-2 rounded-pill border border-warning-subtle bg-warning-subtle text-warning-emphasis fs-7 fw-bold">
+                <i class="bi bi-check2-square me-1"></i>
+                已選取 <span id="selectionCount">0</span> 項
+                <button type="button" id="btnClearSelection" class="btn-close btn-close-sm ms-2"
+                        style="font-size:0.6rem;" title="清除選取"></button>
+            </div>
 
-    @* 篩選表單 *@
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" asp-action="Index" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">主分類</label>
-                    <select id="parentCategoryId" name="parentCategoryId" class="form-select">
-                        <option value="">-- 所有主分類 --</option>
-                        @foreach (var parent in parentCategories)
-                        {
-                            <option value="@parent.Id" selected="@(currentParentId == parent.Id)">
-                                @parent.Name
-                            </option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">子分類</label>
-                    <select id="categoryId" name="categoryId" class="form-select">
-                        <option value="">-- 所有子分類 --</option>
-                        @foreach (var sub in allSubCategories)
-                        {
-                            <option value="@sub.Id"
-                                    data-parent="@sub.ParentId"
-                                    selected="@(currentCategoryId == sub.Id)"
-                                    style="@(currentParentId.HasValue && sub.ParentId != currentParentId ? "display:none" : "")">
-                                @sub.Name
-                            </option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-search"></i> 搜尋
-                    </button>
-                    <a asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-circle"></i> 清除條件
-                    </a>
-                </div>
-            </form>
+            <button type="button" id="btnBatchPublish" class="btn btn-success rounded-pill px-4 shadow-sm" disabled>
+                <i class="bi bi-arrow-up-circle me-1"></i> 批次上架
+            </button>
+            <button type="button" id="btnBatchUnpublish" class="btn btn-secondary rounded-pill px-4 shadow-sm" disabled>
+                <i class="bi bi-arrow-down-circle me-1"></i> 批次下架
+            </button>
+            <a href="@Url.Action("Create")" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i> 新增商品
+            </a>
         </div>
     </div>
 
-    @if (Model != null && Model.Data.Any())
-    {
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>主圖</th>
-                        <th>商品名稱</th>
-                        <th>商店名稱</th>
-                        <th>分類</th>
-                        <th>品牌</th>
-                        <th>最低價</th>
-                        <th>最高價</th>
-                        <th>狀態</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var product in Model.Data)
+    <div class="filter-card mb-5">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label text-muted fs-7 fw-bold tracking-wide">關鍵字搜尋</label>
+                <div class="input-group custom-input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="keyword" value="@currentKeyword" class="form-control border-start-0 ps-0" placeholder="輸入商品名稱...">
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted fs-7 fw-bold tracking-wide">主分類</label>
+                <select id="parentCategorySelect" name="parentCategoryId" class="form-select custom-select">
+                    <option value="">-- 全部 --</option>
+                    @if (parentCategories.Any())
                     {
+                        foreach (var pc in parentCategories)
+                        {
+                            <option value="@pc.Id" selected="@(currentParentId == pc.Id)">@pc.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted fs-7 fw-bold tracking-wide">子分類</label>
+                <select id="categorySelect" name="categoryId" class="form-select custom-select">
+                    <option value="">-- 全部 --</option>
+                    @if (allSubCategories.Any())
+                    {
+                        foreach (var sc in allSubCategories)
+                        {
+                            <option value="@sc.Id" selected="@(currentCategoryId == sc.Id)">@sc.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted fs-7 fw-bold tracking-wide">品牌</label>
+                <select id="brandSelect" name="brandId" class="form-select custom-select">
+                    <option value="">-- 全部 --</option>
+                    @if (brands.Any())
+                    {
+                        foreach (var b in brands)
+                        {
+                            <option value="@b.Id" selected="@(currentBrandId == b.Id)">@b.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted fs-7 fw-bold tracking-wide">狀態</label>
+                <select name="status" class="form-select custom-select">
+                    <option value="">-- 全部 --</option>
+                    <option value="1" selected="@(currentStatus == 1)">已上架</option>
+                    <option value="0" selected="@(currentStatus == 0)">未上架</option>
+                </select>
+            </div>
+
+            <div class="col-md-5 mt-4">
+                <label class="form-label text-muted fs-7 fw-bold tracking-wide">建檔日期區間</label>
+                <div class="input-group custom-input-group">
+                    <span class="input-group-text bg-white text-muted">從</span>
+                    <input type="date" name="startDate" value="@currentStartDate" class="form-control">
+                    <span class="input-group-text bg-white text-muted border-start-0 border-end-0">至</span>
+                    <input type="date" name="endDate" value="@currentEndDate" class="form-control">
+                </div>
+            </div>
+
+            <div class="col-md-7 mt-4 d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-funnel me-1"></i> 套用篩選
+                </button>
+                <a href="@Url.Action("Index")" class="btn btn-light rounded-pill px-4 border text-muted">
+                    清除條件
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive px-2 pb-3">
+        <table class="table table-custom align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 48px;">
+                        <input type="checkbox" id="selectAll" class="form-check-input" title="全選" />
+                    </th>
+                    <th style="width: 60px;">圖片</th>
+                    <th style="min-width: 250px;">商品名稱</th>
+                    <th>分類</th>
+                    <th>品牌</th>
+                    <th>價格</th>
+                    <th>建檔日期</th>
+                    <th>狀態</th>
+                    <th class="text-end">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Data != null && Model.Data.Any())
+                {
+                    foreach (var item in Model.Data)
+                    {
+                        var isPublished = item.Status == 1;
+                        var statusText = isPublished ? "已上架" : "未上架";
+                        var statusBg = isPublished ? "bg-success-soft text-success" : "bg-secondary-soft text-secondary";
+
                         <tr>
                             <td>
-                                @if (!string.IsNullOrEmpty(product.MainImageUrl))
+                                <input type="checkbox" class="product-select form-check-input" value="@item.Id" />
+                            </td>
+                            <td>
+                                <img src="@item.MainImageUrl" alt="商品圖" class="list-thumbnail" onerror="this.src='https://via.placeholder.com/50'" />
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark fs-6 mb-1">@item.Name</div>
+                                <div class="text-muted fs-7"><i class="bi bi-shop me-1"></i>@item.StoreName</div>
+                            </td>
+                            <td><span class="badge-soft bg-primary-soft text-primary">@item.CategoryName</span></td>
+                            <td><span class="badge-soft bg-info-soft text-info">@item.BrandName</span></td>
+                            <td class="fw-bold text-dark">
+                                @if (item.MinPrice == item.MaxPrice)
                                 {
-                                    <img src="@product.MainImageUrl" width="50" height="50" style="object-fit: cover;" alt="@product.Name" />
+                                    <span>NT$@item.MinPrice.GetValueOrDefault().ToString("N0")</span>
                                 }
                                 else
                                 {
-                                    <span class="text-muted">-</span>
+                                    <span>NT$@item.MinPrice.GetValueOrDefault().ToString("N0") ~ @item.MaxPrice.GetValueOrDefault().ToString("N0")</span>
                                 }
                             </td>
-                            <td>@product.Name</td>
-                            <td>@product.StoreName</td>
-                            <td>@product.CategoryName</td>
-                            <td>@product.BrandName</td>
-                            <td>@(product.MinPrice?.ToString("C0") ?? "-")</td>
-                            <td>@(product.MaxPrice?.ToString("C0") ?? "-")</td>
+                            <td class="text-muted fs-7">@item.CreatedAt.GetValueOrDefault().ToString("yyyy-MM-dd")</td>
                             <td>
-                                @if (product.Status == 1)
-                                {
-                                    <span class="badge bg-success">已上架</span>
-                                }
-                                else if (product.Status == 2)
-                                {
-                                    <span class="badge bg-warning text-dark">待審核</span>
-                                }
-                                else if (product.Status == 0)
-                                {
-                                    <span class="badge bg-danger">已下架</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">未知</span>
-                                }
+                                <span class="badge rounded-pill px-3 py-2 @statusBg fw-normal">
+                                    @statusText
+                                </span>
                             </td>
-                            <td>
-                                <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-sm btn-info">
-                                    <i class="bi bi-eye"></i> 查看詳情
+                            <td class="text-end">
+                                <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-action text-primary bg-primary-soft rounded-pill px-3">
+                                    查看詳情
                                 </a>
                             </td>
                         </tr>
                     }
-                </tbody>
-            </table>
-        </div>
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9" class="text-center py-5">
+                            <div class="text-muted mb-2"><i class="bi bi-inboxes fs-1"></i></div>
+                            <h5 class="fw-normal text-muted">找不到符合條件的商品</h5>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-        @* Bootstrap 5 分頁 *@
-        @if (Model.TotalPages > 1)
-        {
-            <nav aria-label="商品分頁">
-                <ul class="pagination justify-content-center flex-wrap">
-                    @* 上一頁 *@
-                    <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
-                        <a class="page-link"
-                           href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=@(Model.CurrentPage - 1)">
-                            &laquo;
-                        </a>
-                    </li>
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation" class="mt-5 mb-4">
+            <ul class="pagination justify-content-center gap-2">
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link shadow-sm rounded-pill px-3" href="@Url.Action("Index", new { page = Model.CurrentPage - 1, keyword = currentKeyword, parentCategoryId = currentParentId, categoryId = currentCategoryId, brandId = currentBrandId, status = currentStatus, startDate = currentStartDate, endDate = currentEndDate })">
+                        <i class="bi bi-chevron-left me-1"></i> 上一頁
+                    </a>
+                </li>
 
-                    @{
-                        int startPage = Math.Max(1, Model.CurrentPage - 2);
-                        int endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
-                    }
-
-                    @if (startPage > 1)
-                    {
-                        <li class="page-item">
-                            <a class="page-link" href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=1">1</a>
-                        </li>
-                        @if (startPage > 2)
-                        {
-                            <li class="page-item disabled"><span class="page-link">…</span></li>
-                        }
-                    }
-
-                    @for (int i = startPage; i <= endPage; i++)
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
                     {
                         <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                            <a class="page-link"
-                               href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=@i">
-                                @i
-                            </a>
+                            <a class="page-link shadow-sm rounded-circle fw-bold" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;" href="@Url.Action("Index", new { page = i, keyword = currentKeyword, parentCategoryId = currentParentId, categoryId = currentCategoryId, brandId = currentBrandId, status = currentStatus, startDate = currentStartDate, endDate = currentEndDate })">@i</a>
                         </li>
                     }
-
-                    @if (endPage < Model.TotalPages)
+                    else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
                     {
-                        @if (endPage < Model.TotalPages - 1)
-                        {
-                            <li class="page-item disabled"><span class="page-link">…</span></li>
-                        }
-                        <li class="page-item">
-                            <a class="page-link" href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=@Model.TotalPages">@Model.TotalPages</a>
+                        <li class="page-item disabled">
+                            <span class="page-link border-0 bg-transparent text-muted fw-bold">...</span>
                         </li>
                     }
+                }
 
-                    @* 下一頁 *@
-                    <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
-                        <a class="page-link"
-                           href="?parentCategoryId=@currentParentId&categoryId=@currentCategoryId&page=@(Model.CurrentPage + 1)">
-                            &raquo;
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        }
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link shadow-sm rounded-pill px-3" href="@Url.Action("Index", new { page = Model.CurrentPage + 1, keyword = currentKeyword, parentCategoryId = currentParentId, categoryId = currentCategoryId, brandId = currentBrandId, status = currentStatus, startDate = currentStartDate, endDate = currentEndDate })">
+                        下一頁 <i class="bi bi-chevron-right ms-1"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     }
-    else
-    {
-        <div class="alert alert-info" role="alert">
-            <h5>目前沒有符合條件的商品。</h5>
-            <p>請調整篩選條件或先建立商品。</p>
-        </div>
-    }
+
 </div>
 
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+
+    body {
+        background-color: #f4f7f6;
+    }
+
+    .font-noto {
+        font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .tracking-tight {
+        letter-spacing: -0.5px;
+    }
+
+    .tracking-wide {
+        letter-spacing: 1.5px;
+    }
+
+    .fs-7 {
+        font-size: 0.95rem;
+    }
+
+    /* 頂級質感搜尋卡片 */
+    .filter-card {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    /* 自訂輸入框與下拉選單 */
+    .custom-input-group .form-control,
+    .custom-input-group .input-group-text,
+    .custom-select {
+        border-color: #e2e8f0;
+        padding: 0.6rem 1rem;
+        box-shadow: none;
+        transition: all 0.2s;
+    }
+
+        .custom-input-group .form-control:focus,
+        .custom-select:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+        }
+
+    /* 懸浮表格設計 (重點！) */
+    .table-custom {
+        border-collapse: separate;
+        border-spacing: 0 16px; /* 讓每一列分開 */
+    }
+
+        .table-custom th {
+            border: none;
+            color: #718096; /* 顏色稍微加深 */
+            font-weight: 700; /* 加粗 */
+            letter-spacing: 1px;
+            font-size: 1rem; /* 字體放大 */
+            padding: 0.5rem 1.5rem;
+            background: transparent;
+        }
+
+        .table-custom td {
+            background: #ffffff;
+            border: none;
+            padding: 1.2rem 1.5rem;
+            font-size: 1.05rem; /* 內容字體放大 */
+        }
+            /* 第一格跟最後一格的圓角 */
+            .table-custom td:first-child {
+                border-top-left-radius: 16px;
+                border-bottom-left-radius: 16px;
+            }
+
+            .table-custom td:last-child {
+                border-top-right-radius: 16px;
+                border-bottom-right-radius: 16px;
+            }
+
+        /* 行懸浮特效 */
+        .table-custom tbody tr {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+        }
+
+            .table-custom tbody tr:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 25px rgba(0,0,0,0.06);
+            }
+
+    /* 縮圖 */
+    .list-thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* 柔和徽章 (與詳情頁共用) */
+    .badge-soft {
+        padding: 0.5em 0.9em;
+        border-radius: 6px;
+        font-size: 0.9rem; /* 標籤字體放大 */
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .bg-primary-soft {
+        background-color: #ebf8ff;
+    }
+
+    .text-primary {
+        color: #3182ce !important;
+    }
+
+    .bg-info-soft {
+        background-color: #e6fffa;
+    }
+
+    .text-info {
+        color: #319795 !important;
+    }
+
+    .bg-success-soft {
+        background-color: #c6f6d5;
+    }
+
+    .text-success {
+        color: #276749 !important;
+    }
+
+    .bg-secondary-soft {
+        background-color: #e2e8f0;
+    }
+
+    .text-secondary {
+        color: #4a5568 !important;
+    }
+
+    /* 按鈕懸浮特效 */
+    .btn-action {
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+        .btn-action:hover {
+            background-color: #3182ce !important;
+            color: white !important;
+            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3);
+        }
+</style>
+
 @section Scripts {
-    <script>
-        // 子分類資料（來自 Server）
-        const allSubCategories = @Html.Raw(JsonSerializer.Serialize(allSubCategories.Select(c => new { id = c.Id, name = c.Name, parentId = c.ParentId })));
+<script>
+(function () {
+    var parentSel   = document.getElementById('parentCategorySelect');
+    var categorySel = document.getElementById('categorySelect');
+    var brandSel    = document.getElementById('brandSelect');
 
-        const parentSelect = document.getElementById('parentCategoryId');
-        const subSelect = document.getElementById('categoryId');
+    var urlGetSubs   = '@Url.Action("GetSubCategories",   "Products")';
+    var urlGetBrands = '@Url.Action("GetBrandsByCategory","Products")';
 
-        parentSelect.addEventListener('change', function () {
-            const selectedParentId = this.value ? parseInt(this.value) : null;
-            const currentSubValue = subSelect.value;
+    // 保留頁面回載時的選中值（翻頁或篩選後保留狀態）
+    var savedCategoryId = @(currentCategoryId.HasValue ? currentCategoryId.Value.ToString() : "null");
+    var savedBrandId    = @(currentBrandId.HasValue    ? currentBrandId.Value.ToString()    : "null");
 
-            // 重建子分類選項
-            subSelect.innerHTML = '<option value="">-- 所有子分類 --</option>';
+    /** 重建 <select> 選項的共用函式 */
+    function rebuildSelect(sel, items, selectedId) {
+        var firstOpt = sel.querySelector('option[value=""]');
+        var placeholder = firstOpt ? firstOpt.textContent : '-- 全部 --';
+        sel.innerHTML = '<option value="">' + placeholder + '</option>';
+        (items || []).forEach(function (item) {
+            var opt = document.createElement('option');
+            opt.value = item.id;
+            opt.textContent = item.name;
+            if (selectedId !== null && selectedId !== undefined && item.id == selectedId) {
+                opt.selected = true;
+            }
+            sel.appendChild(opt);
+        });
+    }
 
-            const filtered = selectedParentId
-                ? allSubCategories.filter(c => c.parentId === selectedParentId)
-                : allSubCategories;
+    /** 主分類變更 → 重建子分類，並清空品牌 */
+    parentSel.addEventListener('change', function () {
+        var pid = this.value;
+        rebuildSelect(categorySel, [], null);
+        rebuildSelect(brandSel,    [], null);
+        if (!pid) return;
 
-            filtered.forEach(c => {
-                const option = document.createElement('option');
-                option.value = c.id;
-                option.textContent = c.name;
-                if (c.id === parseInt(currentSubValue)) {
-                    option.selected = true;
+        fetch(urlGetSubs + '?parentId=' + pid)
+            .then(function (r) { return r.json(); })
+            .then(function (subs) { rebuildSelect(categorySel, subs, null); });
+    });
+
+    /** 子分類變更 → 重建品牌 */
+    categorySel.addEventListener('change', function () {
+        var cid = this.value;
+        rebuildSelect(brandSel, [], null);
+        if (!cid) return;
+
+        fetch(urlGetBrands + '?categoryId=' + cid)
+            .then(function (r) { return r.json(); })
+            .then(function (brands) { rebuildSelect(brandSel, brands, null); });
+    });
+
+    /**
+     * 頁面載入時初始化：
+     * 若 savedCategoryId 有值，表示是帶條件翻頁或重新整理，
+     * 重新從 API 取得該分類的品牌清單，並還原 savedBrandId 的選中狀態。
+     */
+    if (savedCategoryId) {
+        fetch(urlGetBrands + '?categoryId=' + savedCategoryId)
+            .then(function (r) { return r.json(); })
+            .then(function (brands) { rebuildSelect(brandSel, brands, savedBrandId); });
+    }
+
+    /* ── 批次上架 / 下架（跨頁 sessionStorage 記憶）─────── */
+    var SESSION_KEY    = 'selectedProductIds';
+    var selectAll      = document.getElementById('selectAll');
+    var btnPublish     = document.getElementById('btnBatchPublish');
+    var btnUnpublish   = document.getElementById('btnBatchUnpublish');
+    var toolbar        = document.getElementById('selection-toolbar');
+    var countEl        = document.getElementById('selectionCount');
+    var btnClear       = document.getElementById('btnClearSelection');
+    var urlBatchUpdate = '@Url.Action("BatchUpdateStatus", "Products")';
+
+    /** 從 sessionStorage 讀取已選 ID 陣列 */
+    function loadSelected() {
+        try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)) || []; }
+        catch (e) { return []; }
+    }
+
+    /** 將已選 ID 陣列寫回 sessionStorage */
+    function saveSelected(ids) {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(ids));
+    }
+
+    /** 根據已選數量更新工具列顯示、按鈕 disabled 狀態 */
+    function updateBatchButtonsState() {
+        var ids   = loadSelected();
+        var count = ids.length;
+
+        // toolbar 顯示/隱藏
+        if (count > 0) {
+            toolbar.classList.remove('d-none');
+            toolbar.classList.add('d-flex');
+            countEl.textContent = count;
+        } else {
+            toolbar.classList.add('d-none');
+            toolbar.classList.remove('d-flex');
+            countEl.textContent = 0;
+        }
+
+        // 按鈕啟停
+        btnPublish.disabled   = (count === 0);
+        btnUnpublish.disabled = (count === 0);
+    }
+
+    /** 頁面載入：根據 sessionStorage 還原本頁 checkbox 勾選狀態 */
+    (function restoreChecks() {
+        var ids     = loadSelected();
+        var total   = 0;
+        var checked = 0;
+
+        document.querySelectorAll('.product-select').forEach(function (cb) {
+            total++;
+            if (ids.indexOf(parseInt(cb.value)) !== -1) {
+                cb.checked = true;
+                checked++;
+            }
+        });
+
+        if (total > 0) {
+            selectAll.checked       = (checked === total);
+            selectAll.indeterminate = (checked > 0 && checked < total);
+        }
+
+        updateBatchButtonsState();
+    })();
+
+    /** 全選 / 全不選（僅作用於本頁） */
+    selectAll.addEventListener('change', function () {
+        var ids = loadSelected();
+
+        document.querySelectorAll('.product-select').forEach(function (cb) {
+            var id = parseInt(cb.value);
+            cb.checked = selectAll.checked;
+
+            if (selectAll.checked) {
+                if (ids.indexOf(id) === -1) ids.push(id);
+            } else {
+                ids = ids.filter(function (x) { return x !== id; });
+            }
+        });
+
+        saveSelected(ids);
+        updateBatchButtonsState();
+    });
+
+    /** 單選：同步更新 sessionStorage 與全選狀態 */
+    document.querySelectorAll('.product-select').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            var id  = parseInt(this.value);
+            var ids = loadSelected();
+
+            if (this.checked) {
+                if (ids.indexOf(id) === -1) ids.push(id);
+            } else {
+                ids = ids.filter(function (x) { return x !== id; });
+            }
+
+            saveSelected(ids);
+
+            var total   = document.querySelectorAll('.product-select').length;
+            var checked = document.querySelectorAll('.product-select:checked').length;
+            selectAll.checked       = (checked === total);
+            selectAll.indeterminate = (checked > 0 && checked < total);
+
+            updateBatchButtonsState();
+        });
+    });
+
+    /** 批次操作核心 */
+    function batchUpdate(targetStatus) {
+        var ids    = loadSelected();
+        var action = targetStatus === 1 ? '上架' : '下架';
+
+        Swal.fire({
+            title: '批次' + action + '確認',
+            html: '確定要將這 <strong>' + ids.length + '</strong> 項商品設為「<strong>' + action + '</strong>」嗎？',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: targetStatus === 1 ? '#38a169' : '#718096',
+            cancelButtonColor: '#a0aec0',
+            confirmButtonText: '確認' + action,
+            cancelButtonText: '取消',
+            borderRadius: '16px'
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+
+            fetch(urlBatchUpdate, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productIds: ids, targetStatus: targetStatus })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.success) {
+                    sessionStorage.removeItem(SESSION_KEY);
+                    Swal.fire({
+                        title: '操作成功！',
+                        text: res.message,
+                        icon: 'success',
+                        confirmButtonColor: '#3182ce',
+                        confirmButtonText: '確定',
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(function () { location.reload(); });
+                } else {
+                    Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
                 }
-                subSelect.appendChild(option);
+            })
+            .catch(function () {
+                Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error', confirmButtonColor: '#e53e3e' });
             });
         });
-    </script>
-}
+    }
 
+    /** 清除選取按鈕 */
+    btnClear.addEventListener('click', function () {
+        sessionStorage.removeItem(SESSION_KEY);
+        document.querySelectorAll('.product-select').forEach(function (cb) { cb.checked = false; });
+        selectAll.checked       = false;
+        selectAll.indeterminate = false;
+        updateBatchButtonsState();
+    });
+
+    btnPublish.addEventListener('click',   function () { batchUpdate(1); });
+    btnUnpublish.addEventListener('click', function () { batchUpdate(0); });
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+}

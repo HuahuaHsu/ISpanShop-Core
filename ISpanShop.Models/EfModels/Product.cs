@@ -37,6 +37,8 @@ public partial class Product
 
     public DateTime? UpdatedAt { get; set; }
 
+    public string RejectReason { get; set; }
+
     public virtual Brand Brand { get; set; }
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();

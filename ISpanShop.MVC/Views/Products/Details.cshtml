@@ -2,146 +2,119 @@
 
 @{
     ViewData["Title"] = $"商品詳情 - {Model?.Name ?? "未知"}";
+    // 狀態防呆與高質感色彩設定
+    var isPublished = Model.Status == 1;
+    var statusText = isPublished ? "已上架販售" : "未上架 / 停售";
+    var statusBg = isPublished ? "bg-success-soft text-success" : "bg-secondary-soft text-secondary";
+    var statusIcon = isPublished ? "bi-check-circle-fill" : "bi-dash-circle-fill";
 }
 
-<div class="container-lg py-5">
-    <!-- 頁面標題 -->
-    <div class="row mb-5">
-        <div class="col-md-12">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <h1 class="display-5 fw-bold mb-2">@Model.Name</h1>
-                    <p class="text-muted fs-6">
-                        <span class="badge bg-light text-dark">商品 ID: @Model.Id</span>
-                        <span class="ms-2 badge bg-@Model.StatusBadgeClass">@Model.StatusText</span>
-                    </p>
-                </div>
-            </div>
-        </div>
+<div class="container-lg py-5 font-noto">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="javascript:history.back()" class="btn btn-back">
+            <i class="bi bi-arrow-left me-2"></i>返回商品總覽
+        </a>
+        <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-edit">
+            <i class="bi bi-pencil-square me-2"></i>編輯商品
+        </a>
     </div>
 
-    <!-- 主要內容區 -->
-    <div class="row g-4 mb-5">
-        <!-- 左側：圖片輪播 -->
-        <div class="col-lg-6">
-            <div class="card shadow-sm border-0 rounded-3 overflow-hidden mb-3">
-                <div class="card-body p-0">
-                    @if (Model.Images != null && Model.Images.Any())
-                    {
-                        <div id="productCarousel" class="carousel carousel-dark slide" data-bs-ride="carousel">
-                            <!-- Indicators -->
-                            @if (Model.Images.Count > 1)
+    <div class="row g-5 mb-5">
+        <div class="col-lg-5">
+            <div class="product-gallery-card">
+                @if (Model.Images != null && Model.Images.Any())
+                {
+                    <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner rounded-4 overflow-hidden">
+                            @for (int i = 0; i < Model.Images.Count; i++)
                             {
-                                <div class="carousel-indicators">
-                                    @for (int i = 0; i < Model.Images.Count; i++)
-                                    {
-                                        <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : "")" aria-current="@(i == 0 ? "true" : "false")" aria-label="Slide @(i + 1)"></button>
-                                    }
+                                <div class="carousel-item @(i == 0 ? "active" : "")">
+                                    <img src="@Model.Images[i]" class="d-block w-100 gallery-main-img" alt="商品圖片 @(i + 1)">
                                 </div>
                             }
+                        </div>
+                        @if (Model.Images.Count > 1)
+                        {
+                            <button class="carousel-control-prev gallery-btn" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">上一張</span>
+                            </button>
+                            <button class="carousel-control-next gallery-btn" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">下一張</span>
+                            </button>
+                        }
+                    </div>
 
-                            <!-- Carousel Items -->
-                            <div class="carousel-inner">
-                                @for (int i = 0; i < Model.Images.Count; i++)
-                                {
-                                    <div class="carousel-item @(i == 0 ? "active" : "")">
-                                        <img src="@Model.Images[i]" class="d-block w-100" alt="商品圖片 @(i + 1)" style="width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px;">
-                                    </div>
-                                }
-                            </div>
-
-                            <!-- Controls -->
-                            @if (Model.Images.Count > 1)
+                    @if (Model.Images.Count > 1)
+                    {
+                        <div class="d-flex gap-2 mt-3 overflow-auto thumbnail-container py-1">
+                            @for (int i = 0; i < Model.Images.Count; i++)
                             {
-                                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">上一張</span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">下一張</span>
-                                </button>
+                                <img src="@Model.Images[i]" class="gallery-thumbnail" alt="縮圖 @(i + 1)"
+                                     data-bs-target="#productCarousel" data-bs-slide-to="@i" />
                             }
                         </div>
                     }
-                    else
-                    {
-                        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); height: 400px; display: flex; align-items: center; justify-content: center;">
-                            <div class="text-center">
-                                <i class="bi bi-image" style="font-size: 3rem; color: #adb5bd;"></i>
-                                <p class="text-muted mt-3">無圖片</p>
-                            </div>
-                        </div>
-                    }
-                </div>
+                }
+                else
+                {
+                    <div class="empty-image-placeholder rounded-4">
+                        <i class="bi bi-image"></i>
+                        <p>尚無商品圖片</p>
+                    </div>
+                }
             </div>
-
-            <!-- 圖片清單 -->
-            @if (Model.Images != null && Model.Images.Count > 1)
-            {
-                <div class="d-flex flex-wrap gap-2 mb-5 pb-3">
-                    @for (int i = 0; i < Model.Images.Count; i++)
-                    {
-                        <div class="flex-shrink-0">
-                            <img src="@Model.Images[i]" class="img-thumbnail rounded-2" alt="縮圖 @(i + 1)"
-                                 style="object-fit: cover; height: 100px; width: 100px; cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease;"
-                                 data-bs-target="#productCarousel"
-                                 data-bs-slide-to="@i"
-                                 onmouseover="this.style.borderColor='#0d6efd'; this.style.boxShadow='0 4px 8px rgba(13, 110, 253, 0.3)';"
-                                 onmouseout="this.style.borderColor='transparent'; this.style.boxShadow='none';" />
-                        </div>
-                    }
-                </div>
-            }
         </div>
 
-        <!-- 右側：商品基本資訊 -->
-        <div class="col-lg-6">
-            <div class="card shadow-sm border-0 rounded-3 mb-3">
-                <div class="card-body">
-                    <!-- 商品分類與品牌 -->
-                    <div class="mb-4">
-                        <div class="d-flex gap-2 flex-wrap">
-                            @if (!string.IsNullOrEmpty(Model.CategoryName))
-                            {
-                                <span class="badge bg-primary">@Model.CategoryName</span>
-                            }
-                            @if (!string.IsNullOrEmpty(Model.BrandName))
-                            {
-                                <span class="badge bg-info">@Model.BrandName</span>
-                            }
-                        </div>
-                    </div>
-
-                    <!-- 商店名稱 -->
-                    <div class="mb-4">
-                        <h6 class="text-muted small mb-2">🏪 商店</h6>
-                        <p class="fs-6 fw-500">@Model.StoreName</p>
-                    </div>
-
-                    <hr class="my-4" />
-
-                    <!-- 商品描述 -->
-                    @if (!string.IsNullOrEmpty(Model.Description))
+        <div class="col-lg-7">
+            <div class="d-flex flex-column h-100 justify-content-center px-lg-3">
+                
+                <div class="d-flex gap-2 mb-3">
+                    @if (!string.IsNullOrEmpty(Model.CategoryName))
                     {
-                        <div class="mb-4">
-                            <h6 class="text-muted small mb-2">📝 商品描述</h6>
-                            <p class="text-dark">@Model.Description</p>
-                        </div>
+                        <span class="badge-soft bg-primary-soft text-primary">@Model.CategoryName</span>
                     }
+                    @if (!string.IsNullOrEmpty(Model.BrandName))
+                    {
+                        <span class="badge-soft bg-info-soft text-info">@Model.BrandName</span>
+                    }
+                </div>
 
-                    <!-- 統計資訊 -->
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="p-3 bg-light rounded-2">
-                                <h6 class="text-muted small mb-1">規格數量</h6>
-                                <p class="fs-5 fw-bold">@(Model.Variants?.Count ?? 0) 個</p>
+                <h1 class="display-5 fw-bold text-dark mb-3 tracking-tight">@Model.Name</h1>
+                
+                <div class="mb-4">
+                    <span class="badge rounded-pill px-3 py-2 fs-6 @statusBg fw-normal shadow-sm">
+                        <i class="bi @statusIcon"></i> @statusText
+                    </span>
+                    <span class="text-muted ms-3 fs-6"><i class="bi bi-shop me-1"></i> @Model.StoreName</span>
+                </div>
+
+                <hr class="divider-subtle mb-4" />
+
+                <div class="mb-5">
+                    <h6 class="text-uppercase text-muted fw-bold mb-3 tracking-wide fs-7">商品介紹</h6>
+                    <p class="text-secondary lh-lg fs-6">
+                        @(string.IsNullOrEmpty(Model.Description) ? "賣家尚未提供商品描述。" : Model.Description)
+                    </p>
+                </div>
+
+                <div class="row g-3 mt-auto">
+                    <div class="col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-blue-soft text-blue"><i class="bi bi-box-seam"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">規格數量</span>
+                                <span class="stat-value">@(Model.Variants?.Count ?? 0) <small>個</small></span>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="p-3 bg-light rounded-2">
-                                <h6 class="text-muted small mb-1">圖片數量</h6>
-                                <p class="fs-5 fw-bold">@(Model.Images?.Count ?? 0) 張</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-purple-soft text-purple"><i class="bi bi-images"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">圖片數量</span>
+                                <span class="stat-value">@(Model.Images?.Count ?? 0) <small>張</small></span>
                             </div>
                         </div>
                     </div>
@@ -150,184 +123,245 @@
         </div>
     </div>
 
-    <!-- 規格詳情表 -->
-    <div class="row mb-5">
-        <div class="col-md-12">
-            <div class="card shadow-sm border-0 rounded-3">
-                <div class="card-header bg-light border-0 rounded-top-3">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-list-check"></i> 規格詳情
-                    </h5>
-                </div>
-                <div class="card-body">
-                    @if (Model.Variants != null && Model.Variants.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 25%;">SKU 代碼</th>
-                                        <th style="width: 20%;">規格名稱</th>
-                                        <th style="width: 15%;" class="text-end">價格</th>
-                                        <th style="width: 15%;" class="text-center">庫存</th>
-                                        <th style="width: 25%;">規格值</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var variant in Model.Variants)
+    <div class="spec-section-card mt-5">
+        <h4 class="fw-bold mb-4 text-dark"><i class="bi bi-list-columns-reverse me-2 text-primary"></i>規格與庫存明細</h4>
+        
+        @if (Model.Variants != null && Model.Variants.Any())
+        {
+            <div class="table-responsive">
+                <table class="table modern-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>SKU 代碼</th>
+                            <th>規格名稱</th>
+                            <th class="text-end">價格</th>
+                            <th class="text-center">庫存狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var variant in Model.Variants)
+                        {
+                            <tr>
+                                <td><code class="sku-badge">@variant.SkuCode</code></td>
+                                <td class="fw-medium text-dark">@variant.VariantName</td>
+                                <td class="text-end fw-bold text-primary fs-5">@variant.Price.ToString("C0")</td>
+                                <td class="text-center">
+                                    @if (variant.Stock > 10)
                                     {
-                                        <tr class="border-bottom">
-                                            <td>
-                                                <code class="px-2 py-1 bg-light rounded">@variant.SkuCode</code>
-                                            </td>
-                                            <td>@variant.VariantName</td>
-                                            <td class="text-end">
-                                                <span class="fs-6 fw-bold text-success">@variant.Price.ToString("C0")</span>
-                                            </td>
-                                            <td class="text-center">
-                                                @if (variant.Stock > 10)
-                                                {
-                                                    <span class="badge bg-success">@variant.Stock 件</span>
-                                                }
-                                                else if (variant.Stock > 0)
-                                                {
-                                                    <span class="badge bg-warning text-dark">@variant.Stock 件</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-danger">已缺貨</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(variant.SpecValueJson) && variant.SpecValueJson != "{}")
-                                                {
-                                                    <small class="text-muted font-monospace">@variant.SpecValueJson</small>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">—</span>
-                                                }
-                                            </td>
-                                        </tr>
+                                        <span class="badge bg-success-soft text-success rounded-pill px-3">@variant.Stock 件</span>
                                     }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="alert alert-warning mb-0" role="alert">
-                            <i class="bi bi-exclamation-triangle"></i> 暫無規格資訊
-                        </div>
-                    }
-                </div>
+                                    else if (variant.Stock > 0)
+                                    {
+                                        <span class="badge bg-warning-soft text-warning rounded-pill px-3">緊張：@variant.Stock 件</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger-soft text-danger rounded-pill px-3">已售罄</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
-        </div>
-    </div>
-
-    <!-- 操作按鈕 -->
-    <div class="row">
-        <div class="col-md-12">
-            <div class="d-flex gap-2 justify-content-start">
-                <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-lg">
-                    <i class="bi bi-arrow-left"></i> 返回列表
-                </a>
-                <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-primary btn-lg">
-                    <i class="bi bi-pencil-square"></i> 編輯商品
-                </a>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <div class="empty-state-icon mb-3"><i class="bi bi-inboxes"></i></div>
+                <h5 class="text-muted fw-normal">暫無規格資訊</h5>
             </div>
-        </div>
+        }
     </div>
 </div>
 
 <style>
-    /* 全局卡片樣式 */
-    .card {
-        border: none;
-        transition: all 0.3s ease;
+    /* 引入 Google 現代字體 */
+    @@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+
+    body {
+        background-color: #f7f9fc; /* 非常柔和的背景色，讓白卡片凸顯 */
     }
 
-    .card:hover {
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+    .font-noto {
+        font-family: 'Noto Sans TC', sans-serif;
     }
 
-    /* 圓角卡片 */
-    .rounded-3 {
-        border-radius: 1rem !important;
-    }
-
-    /* 輪播圖樣式 */
-    .carousel-dark .carousel-control-prev-icon,
-    .carousel-dark .carousel-control-next-icon {
-        filter: invert(1) grayscale(100%) brightness(1.2);
-    }
-
-    /* 代碼塊樣式 */
-    code {
-        background-color: #f5f5f5;
-        color: #d63384;
-        font-family: 'Monaco', 'Courier New', monospace;
-        font-size: 0.875rem;
-    }
-
-    /* Badge 樣式 */
-    .badge {
-        padding: 0.5rem 0.75rem;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-    }
-
-    /* 表格行懸停效果 */
-    .table-hover tbody tr:hover {
-        background-color: rgba(13, 110, 253, 0.05) !important;
-    }
+    .tracking-tight { letter-spacing: -0.5px; }
+    .tracking-wide { letter-spacing: 1.5px; }
+    .fs-7 { font-size: 0.85rem; }
 
     /* 按鈕樣式 */
-    .btn-outline-secondary {
-        border-width: 2px;
+    .btn-back {
+        background-color: #fff;
+        color: #4a5568;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
         font-weight: 500;
-        transition: all 0.3s ease;
+        transition: all 0.2s;
+    }
+    .btn-back:hover {
+        background-color: #edf2f7;
+        color: #1a202c;
     }
 
-    .btn-outline-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    .btn-primary {
+    .btn-edit {
+        background-color: #2b6cb0;
+        color: white;
+        border-radius: 10px;
+        padding: 0.5rem 1.5rem;
         font-weight: 500;
-        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(43, 108, 176, 0.2);
+        transition: all 0.2s;
+    }
+    .btn-edit:hover {
+        background-color: #2c5282;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 12px rgba(43, 108, 176, 0.3);
     }
 
-    .btn-primary:hover {
+    /* 圖片庫區塊 */
+    .gallery-main-img {
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        background-color: #fff;
+    }
+    .gallery-thumbnail {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+    }
+    .gallery-thumbnail:hover, .gallery-thumbnail.active {
+        opacity: 1;
+        border-color: #2b6cb0;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+    .empty-image-placeholder {
+        aspect-ratio: 1 / 1;
+        background-color: #edf2f7;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #a0aec0;
+    }
+    .empty-image-placeholder i { font-size: 3rem; margin-bottom: 1rem; }
+
+    /* 柔和徽章 (Soft Badges) - 高級感來源 */
+    .badge-soft {
+        padding: 0.4em 0.8em;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .bg-primary-soft { background-color: #ebf8ff; }
+    .text-primary { color: #3182ce !important; }
+    
+    .bg-info-soft { background-color: #e6fffa; }
+    .text-info { color: #319795 !important; }
+
+    .bg-success-soft { background-color: #c6f6d5; }
+    .text-success { color: #276749 !important; }
+
+    .bg-secondary-soft { background-color: #e2e8f0; }
+    .text-secondary { color: #4a5568 !important; }
+
+    .bg-warning-soft { background-color: #feebc8; }
+    .text-warning { color: #c05621 !important; }
+
+    .bg-danger-soft { background-color: #fed7d7; }
+    .text-danger { color: #c53030 !important; }
+
+    /* 數據小卡 */
+    .stat-card {
+        background: #fff;
+        border: 1px solid #edf2f7;
+        border-radius: 16px;
+        padding: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.01);
+    }
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .bg-blue-soft { background-color: #ebf8ff; }
+    .text-blue { color: #2b6cb0; }
+    .bg-purple-soft { background-color: #faf5ff; }
+    .text-purple { color: #6b46c1; }
+    
+    .stat-info { display: flex; flex-direction: column; }
+    .stat-label { font-size: 0.85rem; color: #a0aec0; font-weight: 500; }
+    .stat-value { font-size: 1.25rem; font-weight: 700; color: #2d3748; }
+
+    /* 分隔線 */
+    .divider-subtle {
+        border-color: #e2e8f0;
+        opacity: 1;
     }
 
-    /* 標題樣式 */
-    .display-5 {
-        font-weight: 700;
-        color: #1a1a1a;
+    /* 規格詳情區塊 (底部大白卡) */
+    .spec-section-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
     }
 
-    /* 統計盒樣式 */
-    .bg-light {
-        background-color: #f8f9fa !important;
+    .modern-table th {
+        background-color: #f7fafc;
+        color: #718096;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+        padding: 1rem 1.5rem;
+        border-bottom: none;
+    }
+    .modern-table th:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+    .modern-table th:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+    
+    .modern-table td {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid #edf2f7;
+    }
+    .modern-table tbody tr:last-child td { border-bottom: none; }
+    
+    .sku-badge {
+        background-color: #edf2f7;
+        color: #4a5568;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-family: 'Monaco', monospace;
+        font-size: 0.85rem;
     }
 
-    /* 媒體查詢 - 移動端 */
-    @@media (max-width: 991.98px) {
-        .container-lg {
-            padding: 1rem;
-        }
+    .empty-state-icon i {
+        font-size: 4rem;
+        color: #cbd5e0;
+    }
+</style>
 
-        .display-5 {
-            font-size: 2rem;
-        }
-
-        .btn-lg {
-            font-size: 0.95rem;
-            padding: 0.5rem 1rem;
-        }
+<style>
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 50%;
+        padding: 1.5rem;
     }
 </style>

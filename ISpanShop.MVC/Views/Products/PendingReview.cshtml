@@ -2,57 +2,365 @@
 
 @{
     ViewData["Title"] = "商品審核中心";
+    var rejectedList = ViewBag.RejectedRecords as IEnumerable<ISpanShop.MVC.Models.ViewModels.ProductReviewListVm>;
 }
 
-<div class="container mt-5">
-    <h2>商品審核中心</h2>
-    <hr />
+<div class="container-fluid py-4 font-noto">
 
-    @if (Model != null && Model.Any())
-    {
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>商品 ID</th>
-                    <th>商店 ID</th>
-                    <th>分類</th>
-                    <th>品牌</th>
-                    <th>商品名稱</th>
-                    <th>建立時間</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var product in Model)
-                {
-                    <tr>
-                        <td>@product.Id</td>
-                        <td>@product.StoreId</td>
-                        <td>@product.CategoryName</td>
-                        <td>@product.BrandName</td>
-                        <td>@product.Name</td>
-                        <td>@(product.CreatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
-                        <td>
-                            <form method="post" action="@Url.Action("ChangeStatus", "Products")" style="display: inline;">
-                                <input type="hidden" name="id" value="@product.Id" />
-                                <input type="hidden" name="newStatus" value="1" />
-                                <button type="submit" class="btn btn-success btn-sm">核准上架</button>
-                            </form>
-                            <form method="post" action="@Url.Action("ChangeStatus", "Products")" style="display: inline;">
-                                <input type="hidden" name="id" value="@product.Id" />
-                                <input type="hidden" name="newStatus" value="0" />
-                                <button type="submit" class="btn btn-danger btn-sm">退回下架</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div class="alert alert-info" role="alert">
-            <h5>目前沒有需要審核的商品。</h5>
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="fw-bold text-dark tracking-tight mb-1">商品審核中心</h2>
+            <p class="text-muted mb-0 fs-7">
+                待審核商品共 <span class="fw-bold text-warning" id="pendingCount">@(Model?.Count() ?? 0)</span> 筆
+            </p>
         </div>
-    }
+        <a href="@Url.Action("Index")" class="btn btn-light rounded-pill px-4 border text-muted">
+            <i class="bi bi-arrow-left me-1"></i> 回商品總覽
+        </a>
+    </div>
+
+    @* Bootstrap Nav Tabs *@
+    <ul class="nav nav-tabs mb-0 border-0" id="reviewTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active px-4 py-2 fw-semibold" id="pending-tab"
+                    data-bs-toggle="tab" data-bs-target="#pendingPanel"
+                    type="button" role="tab">
+                <i class="bi bi-hourglass-split me-1 text-warning"></i>
+                待審核
+                <span class="badge rounded-pill ms-1"
+                      style="background:#fef3c7;color:#92400e;font-size:0.78rem;">@(Model?.Count() ?? 0)</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link px-4 py-2 fw-semibold" id="rejected-tab"
+                    data-bs-toggle="tab" data-bs-target="#rejectedPanel"
+                    type="button" role="tab">
+                <i class="bi bi-x-circle me-1 text-danger"></i>
+                近期退回紀錄
+                <span class="badge rounded-pill ms-1"
+                      style="background:#fee2e2;color:#991b1b;font-size:0.78rem;">@(rejectedList?.Count() ?? 0)</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="reviewTabsContent">
+
+        <div class="tab-pane fade show active" id="pendingPanel" role="tabpanel">
+            <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
+                @if (Model != null && Model.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle">
+                            <thead>
+                                <tr>
+                                    <th>商品名稱</th>
+                                    <th>商店</th>
+                                    <th>分類 / 品牌</th>
+                                    <th style="min-width:260px;">商品描述摘要</th>
+                                    <th>建檔日期</th>
+                                    <th class="text-end" style="min-width:200px;">審核操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var product in Model)
+                                {
+                                    <tr data-id="@product.Id">
+                                        <td>
+                                            <div class="fw-bold text-dark">@product.Name</div>
+                                        </td>
+                                        <td class="text-muted fs-7">@(product.StoreName ?? $"Store #{product.StoreId}")</td>
+                                        <td>
+                                            <span class="badge-soft bg-primary-soft text-primary me-1">@product.CategoryName</span>
+                                            <span class="badge-soft bg-info-soft text-info">@product.BrandName</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted fs-7">
+                                                @if (!string.IsNullOrWhiteSpace(product.Description))
+                                                {
+                                                    @(product.Description.Length > 60
+                                                        ? product.Description.Substring(0, 60) + "…"
+                                                        : product.Description)
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-danger fw-bold">（無描述）</span>
+                                                }
+                                            </span>
+                                        </td>
+                                        <td class="text-muted fs-7">@(product.CreatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-approve rounded-pill px-3 me-1"
+                                                    data-id="@product.Id" data-name="@product.Name">
+                                                <i class="bi bi-check-circle me-1"></i>核准上架
+                                            </button>
+                                            <button class="btn btn-sm btn-reject rounded-pill px-3"
+                                                    data-id="@product.Id" data-name="@product.Name">
+                                                <i class="bi bi-x-circle me-1"></i>退回
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <div class="text-success mb-3"><i class="bi bi-check-circle fs-1"></i></div>
+                        <h5 class="fw-bold text-dark mb-1">目前沒有待審核的商品</h5>
+                        <p class="text-muted fs-7 mb-0">所有商品均已完成審核，稍後再來查看。</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="rejectedPanel" role="tabpanel">
+            <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
+                @if (rejectedList != null && rejectedList.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width:70px;">圖片</th>
+                                    <th>商品名稱</th>
+                                    <th>商家</th>
+                                    <th>退回原因</th>
+                                    <th>退回時間</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in rejectedList)
+                                {
+                                    <tr>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(item.MainImageUrl))
+                                            {
+                                                <img src="@item.MainImageUrl" alt="@item.Name"
+                                                     style="width:54px;height:54px;object-fit:cover;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);" />
+                                            }
+                                            else
+                                            {
+                                                <div style="width:54px;height:54px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🖼️</div>
+                                            }
+                                        </td>
+                                        <td class="fw-semibold text-dark">@item.Name</td>
+                                        <td class="text-muted fs-7">@item.StoreName</td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(item.RejectReason))
+                                            {
+                                                <span style="background:#fff0f0;color:#c53030;border-radius:6px;font-size:0.82rem;font-weight:500;padding:0.3em 0.7em;display:inline-block;">
+                                                    @item.RejectReason
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted fs-7">（未填寫）</span>
+                                            }
+                                        </td>
+                                        <td class="text-muted fs-7">@(item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <div class="text-muted mb-2" style="font-size:2rem;">📭</div>
+                        <p class="text-muted mb-0">近期無退回紀錄</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>@* /tab-content *@
+
 </div>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+    body { background-color: #f4f7f6; }
+    .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+    .tracking-tight { letter-spacing: -0.5px; }
+    .fs-7 { font-size: 0.9rem; }
+
+    /* ── Tabs 樣式 ── */
+    #reviewTabs .nav-link {
+        color: #718096;
+        border: 1px solid transparent;
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        background: rgba(255,255,255,0.5);
+        transition: all 0.2s;
+    }
+    #reviewTabs .nav-link:hover { color: #2d3748; background: rgba(255,255,255,0.8); }
+    #reviewTabs .nav-link.active {
+        color: #2d3748;
+        background: #fff;
+        border-color: rgba(226,232,240,0.8);
+        border-bottom-color: #fff;
+    }
+
+    /* ── 卡片 ── */
+    .filter-card {
+        background: #ffffff;
+        border-radius: 0 20px 20px 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+        border: 1px solid rgba(226,232,240,0.8);
+    }
+
+    /* ── 懸浮卡片表格 ── */
+    .table-custom { border-collapse: separate; border-spacing: 0 10px; }
+    .table-custom th { border: none; color: #718096; font-weight: 700; letter-spacing: 1px; font-size: 0.85rem; padding: 0.4rem 1.2rem; background: transparent; text-transform: uppercase; }
+    .table-custom td { background: #fff; border: none; padding: 1rem 1.2rem; font-size: 0.95rem; }
+    .table-custom td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+    .table-custom td:last-child  { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+    .table-custom tbody tr { box-shadow: 0 3px 12px rgba(0,0,0,0.03); transition: all 0.25s ease; }
+    .table-custom tbody tr:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.07); }
+
+    .badge-soft { padding: 0.35em 0.75em; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+    .bg-primary-soft { background-color: #ebf8ff; }
+    .text-primary { color: #3182ce !important; }
+    .bg-info-soft { background-color: #e6fffa; }
+    .text-info { color: #319795 !important; }
+
+    /* ── 審核按鈕 ── */
+    .btn-approve { background-color: #c6f6d5; color: #276749; border: none; font-weight: 600; transition: all 0.2s; }
+    .btn-approve:hover { background-color: #38a169; color: #fff; box-shadow: 0 4px 12px rgba(56,161,105,0.3); }
+    .btn-reject  { background-color: #fed7d7; color: #9b2c2c; border: none; font-weight: 600; transition: all 0.2s; }
+    .btn-reject:hover  { background-color: #e53e3e; color: #fff; box-shadow: 0 4px 12px rgba(229,62,62,0.3); }
+</style>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(function () {
+    var urlApprove = '@Url.Action("ApproveProduct", "Products")';
+    var urlReject  = '@Url.Action("RejectProduct",  "Products")';
+
+    /* 頁面載入時：若 hash == #rejectedTab，自動切換到退回紀錄頁籤 */
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.location.hash === '#rejectedTab') {
+            var tabEl = document.querySelector('#rejected-tab');
+            if (tabEl && typeof bootstrap !== 'undefined') {
+                new bootstrap.Tab(tabEl).show();
+            }
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+    });
+
+    /** 移除列並更新計數；若清空則重整 */
+    function removeRow(id) {
+        var row = document.querySelector('tr[data-id="' + id + '"]');
+        if (row) row.remove();
+        var remaining = document.querySelectorAll('#pendingPanel tbody tr').length;
+        var countEls  = document.querySelectorAll('#pendingCount, .text-warning.fw-bold');
+        countEls.forEach(function (el) { el.textContent = remaining; });
+        // 同步更新 tab badge
+        var badge = document.querySelector('#pending-tab .badge');
+        if (badge) badge.textContent = remaining;
+        if (remaining === 0) location.reload();
+    }
+
+    /** ── 核准上架 ── */
+    document.querySelectorAll('.btn-approve').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var id   = this.dataset.id;
+            var name = this.dataset.name;
+
+            Swal.fire({
+                title: '確認核准上架',
+                html:  '確定要核准商品<br><strong>「' + name + '」</strong>上架嗎？',
+                icon:  'question',
+                showCancelButton:   true,
+                confirmButtonColor: '#38a169',
+                cancelButtonColor:  '#a0aec0',
+                confirmButtonText:  '<i class="bi bi-check-circle me-1"></i> 確認核准',
+                cancelButtonText:   '取消'
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+
+                fetch(urlApprove, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body:    'id=' + id
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) {
+                        removeRow(id);
+                        Swal.fire({
+                            title: '核准成功！', text: res.message, icon: 'success',
+                            confirmButtonColor: '#3182ce', timer: 2000, timerProgressBar: true
+                        });
+                    } else {
+                        Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
+                    }
+                })
+                .catch(function () {
+                    Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error', confirmButtonColor: '#e53e3e' });
+                });
+            });
+        });
+    });
+
+    /** ── 退回審核 ── */
+    document.querySelectorAll('.btn-reject').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var id   = this.dataset.id;
+            var name = this.dataset.name;
+
+            Swal.fire({
+                title:    '退回商品審核',
+                html:     '商品：<strong>「' + name + '」</strong>',
+                input:    'textarea',
+                inputLabel:       '退回原因（必填）',
+                inputPlaceholder: '請填寫退回原因，此訊息將記錄於退回紀錄中...',
+                inputAttributes:  { rows: 3 },
+                icon:   'warning',
+                showCancelButton:   true,
+                confirmButtonColor: '#e53e3e',
+                cancelButtonColor:  '#a0aec0',
+                confirmButtonText:  '<i class="bi bi-x-circle me-1"></i> 確認退回',
+                cancelButtonText:   '取消',
+                inputValidator: function (value) {
+                    if (!value || !value.trim()) return '退回原因為必填欄位，請填寫後再送出。';
+                }
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+
+                var reason = result.value.trim();
+
+                fetch(urlReject + '?id=' + id + '&reason=' + encodeURIComponent(reason), {
+                    method: 'POST'
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) {
+                        removeRow(id);
+                        Swal.fire({
+                            title: '已退回！', text: res.message, icon: 'success',
+                            confirmButtonColor: '#3182ce', timer: 2000, timerProgressBar: true
+                        }).then(function () {
+                            /* 退回後跳轉到退回紀錄頁籤 */
+                            window.location.hash = '#rejectedTab';
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
+                    }
+                })
+                .catch(function () {
+                    Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error', confirmButtonColor: '#e53e3e' });
+                });
+            });
+        });
+    });
+})();
+</script>
+}

@@ -441,8 +441,62 @@ namespace ISpanShop.Models
 						SafetyStock = 10,
 						IsDeleted = false
 					});
+					// === 資料倍增術：將 1 筆真實商品變種成 5 筆 ===
+					string[] suffixes = { "", " (2025 全新升級版)", " (特仕限量版)", " (海外平輸版)", " - 聯名精裝版" };
 
-					products.Add(product);
+					for (int k = 0; k < suffixes.Length; k++)
+					{
+						var clonedProduct = new Product
+						{
+							StoreId = product.StoreId,
+							CategoryId = product.CategoryId,
+							BrandId = product.BrandId,
+							Name = product.Name + suffixes[k], // 加上變種後綴
+							Description = product.Description,
+
+							// 使用 ?? 0 確保如果沒價格就當作 0，避免 null 報錯
+							MinPrice = (product.MinPrice ?? 0) + (k * 150),
+							MaxPrice = (product.MaxPrice ?? 0) + (k * 150),
+
+							// 明確轉型成 byte (強制轉型)
+							Status = (byte)_random.Next(0, 2),
+
+							CreatedAt = DateTime.Now.AddDays(-_random.Next(1, 100)), // 隨機產生過去 100 天內的建檔日期
+							UpdatedAt = DateTime.Now,
+							ProductImages = product.ProductImages.Select(img => new ProductImage
+							{
+								ImageUrl = img.ImageUrl,
+								IsMain = img.IsMain,
+								SortOrder = img.SortOrder
+							}).ToList(),
+							ProductVariants = new List<ProductVariant>
+								{
+									new ProductVariant
+									{
+										SkuCode = Guid.NewGuid().ToString().Substring(0, 8).ToUpper(),
+										VariantName = "標準版",
+										SpecValueJson = "{}",
+                
+										// 一樣處理 Nullable 轉型問題
+										Price = (product.MinPrice ?? 0) + (k * 150),
+
+										Stock = _random.Next(10, 500), // 打亂庫存數量
+										SafetyStock = 10,
+										IsDeleted = false
+									}
+								}
+							};
+						products.Add(clonedProduct);
+					}
+				}
+
+				// 將最後 15 筆設為「待審核」測試資料
+				var pendingReviewProducts = products.Skip(Math.Max(0, products.Count - 15)).ToList();
+				foreach (var p in pendingReviewProducts)
+				{
+					p.Status = 2;
+					if (!p.Name.StartsWith("[待審核] "))
+						p.Name = "[待審核] " + p.Name;
 				}
 
 				context.Products.AddRange(products);
@@ -454,6 +508,38 @@ namespace ISpanShop.Models
 				Console.WriteLine($"❌ 播種過程出錯：{ex.Message}");
 				throw;
 			}
+		}
+
+		/// <summary>
+		/// 確保資料庫中隨時維持至少 15 筆「待審核 (Status==2)」的商品，供測試使用。
+		/// 每次應用程式啟動時呼叫，不足時自動從其他商品補足差額。
+		/// </summary>
+		public static async Task EnsurePendingProductsAsync(ISpanShopDBContext context)
+		{
+			var currentCount = context.Products.Count(p => p.Status == 2);
+			if (currentCount >= 15)
+			{
+				Console.WriteLine($"ℹ️  待審核商品已有 {currentCount} 筆，無需補充。");
+				return;
+			}
+
+			var needed = 15 - currentCount;
+
+			// 抓取不是待審核、且名稱未加前綴的商品來補足
+			var candidates = context.Products
+				.Where(p => p.Status != 2 && !p.Name.StartsWith("[待審核] "))
+				.Take(needed)
+				.ToList();
+
+			foreach (var p in candidates)
+			{
+				p.Status = 2;
+				p.Name = "[待審核] " + p.Name;
+				p.UpdatedAt = DateTime.Now;
+			}
+
+			await context.SaveChangesAsync();
+			Console.WriteLine($"✅ 已補充 {candidates.Count} 筆待審核商品，目前共 {currentCount + candidates.Count} 筆");
 		}
 
 		private static async Task<List<DummyProduct>> FetchProductsFromApiAsync()
@@ -540,16 +626,16 @@ namespace ISpanShop.Models
 
 				// 1. 處理主分類 (Parent)
 				var parentCategory = context.Categories.FirstOrDefault(c => c.Name == parentName);
-                if (parentCategory == null)
-                {
-                    parentCategory = new Category
-                    {
-                        Name = parentName,
-                        Sort = 0,
-                        IsVisible = true,
-                        ParentId = null // ★ 告訴資料庫：主分類沒有爸爸
-                    };
-                    context.Categories.Add(parentCategory);
+				if (parentCategory == null)
+				{
+					parentCategory = new Category
+					{
+						Name = parentName,
+						Sort = 0,
+						IsVisible = true,
+						ParentId = null // ★ 告訴資料庫：主分類沒有爸爸
+					};
+					context.Categories.Add(parentCategory);
 					context.SaveChanges(); // 先存檔才能拿到主分類的 ID
 				}
 
