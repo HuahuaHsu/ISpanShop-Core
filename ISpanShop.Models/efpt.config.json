@@ -75,6 +75,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[Permissions]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[PointHistory]",
          "ObjectType": 0
       },
@@ -92,6 +96,10 @@
       },
       {
          "Name": "[dbo].[ReviewImages]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RolePermissions]",
          "ObjectType": 0
       },
       {
