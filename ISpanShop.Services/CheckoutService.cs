@@ -88,6 +88,26 @@ namespace ISpanShop.Services
 							// 其他欄位如 ProductName 可從 DB 抓取補上
 						});
 					}
+					// --- E. 預先建立金流紀錄 (PaymentLog) ---
+					// 這裡產生的 MerchantTradeNo 必須跟傳給綠界的一模一樣
+					string merchantTradeNo = _paymentService.GenerateMerchantTradeNo();
+
+					var paymentLog = new PaymentLog
+					{
+						OrderId = order.Id,
+						MerchantTradeNo = merchantTradeNo,
+						TradeAmt = order.FinalAmount,
+						CreatedAt = DateTime.Now,
+						// 其他欄位如 TradeNo, PaymentDate 等到回傳時再補填
+					};
+
+					_context.PaymentLogs.Add(paymentLog);
+
+					// 為了讓後續流程拿得到這個單號，我們可以把它包在 Result 回傳
+					await _context.SaveChangesAsync();
+					await transaction.CommitAsync();
+
+					return (true, "訂單已建立", merchantTradeNo); // 改回傳 MerchantTradeNo
 
 					await _context.SaveChangesAsync();
 					await transaction.CommitAsync();
