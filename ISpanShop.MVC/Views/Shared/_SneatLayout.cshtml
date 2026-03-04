@@ -1,10 +1,7 @@
 ﻿@{
 }
 <!DOCTYPE html>
-<html lang="zh-Hant"
-      class="light-style layout-menu-fixed"
-      dir="ltr"
-      data-theme="theme-default"
+<html lang="zh-Hant" dir="ltr" data-theme="theme-default"
       data-assets-path="/sneat/assets/"
       data-template="vertical-menu-template-free">
 <head>
@@ -21,66 +18,485 @@
     <link rel="stylesheet" href="~/sneat/assets/css/demo.css" />
     <link rel="stylesheet" href="~/sneat/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
 
-    <!-- 自訂主題：深色側邊欄 + 青綠配色 -->
-    <style>
-        /* ── 側邊欄背景 ── */
-        .bg-menu-theme {
-            background-color: #2a3f54 !important;
-        }
-
-        /* ── 選單文字 / icon ── */
-        .menu-inner > .menu-item > .menu-link,
-        .menu-inner > .menu-item .menu-link {
-            color: #a9c1d8 !important;
-        }
-
-            .menu-inner > .menu-item > .menu-link:hover,
-            .menu-inner > .menu-item .menu-link:hover {
-                color: #ffffff !important;
-                background: rgba(255,255,255,0.08) !important;
+    <script>
+        (function(){
+            var html = document.documentElement;
+            /* 1. 收合狀態 */
+            if(window.innerWidth>=1200 && sessionStorage.getItem('sidebarCollapsed')==='1'){
+                html.classList.add('pre-collapsed');
             }
+            /* 2. 預先展開子選單，避免頁面切換閃爍 */
+            var openKey = sessionStorage.getItem('openMenuKey');
+            if(openKey){ html.setAttribute('data-open-menu', openKey); }
+            /* 3. tab title */
+            var savedTitle = sessionStorage.getItem('pageTitle');
+            if(savedTitle){ document.title = savedTitle; }
+        })();
+    </script>
 
-        /* ── active 選單項目 ── */
-        .menu-item.active > .menu-link,
-        .menu-item.active > .menu-link .menu-icon {
-            color: #ffffff !important;
-            background: linear-gradient(90deg, #1abb9c, #18a084) !important;
-            border-radius: 8px;
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
         }
 
-        /* ── 選單分類標題 ── */
-        .menu-header .menu-header-text {
-            color: #73a0bf !important;
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
         }
 
-        /* ── Brand 區域 ── */
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Public Sans', sans-serif;
+        }
+
+        :root {
+            --sidebar-w: 260px;
+            --sidebar-mini-w: 76px;
+            --transition: 0.25s ease;
+        }
+
+        #app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        #layout-menu {
+            width: var(--sidebar-w);
+            min-height: 100vh;
+            background-color: #2a3f54;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: width var(--transition);
+            overflow: hidden;
+            z-index: 1100;
+        }
+
         .app-brand {
-            border-bottom: 1px solid rgba(255,255,255,0.08) !important;
-            padding-bottom: 0.75rem !important;
-            margin-bottom: 0.25rem !important;
+            display: flex;
+            align-items: center;
+            padding: 1rem 0 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            flex-shrink: 0;
+            overflow: hidden;
+            transition: padding var(--transition);
+            /* 展開時讓 logo icon 對齊選單 icon（左邊距 1.25rem，icon 寬 1.2rem，置中在 34px 範圍內） */
+            padding-left: 1.75rem;
         }
 
         .app-brand-text {
-            color: #ffffff !important;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-left: .6rem;
+            white-space: nowrap;
+            transition: opacity var(--transition), width var(--transition);
         }
 
-        /* ── 頂部 Navbar ── */
-        .bg-navbar-theme {
-            background-color: #ffffff !important;
-            border-bottom: 1px solid #e8edf2 !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+        /* MENU */
+        .menu-inner {
+            list-style: none;
+            padding: .25rem 0;
+            margin: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            display: block !important;
         }
-        /* 移除 navbar 上方空隙 */
-        .layout-navbar {
+
+            .menu-inner::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .menu-inner::-webkit-scrollbar-thumb {
+                background: rgba(255,255,255,0.15);
+                border-radius: 4px;
+            }
+
+        .menu-header {
+            padding: .75rem 1.25rem .25rem;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #73a0bf;
+            text-transform: uppercase;
+            white-space: nowrap;
+            transition: opacity var(--transition);
+            display: block !important;
+        }
+
+        .menu-item {
+            position: relative;
+            display: block !important;
+        }
+
+        /* 每個主選單項目加上底部間距，製造分隔感 */
+        .menu-inner > .menu-item,
+        .menu-inner > .menu-header {
+            margin-bottom: 6px;
+        }
+
+        .menu-link {
+            display: flex !important;
+            align-items: center;
+            padding: .55rem 1.25rem;
+            color: #a9c1d8;
+            text-decoration: none;
+            transition: background var(--transition), color var(--transition);
+            white-space: nowrap;
+            cursor: pointer;
+            border-radius: 6px;
+            margin: 0 .5rem;
+        }
+
+            .menu-link:hover {
+                color: #fff;
+                background: rgba(255,255,255,0.08);
+            }
+
+        .menu-item.active > .menu-link {
+            color: #fff;
+            background: linear-gradient(90deg,#1abb9c,#18a084);
+            border-radius: 8px;
+        }
+
+        .menu-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-right: .65rem;
+            width: 1.2rem;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .menu-label {
+            flex: 1;
+            font-size: .925rem;
+            white-space: nowrap;
+            transition: opacity var(--transition);
+            overflow: hidden;
+        }
+
+        .menu-arrow {
+            font-size: .85rem;
+            margin-left: auto;
+            transition: transform var(--transition), opacity var(--transition);
+            color: #73a0bf;
+            flex-shrink: 0;
+        }
+
+        .menu-short {
+            display: none;
+        }
+
+        .mini-wrap {
+            display: none !important;
+        }
+        /* In expanded state, standalone icons show; mini-wrap hidden */
+
+        /* SUBMENU */
+        .menu-sub {
+            display: grid !important;
+            grid-template-rows: 0fr;
+            background: rgba(0,0,0,0.12);
+            border-radius: 0 0 6px 6px;
+            margin: 0 .5rem;
+        }
+
+            .menu-sub > ul {
+                overflow: hidden;
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .menu-sub.animated {
+                transition: grid-template-rows 0.35s cubic-bezier(0.4,0,0.2,1);
+            }
+
+        .menu-item.open > .menu-sub {
+            grid-template-rows: 1fr;
+        }
+
+        .menu-item.open > .menu-link .menu-arrow {
+            transform: rotate(90deg);
+        }
+
+        .menu-sub > ul > .menu-item > .menu-link {
+            padding: .45rem 1.25rem .45rem 3rem;
+            font-size: .875rem;
+            display: flex !important;
+            margin: 0;
+            border-radius: 0;
+        }
+
+            .menu-sub > ul > .menu-item > .menu-link:hover {
+                background: rgba(255,255,255,0.06);
+            }
+
+        .menu-sub > ul > .menu-item.active > .menu-link {
+            background: rgba(26,187,156,0.18);
+            color: #1abb9c;
+            border-radius: 0;
+            margin: 0;
+            padding-left: 3rem;
+        }
+
+        .menu-sub > ul > .menu-item:last-child > .menu-link {
+            border-radius: 0 0 6px 6px;
+        }
+
+        .menu-sub > ul > .menu-item.active:last-child > .menu-link {
+            border-radius: 0 0 6px 6px;
+        }
+        /* submenu items: use opacity animation only when NOT pre-open */
+        .menu-sub > ul > .menu-item {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+            /* items already visible on page load - no animation */
+            .menu-sub > ul > .menu-item.pre-open {
+                opacity: 1 !important;
+                transition: none !important;
+            }
+
+        .menu-item.open > .menu-sub > ul > .menu-item {
+            opacity: 1;
+        }
+
+        /* FLYOUT */
+        .menu-flyout {
+            display: none;
+            position: fixed;
+            left: var(--sidebar-mini-w);
+            min-width: 180px;
+            background: #1e2d3d;
+            border-radius: 0 8px 8px 0;
+            padding: .5rem 0;
+            z-index: 99999;
+            box-shadow: 4px 4px 16px rgba(0,0,0,0.3);
+        }
+
+        .menu-flyout-title {
+            padding: .4rem 1rem .3rem;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #73a0bf;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: .25rem;
+        }
+
+        .menu-flyout a {
+            display: block;
+            padding: .45rem 1rem;
+            color: #a9c1d8;
+            text-decoration: none;
+            font-size: .875rem;
+            white-space: nowrap;
+        }
+
+            .menu-flyout a:hover {
+                color: #fff;
+                background: rgba(255,255,255,0.08);
+            }
+
+        /* MAIN */
+        #main-wrapper {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #layout-navbar {
+            height: 56px;
+            background: #fff;
+            border-bottom: 1px solid #e8edf2;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            padding: 0 1.25rem;
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+            flex-shrink: 0;
+        }
+
+        #sidebarToggleBtn {
+            font-size: 1.35rem;
+            color: #697a8d;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: .3rem .4rem;
+            margin-right: .5rem;
+            border-radius: 6px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+            #sidebarToggleBtn:hover {
+                background: #f0f2f4;
+                color: #2d3748;
+            }
+
+        .navbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-body {
+            flex: 1;
+            padding: 1.5rem;
+        }
+
+        .content-footer {
+            padding: .75rem 1.5rem;
+            font-size: .875rem;
+            color: #697a8d;
+            border-top: 1px solid #e8edf2;
+            background: #fff;
+        }
+
+        /* ══ COLLAPSED ══ */
+        body.sidebar-collapsed #layout-menu,
+        html.pre-collapsed #layout-menu {
+            width: var(--sidebar-mini-w);
+        }
+
+        body.sidebar-collapsed .app-brand-text,
+        html.pre-collapsed .app-brand-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        body.sidebar-collapsed .menu-header,
+        html.pre-collapsed .menu-header {
+            display: none !important;
+        }
+
+        body.sidebar-collapsed .app-brand,
+        html.pre-collapsed .app-brand {
+            justify-content: center;
+            padding: 6px 4px;
+            border-bottom-color: transparent;
+        }
+
+        /* menu-link 改成 block 置中容器，mini-wrap 控制 icon+短標籤緊靠 */
+        body.sidebar-collapsed .menu-link,
+        html.pre-collapsed .menu-link {
+            display: block !important;
+            text-align: center;
+            padding: 6px 2px !important;
+            margin: 0 4px !important;
+            border-radius: 8px;
+            line-height: 1;
+        }
+
+        body.sidebar-collapsed .mini-wrap,
+        html.pre-collapsed .mini-wrap {
+            display: inline-flex !important;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+        }
+
+        body.sidebar-collapsed .menu-icon,
+        html.pre-collapsed .menu-icon {
+            display: block !important;
             margin: 0 !important;
-            border-radius: 0 !important;
+            font-size: 1.15rem;
+            line-height: 1;
+            width: auto !important;
         }
 
-        .layout-page {
-            padding-top: 0 !important;
+        body.sidebar-collapsed .menu-short,
+        html.pre-collapsed .menu-short {
+            display: block !important;
+            font-size: 0.58rem;
+            line-height: 1;
+            margin: 0;
+            white-space: nowrap;
         }
 
-        /* ── 主要按鈕改青綠 ── */
+        /* hide standalone icons when collapsed - only mini-wrap icons show */
+        body.sidebar-collapsed .menu-link > .menu-icon,
+        html.pre-collapsed .menu-link > .menu-icon {
+            display: none !important;
+        }
+
+        body.sidebar-collapsed .menu-label,
+        html.pre-collapsed .menu-label {
+            display: none !important;
+        }
+
+        body.sidebar-collapsed .menu-arrow,
+        html.pre-collapsed .menu-arrow {
+            display: none !important;
+        }
+
+        body.sidebar-collapsed .menu-item.active > .menu-link,
+        html.pre-collapsed .menu-item.active > .menu-link {
+            border-radius: 8px;
+            margin: 0 4px !important;
+        }
+
+        /* 收合時選單間距 */
+        body.sidebar-collapsed .menu-inner > .menu-item,
+        html.pre-collapsed .menu-inner > .menu-item {
+            margin-bottom: 16px;
+        }
+
+        body.sidebar-collapsed .menu-sub,
+        html.pre-collapsed .menu-sub {
+            grid-template-rows: 0fr !important;
+            transition: none !important;
+        }
+
+        /* MOBILE */
+        @@media (max-width: 1199px) {
+            #layout-menu {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                transform: translateX(-100%);
+                transition: transform var(--transition);
+                width: var(--sidebar-w) !important;
+            }
+
+            body.mobile-menu-open #layout-menu {
+                transform: translateX(0);
+            }
+
+            #sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 1099;
+            }
+
+            body.mobile-menu-open #sidebar-overlay {
+                display: block;
+            }
+        }
+
+        /* GLOBAL */
         .btn-primary {
             background-color: #1abb9c !important;
             border-color: #1abb9c !important;
@@ -92,13 +508,11 @@
                 border-color: #18a084 !important;
             }
 
-        /* ── page-link active ── */
         .page-item.active .page-link {
             background-color: #1abb9c !important;
             border-color: #1abb9c !important;
         }
 
-        /* ── text-primary 改青綠 ── */
         .text-primary {
             color: #1abb9c !important;
         }
@@ -107,141 +521,316 @@
             color: #18a084 !important;
         }
 
-        /* ── 側邊欄捲軸顏色 ── */
-        .layout-menu::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.15) !important;
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+            display: inline-block;
+        }
+
+            .avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .avatar-online::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 9px;
+            height: 9px;
+            background: #71dd37;
+            border: 2px solid #fff;
+            border-radius: 50%;
         }
     </style>
-    <script src="~/sneat/assets/vendor/js/helpers.js"></script>
-    <script src="~/sneat/assets/js/config.js"></script>
 </head>
 <body>
-    <div class="layout-wrapper layout-content-navbar">
-        <div class="layout-container">
+    <div id="sidebar-overlay"></div>
+    <div id="app-layout">
+        <aside id="layout-menu">
+            <div class="app-brand">
+                <a href="/" style="display:flex;align-items:center;text-decoration:none;overflow:hidden;">
+                    <span style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#696cff,#9155fd);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bx bx-store-alt" style="font-size:1.35rem;color:#fff;"></i>
+                    </span>
+                    <span class="app-brand-text">ISpanShop</span>
+                </a>
+            </div>
+            <ul class="menu-inner">
 
-            <!-- 左側選單 -->
-            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-                <div class="app-brand demo">
-                    <a href="/" class="app-brand-link">
-                        <span class="app-brand-logo demo"
-                              style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#696cff,#9155fd);display:flex;align-items:center;justify-content:center;">
-                            <i class="bx bx-store-alt" style="font-size:1.35rem;color:#fff;"></i>
+                <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                    <a href="/" class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-home-circle"></i>
+                            <span class="menu-short">首頁</span>
                         </span>
-                        <span class="app-brand-text demo menu-text fw-bolder ms-2">ISpanShop</span>
+                        <i class="menu-icon bx bx-home-circle"></i>
+                        <span class="menu-label">首頁</span>
                     </a>
-                    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
-                        <i class="bx bx-chevron-left bx-sm align-middle"></i>
-                    </a>
+                </li>
 
-                </div>
-                <div class="menu-inner-shadow"></div>
-                <ul class="menu-inner py-1">
-                    <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
-                        <a href="/" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                            <div>首頁</div>
-                        </a>
-                    </li>
-                    <li class="menu-header small text-uppercase">
-                        <span class="menu-header-text">商品管理</span>
-                    </li>
-                    <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
-                        <a href="@Url.Action("Index", "Products")" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-store"></i>
-                            <div>全站商品總覽</div>
-                        </a>
-                    </li>
-                    <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" && ViewContext.RouteData.Values["action"]?.ToString() == "PendingReview" ? "active" : "")">
-                        <a href="@Url.Action("PendingReview", "Products")" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-time-five"></i>
-                            <div>待審核商品</div>
-                        </a>
-                    </li>
-                </ul>
-            </aside>
-
-            <!-- 右側 -->
-            <div class="layout-page">
-                <!-- 頂部導覽列（無搜尋欄） -->
-                <nav class="layout-navbar navbar navbar-expand-xl align-items-center bg-navbar-theme" id="layout-navbar" style="margin:0;border-radius:0;top:0;">
-                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0">
-                        <a class="nav-item nav-link px-0 me-xl-4 layout-menu-toggle" href="javascript:void(0)" title="收合/展開選單">
-                            <i class="bx bx-menu bx-sm"></i>
-                        </a>
-                    </div>
-                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-                        <ul class="navbar-nav flex-row align-items-center ms-auto">
-                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
-                                <a class="nav-link dropdown-toggle hide-arrow d-flex align-items-center gap-2" href="javascript:void(0);" data-bs-toggle="dropdown">
-                                    <div class="avatar avatar-online">
-                                        <img src="~/sneat/assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
-                                    </div>
-                                    <span class="d-none d-xl-block fw-semibold" style="color:#2d3748;font-size:0.9rem;">John Doe</span>
-                                    <i class="bx bx-chevron-down d-none d-xl-block" style="color:#8a9bb0;font-size:0.85rem;"></i>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="#">
-                                            <div class="d-flex">
-                                                <div class="flex-shrink-0 me-3">
-                                                    <div class="avatar avatar-online">
-                                                        <img src="~/sneat/assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
-                                                    </div>
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <span class="fw-semibold d-block">管理員</span>
-                                                    <small class="text-muted">Admin</small>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <li><div class="dropdown-divider"></div></li>
-                                    <li>
-                                        <a class="dropdown-item" href="#">
-                                            <i class="bx bx-user me-2"></i><span class="align-middle">個人資料</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#">
-                                            <i class="bx bx-cog me-2"></i><span class="align-middle">設定</span>
-                                        </a>
-                                    </li>
-                                    <li><div class="dropdown-divider"></div></li>
-                                    <li>
-                                        <a class="dropdown-item" href="#">
-                                            <i class="bx bx-power-off me-2"></i><span class="align-middle">登出</span>
-                                        </a>
-                                    </li>
-                                </ul>
+                <li class="menu-header"><span>商品管理</span></li>
+                <li class="menu-item has-sub @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
+                    <span class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-store"></i>
+                            <span class="menu-short">商品</span>
+                        </span>
+                        <i class="menu-icon bx bx-store"></i>
+                        <span class="menu-label">商品管理</span>
+                        <i class="menu-arrow bx bx-chevron-right"></i>
+                    </span>
+                    <div class="menu-sub">
+                        <ul>
+                            <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                                <a href="@Url.Action("Index", "Products")" class="menu-link">全站商品總覽</a>
+                            </li>
+                            <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" && ViewContext.RouteData.Values["action"]?.ToString() == "PendingReview" ? "active" : "")">
+                                <a href="@Url.Action("PendingReview", "Products")" class="menu-link">待審核商品</a>
                             </li>
                         </ul>
                     </div>
-                </nav>
-
-                <!-- 頁面內容 -->
-                <div class="content-wrapper">
-                    <div class="flex-grow-1 container-p-y px-4">
-                        @RenderBody()
+                    <div class="menu-flyout">
+                        <div class="menu-flyout-title">商品管理</div>
+                        <a href="@Url.Action("Index", "Products")">全站商品總覽</a>
+                        <a href="@Url.Action("PendingReview", "Products")">待審核商品</a>
                     </div>
-                    <footer class="content-footer footer bg-footer-theme">
-                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-                            <div class="mb-2 mb-md-0">
-                                &copy; <script>document.write(new Date().getFullYear())</script> ISpanShop 後台管理系統
+                </li>
+
+                <li class="menu-header"><span>示範頁面</span></li>
+                <li class="menu-item has-sub">
+                    <span class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-grid-alt"></i>
+                            <span class="menu-short">報表</span>
+                        </span>
+                        <i class="menu-icon bx bx-grid-alt"></i>
+                        <span class="menu-label">Dashboard</span>
+                        <i class="menu-arrow bx bx-chevron-right"></i>
+                    </span>
+                    <div class="menu-sub">
+                        <ul>
+                            <li class="menu-item"><a href="#" class="menu-link">Dashboard 1</a></li>
+                            <li class="menu-item"><a href="#" class="menu-link">Dashboard 2</a></li>
+                            <li class="menu-item"><a href="#" class="menu-link">Dashboard 3</a></li>
+                        </ul>
+                    </div>
+                    <div class="menu-flyout">
+                        <div class="menu-flyout-title">Dashboard</div>
+                        <a href="#">Dashboard 1</a>
+                        <a href="#">Dashboard 2</a>
+                        <a href="#">Dashboard 3</a>
+                    </div>
+                </li>
+
+                <li class="menu-item has-sub">
+                    <span class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-user"></i>
+                            <span class="menu-short">會員</span>
+                        </span>
+                        <i class="menu-icon bx bx-user"></i>
+                        <span class="menu-label">會員管理</span>
+                        <i class="menu-arrow bx bx-chevron-right"></i>
+                    </span>
+                    <div class="menu-sub">
+                        <ul>
+                            <li class="menu-item"><a href="#" class="menu-link">會員列表</a></li>
+                            <li class="menu-item"><a href="#" class="menu-link">黑名單管理</a></li>
+                        </ul>
+                    </div>
+                    <div class="menu-flyout">
+                        <div class="menu-flyout-title">會員管理</div>
+                        <a href="#">會員列表</a>
+                        <a href="#">黑名單管理</a>
+                    </div>
+                </li>
+
+                <li class="menu-item has-sub">
+                    <span class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-receipt"></i>
+                            <span class="menu-short">訂單</span>
+                        </span>
+                        <i class="menu-icon bx bx-receipt"></i>
+                        <span class="menu-label">訂單管理</span>
+                        <i class="menu-arrow bx bx-chevron-right"></i>
+                    </span>
+                    <div class="menu-sub">
+                        <ul>
+                            <li class="menu-item"><a href="#" class="menu-link">全部訂單</a></li>
+                            <li class="menu-item"><a href="#" class="menu-link">待出貨</a></li>
+                            <li class="menu-item"><a href="#" class="menu-link">退貨申請</a></li>
+                        </ul>
+                    </div>
+                    <div class="menu-flyout">
+                        <div class="menu-flyout-title">訂單管理</div>
+                        <a href="#">全部訂單</a>
+                        <a href="#">待出貨</a>
+                        <a href="#">退貨申請</a>
+                    </div>
+                </li>
+
+            </ul>
+        </aside>
+
+        <div id="main-wrapper">
+            <nav id="layout-navbar">
+                <button id="sidebarToggleBtn" title="收合/展開選單">
+                    <i class="bx bx-menu"></i>
+                </button>
+                <div class="navbar-right">
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center gap-2 text-decoration-none"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="avatar avatar-online">
+                                <img src="~/sneat/assets/img/avatars/1.png" alt />
                             </div>
-                        </div>
-                    </footer>
-                    <div class="content-backdrop fade"></div>
+                            <span class="fw-semibold d-none d-xl-block" style="color:#2d3748;font-size:.9rem;">John Doe</span>
+                            <i class="bx bx-chevron-down d-none d-xl-block" style="color:#8a9bb0;"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar avatar-online"><img src="~/sneat/assets/img/avatars/1.png" alt /></div>
+                                        <div><span class="fw-semibold d-block">管理員</span><small class="text-muted">Admin</small></div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li><a class="dropdown-item" href="#"><i class="bx bx-user me-2"></i>個人資料</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bx bx-cog me-2"></i>設定</a></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li><a class="dropdown-item" href="#"><i class="bx bx-power-off me-2"></i>登出</a></li>
+                        </ul>
+                    </div>
                 </div>
+            </nav>
+            <div class="content-wrapper">
+                <div class="content-body">@RenderBody()</div>
+                <footer class="content-footer">
+                    &copy; <script>document.write(new Date().getFullYear())</script> ISpanShop 後台管理系統
+                </footer>
             </div>
         </div>
-        <div class="layout-overlay layout-menu-toggle"></div>
     </div>
+
     <script src="~/sneat/assets/vendor/libs/jquery/jquery.js"></script>
     <script src="~/sneat/assets/vendor/libs/popper/popper.js"></script>
     <script src="~/sneat/assets/vendor/js/bootstrap.js"></script>
-    <script src="~/sneat/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-    <script src="~/sneat/assets/vendor/js/menu.js"></script>
-    <script src="~/sneat/assets/js/main.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        (function () {
+            var btn     = document.getElementById('sidebarToggleBtn');
+            var overlay = document.getElementById('sidebar-overlay');
+            var body    = document.body;
+            var html    = document.documentElement;
+            var KEY     = 'sidebarCollapsed';
+            var DESKTOP = 1200;
+            function isCollapsed() { return body.classList.contains('sidebar-collapsed'); }
+            function isDesktop()   { return window.innerWidth >= DESKTOP; }
+
+            /* 儲存當前頁面 title，下次進入前先顯示 */
+            sessionStorage.setItem('pageTitle', document.title);
+
+            /* 展開時隱藏 mini-wrap，只在收合時才用 */
+            function applyExpandedIcons() {
+                document.querySelectorAll('.menu-link .mini-wrap').forEach(function(w){ w.style.display='none'; });
+            }
+            function applyCollapsedIcons() {
+                /* collapsed 狀態：用 CSS 控制，不需要 JS */
+            }
+
+            if (html.classList.contains('pre-collapsed')) {
+                body.classList.add('sidebar-collapsed');
+                html.classList.remove('pre-collapsed');
+            } else {
+                applyExpandedIcons();
+            }
+
+            if (!isCollapsed() || !isDesktop()) {
+                document.querySelectorAll('.has-sub').forEach(function (item) {
+                    if (item.querySelector('.menu-sub .menu-item.active')) {
+                        item.classList.add('open');
+                        /* mark children already-visible: skip flash on same-page re-render */
+                        item.querySelectorAll('.menu-sub > ul > .menu-item').forEach(function(li){
+                            li.classList.add('pre-open');
+                        });
+                    }
+                });
+            }
+
+            requestAnimationFrame(function () {
+                html.removeAttribute('data-open-menu');
+
+                requestAnimationFrame(function () {
+                    document.querySelectorAll('.menu-sub').forEach(function (sub) {
+                        sub.classList.add('animated');
+                    });
+                });
+            });
+
+            btn.addEventListener('click', function () {
+                if (isDesktop()) {
+                    var c = body.classList.toggle('sidebar-collapsed');
+                    sessionStorage.setItem(KEY, c ? '1' : '0');
+                    if (!c) { applyExpandedIcons(); }
+                } else {
+                    body.classList.toggle('mobile-menu-open');
+                }
+                document.querySelectorAll('.menu-flyout').forEach(function (f) { f.style.display = 'none'; });
+            });
+
+            overlay.addEventListener('click', function () { body.classList.remove('mobile-menu-open'); });
+            window.addEventListener('resize', function () { if (isDesktop()) body.classList.remove('mobile-menu-open'); });
+
+            document.querySelectorAll('.has-sub > .menu-link').forEach(function (link) {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (isCollapsed() && isDesktop()) return;
+                    var item = this.closest('.menu-item');
+                    var isOpen = item.classList.contains('open');
+                    document.querySelectorAll('.menu-item.open').forEach(function (el) { if (el !== item) el.classList.remove('open'); });
+                    item.classList.toggle('open', !isOpen);
+                });
+            });
+
+            var activeFlyout = null;
+            var flyoutTimer  = null;
+            var hoverTimer   = null;
+            function showFlyout(flyout, item) {
+                clearTimeout(flyoutTimer);
+                if (activeFlyout && activeFlyout !== flyout) { activeFlyout.style.display = 'none'; }
+                var r = item.getBoundingClientRect();
+                flyout.style.top = r.top + 'px';
+                flyout.style.display = 'block';
+                activeFlyout = flyout;
+            }
+            function hideFlyout(flyout) {
+                flyoutTimer = setTimeout(function () { if (flyout) flyout.style.display = 'none'; activeFlyout = null; }, 120);
+            }
+            document.querySelectorAll('.has-sub').forEach(function (item) {
+                var flyout = item.querySelector('.menu-flyout');
+                if (!flyout) return;
+                item.addEventListener('mouseenter', function () {
+                    if (!isCollapsed() || !isDesktop()) return;
+                    hoverTimer = setTimeout(function () { showFlyout(flyout, item); }, 180);
+                });
+                item.addEventListener('mouseleave', function () {
+                    clearTimeout(hoverTimer);
+                    if (isCollapsed() && isDesktop()) hideFlyout(flyout);
+                });
+                flyout.addEventListener('mouseenter', function () { clearTimeout(flyoutTimer); });
+                flyout.addEventListener('mouseleave', function () { hideFlyout(flyout); });
+            });
+        })();
+    </script>
 </body>
 </html>
