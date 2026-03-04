@@ -1,13 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using ISpanShop.Models.Dtos;
+using ISpanShop.Models.DTOs;
+using ISpanShop.Models.EfModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using ISpanShop.Models.EfModels;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace ISpanShop.MVC.Controllers
+namespace ISpanShop.Models.Dtos
 {
     public class UsersController : Controller
     {
@@ -18,15 +20,27 @@ namespace ISpanShop.MVC.Controllers
             _context = context;
         }
 
-        // GET: Users
-        public async Task<IActionResult> Index()
-        {
-            var iSpanShopDBContext = _context.Users.Include(u => u.Role);
-            return View(await iSpanShopDBContext.ToListAsync());
-        }
+		// GET: Users
+		public async Task<IActionResult> Index()
+		{
+			var dtoList = _context.Users
+				.Include(u => u.Role)
+				.Select(u => new UserDto
+				{
+					Id = u.Id,
+					Account = u.Account,
+					Email = u.Email,
+					IsBlacklisted = u.IsBlacklisted,
+					IsSeller = u.IsSeller ?? false,
+					RoleName = u.Role.RoleName
+				});
 
-        // GET: Users/Details/5
-        public async Task<IActionResult> Details(int? id)
+			return View(await dtoList.ToListAsync());
+		}
+
+
+		// GET: Users/Details/5
+		public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {
