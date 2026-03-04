@@ -90,8 +90,7 @@ namespace ISpanShop.Services
 					}
 					// --- E. 預先建立金流紀錄 (PaymentLog) ---
 					// 這裡產生的 MerchantTradeNo 必須跟傳給綠界的一模一樣
-					string merchantTradeNo = _paymentService.GenerateMerchantTradeNo();
-
+					string merchantTradeNo = _paymentService.GenerateMerchantTradeNo(order);
 					var paymentLog = new PaymentLog
 					{
 						OrderId = order.Id,
