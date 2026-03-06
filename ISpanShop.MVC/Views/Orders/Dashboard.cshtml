@@ -149,8 +149,8 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0 fw-bold">熱銷商品 Top 10 (依類別著色)</h5>
                 <select id="top10OrderBy" class="form-select form-select-sm w-auto" onchange="loadTop10Chart()">
-                    <option value="revenue">依銷售額</option>
                     <option value="volume">依銷量</option>
+                    <option value="revenue">依銷售額</option>
                 </select>
             </div>
             <div class="card-body">
@@ -230,16 +230,82 @@
             el.addClass(colorClass).html(`${rate >= 0 ? '↑' : '↓'} ${Math.abs(rate)}% <span class="text-muted fw-normal">vs 前期</span>`);
         }
 
+        // 通用營收格式化函式 (自動轉 萬)
+        function formatRevenue(val) {
+            if (val === null || val === undefined) return '$0';
+            var num = parseFloat(val);
+            if (num >= 10000) return (num / 10000).toFixed(1) + ' 萬';
+            return num.toLocaleString();
+        }
+
         function loadTrendChart() {
             const storeId = $('#storeFilter').val();
             $.get(`/Orders/GetMonthlyTrend?storeId=${storeId}`, function(data) {
+                if (!data || !data.series || !data.labels) return;
+                
                 const options = {
                     series: data.series,
-                    chart: { height: 350, type: 'line', toolbar: { show: false } },
-                    stroke: { curve: 'smooth', width: 3 },
-                    xaxis: { categories: data.labels },
+                    chart: { 
+                        height: 350, 
+                        type: 'line', 
+                        toolbar: { show: false },
+                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                    },
+                    stroke: { curve: 'smooth', width: 4 },
                     colors: [palette[0]],
-                    grid: { borderColor: '#f1f1f1' }
+                    grid: { 
+                        borderColor: '#f1f1f1',
+                        padding: { bottom: 15 }
+                    },
+                    xaxis: {
+                        categories: data.labels,
+                        axisBorder: { show: false },
+                        axisTicks: { show: false },
+                        labels: {
+                            style: { colors: '#a1acb8', fontSize: '13px' },
+                            formatter: function(value, timestamp, opts) {
+                                if (!value) return value;
+                                var strVal = String(value);
+                                var parts = strVal.split('/');
+                                if (parts.length < 2) return strVal;
+                                
+                                var year = parts[0];
+                                var month = parseInt(parts[1], 10);
+                                
+                                // 判斷是否為首筆數據：檢查 opts.i 或 opts.index
+                                var isFirst = opts && (opts.i === 0 || opts.index === 0);
+                                
+                                // 1月或是第一筆數據，顯示完整年份作為標記
+                                if (month === 1 || isFirst) {
+                                    return year + '/' + parts[1];
+                                }
+                                return month + '月';
+                            }
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            style: { colors: '#a1acb8', fontSize: '13px' },
+                            formatter: function(val) {
+                                return formatRevenue(val);
+                            }
+                        },
+                        tickAmount: 5
+                    },
+                    markers: {
+                        size: 4,
+                        colors: [palette[0]],
+                        strokeColors: '#fff',
+                        strokeWidth: 2,
+                        hover: { size: 6 }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function(val) {
+                                return '$' + parseFloat(val).toLocaleString();
+                            }
+                        }
+                    }
                 };
                 if(trendChart) trendChart.destroy();
                 trendChart = new ApexCharts(document.querySelector("#trendChart"), options);
@@ -282,11 +348,45 @@
                         name: orderBy === 'revenue' ? '銷售額' : '銷量', 
                         data: data.map(x => orderBy === 'revenue' ? x.salesRevenue : x.salesVolume) 
                     }],
-                    chart: { type: 'bar', height: 350, toolbar: { show: false } },
-                    plotOptions: { bar: { horizontal: true, borderRadius: 4, distributed: true } },
-                    xaxis: { categories: data.map(x => x.productName) },
+                    chart: { 
+                        type: 'bar', 
+                        height: 350, 
+                        toolbar: { show: false },
+                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                    },
+                    plotOptions: { 
+                        bar: { 
+                            horizontal: true, 
+                            borderRadius: 4, 
+                            distributed: true,
+                            dataLabels: { position: 'top' }
+                        } 
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        offsetX: -6,
+                        style: { fontSize: '12px', colors: ['#fff'] },
+                        formatter: function(val) {
+                            return orderBy === 'revenue' ? '$' + formatRevenue(val) : val;
+                        }
+                    },
+                    xaxis: { 
+                        categories: data.map(x => x.productName),
+                        labels: {
+                            formatter: function(val) {
+                                return orderBy === 'revenue' ? formatRevenue(val) : val;
+                            }
+                        }
+                    },
                     colors: barColors,
-                    legend: { show: false }
+                    legend: { show: false },
+                    tooltip: {
+                        y: {
+                            formatter: function(val) {
+                                return orderBy === 'revenue' ? '$' + val.toLocaleString() : val + ' 件';
+                            }
+                        }
+                    }
                 };
                 if(top10Chart) top10Chart.destroy();
                 top10Chart = new ApexCharts(document.querySelector("#top10Chart"), options);
@@ -307,7 +407,11 @@
                 
                 const chartColors = data.labels.map(name => getCategoryColor(name));
                 let options = {
-                    chart: { height: 350, toolbar: { show: false } },
+                    chart: { 
+                        height: 350, 
+                        toolbar: { show: false },
+                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                    },
                     colors: chartColors
                 };
 
@@ -318,7 +422,13 @@
                         series: [{ data: treemapData }],
                         chart: { ...options.chart, type: 'treemap' },
                         plotOptions: { treemap: { distributed: true, enableShades: false } },
-                        dataLabels: { enabled: true, formatter: (text, op) => [text, '$' + op.value.toLocaleString()] }
+                        dataLabels: { 
+                            enabled: true, 
+                            formatter: (text, op) => [text, '$' + formatRevenue(op.value)] 
+                        },
+                        tooltip: {
+                            y: { formatter: (val) => '$' + val.toLocaleString() }
+                        }
                     };
                 } else if (currentCategoryChartType === 'radar') {
                     options = {
@@ -329,7 +439,10 @@
                         fill: { opacity: 0.4 },
                         stroke: { width: 2 },
                         markers: { size: 4 },
-                        colors: [palette[0]] // 雷達圖單色較好看
+                        colors: [palette[0]],
+                        yaxis: {
+                            labels: { formatter: (val) => formatRevenue(val) }
+                        }
                     };
                 } else {
                     // 預設：柱狀圖 (Bar)
@@ -340,7 +453,18 @@
                         plotOptions: { bar: { distributed: true, borderRadius: 4, columnWidth: '50%' } },
                         xaxis: { categories: data.labels },
                         legend: { show: false },
-                        dataLabels: { enabled: true, formatter: (val) => '$' + val.toLocaleString() }
+                        dataLabels: { 
+                            enabled: true, 
+                            formatter: (val) => '$' + formatRevenue(val),
+                            offsetY: -20,
+                            style: { colors: ['#a1acb8'] }
+                        },
+                        yaxis: {
+                            labels: { formatter: (val) => formatRevenue(val) }
+                        },
+                        tooltip: {
+                            y: { formatter: (val) => '$' + val.toLocaleString() }
+                        }
                     };
                 }
 
