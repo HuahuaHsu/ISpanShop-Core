@@ -55,7 +55,7 @@ namespace ISpanShop.Repositories
                 .Include(p => p.Store)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
-                .Where(p => p.Status == 2)
+                .Where(p => p.Status == 2 && p.IsDeleted != true)
                 .ToList();
         }
 
@@ -86,6 +86,7 @@ namespace ISpanShop.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.ProductImages)
+                .Where(p => p.IsDeleted != true)
                 .ToList();
         }
 
@@ -117,6 +118,7 @@ namespace ISpanShop.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.ProductImages)
+                .Where(p => p.IsDeleted != true)
                 .AsQueryable();
 
             // 分類篩選：優先以子分類篩選，否則以主分類篩選所有子分類商品
@@ -151,10 +153,14 @@ namespace ISpanShop.Repositories
                 query = query.Where(p => p.BrandId == criteria.BrandId.Value);
             }
 
-            // 商品狀態篩選：精準匹配狀態
+            // 商品狀態篩選：指定狀態時精準匹配；未指定時預設排除待審核（Status==2）
             if (criteria.Status.HasValue)
             {
                 query = query.Where(p => p.Status == criteria.Status.Value);
+            }
+            else
+            {
+                query = query.Where(p => p.Status != 2);
             }
 
             // 建檔日期起：>= StartDate
@@ -169,6 +175,19 @@ namespace ISpanShop.Repositories
                 var endOfDay = criteria.EndDate.Value.AddDays(1).AddTicks(-1);
                 query = query.Where(p => p.CreatedAt <= endOfDay);
             }
+
+            // 排序
+            query = criteria.SortOrder switch
+            {
+                "name_asc"    => query.OrderBy(p => p.Name),
+                "name_desc"   => query.OrderByDescending(p => p.Name),
+                "price_asc"   => query.OrderBy(p => p.MinPrice),
+                "price_desc"  => query.OrderByDescending(p => p.MinPrice),
+                "status_asc"  => query.OrderBy(p => p.Status),
+                "status_desc" => query.OrderByDescending(p => p.Status),
+                "date_asc"    => query.OrderBy(p => p.CreatedAt),
+                _             => query.OrderByDescending(p => p.CreatedAt) // date_desc（預設：最新優先）
+            };
 
             int totalCount = query.Count();
 
@@ -258,6 +277,9 @@ namespace ISpanShop.Repositories
             {
                 product.Status = 1;
                 product.UpdatedAt = DateTime.Now;
+                // 移除可能存在的 [待審核] 前綴
+                if (product.Name != null && product.Name.StartsWith("[待審核]"))
+                    product.Name = product.Name.Substring("[待審核]".Length).TrimStart();
                 _context.SaveChanges();
             }
         }
@@ -287,10 +309,123 @@ namespace ISpanShop.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.ProductImages)
-                .Where(p => p.Status == 3)
+                .Where(p => p.Status == 3 && p.IsDeleted != true)
                 .OrderByDescending(p => p.UpdatedAt)
                 .Take(top)
                 .ToList();
+        }
+
+        public void UpdateProduct(ProductUpdateDto dto)
+        {
+            var product = _context.Products
+                .Include(p => p.ProductImages)
+                .FirstOrDefault(p => p.Id == dto.Id);
+            if (product == null) return;
+
+            product.Name = dto.Name;
+            product.Description = dto.Description;
+            product.CategoryId = dto.CategoryId;
+            product.BrandId = dto.BrandId;
+            product.SpecDefinitionJson = dto.SpecDefinitionJson;
+            product.UpdatedAt = DateTime.Now;
+
+            if (!string.IsNullOrWhiteSpace(dto.MainImageUrl))
+            {
+                var mainImg = product.ProductImages.FirstOrDefault(i => i.IsMain == true);
+                if (mainImg != null)
+                    mainImg.ImageUrl = dto.MainImageUrl;
+                else
+                    product.ProductImages.Add(new ProductImage
+                    {
+                        ImageUrl = dto.MainImageUrl,
+                        IsMain = true,
+                        SortOrder = 0
+                    });
+            }
+
+            _context.SaveChanges();
+        }
+
+        public void SoftDeleteProduct(int id)
+        {
+            var product = _context.Products.Find(id);
+            if (product == null) return;
+            product.IsDeleted = true;
+            product.UpdatedAt = DateTime.Now;
+            _context.SaveChanges();
+        }
+
+        public ProductVariant? GetVariantById(int id)
+        {
+            return _context.ProductVariants
+                .Include(v => v.Product)
+                .FirstOrDefault(v => v.Id == id);
+        }
+
+        public void AddVariant(ProductVariant variant)
+        {
+            _context.ProductVariants.Add(variant);
+            _context.SaveChanges();
+            RecalcProductPrice(variant.ProductId);
+        }
+
+        public void UpdateVariant(ProductVariantUpdateDto dto)
+        {
+            var variant = _context.ProductVariants.Find(dto.Id);
+            if (variant == null) return;
+            variant.SkuCode = dto.SkuCode;
+            variant.Price = dto.Price;
+            variant.Stock = dto.Stock;
+            variant.SafetyStock = dto.SafetyStock;
+            _context.SaveChanges();
+            RecalcProductPrice(variant.ProductId);
+        }
+
+        public void SoftDeleteVariant(int id)
+        {
+            var variant = _context.ProductVariants.Find(id);
+            if (variant == null) return;
+            variant.IsDeleted = true;
+            _context.SaveChanges();
+            RecalcProductPrice(variant.ProductId);
+        }
+
+        public (int Total, int Published, int Unpublished, int Pending) GetStatusCounts()
+        {
+            var q = _context.Products.Where(p => p.IsDeleted != true);
+            return (
+                q.Count(),
+                q.Count(p => p.Status == 1),
+                q.Count(p => p.Status == 0),
+                q.Count(p => p.Status == 2)
+            );
+        }
+
+        public void ForceUnpublish(int id, string? reason)
+        {
+            var product = _context.Products.Find(id);
+            if (product == null) return;
+            product.Status       = 0;
+            product.RejectReason = reason;
+            product.UpdatedAt    = DateTime.Now;
+            _context.SaveChanges();
+        }
+
+        private void RecalcProductPrice(int productId)
+        {
+            var product = _context.Products.Find(productId);
+            if (product == null) return;
+            var prices = _context.ProductVariants
+                .Where(v => v.ProductId == productId && v.IsDeleted != true)
+                .Select(v => v.Price)
+                .ToList();
+            if (prices.Any())
+            {
+                product.MinPrice = prices.Min();
+                product.MaxPrice = prices.Max();
+            }
+            product.UpdatedAt = DateTime.Now;
+            _context.SaveChanges();
         }
     }
 }

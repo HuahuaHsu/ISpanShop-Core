@@ -56,5 +56,10 @@ namespace ISpanShop.Models.DTOs
         /// 每頁筆數
         /// </summary>
         public int PageSize { get; set; } = 10;
+
+        /// <summary>
+        /// 排序方式（date_desc|date_asc|name_asc|name_desc|price_asc|price_desc|status_asc|status_desc）
+        /// </summary>
+        public string? SortOrder { get; set; }
     }
 }

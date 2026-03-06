@@ -1,7 +1,7 @@
 @model IEnumerable<ISpanShop.Models.DTOs.CategoryDto>
 @{
     Layout = "_SneatLayout";
-    ViewData["Title"] = "分類規格綁定";
+    ViewData["Title"] = "分類屬性綁定";
     var parents  = Model.Where(c => c.ParentId == null).ToList();
     var children = Model.Where(c => c.ParentId != null).ToList();
 }
@@ -36,7 +36,7 @@
 
 <div class="d-flex align-items-center mb-3">
     <div>
-        <h4 class="fw-bold mb-0">分類規格綁定</h4>
+        <h4 class="fw-bold mb-0">分類屬性綁定</h4>
         <small class="text-muted">從左側選擇分類，再勾選該分類需要的規格</small>
     </div>
 </div>
@@ -126,7 +126,7 @@ function pickCat(el){
 function renderSpecs(specs){
     const body = document.getElementById('rBody');
     if(!specs||specs.length===0){
-        body.innerHTML='<div class="empty-hint"><div>尚無規格可設定</div><div style="font-size:.8rem;color:#ccc">請先到「分類規格管理」新增規格</div></div>';
+        body.innerHTML='<div class="empty-hint"><div>尚無規格可設定</div><div style="font-size:.8rem;color:#ccc">請先到「分類屬性管理」新增規格</div></div>';
         return;
     }
     const typeMap = {text:'文字輸入',select:'下拉選單',checkbox:'多選框',radio:'單選框'};

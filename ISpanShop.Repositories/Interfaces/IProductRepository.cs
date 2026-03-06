@@ -106,5 +106,45 @@ namespace ISpanShop.Repositories.Interfaces
         /// </summary>
         /// <param name="top">最多取幾筆</param>
         IEnumerable<Product> GetRecentRejectedProducts(int top);
+
+        /// <summary>
+        /// 更新商品基本資料（名稱、描述、分類、品牌、規格定義、主圖）
+        /// </summary>
+        void UpdateProduct(ProductUpdateDto dto);
+
+        /// <summary>
+        /// 軟刪除商品（設 IsDeleted = true）
+        /// </summary>
+        void SoftDeleteProduct(int id);
+
+        /// <summary>
+        /// 根據 ID 取得規格（含所屬商品）
+        /// </summary>
+        ProductVariant? GetVariantById(int id);
+
+        /// <summary>
+        /// 新增規格並重算商品價格區間
+        /// </summary>
+        void AddVariant(ProductVariant variant);
+
+        /// <summary>
+        /// 更新規格（SKU/售價/庫存/安全庫存）並重算商品價格區間
+        /// </summary>
+        void UpdateVariant(ProductVariantUpdateDto dto);
+
+        /// <summary>
+        /// 軟刪除規格並重算商品價格區間
+        /// </summary>
+        void SoftDeleteVariant(int id);
+
+        /// <summary>
+        /// 取得全站商品各狀態筆數（Total、已上架、未上架、待審核）
+        /// </summary>
+        (int Total, int Published, int Unpublished, int Pending) GetStatusCounts();
+
+        /// <summary>
+        /// 管理員強制下架商品，儲存下架原因
+        /// </summary>
+        void ForceUnpublish(int id, string? reason);
     }
 }

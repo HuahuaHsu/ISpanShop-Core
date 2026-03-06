@@ -11,6 +11,8 @@ namespace ISpanShop.Models.DTOs
         public int SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
         public string? ImageUrl { get; set; }
+        public string? NameEn { get; set; }
+        public int ProductCount { get; set; }
         public int ChildCount { get; set; }
         public List<CategoryManageDto> Children { get; set; } = new();
     }

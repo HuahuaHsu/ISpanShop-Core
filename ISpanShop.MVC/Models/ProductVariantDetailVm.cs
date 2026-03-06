@@ -4,6 +4,8 @@ namespace ISpanShop.MVC.Models.ViewModels
 {
     public class ProductVariantDetailVm
     {
+        public int Id { get; set; }
+        public int ProductId { get; set; }
         public string? SkuCode { get; set; }
         public string? VariantName { get; set; }
         public decimal Price { get; set; }

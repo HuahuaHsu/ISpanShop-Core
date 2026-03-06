@@ -1,653 +1,755 @@
 @model IEnumerable<ISpanShop.Models.DTOs.CategorySpecDto>
+@using System.Text.Json
+
 @{
     Layout = "_SneatLayout";
-    ViewData["Title"] = "分類規格管理";
-    var specList = Model.ToList();
+    ViewData["Title"] = "分類屬性管理";
+
+    var allSpecs  = Model.ToList();
+    var catDtos   = (IEnumerable<ISpanShop.Models.DTOs.CategoryDto>)ViewBag.Categories;
+    var parents   = catDtos.Where(c => c.ParentId == null).OrderBy(c => c.Id).ToList();
+    var children  = catDtos.Where(c => c.ParentId != null).OrderBy(c => c.Name).ToList();
+
+    string InputTypeLabel(string t) => t switch
+    {
+        "text"     => "文字",
+        "select"   => "單選",
+        "checkbox" => "多選",
+        "radio"    => "單選按鈕",
+        "number"   => "數字",
+        _ => t
+    };
+    string InputTypeBadgeCls(string t) => t switch
+    {
+        "text"     => "bg-secondary-subtle text-secondary",
+        "select"   => "bg-primary-subtle text-primary",
+        "checkbox" => "bg-info-subtle text-info",
+        "radio"    => "bg-warning-subtle text-warning",
+        "number"   => "bg-success-subtle text-success",
+        _ => "bg-secondary-subtle text-secondary"
+    };
 }
 
-<style>
-/* ══ 基礎卡片 ══ */
-.mg-card {
-    background:#fff; border-radius:14px;
-    box-shadow:0 2px 14px rgba(0,0,0,.07);
-    border:none; margin-bottom:24px; overflow:hidden;
-}
-.mg-head {
-    padding:14px 22px; border-bottom:1px solid #f0f0f0;
-    background:#fafbfc; display:flex; align-items:center;
-    justify-content:space-between; flex-wrap:wrap; gap:8px;
-}
-.mg-head h5 { margin:0; font-weight:700; font-size:.95rem; color:#333; }
-
-/* ══ 篩選列 ══ */
-.filter-bar {
-    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    padding:12px 22px; border-bottom:1px solid #f0f0f0; background:#fefefe;
-}
-.filter-bar input, .filter-bar select {
-    border:1.5px solid #dde2e8; border-radius:8px;
-    padding:7px 12px; font-size:.85rem; outline:none;
-    transition:border-color .2s; background:#fff;
-}
-.filter-bar input:focus, .filter-bar select:focus {
-    border-color:#1a73e8; box-shadow:0 0 0 3px rgba(26,115,232,.1);
-}
-
-/* ══ 矩陣表格 ══ */
-.matrix-wrap { overflow-x:auto; max-height:480px; overflow-y:auto; }
-.matrix-table { border-collapse:collapse; min-width:100%; }
-.matrix-table th, .matrix-table td { border:1px solid #eee; }
-
-.col-cat {
-    position:sticky; left:0; z-index:3;
-    background:#fff; min-width:130px; max-width:160px;
-    font-size:.85rem; font-weight:600; padding:10px 14px;
-    border-right:2px solid #e0e4ea;
-}
-thead .col-cat { background:#f0f4ff; z-index:4; font-weight:700; color:#3c4a6b; font-size:.82rem; }
-.matrix-table thead th { position:sticky; top:0; z-index:2; background:#f6f7fb; }
-
-.group-row td {
-    background:#eef2ff; color:#3d5afe; font-weight:700;
-    font-size:.78rem; padding:5px 14px; letter-spacing:.4px;
-    position:sticky; left:0;
-}
-.spec-head {
-    font-size:.78rem; font-weight:700; color:#555;
-    padding:8px 8px 6px; text-align:center; min-width:82px; max-width:110px;
-}
-.spec-head-name { font-weight:700; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90px; }
-.spec-head-opts { font-weight:400; color:#aaa; font-size:.67rem; white-space:normal; line-height:1.4; }
-
-.status-cell { text-align:center; padding:9px 6px; min-width:82px; }
-.status-dot {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:24px; height:24px; border-radius:50%; font-size:.8rem;
-}
-.status-dot.on  { background:#e6f4ea; color:#34a853; }
-.status-dot.off { background:#f4f4f4; color:#ccc; }
-
-.cat-row-link {
-    display:flex; align-items:center; justify-content:space-between;
-    cursor:pointer; transition:color .15s;
-}
-.cat-row-link:hover .cat-name { color:#1a73e8; text-decoration:underline; }
-.edit-icon { font-size:.75rem; color:#bbb; margin-left:6px; }
-.bound-count-pill {
-    font-size:.7rem; background:#e8f0fe; color:#1a73e8;
-    border-radius:10px; padding:1px 7px; margin-left:6px; white-space:nowrap;
-}
-.matrix-table tbody tr:hover td { background:#fafcff; }
-.matrix-table tbody tr:hover td.col-cat { background:#f0f7ff; }
-
-/* ══ 右側抽屜 ══ */
-#drawer-overlay {
-    display:none; position:fixed; inset:0;
-    background:rgba(0,0,0,.35); z-index:1040;
-}
-#drawer {
-    position:fixed; top:0; right:-440px; width:420px; height:100vh;
-    background:#fff; z-index:1050; box-shadow:-4px 0 24px rgba(0,0,0,.14);
-    display:flex; flex-direction:column;
-    transition:right .28s cubic-bezier(.4,0,.2,1);
-    border-radius:16px 0 0 16px;
-}
-#drawer.open { right:0; }
-#drawer-overlay.open { display:block; }
-
-.drawer-head {
-    padding:20px 22px 16px; border-bottom:1px solid #f0f0f0;
-    display:flex; align-items:flex-start; justify-content:space-between; flex-shrink:0;
-}
-.drawer-head h5 { margin:0 0 3px; font-weight:700; font-size:1rem; }
-.drawer-head small { color:#888; font-size:.82rem; }
-.drawer-close {
-    background:none; border:none; font-size:1.4rem;
-    color:#aaa; cursor:pointer; padding:0; line-height:1; transition:color .15s;
-}
-.drawer-close:hover { color:#e53935; }
-.drawer-body { flex:1; overflow-y:auto; padding:16px 22px; }
-.drawer-footer {
-    padding:14px 22px; border-top:1px solid #f0f0f0; flex-shrink:0;
-    background:#fafbfc; display:flex; align-items:center; gap:10px;
-}
-
-/* 規格 Toggle 列表 */
-.spec-toggle-item {
-    display:flex; align-items:flex-start; gap:14px;
-    padding:13px 0; border-bottom:1px solid #f5f5f5;
-}
-.spec-toggle-item:last-child { border-bottom:none; }
-.spec-toggle-info { flex:1; min-width:0; }
-.spec-toggle-name { font-weight:700; font-size:.9rem; margin-bottom:4px; display:flex; align-items:center; gap:6px; }
-.spec-toggle-opts { font-size:.78rem; color:#888; }
-.spec-toggle-opts span {
-    display:inline-block; background:#e8f0fe; color:#1a5bb5;
-    border-radius:8px; padding:1px 7px; margin:2px; font-size:.73rem;
-}
-
-/* iOS Toggle */
-.toggle-wrap { flex-shrink:0; margin-top:2px; }
-.toggle-switch { position:relative; display:inline-block; width:44px; height:24px; }
-.toggle-switch input { opacity:0; width:0; height:0; }
-.toggle-track {
-    position:absolute; inset:0; border-radius:12px;
-    background:#ddd; cursor:pointer; transition:background .2s;
-}
-.toggle-track:before {
-    content:''; position:absolute; width:18px; height:18px;
-    left:3px; top:3px; border-radius:50%; background:#fff;
-    transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.2);
-}
-.toggle-switch input:checked + .toggle-track { background:#34a853; }
-.toggle-switch input:checked + .toggle-track:before { transform:translateX(20px); }
-
-.save-indicator { font-size:.8rem; color:#888; display:flex; align-items:center; gap:6px; }
-.save-indicator.saving { color:#1a73e8; }
-.save-indicator.saved  { color:#34a853; }
-.save-indicator.error  { color:#e53935; }
-
-/* ══ 規格總表 ══ */
-.spec-table { width:100%; border-collapse:collapse; }
-.spec-table th {
-    background:#f6f7fb; font-weight:700; font-size:.82rem;
-    color:#555; padding:11px 14px; white-space:nowrap; border-bottom:1.5px solid #eee;
-}
-.spec-table td { font-size:.87rem; padding:11px 14px; border-bottom:1px solid #f3f3f3; vertical-align:middle; }
-.spec-table tbody tr:hover { background:#fafcff; }
-
-.bd { display:inline-block; padding:3px 9px; border-radius:12px; font-size:.74rem; font-weight:600; white-space:nowrap; }
-.bd-select   { background:#1a73e8; color:#fff; }
-.bd-text     { background:#9e9e9e; color:#fff; }
-.bd-checkbox { background:#ff9800; color:#fff; }
-.bd-radio    { background:#9c27b0; color:#fff; }
-.bd-req      { background:#e6f4ea; color:#1e7e34; }
-.bd-opt      { display:inline-block; background:#e8f0fe; color:#1a5bb5; padding:2px 8px; border-radius:8px; font-size:.74rem; margin:2px; }
-.bd-cat      { display:inline-block; background:#fff3e0; color:#e65100; padding:2px 8px; border-radius:8px; font-size:.74rem; margin:2px; }
-
-.spin { display:inline-block; width:16px; height:16px; border:2px solid #ddd; border-top-color:#1a73e8; border-radius:50%; animation:_spin .6s linear infinite; }
-@@keyframes _spin { to { transform:rotate(360deg); } }
-
-#gToast {
-    position:fixed; top:22px; right:22px; z-index:9999;
-    display:none; background:#2d2d2d; color:#fff;
-    padding:11px 22px; border-radius:10px; font-size:.86rem;
-    box-shadow:0 4px 18px rgba(0,0,0,.22);
-}
-.btn { border-radius:8px; }
-.btn-sm { font-size:.8rem; padding:4px 10px; }
-</style>
-
-<div id="gToast"></div>
-
-@* ── 右側抽屜 ── *@
-<div id="drawer-overlay" onclick="closeDrawer()"></div>
-<div id="drawer">
-    <div class="drawer-head">
-        <div>
-            <h5 id="drawer-title">設定規格</h5>
-            <small>開啟 Toggle 即時儲存，無需按確認</small>
-        </div>
-        <button class="drawer-close" onclick="closeDrawer()">×</button>
-    </div>
-    <div class="drawer-body" id="drawer-body">
-        <div style="text-align:center;padding:40px;color:#aaa">
-            <div class="spin" style="width:24px;height:24px;margin:0 auto 10px"></div>載入中...
-        </div>
-    </div>
-    <div class="drawer-footer">
-        <div class="save-indicator" id="saveIndicator">✅ 變更即時儲存</div>
-        <button class="btn btn-outline-secondary btn-sm ms-auto" onclick="closeDrawer()">關閉</button>
-    </div>
-</div>
-
-@* ── 頁頭 ── *@
-<div class="d-flex justify-content-between align-items-center mb-3">
+@* ─── 頁面標題 ─────────────────────────────────────── *@
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="fw-bold mb-0">分類規格管理</h4>
-        <small class="text-muted">管理規格字典，點擊分類名稱可設定該分類的規格</small>
+        <h4 class="fw-bold mb-1" style="color:#1e2d3d;">分類屬性管理</h4>
+        <p class="text-muted mb-0 small">設定各分類對應的屬性，前台賣家建立商品時將自動帶出</p>
     </div>
-    <a href="@Url.Action("Create")" class="btn btn-success px-4">＋ 新增規格</a>
+    <button class="btn btn-primary rounded-pill px-4" onclick="openCreateAttrModal()">
+        <i class="bx bx-plus me-1"></i>新增屬性
+    </button>
 </div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show">
-        @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
+@* ─── 主體：左右分欄 ──────────────────────────────── *@
+<div class="row g-4">
 
-@* ══ 卡片一：矩陣總覽 ══ *@
-<div class="mg-card">
-    <div class="mg-head">
-        <div>
-            <h5>🗂 分類 × 規格 綁定總覽</h5>
-            <small style="color:#888;font-size:.8rem">點擊左側分類名稱，右側抽屜開啟編輯</small>
+    @* 左欄：分類樹 *@
+    <div class="col-lg-3">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white border-0 pt-3 pb-2 px-3">
+                <h6 class="fw-bold mb-2" style="color:#566a7f;">
+                    <i class="bx bx-category me-1 text-primary"></i>分類列表
+                </h6>
+                <input id="catSearch" class="form-control form-control-sm rounded-pill"
+                       placeholder="搜尋分類...">
+            </div>
+            <div class="card-body p-2 overflow-auto" style="max-height:68vh;" id="catTree">
+                @foreach (var parent in parents)
+                {
+                    var subs = children.Where(c => c.ParentId == parent.Id).ToList();
+                    if (!subs.Any()) continue;
+                    <div class="cat-group mb-1">
+                        <div class="cat-parent-label">@parent.Name</div>
+                        @foreach (var sub in subs)
+                        {
+                            <div class="cat-item" data-id="@sub.Id" data-name="@sub.Name"
+                                 onclick="selectCategory(this)">
+                                <span class="cat-item-name small fw-medium">@sub.Name</span>
+                                <span class="badge rounded-pill bg-primary-subtle text-primary d-none"
+                                      id="cnt-@sub.Id"></span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
         </div>
-        <small class="text-muted">✓ = 已綁定　○ = 未綁定</small>
     </div>
-    <div class="filter-bar">
-        <input type="text" id="filterCat"   placeholder="🔍 搜尋分類..." oninput="renderMatrix()" style="width:180px">
-        <input type="text" id="filterSpec"  placeholder="🔍 搜尋規格..." oninput="renderMatrix()" style="width:180px">
-        <select id="filterBound" onchange="renderMatrix()" style="width:155px">
-            <option value="">全部分類</option>
-            <option value="bound">有綁定的分類</option>
-            <option value="unbound">未綁定任何規格</option>
-        </select>
-        <button class="btn btn-outline-secondary btn-sm" onclick="resetFilter()">清除</button>
-        <span id="matrixStatus" style="font-size:.8rem;color:#aaa;margin-left:auto"></span>
-    </div>
-    <div class="matrix-wrap">
-        <div id="matrixContainer">
-            <div style="text-align:center;padding:36px;color:#aaa">
-                <div class="spin" style="width:24px;height:24px;margin:0 auto 10px"></div>載入矩陣資料中...
+
+    @* 右欄 *@
+    <div class="col-lg-9">
+
+        @* 未選擇時的提示 *@
+        <div id="noSelection" class="card shadow-sm border-0 rounded-4 text-center py-5 mb-4">
+            <i class="bx bx-left-arrow-circle fs-1 d-block mb-2" style="color:#adb5bd;"></i>
+            <p class="text-muted mb-0">請點選左側分類來管理其屬性</p>
+        </div>
+
+        @* 綁定面板 *@
+        <div id="bindingPanel" class="d-none mb-4">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0" style="color:#1e2d3d;">
+                        <i class="bx bx-link me-2 text-primary"></i>
+                        <span id="selCatName">—</span> 的屬性設定
+                    </h5>
+                    <button class="btn btn-sm btn-primary rounded-pill px-3" onclick="openBindModal()">
+                        <i class="bx bx-link-alt me-1"></i>綁定屬性
+                    </button>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <p class="text-muted small mb-3">
+                        <i class="bx bx-info-circle me-1"></i>
+                        拖拉左側 <i class="bx bx-grid-vertical"></i> 可調整順序；切換「可篩選」決定前台是否提供篩選條件。
+                    </p>
+                    <div id="boundEmpty" class="text-center py-5 text-muted d-none">
+                        <i class="bx bx-unlink fs-1 d-block mb-2 opacity-50"></i>
+                        此分類尚未綁定任何屬性，點擊「綁定屬性」開始設定
+                    </div>
+                    <div id="boundTableWrap" class="d-none">
+                        <table class="table table-hover align-middle bound-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th width="40"></th>
+                                    <th>屬性名稱</th>
+                                    <th>輸入類型</th>
+                                    <th class="text-center">必填</th>
+                                    <th class="text-center">可篩選</th>
+                                    <th>選項預覽</th>
+                                    <th class="text-end">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="boundTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* 屬性庫 *@
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-0" style="color:#1e2d3d;">
+                    <i class="bx bx-library me-2 text-secondary"></i>屬性庫
+                    <span class="badge bg-secondary-subtle text-secondary rounded-pill ms-1 fw-normal" style="font-size:.78rem;">@allSpecs.Count</span>
+                </h5>
+                <input id="libSearch" class="form-control form-control-sm rounded-pill"
+                       style="max-width:220px;" placeholder="搜尋屬性...">
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (!allSpecs.Any())
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bx bx-category-alt fs-1 d-block mb-2 opacity-50"></i>
+                        <p>尚未建立任何屬性，點擊右上角「新增屬性」開始</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive mt-3">
+                        <table class="table table-hover align-middle lib-table mb-0" id="libTable">
+                            <thead>
+                                <tr>
+                                    <th>屬性名稱</th>
+                                    <th>輸入類型</th>
+                                    <th class="text-center">必填</th>
+                                    <th>選項</th>
+                                    <th>已綁分類</th>
+                                    <th class="text-end">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var spec in allSpecs)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@spec.Name</td>
+                                        <td>
+                                            <span class="badge rounded-pill @InputTypeBadgeCls(spec.InputType)">
+                                                @InputTypeLabel(spec.InputType)
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (spec.IsRequired)
+                                            {
+                                                <span class="badge rounded-pill bg-danger-subtle text-danger">必填</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        <td class="text-muted small">
+                                            @if (spec.Options.Any())
+                                            {
+                                                @string.Join("、", spec.Options.Take(4))
+                                                @if (spec.Options.Count > 4)
+                                                {
+                                                    <span class="opacity-50"> +@(spec.Options.Count - 4)</span>
+                                                }
+                                            }
+                                            else { <text>—</text> }
+                                        </td>
+                                        <td>
+                                            @if (spec.BoundCategoryNames.Any())
+                                            {
+                                                @foreach (var cn in spec.BoundCategoryNames.Take(3))
+                                                {
+                                                    <span class="badge rounded-pill bg-success-subtle text-success me-1">@cn</span>
+                                                }
+                                                @if (spec.BoundCategoryNames.Count > 3)
+                                                {
+                                                    <span class="text-muted small">+@(spec.BoundCategoryNames.Count - 3)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">未綁定</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex gap-1 justify-content-end">
+                                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                        onclick="openEditAttrModal(@spec.Id)">
+                                                    <i class="bx bx-edit me-1"></i>編輯
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                        onclick="deleteSpec(@spec.Id, '@Html.Raw(spec.Name.Replace("'", "\\'"))')">
+                                                    <i class="bx bx-trash me-1"></i>刪除
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
         </div>
     </div>
 </div>
 
-@* ══ 卡片二：規格總表 ══ *@
-<div class="mg-card">
-    <div class="mg-head">
-        <h5>📋 規格總表</h5>
-        <span style="font-size:.82rem;color:#999">共 @specList.Count 筆</span>
-    </div>
-    @if (!specList.Any())
-    {
-        <div style="text-align:center;padding:48px;color:#bbb">
-            <div style="font-size:2rem;margin-bottom:8px">📭</div>
-            尚無規格，請點右上角「＋ 新增規格」
+@* ══ Modal 1：新增屬性 ════════════════════════════════ *@
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bx bx-plus-circle text-primary me-2"></i>新增屬性
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">屬性名稱 <span class="text-danger">*</span></label>
+                    <input id="createAttrName" type="text" class="form-control" placeholder="例如：顏色、尺寸、材質">
+                    <div class="invalid-feedback">請填寫屬性名稱</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">輸入類型</label>
+                    <select id="createInputType" class="form-select" onchange="onCreateTypeChange()">
+                        <option value="text">文字輸入</option>
+                        <option value="select">單選（下拉）</option>
+                        <option value="checkbox">多選（核取方塊）</option>
+                        <option value="radio">單選按鈕</option>
+                        <option value="number">數字輸入</option>
+                    </select>
+                </div>
+                <div class="mb-3 d-none" id="createOptionsSection">
+                    <label class="form-label fw-medium">選項清單</label>
+                    <div id="createOptions"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-1"
+                            onclick="addOption('createOptions')">
+                        <i class="bx bx-plus me-1"></i>新增選項
+                    </button>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="createIsRequired">
+                        <label class="form-check-label fw-medium" for="createIsRequired">此屬性為必填</label>
+                    </div>
+                </div>
+                <div class="mb-1">
+                    <label class="form-label fw-medium">排序值</label>
+                    <input id="createSortOrder" type="number" class="form-control" value="0" min="0">
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveCreateAttr()">
+                    <i class="bx bx-save me-1"></i>儲存屬性
+                </button>
+            </div>
         </div>
-    }
-    else
-    {
-        <table class="spec-table">
-            <thead>
-                <tr>
-                    <th style="width:44px">#</th>
-                    <th>規格名稱</th>
-                    <th>輸入類型</th>
-                    <th>必填</th>
-                    <th>選項內容</th>
-                    <th>已綁定分類</th>
-                    <th style="width:60px">排序</th>
-                    <th style="width:130px">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var spec in specList)
-                {
-                    <tr>
-                        <td style="color:#ccc;font-size:.8rem">@spec.Id</td>
-                        <td><strong>@spec.Name</strong></td>
-                        <td>
-                            @{
-                                var (tl, tc) = spec.InputType switch {
-                                    "select"   => ("下拉選單", "bd-select"),
-                                    "checkbox" => ("多選框",   "bd-checkbox"),
-                                    "radio"    => ("單選框",   "bd-radio"),
-                                    _          => ("文字輸入", "bd-text")
-                                };
-                            }
-                            <span class="bd @tc">@tl</span>
-                        </td>
-                        <td>
-                            @if (spec.IsRequired)
-                            { <span class="bd bd-req">✓ 必填</span> }
-                            else
-                            { <span style="color:#bbb;font-size:.82rem">選填</span> }
-                        </td>
-                        <td>
-                            @if (spec.InputType == "text")
-                            { <span style="color:#aaa;font-size:.82rem">✏️ 自由輸入</span> }
-                            else if (spec.Options.Any())
-                            { foreach (var o in spec.Options) { <span class="bd-opt">@o</span> } }
-                            else
-                            { <span style="color:#ccc;font-size:.8rem">尚未設定</span> }
-                        </td>
-                        <td class="bound-cats-cell" data-spec-id="@spec.Id">
-                            @if (spec.BoundCategoryNames != null && spec.BoundCategoryNames.Any())
-                            { foreach (var cat in spec.BoundCategoryNames) { <span class="bd-cat">@cat</span> } }
-                            else
-                            { <span style="color:#ccc;font-size:.8rem">尚未綁定</span> }
-                        </td>
-                        <td style="color:#aaa">@spec.SortOrder</td>
-                        <td>
-                            <a href="@Url.Action("Edit", new { id = spec.Id })"
-                               class="btn btn-primary btn-sm me-1">編輯</a>
-                            <form method="post" action="@Url.Action("Delete", new { id = spec.Id })"
-                                  style="display:inline"
-                                  onsubmit="return confirm('確定刪除「@spec.Name」？')">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-danger btn-sm">刪除</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+    </div>
 </div>
 
-@section Scripts {
-<script>
-let MATRIX = { specs:[], categories:[], parentCategories:[], bindings:[] };
-let boundSet = new Set();   // 'catId_specId'
-let drawerCatId = null;
+@* ══ Modal 2：綁定屬性 ════════════════════════════════ *@
+<div class="modal fade" id="bindModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bx bx-link-alt text-primary me-2"></i>
+                    綁定屬性到「<span id="bindModalCatName"></span>」
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <p class="text-muted small mb-3">
+                    勾選要綁定的屬性。若屬性庫中沒有所需屬性，請先在屬性庫新增後再回來綁定。
+                </p>
+                <input id="bindSearch" class="form-control form-control-sm rounded-pill mb-3"
+                       placeholder="搜尋屬性庫..." oninput="filterBindList()">
+                <div id="bindSpecList" style="max-height:340px;overflow-y:auto;"></div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmBind()">
+                    <i class="bx bx-link me-1"></i>確認綁定
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-// ── 載入矩陣資料 ──
+@* ══ Modal 3：編輯屬性 ════════════════════════════════ *@
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bx bx-edit text-warning me-2"></i>編輯屬性
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <input type="hidden" id="editAttrId">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">屬性名稱 <span class="text-danger">*</span></label>
+                    <input id="editAttrName" type="text" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">輸入類型</label>
+                    <select id="editInputType" class="form-select" onchange="onEditTypeChange()">
+                        <option value="text">文字輸入</option>
+                        <option value="select">單選（下拉）</option>
+                        <option value="checkbox">多選（核取方塊）</option>
+                        <option value="radio">單選按鈕</option>
+                        <option value="number">數字輸入</option>
+                    </select>
+                </div>
+                <div class="mb-3 d-none" id="editOptionsSection">
+                    <label class="form-label fw-medium">選項清單</label>
+                    <div id="editOptions"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-1"
+                            onclick="addOption('editOptions')">
+                        <i class="bx bx-plus me-1"></i>新增選項
+                    </button>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editIsRequired">
+                        <label class="form-check-label fw-medium" for="editIsRequired">此屬性為必填</label>
+                    </div>
+                </div>
+                <div class="mb-1">
+                    <label class="form-label fw-medium">排序值</label>
+                    <input id="editSortOrder" type="number" class="form-control" min="0">
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" onclick="saveEditAttr()">
+                    <i class="bx bx-save me-1"></i>更新屬性
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ════════════════════════════════════════
+   Scripts
+════════════════════════════════════════ *@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+<script>
+// ── 初始資料（Server 序列化）─────────────────────
+const allSpecsData = @Html.Raw(JsonSerializer.Serialize(allSpecs.Select(s => new {
+    id         = s.Id,
+    name       = s.Name,
+    inputType  = s.InputType,
+    isRequired = s.IsRequired,
+    sortOrder  = s.SortOrder,
+    options    = s.Options
+})));
+
+const _bindingPairs = @Html.Raw(JsonSerializer.Serialize(
+    (ViewBag._categorySpecService_BindingPairs ?? new object[0])));
+
+// ── 狀態 ─────────────────────────────────────────
+let selectedCatId   = null;
+let selectedCatName = '';
+let boundSpecs      = [];
+let sortableInst    = null;
+
+// ── 初始化 ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    fetch('/CategorySpecs/GetMatrixData')
-        .then(r => r.json())
-        .then(data => {
-            MATRIX = data;
-            boundSet = new Set(data.bindings.map(b => b.categoryId + '_' + b.attributeId));
-            renderMatrix();
-        })
-        .catch(() => {
-            document.getElementById('matrixContainer').innerHTML =
-                '<div style="text-align:center;padding:30px;color:#e53935">資料載入失敗，請重新整理</div>';
-        });
+    initBoundCountBadges();
+    initCatSearch();
+    initLibSearch();
+    restoreSelection();
 });
 
-// ── 渲染矩陣 ──
-function renderMatrix() {
-    const catQ   = document.getElementById('filterCat').value.toLowerCase();
-    const specQ  = document.getElementById('filterSpec').value.toLowerCase();
-    const boundF = document.getElementById('filterBound').value;
+function initBoundCountBadges() {
+    const pairs = @Html.Raw(JsonSerializer.Serialize(
+        ViewBag.BindingPairs != null
+            ? ((IEnumerable<object>)ViewBag.BindingPairs).Select(p => p)
+            : new object[0]));
 
-    const visSpecs = MATRIX.specs.filter(s =>
-        !specQ || s.name.toLowerCase().includes(specQ)
-    );
-    if (!visSpecs.length) {
-        document.getElementById('matrixContainer').innerHTML =
-            '<div style="text-align:center;padding:28px;color:#aaa">沒有符合的規格</div>';
+    const counts = {};
+    pairs.forEach(p => {
+        const id = p.categoryId ?? p.CategoryId;
+        if (id) counts[id] = (counts[id] || 0) + 1;
+    });
+    Object.entries(counts).forEach(([id, cnt]) => {
+        const el = document.getElementById('cnt-' + id);
+        if (el) { el.textContent = cnt; el.classList.remove('d-none'); }
+    });
+}
+
+function restoreSelection() {
+    const savedId = sessionStorage.getItem('catAttrSelectedId');
+    if (!savedId) return;
+    const el = document.querySelector(`.cat-item[data-id="${savedId}"]`);
+    if (el) el.click();
+}
+
+// ── 分類選擇 ──────────────────────────────────────
+function selectCategory(el) {
+    document.querySelectorAll('.cat-item').forEach(e => e.classList.remove('cat-active'));
+    el.classList.add('cat-active');
+
+    selectedCatId   = parseInt(el.dataset.id);
+    selectedCatName = el.dataset.name;
+    sessionStorage.setItem('catAttrSelectedId', selectedCatId);
+
+    document.getElementById('noSelection').classList.add('d-none');
+    document.getElementById('bindingPanel').classList.remove('d-none');
+    document.getElementById('selCatName').textContent      = selectedCatName;
+    document.getElementById('bindModalCatName').textContent = selectedCatName;
+
+    loadBoundSpecs();
+}
+
+// ── 載入已綁定屬性 ────────────────────────────────
+async function loadBoundSpecs() {
+    const res = await fetch(`/CategorySpecs/GetBoundSpecs?categoryId=${selectedCatId}`);
+    boundSpecs = await res.json();
+    renderBoundTable();
+}
+
+function renderBoundTable() {
+    const tbody     = document.getElementById('boundTbody');
+    const emptyDiv  = document.getElementById('boundEmpty');
+    const tableWrap = document.getElementById('boundTableWrap');
+    const cntEl     = document.getElementById('cnt-' + selectedCatId);
+
+    if (cntEl) { cntEl.textContent = boundSpecs.length; cntEl.classList.toggle('d-none', boundSpecs.length === 0); }
+
+    if (boundSpecs.length === 0) {
+        emptyDiv.classList.remove('d-none');
+        tableWrap.classList.add('d-none');
         return;
     }
+    emptyDiv.classList.add('d-none');
+    tableWrap.classList.remove('d-none');
 
-    // 依父分類分群
-    const groups = {};
-    MATRIX.categories
-        .filter(c => !catQ || c.name.toLowerCase().includes(catQ))
-        .forEach(c => {
-            const pid = c.parentId ?? 0;
-            if (!groups[pid]) groups[pid] = [];
-            groups[pid].push(c);
-        });
+    tbody.innerHTML = boundSpecs.map(s => `
+        <tr data-spec-id="${s.specId}">
+            <td class="text-center drag-handle" style="cursor:grab;color:#adb5bd;" title="拖拉排序">
+                <i class="bx bx-grid-vertical fs-5"></i>
+            </td>
+            <td class="fw-semibold">${esc(s.name)}</td>
+            <td>${typeBadge(s.inputType)}</td>
+            <td class="text-center">
+                <span class="badge rounded-pill ${s.isRequired ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary'}">
+                    ${s.isRequired ? '必填' : '選填'}
+                </span>
+            </td>
+            <td class="text-center">
+                <div class="form-check form-switch d-flex justify-content-center mb-0">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           ${s.isFilterable ? 'checked' : ''}
+                           onchange="toggleFilterable(${s.specId}, this.checked)">
+                </div>
+            </td>
+            <td class="text-muted small">
+                ${s.options.length ? s.options.slice(0,4).map(esc).join('、') + (s.options.length > 4 ? ` +${s.options.length-4}` : '') : '—'}
+            </td>
+            <td class="text-end">
+                <button class="btn btn-sm btn-outline-danger rounded-pill"
+                        onclick="unbindSpec(${s.specId}, '${escJs(s.name)}')">
+                    <i class="bx bx-unlink me-1"></i>解除
+                </button>
+            </td>
+        </tr>
+    `).join('');
 
-    let html = '<table class="matrix-table"><thead><tr>';
-    html += '<th class="col-cat">分類 <span style="font-weight:400;color:#aaa;font-size:.7rem">（點擊編輯）</span></th>';
-    visSpecs.forEach(s => {
-        const preview = s.options && s.options.length
-            ? s.options.slice(0, 3).join('・') + (s.options.length > 3 ? '…' : '')
-            : (s.inputType === 'text' ? '自由輸入' : '');
-        html += `<th class="spec-head" title="${esc(s.name)}">
-            <div class="spec-head-name">${esc(s.name)}</div>
-            <div class="spec-head-opts">${esc(preview)}</div>
-        </th>`;
+    if (sortableInst) sortableInst.destroy();
+    sortableInst = new Sortable(tbody, {
+        animation: 150,
+        handle: '.drag-handle',
+        onEnd: async () => {
+            const ids = [...tbody.querySelectorAll('tr')].map(r => parseInt(r.dataset.specId));
+            await post('/CategorySpecs/UpdateBindingSort', { categoryId: selectedCatId, orderedSpecIds: ids });
+        }
     });
-    html += '</tr></thead><tbody>';
+}
 
-    let rowCount = 0;
-    let hasVisible = false;
+// ── 切換可篩選 ────────────────────────────────────
+async function toggleFilterable(specId, isFilterable) {
+    await post('/CategorySpecs/ToggleFilterable', { categoryId: selectedCatId, specId, isFilterable });
+}
 
-    Object.keys(groups).forEach(pid => {
-        const cats = groups[pid];
-        if (!cats.length) return;
-
-        const filtered = cats.filter(c => {
-            if (!boundF) return true;
-            const hasBound = visSpecs.some(s => boundSet.has(c.id + '_' + s.id));
-            return boundF === 'bound' ? hasBound : !hasBound;
-        });
-        if (!filtered.length) return;
-        hasVisible = true;
-
-        const pName = (MATRIX.parentCategories.find(p => p.id === parseInt(pid)) || {}).name || '其他分類';
-        html += `<tr class="group-row"><td colspan="${visSpecs.length + 1}">📁 ${esc(pName)}</td></tr>`;
-
-        filtered.forEach(c => {
-            const boundCount = visSpecs.filter(s => boundSet.has(c.id + '_' + s.id)).length;
-            const pillHtml = boundCount > 0
-                ? `<span class="bound-count-pill" id="pill_${c.id}">${boundCount} 個規格</span>`
-                : `<span class="bound-count-pill" id="pill_${c.id}" style="display:none">0 個規格</span>`;
-            html += `<tr data-cat-id="${c.id}">
-                <td class="col-cat">
-                    <div class="cat-row-link" onclick="openDrawer(${c.id},'${c.name.replace(/'/g, "\\'")}')">
-                        <span class="cat-name">${esc(c.name)}</span>
-                        <span>${pillHtml}<span class="edit-icon">✏️</span></span>
-                    </div>
-                </td>`;
-            visSpecs.forEach(s => {
-                const on = boundSet.has(c.id + '_' + s.id);
-                html += `<td class="status-cell">
-                    <div class="status-dot ${on ? 'on' : 'off'}"
-                         id="dot_${c.id}_${s.id}"
-                         title="${on ? '已綁定' : '未綁定'}">
-                        ${on ? '✓' : '○'}
-                    </div>
-                </td>`;
-            });
-            html += '</tr>';
-            rowCount++;
-        });
+// ── 解除綁定 ──────────────────────────────────────
+async function unbindSpec(specId, name) {
+    const r = await Swal.fire({
+        title:'解除綁定', html:`確定要解除「<strong>${esc(name)}</strong>」與此分類的綁定？`,
+        icon:'warning', showCancelButton:true,
+        confirmButtonColor:'#e53e3e', confirmButtonText:'確認解除', cancelButtonText:'取消'
     });
+    if (!r.isConfirmed) return;
+    await post('/CategorySpecs/UnbindSpec', { categoryId: selectedCatId, specId });
+    toast('已解除綁定', 'success');
+    await loadBoundSpecs();
+}
 
-    if (!hasVisible) {
-        document.getElementById('matrixContainer').innerHTML =
-            '<div style="text-align:center;padding:28px;color:#aaa">沒有符合的分類</div>';
+// ── 綁定屬性 Modal ────────────────────────────────
+function openBindModal() {
+    if (!selectedCatId) return;
+    document.getElementById('bindSearch').value = '';
+    renderBindList('');
+    new bootstrap.Modal(document.getElementById('bindModal')).show();
+}
+
+function renderBindList(q) {
+    const boundIds  = new Set(boundSpecs.map(s => s.specId));
+    const available = allSpecsData.filter(s =>
+        !boundIds.has(s.id) && (!q || s.name.toLowerCase().includes(q.toLowerCase())));
+    const list = document.getElementById('bindSpecList');
+    if (!available.length) {
+        list.innerHTML = '<p class="text-muted text-center py-4">所有屬性皆已綁定至此分類</p>';
         return;
     }
-
-    html += '</tbody></table>';
-    document.getElementById('matrixContainer').innerHTML = html;
-    document.getElementById('matrixStatus').textContent =
-        `顯示 ${rowCount} 個分類 × ${visSpecs.length} 個規格`;
+    list.innerHTML = available.map(s => `
+        <div class="form-check d-flex align-items-center gap-2 py-2 border-bottom">
+            <input class="form-check-input bind-chk flex-shrink-0" type="checkbox" value="${s.id}" id="bc${s.id}">
+            <label class="form-check-label d-flex align-items-center justify-content-between w-100 mb-0"
+                   for="bc${s.id}" style="cursor:pointer;">
+                <span class="fw-medium">${esc(s.name)}</span>
+                ${typeBadge(s.inputType)}
+            </label>
+        </div>
+    `).join('');
 }
 
-// ── 開啟抽屜 ──
-function openDrawer(catId, catName) {
-    drawerCatId = catId;
-    document.getElementById('drawer-title').textContent = '✏️ ' + catName;
-    document.getElementById('saveIndicator').textContent = '✅ 變更即時儲存';
-    document.getElementById('saveIndicator').className = 'save-indicator';
-    document.getElementById('drawer-body').innerHTML =
-        '<div style="text-align:center;padding:40px;color:#aaa"><div class="spin" style="width:24px;height:24px;margin:0 auto 10px"></div>載入中...</div>';
-    document.getElementById('drawer').classList.add('open');
-    document.getElementById('drawer-overlay').classList.add('open');
+function filterBindList() {
+    renderBindList(document.getElementById('bindSearch').value);
+}
 
-    fetch('/CategorySpecs/GetBoundSpecItems?categoryId=' + catId)
-        .then(r => r.json())
-        .then(items => renderDrawer(catId, items))
-        .catch(() => {
-            document.getElementById('drawer-body').innerHTML =
-                '<div style="text-align:center;padding:40px;color:#e53935">載入失敗，請重試</div>';
+async function confirmBind() {
+    const ids = [...document.querySelectorAll('.bind-chk:checked')].map(e => +e.value);
+    if (!ids.length) { toast('請勾選至少一個屬性', 'warning'); return; }
+    for (const id of ids) await post('/CategorySpecs/BindSpec', { categoryId: selectedCatId, specId: id });
+    bootstrap.Modal.getInstance(document.getElementById('bindModal'))?.hide();
+    toast(`已綁定 ${ids.length} 個屬性`, 'success');
+    await loadBoundSpecs();
+}
+
+// ── 新增屬性 Modal ────────────────────────────────
+function openCreateAttrModal() {
+    document.getElementById('createAttrName').value     = '';
+    document.getElementById('createInputType').value    = 'text';
+    document.getElementById('createIsRequired').checked = false;
+    document.getElementById('createSortOrder').value    = '0';
+    document.getElementById('createOptions').innerHTML  = '';
+    document.getElementById('createOptionsSection').classList.add('d-none');
+    document.getElementById('createAttrName').classList.remove('is-invalid');
+    new bootstrap.Modal(document.getElementById('createModal')).show();
+}
+
+function onCreateTypeChange() {
+    const needs = needsOptions(document.getElementById('createInputType').value);
+    document.getElementById('createOptionsSection').classList.toggle('d-none', !needs);
+}
+
+async function saveCreateAttr() {
+    const name = document.getElementById('createAttrName').value.trim();
+    if (!name) { document.getElementById('createAttrName').classList.add('is-invalid'); return; }
+    document.getElementById('createAttrName').classList.remove('is-invalid');
+
+    const payload = {
+        name,
+        inputType : document.getElementById('createInputType').value,
+        isRequired: document.getElementById('createIsRequired').checked,
+        sortOrder : +document.getElementById('createSortOrder').value || 0,
+        options   : getOpts('createOptions')
+    };
+    const data = await post('/CategorySpecs/CreateAjax', payload);
+    if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('createModal'))?.hide();
+        toast('屬性新增成功', 'success');
+        setTimeout(() => location.reload(), 900);
+    } else { toast(data.message || '新增失敗', 'error'); }
+}
+
+// ── 編輯屬性 Modal ────────────────────────────────
+function openEditAttrModal(id) {
+    const s = allSpecsData.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('editAttrId').value         = id;
+    document.getElementById('editAttrName').value       = s.name;
+    document.getElementById('editInputType').value      = s.inputType;
+    document.getElementById('editIsRequired').checked   = s.isRequired;
+    document.getElementById('editSortOrder').value      = s.sortOrder;
+    const needs = needsOptions(s.inputType);
+    document.getElementById('editOptionsSection').classList.toggle('d-none', !needs);
+    document.getElementById('editOptions').innerHTML =
+        (s.options || []).map(o => optRow(o, 'editOptions')).join('');
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+function onEditTypeChange() {
+    document.getElementById('editOptionsSection').classList.toggle('d-none',
+        !needsOptions(document.getElementById('editInputType').value));
+}
+
+async function saveEditAttr() {
+    const name = document.getElementById('editAttrName').value.trim();
+    if (!name) return;
+    const data = await post('/CategorySpecs/EditAjax', {
+        id        : +document.getElementById('editAttrId').value,
+        name,
+        inputType : document.getElementById('editInputType').value,
+        isRequired: document.getElementById('editIsRequired').checked,
+        sortOrder : +document.getElementById('editSortOrder').value || 0,
+        options   : getOpts('editOptions')
+    });
+    if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('editModal'))?.hide();
+        toast('屬性更新成功', 'success');
+        setTimeout(() => location.reload(), 900);
+    }
+}
+
+// ── 刪除屬性 ──────────────────────────────────────
+async function deleteSpec(id, name) {
+    const r = await Swal.fire({
+        title:'確認刪除屬性',
+        html:`確定要刪除「<strong>${esc(name)}</strong>」？<br>
+              <span class="text-muted small">若已綁定至分類，系統將拒絕刪除。</span>`,
+        icon:'warning', showCancelButton:true,
+        confirmButtonColor:'#e53e3e', confirmButtonText:'確認刪除', cancelButtonText:'取消'
+    });
+    if (!r.isConfirmed) return;
+    const data = await post('/CategorySpecs/DeleteAjax', { id });
+    if (data.success) {
+        toast('屬性已刪除', 'success');
+        setTimeout(() => location.reload(), 900);
+    } else { Swal.fire({ title:'無法刪除', text:data.message, icon:'error' }); }
+}
+
+// ── 搜尋 ──────────────────────────────────────────
+function initLibSearch() {
+    document.getElementById('libSearch').addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#libTable tbody tr').forEach(tr => {
+            tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
         });
-}
-
-// ── 關閉抽屜 ──
-function closeDrawer() {
-    document.getElementById('drawer').classList.remove('open');
-    document.getElementById('drawer-overlay').classList.remove('open');
-    drawerCatId = null;
-}
-
-// ── 渲染抽屜內容 ──
-// boundItems = [{ attributeId, isFilterable }, ...]
-function renderDrawer(catId, boundItems) {
-    const typeMap = { text:'文字輸入', select:'下拉選單', checkbox:'多選框', radio:'單選框' };
-    const typeCls = { text:'bd-text', select:'bd-select', checkbox:'bd-checkbox', radio:'bd-radio' };
-
-    if (!MATRIX.specs.length) {
-        document.getElementById('drawer-body').innerHTML =
-            '<div style="text-align:center;padding:40px;color:#aaa">尚無規格，請先新增</div>';
-        return;
-    }
-
-    const boundMap = {};
-    (boundItems || []).forEach(item => {
-        boundMap[item.attributeId] = item.isFilterable;
-    });
-
-    document.getElementById('drawer-body').innerHTML = MATRIX.specs.map(s => {
-        const on          = s.id in boundMap;
-        const filterable  = on ? boundMap[s.id] : false;
-        const opts = s.options && s.options.length
-            ? s.options.map(o => `<span>${esc(o)}</span>`).join('')
-            : (s.inputType === 'text' ? '✏️ 自由輸入文字' : '<span style="color:#ccc">尚無選項</span>');
-        return `<div class="spec-toggle-item">
-            <div class="spec-toggle-info">
-                <div class="spec-toggle-name">
-                    ${esc(s.name)}
-                    <span class="bd ${typeCls[s.inputType] || 'bd-text'}" style="font-size:.68rem;padding:2px 7px">${typeMap[s.inputType] || s.inputType}</span>
-                    ${s.isRequired ? '<span class="bd bd-req" style="font-size:.68rem;padding:2px 7px">必填</span>' : ''}
-                </div>
-                <div class="spec-toggle-opts">${opts}</div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span style="font-size:.72rem;color:#888">綁定</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="tog_${s.id}" ${on ? 'checked' : ''}
-                               data-spec-id="${s.id}"
-                               onchange="toggleSpec(this)">
-                        <span class="toggle-track"></span>
-                    </label>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span style="font-size:.72rem;color:#888">可篩選</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="fil_${s.id}" ${filterable ? 'checked' : ''} ${on ? '' : 'disabled'}
-                               data-spec-id="${s.id}"
-                               onchange="toggleFilterable(this)">
-                        <span class="toggle-track" style="${on ? '' : 'opacity:.4;cursor:not-allowed'}"></span>
-                    </label>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-// ── 切換單一綁定（即時儲存）──
-function toggleSpec(input) {
-    const specId  = parseInt(input.dataset.specId);
-    const isBound = input.checked;
-    const catId   = drawerCatId;
-    const key     = catId + '_' + specId;
-    const ind     = document.getElementById('saveIndicator');
-    ind.className = 'save-indicator saving'; ind.textContent = '⏳ 儲存中...';
-
-    fetch('/CategorySpecs/ToggleSpec', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoryId: catId, attributeId: specId, isBound: isBound })
-    })
-    .then(r => r.json())
-    .then(() => {
-        // 更新本地 boundSet
-        if (isBound) boundSet.add(key);
-        else         boundSet.delete(key);
-
-        // 連動 isFilterable Toggle 的 disabled 狀態
-        const filInput = document.getElementById('fil_' + specId);
-        if (filInput) {
-            filInput.disabled = !isBound;
-            const track = filInput.nextElementSibling;
-            if (track) track.style.opacity = isBound ? '' : '.4';
-            if (track) track.style.cursor  = isBound ? '' : 'not-allowed';
-            if (!isBound) filInput.checked = false;
-        }
-
-        // 更新矩陣狀態點
-        const dot = document.getElementById('dot_' + catId + '_' + specId);
-        if (dot) {
-            dot.className = 'status-dot ' + (isBound ? 'on' : 'off');
-            dot.title = isBound ? '已綁定' : '未綁定';
-            dot.textContent = isBound ? '✓' : '○';
-        }
-
-        // 更新 bound-count-pill
-        const cnt = MATRIX.specs.filter(s => boundSet.has(catId + '_' + s.id)).length;
-        const pill = document.getElementById('pill_' + catId);
-        if (pill) {
-            pill.textContent = cnt + ' 個規格';
-            pill.style.display = cnt > 0 ? '' : 'none';
-        }
-
-        // 更新規格總表「已綁定分類」欄
-        updateBoundCatCell(specId);
-
-        ind.className = 'save-indicator saved'; ind.textContent = '✅ 已儲存';
-        showToast(isBound ? '✓ 已綁定規格' : '規格已解除綁定');
-        setTimeout(() => {
-            ind.className = 'save-indicator'; ind.textContent = '✅ 變更即時儲存';
-        }, 2000);
-    })
-    .catch(() => {
-        input.checked = !isBound;
-        ind.className = 'save-indicator error'; ind.textContent = '❌ 儲存失敗';
     });
 }
 
-// ── 切換 IsFilterable（即時儲存）──
-function toggleFilterable(input) {
-    const specId       = parseInt(input.dataset.specId);
-    const isFilterable = input.checked;
-    const ind          = document.getElementById('saveIndicator');
-    ind.className = 'save-indicator saving'; ind.textContent = '⏳ 儲存中...';
-
-    fetch('/CategorySpecs/ToggleFilterable', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoryId: drawerCatId, specId: specId, isFilterable: isFilterable })
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (!d.success) throw new Error();
-        ind.className = 'save-indicator saved'; ind.textContent = '✅ 已儲存';
-        showToast(isFilterable ? '🔍 已設為可篩選' : '篩選已關閉');
-        setTimeout(() => {
-            ind.className = 'save-indicator'; ind.textContent = '✅ 變更即時儲存';
-        }, 2000);
-    })
-    .catch(() => {
-        input.checked = !isFilterable;
-        ind.className = 'save-indicator error'; ind.textContent = '❌ 儲存失敗';
+function initCatSearch() {
+    document.getElementById('catSearch').addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.cat-item').forEach(el => {
+            el.style.display = el.dataset.name.toLowerCase().includes(q) ? '' : 'none';
+        });
+        document.querySelectorAll('.cat-group').forEach(g => {
+            const any = [...g.querySelectorAll('.cat-item')].some(e => e.style.display !== 'none');
+            g.style.display = any ? '' : 'none';
+        });
     });
 }
 
-// ── 更新規格總表「已綁定分類」欄 ──
-function updateBoundCatCell(specId) {
-    const cell = document.querySelector('.bound-cats-cell[data-spec-id="' + specId + '"]');
-    if (!cell) return;
-    const cats = MATRIX.categories.filter(c => boundSet.has(c.id + '_' + specId));
-    if (!cats.length) {
-        cell.innerHTML = '<span style="color:#ccc;font-size:.8rem">尚未綁定</span>';
-    } else {
-        cell.innerHTML = cats.map(c => `<span class="bd-cat">${esc(c.name)}</span>`).join('');
-    }
+// ── 工具 ──────────────────────────────────────────
+function needsOptions(t) { return ['select','checkbox','radio'].includes(t); }
+
+function getOpts(id) {
+    return [...document.querySelectorAll(`#${id} .opt-inp`)].map(i => i.value.trim()).filter(Boolean);
 }
 
-// ── 清除篩選 ──
-function resetFilter() {
-    document.getElementById('filterCat').value  = '';
-    document.getElementById('filterSpec').value = '';
-    document.getElementById('filterBound').value = '';
-    renderMatrix();
+function addOption(id) {
+    const c = document.getElementById(id);
+    const d = document.createElement('div');
+    d.className = 'd-flex gap-2 mb-2';
+    d.innerHTML = `<input type="text" class="form-control form-control-sm opt-inp" placeholder="選項名稱">
+        <button type="button" class="btn btn-sm btn-outline-danger px-2" onclick="this.parentElement.remove()">
+            <i class="bx bx-x"></i></button>`;
+    c.appendChild(d);
+    d.querySelector('.opt-inp').focus();
 }
 
-// ── HTML 跳脫（防 XSS）──
-function esc(str) {
-    return String(str)
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function optRow(v, _) {
+    return `<div class="d-flex gap-2 mb-2">
+        <input type="text" class="form-control form-control-sm opt-inp" value="${esc(v)}">
+        <button type="button" class="btn btn-sm btn-outline-danger px-2" onclick="this.parentElement.remove()">
+            <i class="bx bx-x"></i></button>
+    </div>`;
 }
 
-function showToast(msg) {
-    const t = document.getElementById('gToast');
-    t.textContent = msg; t.style.display = 'block';
-    setTimeout(() => { t.style.display = 'none'; }, 2800);
+function typeBadge(t) {
+    const l = {text:'文字',select:'單選',checkbox:'多選',radio:'單選按鈕',number:'數字'};
+    const c = {text:'secondary',select:'primary',checkbox:'info',radio:'warning',number:'success'};
+    return `<span class="badge rounded-pill bg-${c[t]||'secondary'}-subtle text-${c[t]||'secondary'}">${l[t]||t}</span>`;
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escJs(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+async function post(url, body) {
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    return r.json();
+}
+
+function toast(msg, icon) {
+    Swal.fire({ toast:true, position:'top-end', icon, title:msg, showConfirmButton:false, timer:1800 });
 }
 </script>
+
+@* ─── 樣式 ────────────────────────────────────────── *@
+<style>
+.cat-parent-label {
+    font-size:.71rem; letter-spacing:.8px; color:#8592a3; font-weight:600;
+    padding:.4rem .75rem .1rem; text-transform:uppercase;
 }
+.cat-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.45rem .75rem; border-radius:8px; cursor:pointer; transition:background .12s;
+}
+.cat-item:hover  { background:#f0f3ff; }
+.cat-active      { background:#e8eeff !important; }
+.cat-active .cat-item-name { color:#3d5afe; font-weight:600; }
+
+.bound-table th, .lib-table th {
+    font-size:.77rem; font-weight:600; color:#8592a3;
+    text-transform:uppercase; letter-spacing:.5px;
+    background:#f8f9fa; border-bottom:none; white-space:nowrap;
+}
+.bound-table td, .lib-table td { padding:.75rem 1rem; border-bottom:1px solid #f0f2f5; }
+.bound-table tbody tr:last-child td, .lib-table tbody tr:last-child td { border-bottom:none; }
+.drag-handle:hover { color:#566a7f !important; }
+</style>

@@ -124,7 +124,7 @@
             <div class="modal-body" style="padding:22px">
                 <input type="hidden" id="editId" value="0">
                 <div class="mb-3">
-                    <label class="form-label">分類名稱 <span style="color:#e53935">*</span></label>
+                    <label class="form-label">分類名稱<span style="color:#e53935">*</span></label>
                     <input type="text" class="form-control" id="catName" placeholder="例：女裝、美妝保養">
                 </div>
                 <div class="mb-3">
@@ -171,6 +171,17 @@
     </div>
 }
 
+@* ── 啟用/停用說明 ── *@
+<div class="alert alert-info d-flex align-items-start gap-3 mb-3 rounded-3 border-0 shadow-sm"
+     style="background:#e8f4fd;border-left:4px solid #1a73e8 !important;padding:14px 18px;">
+    <i class="bx bx-info-circle fs-5 mt-1" style="color:#1a73e8;flex-shrink:0;"></i>
+    <div style="font-size:.85rem;color:#3d5166;line-height:1.65;">
+        <strong>啟用／停用說明：</strong>
+        停用分類後，將無法使用該分類來新增商品，但該分類下已建立的商品不受影響，仍可正常顯示與販售。
+        重新啟用後即可再次使用該分類新增商品。
+    </div>
+</div>
+
 @if (!tree.Any())
 {
     <div class="mg-card" style="text-align:center;padding:48px;color:#bbb">
@@ -196,6 +207,10 @@ else
                         @if (parent.Children.Any())
                         {
                             <span class="child-count">@parent.Children.Count 個子分類</span>
+                        }
+                        @if (parent.ProductCount > 0)
+                        {
+                            <span class="child-count" style="background:#f0fdfa;color:#0D9488">@parent.ProductCount 件商品</span>
                         }
                         <span class="st-badge @(parent.IsActive ? "st-on" : "st-off")" id="badge-@parent.Id">
                             @(parent.IsActive ? "啟用" : "停用")
@@ -242,6 +257,10 @@ else
                                 <div class="child-row">
                                     <span style="color:#bbb;font-size:.8rem;width:16px">└</span>
                                     <span class="child-name">@child.Name</span>
+                                    @if (child.ProductCount > 0)
+                                    {
+                                        <span class="child-count" style="background:#f0fdfa;color:#0D9488">@child.ProductCount 件商品</span>
+                                    }
                                     <span class="st-badge @(child.IsActive ? "st-on" : "st-off")" id="badge-@child.Id">
                                         @(child.IsActive ? "啟用" : "停用")
                                     </span>
@@ -361,42 +380,55 @@ function deleteCategory(id, name) {
                 showToast(`❌ 「${name}」有 ${d.count} 筆商品，無法刪除`);
                 return;
             }
-            if (!confirm(`確定刪除「${name}」？`)) return;
-            fetch('/CategoryManage/Delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (!res.success) { showToast('❌ ' + res.message); return; }
-                showToast('✅ 已刪除');
-                setTimeout(() => location.reload(), 900);
+            showConfirm(`確定刪除「${name}」？此操作無法復原。`, function () {
+                fetch('/CategoryManage/Delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.success) { showToast('❌ ' + res.message); return; }
+                    showToast('✅ 已刪除');
+                    setTimeout(() => location.reload(), 900);
+                });
             });
         })
         .catch(() => showToast('❌ 無法確認分類狀態，請重試'));
 }
 
-// ── 啟用/停用 ──
+// ── 啟用/停用（含確認對話框）──
 function toggleActive(input) {
     const id       = parseInt(input.dataset.id);
     const isActive = input.checked;
     const row      = input.closest('.parent-row, .child-row');
-    const badge    = document.getElementById('badge-' + id);
+    const name     = row?.querySelector('.parent-name, .child-name')?.textContent?.trim() || '此分類';
 
-    fetch('/CategoryManage/ToggleActive', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, isActive })
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (!d.success) { input.checked = !isActive; return; }
-        if (badge) {
-            badge.textContent = isActive ? '啟用' : '停用';
-            badge.className = 'st-badge ' + (isActive ? 'st-on' : 'st-off');
-        }
-        showToast(isActive ? '✅ 已啟用' : '🔕 已停用');
+    // 先回復 checkbox（等確認後再改）
+    input.checked = !isActive;
+
+    const msg = isActive
+        ? `確定要啟用「${name}」分類嗎？啟用後可再次使用此分類新增商品。`
+        : `確定要停用「${name}」分類嗎？停用後將無法使用此分類新增商品，但已有的商品不受影響。`;
+
+    showConfirm(msg, function () {
+        // 確認：先更新 UI 再呼叫 API
+        input.checked = isActive;
+        const badge = document.getElementById('badge-' + id);
+        fetch('/CategoryManage/ToggleActive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, isActive })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) { input.checked = !isActive; return; }
+            if (badge) {
+                badge.textContent = isActive ? '啟用' : '停用';
+                badge.className = 'st-badge ' + (isActive ? 'st-on' : 'st-off');
+            }
+            showToast(isActive ? '✅ 已啟用' : '🔕 已停用');
+        });
     });
 }
 

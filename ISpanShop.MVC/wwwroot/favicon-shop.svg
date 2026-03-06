@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#FBBF24"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background matching sidebar icon -->
+  <rect width="32" height="32" rx="7" fill="url(#g)"/>
+  <!-- Store icon: roof triangle -->
+  <polygon points="16,6 27,14 5,14" fill="white"/>
+  <!-- Store body -->
+  <rect x="7" y="14" width="18" height="12" rx="1" fill="white" opacity="0.9"/>
+  <!-- Door (shows gradient through) -->
+  <rect x="13" y="18" width="6" height="8" rx="0.8" fill="url(#g)"/>
+  <!-- Left window -->
+  <rect x="8.5" y="15.5" width="3.5" height="2.5" rx="0.5" fill="url(#g)" opacity="0.7"/>
+  <!-- Right window -->
+  <rect x="20" y="15.5" width="3.5" height="2.5" rx="0.5" fill="url(#g)" opacity="0.7"/>
+</svg>

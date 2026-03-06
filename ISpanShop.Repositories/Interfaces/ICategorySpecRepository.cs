@@ -17,5 +17,12 @@ namespace ISpanShop.Repositories.Interfaces
         void ToggleFilterable(int categoryId, int specId, bool isFilterable);
         List<object> GetAllBindingPairs();
         IEnumerable<CategoryDto> GetAllCategories();
+
+        // ── 新版綁定管理 ─────────────────────────────────────────
+        List<BoundSpecDetailDto> GetBoundSpecsWithDetails(int categoryId);
+        void BindSpec(int categoryId, int specId);
+        void UnbindSpec(int categoryId, int specId);
+        void UpdateBindingSort(int categoryId, List<int> orderedSpecIds);
+        bool HasBindings(int specId);
     }
 }

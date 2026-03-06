@@ -385,7 +385,7 @@
                         confirmButtonText: '確認核准', cancelButtonText: '取消'
                     }).then(function (result) {
                         if (!result.isConfirmed) return;
-                        fetch(urlApprove, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + id })
+                        fetch(urlApprove, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: parseInt(id) }) })
                         .then(r => r.json()).then(function(res) {
                             if (res.success) {
                                 removeRow(id);
@@ -413,7 +413,7 @@
                         inputValidator: function(value) { if (!value || !value.trim()) return '退回原因為必填欄位'; }
                     }).then(function (result) {
                         if (!result.isConfirmed) return;
-                        fetch(urlReject + '?id=' + id + '&reason=' + encodeURIComponent(result.value.trim()), { method: 'POST' })
+                        fetch(urlReject, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: parseInt(id), reason: result.value.trim() }) })
                         .then(r => r.json()).then(function(res) {
                             if (res.success) {
                                 removeRow(id);

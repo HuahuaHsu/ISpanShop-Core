@@ -77,6 +77,23 @@ namespace ISpanShop.Services
             return _categorySpecRepository.GetAllBindingPairs();
         }
 
+        // ── 新版綁定管理 ─────────────────────────────────────────
+
+        public List<BoundSpecDetailDto> GetBoundSpecsWithDetails(int categoryId)
+            => _categorySpecRepository.GetBoundSpecsWithDetails(categoryId);
+
+        public void BindSpec(int categoryId, int specId)
+            => _categorySpecRepository.BindSpec(categoryId, specId);
+
+        public void UnbindSpec(int categoryId, int specId)
+            => _categorySpecRepository.UnbindSpec(categoryId, specId);
+
+        public void UpdateBindingSort(int categoryId, List<int> orderedSpecIds)
+            => _categorySpecRepository.UpdateBindingSort(categoryId, orderedSpecIds);
+
+        public bool HasBindings(int specId)
+            => _categorySpecRepository.HasBindings(specId);
+
         private static bool NeedsOptions(string inputType)
         {
             return inputType == "select"

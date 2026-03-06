@@ -1,0 +1,197 @@
+@model ISpanShop.MVC.Models.ViewModels.ProductVariantCreateVm
+@{
+    Layout = "_SneatLayout";
+    ViewData["Title"] = "新增規格";
+}
+
+<div class="container-fluid py-4 font-noto" style="max-width:700px;">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="@Url.Action("Details", new { id = Model.ProductId })" class="btn btn-outline-secondary rounded-circle p-2 lh-1" style="width:38px;height:38px;">
+            <i class="bx bx-arrow-back"></i>
+        </a>
+        <div>
+            <h2 class="fw-bold mb-0" style="color:#1e2d3d;">新增規格</h2>
+            <p class="mb-0 fs-7 text-muted">商品：@Model.ProductName</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4 p-md-5">
+            <form asp-action="AddVariant" method="post" id="addVariantForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ProductId" />
+                <input type="hidden" asp-for="ProductName" />
+                <input type="hidden" asp-for="SpecDefinitionJson" />
+                <input type="hidden" asp-for="VariantName" id="variantNameHidden" />
+                <input type="hidden" asp-for="SpecValueJson" id="specValueJsonHidden" />
+
+                <div asp-validation-summary="All" class="alert alert-danger rounded-3 mb-4" style="display:@(ViewContext.ModelState.IsValid ? "none" : "block")"></div>
+
+                @* 規格選擇區（根據 SpecDefinitionJson 動態渲染） *@
+                @if (Model.SpecDefinitionJson == "[]" || string.IsNullOrWhiteSpace(Model.SpecDefinitionJson))
+                {
+                    <div class="alert alert-warning rounded-3 mb-3" style="font-size:.88rem;">
+                        <i class="bx bx-error-circle me-2"></i>
+                        <strong>此商品尚未設定規格維度。</strong>
+                        建議先至
+                        <a href="@Url.Action("Edit", "Products", new { id = Model.ProductId })" class="alert-link fw-bold">編輯商品頁面</a>
+                        設定規格維度後再新增規格，或直接在下方輸入規格名稱。
+                    </div>
+                }
+                <div id="specSelectArea" class="mb-4">
+                    @* 由 JS 動態渲染 *@
+                </div>
+
+                @* 組合後的規格名稱預覽 *@
+                <div id="variantNamePreview" class="mb-4 d-none">
+                    <label class="form-label fw-bold text-uppercase fs-7 text-muted">組合規格名稱</label>
+                    <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-3" style="background:#f0f4ff;border:1.5px solid #c5cffe;">
+                        <i class="bx bx-tag text-primary"></i>
+                        <span id="variantNameDisplay" class="fw-bold" style="color:#3d5afe;"></span>
+                    </div>
+                </div>
+
+                <hr class="mb-4" />
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="SkuCode" class="form-label fw-bold text-uppercase fs-7 text-muted">SKU 代碼</label>
+                        <input asp-for="SkuCode" class="form-control" placeholder="留空則自動產生" autocomplete="new-password" />
+                        <div class="form-text">若不填寫，系統將自動產生唯一代碼</div>
+                        <span asp-validation-for="SkuCode" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Price" class="form-label fw-bold text-uppercase fs-7 text-muted">售價 <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">NT$</span>
+                            <input asp-for="Price" class="form-control" type="number" min="1" step="1" placeholder="0"
+                                   oninvalid="this.setCustomValidity('售價必須為大於 0 的整數')"
+                                   oninput="this.setCustomValidity('')" />
+                        </div>
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Stock" class="form-label fw-bold text-uppercase fs-7 text-muted">庫存 <span class="text-danger">*</span></label>
+                        <input asp-for="Stock" class="form-control" type="number" min="0" placeholder="0"
+                               oninvalid="this.setCustomValidity('庫存數量不得為負數')"
+                               oninput="this.setCustomValidity('')" />
+                        <span asp-validation-for="Stock" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="SafetyStock" class="form-label fw-bold text-uppercase fs-7 text-muted">安全庫存</label>
+                        <input asp-for="SafetyStock" class="form-control" type="number" min="0" placeholder="5" />
+                        <span asp-validation-for="SafetyStock" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="@Url.Action("Details", new { id = Model.ProductId })" class="btn btn-outline-secondary rounded-pill px-4">取消</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">
+                        <i class="bx bx-plus me-1"></i> 新增規格
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+    .fs-7 { font-size: 0.85rem; }
+    .card { border-radius: 16px !important; }
+    .spec-select-group label { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #5a6a7a; }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        var specDef = [];
+        try {
+            var raw = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SpecDefinitionJson ?? "[]"));
+            specDef = JSON.parse(raw) || [];
+            if (!Array.isArray(specDef)) specDef = [];
+        } catch(e) { specDef = []; }
+
+        var area = document.getElementById('specSelectArea');
+        var preview = document.getElementById('variantNamePreview');
+        var nameDisplay = document.getElementById('variantNameDisplay');
+        var nameHidden = document.getElementById('variantNameHidden');
+        var specHidden = document.getElementById('specValueJsonHidden');
+
+        function buildSelects() {
+            area.innerHTML = '';
+            if (specDef.length === 0) {
+                // 無規格維度 - 直接顯示文字輸入
+                var div = document.createElement('div');
+                div.className = 'mb-3';
+                div.innerHTML = '<label class="form-label fw-bold text-uppercase fs-7 text-muted">規格名稱 <span class="text-danger">*</span></label>' +
+                    '<input type="text" id="freeVariantName" class="form-control" placeholder="例如：標準版、紅色款、L 號..." required />';
+                area.appendChild(div);
+                document.getElementById('freeVariantName').addEventListener('input', function() {
+                    var v = this.value.trim();
+                    nameHidden.value = v;
+                    specHidden.value = JSON.stringify({});
+                    if (v) { preview.classList.remove('d-none'); nameDisplay.textContent = v; }
+                    else   { preview.classList.add('d-none'); }
+                });
+                return;
+            }
+
+            specDef.forEach(function(dim, i) {
+                var group = document.createElement('div');
+                group.className = 'mb-3 spec-select-group';
+                var sel = '<select id="specSel_' + i + '" class="form-select" onchange="updateVariantName()">' +
+                    '<option value="">-- 請選擇 ' + escHtml(dim.name) + ' --</option>';
+                (dim.options || []).forEach(function(opt) {
+                    sel += '<option value="' + escHtml(opt) + '">' + escHtml(opt) + '</option>';
+                });
+                sel += '</select>';
+                group.innerHTML = '<label class="form-label">' + escHtml(dim.name) + ' <span class="text-danger">*</span></label>' + sel;
+                area.appendChild(group);
+            });
+        }
+
+        function updateVariantName() {
+            var parts = [];
+            var specObj = {};
+            var allSelected = true;
+
+            specDef.forEach(function(dim, i) {
+                var sel = document.getElementById('specSel_' + i);
+                if (!sel || !sel.value) { allSelected = false; return; }
+                parts.push(sel.value);
+                specObj[dim.name] = sel.value;
+            });
+
+            if (allSelected && parts.length > 0) {
+                var name = parts.join(' / ');
+                nameHidden.value = name;
+                specHidden.value = JSON.stringify(specObj);
+                nameDisplay.textContent = name;
+                preview.classList.remove('d-none');
+            } else {
+                nameHidden.value = '';
+                specHidden.value = '{}';
+                preview.classList.add('d-none');
+            }
+        }
+
+        function escHtml(str) {
+            return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        buildSelects();
+
+        // 表單提交前驗證規格名稱
+        document.getElementById('addVariantForm').addEventListener('submit', function(e) {
+            if (!nameHidden.value.trim()) {
+                e.preventDefault();
+                showAlert('請選擇所有規格維度後再提交。');
+            }
+        });
+    </script>
+}

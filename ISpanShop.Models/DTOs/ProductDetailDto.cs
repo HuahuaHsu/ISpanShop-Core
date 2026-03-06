@@ -7,8 +7,11 @@ namespace ISpanShop.Models.DTOs
     {
         public int Id { get; set; }
         public required string Name { get; set; }
+        public int StoreId { get; set; }
         public string? StoreName { get; set; }
+        public int CategoryId { get; set; }
         public string? CategoryName { get; set; }
+        public int? BrandId { get; set; }
         public string? BrandName { get; set; }
         public string? Description { get; set; }
         public byte? Status { get; set; }

@@ -238,8 +238,11 @@ namespace ISpanShop.Services
             {
                 Id                 = product.Id,
                 Name               = product.Name,
+                StoreId            = product.StoreId,
                 StoreName          = product.Store?.StoreName ?? "未知商店",
+                CategoryId         = product.CategoryId,
                 CategoryName       = product.Category?.Name ?? "未分類",
+                BrandId            = product.BrandId,
                 BrandName          = product.Brand?.Name ?? "未設定",
                 Description        = product.Description,
                 Status             = product.Status,
@@ -259,6 +262,8 @@ namespace ISpanShop.Services
                     .Where(v => v.IsDeleted != true)
                     .Select(v => new ProductVariantDetailDto
                     {
+                        Id            = v.Id,
+                        ProductId     = v.ProductId,
                         SkuCode       = v.SkuCode,
                         VariantName   = v.VariantName,
                         Price         = v.Price,
@@ -323,6 +328,154 @@ namespace ISpanShop.Services
         {
             _productRepository.RejectProduct(id, reason);
         }
+
+        /// <summary>
+        /// 管理員後台新增商品 - 略過審核直接上架，自動建立預設規格
+        /// </summary>
+        public void CreateProductAdmin(ProductAdminCreateDto dto)
+        {
+            var skuCode = $"{Guid.NewGuid().ToString()[..8].ToUpper()}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+
+            var product = new Product
+            {
+                StoreId            = dto.StoreId,
+                CategoryId         = dto.CategoryId,
+                BrandId            = dto.BrandId,
+                Name               = dto.Name,
+                Description        = dto.Description,
+                SpecDefinitionJson = "[]",
+                MinPrice           = dto.Price,
+                MaxPrice           = dto.Price,
+                Status             = 1,        // 管理員建立直接上架
+                IsDeleted          = false,
+                CreatedAt          = DateTime.Now,
+                UpdatedAt          = DateTime.Now,
+                ProductVariants    = new List<ProductVariant>
+                {
+                    new ProductVariant
+                    {
+                        SkuCode       = skuCode,
+                        VariantName   = "標準版",
+                        SpecValueJson = "{}",
+                        Price         = dto.Price,
+                        Stock         = 0,
+                        SafetyStock   = 5,
+                        IsDeleted     = false
+                    }
+                }
+            };
+
+            if (!string.IsNullOrWhiteSpace(dto.MainImageUrl))
+            {
+                product.ProductImages = new List<ProductImage>
+                {
+                    new ProductImage { ImageUrl = dto.MainImageUrl, IsMain = true, SortOrder = 0 }
+                };
+            }
+
+            _productRepository.AddProduct(product);
+        }
+
+        /// <summary>
+        /// 更新商品基本資料
+        /// </summary>
+        public void UpdateProduct(ProductUpdateDto dto)
+            => _productRepository.UpdateProduct(dto);
+
+        /// <summary>
+        /// 軟刪除商品（IsDeleted = true）
+        /// </summary>
+        public void SoftDeleteProduct(int id)
+            => _productRepository.SoftDeleteProduct(id);
+
+        /// <summary>
+        /// 根據 ID 取得規格詳情
+        /// </summary>
+        public ProductVariantDetailDto? GetVariantById(int id)
+        {
+            var v = _productRepository.GetVariantById(id);
+            if (v == null) return null;
+            return new ProductVariantDetailDto
+            {
+                Id            = v.Id,
+                ProductId     = v.ProductId,
+                SkuCode       = v.SkuCode,
+                VariantName   = v.VariantName,
+                Price         = v.Price,
+                Stock         = v.Stock,
+                SafetyStock   = v.SafetyStock,
+                SpecValueJson = v.SpecValueJson,
+                IsDeleted     = v.IsDeleted
+            };
+        }
+
+        /// <summary>
+        /// 為商品新增規格（自動產生 SKU 若未提供）
+        /// </summary>
+        public string? AddVariant(int productId, ProductVariantCreateDto dto)
+        {
+            string skuCode;
+            if (string.IsNullOrWhiteSpace(dto.SkuCode))
+            {
+                // 自動產生唯一 SKU（最多嘗試 5 次）
+                int attempts = 0;
+                do
+                {
+                    skuCode = Guid.NewGuid().ToString("N")[..8].ToUpper();
+                    attempts++;
+                } while (_productRepository.IsSkuExists(skuCode) && attempts < 5);
+            }
+            else
+            {
+                skuCode = dto.SkuCode.Trim();
+                if (_productRepository.IsSkuExists(skuCode))
+                    return "此 SKU 代碼已被使用，請更換。";
+            }
+
+            var variant = new ISpanShop.Models.EfModels.ProductVariant
+            {
+                ProductId     = productId,
+                SkuCode       = skuCode,
+                VariantName   = dto.VariantName,
+                SpecValueJson = dto.SpecValueJson,
+                Price         = dto.Price,
+                Stock         = dto.Stock,
+                SafetyStock   = dto.SafetyStock,
+                IsDeleted     = false
+            };
+
+            try
+            {
+                _productRepository.AddVariant(variant);
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+                when (ex.InnerException?.Message.Contains("UNIQUE") == true ||
+                      ex.InnerException?.Message.Contains("unique") == true ||
+                      ex.InnerException?.Message.Contains("duplicate") == true)
+            {
+                return "此 SKU 代碼已被使用，請更換。";
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 更新規格
+        /// </summary>
+        public void UpdateVariant(ProductVariantUpdateDto dto)
+            => _productRepository.UpdateVariant(dto);
+
+        /// <summary>
+        /// 軟刪除規格
+        /// </summary>
+        public void SoftDeleteVariant(int id)
+            => _productRepository.SoftDeleteVariant(id);
+
+        public (int Total, int Published, int Unpublished, int Pending) GetProductStatusCounts()
+            => _productRepository.GetStatusCounts();
+
+        public void ForceUnpublish(int id, string? reason)
+            => _productRepository.ForceUnpublish(id, reason);
 
         /// <summary>
         /// 取得最近退回的商品清單（Status == 3）

@@ -5,12 +5,6 @@
     Layout = "_SneatLayout";
     ViewData["Title"] = $"商品詳情 - {Model?.Name ?? "未知"}";
 
-    // 動態取得所有規格維度欄位（從各 Variant SpecValues 聯集取得）
-    var specKeys = (Model?.Variants ?? new())
-        .SelectMany(v => v.SpecValues.Keys)
-        .Distinct()
-        .ToList();
-
     // 狀態 pill CSS class
     var stClass = Model?.Status switch
     {
@@ -20,6 +14,29 @@
         0 => "st-secondary",
         _ => "st-secondary"
     };
+
+    // 解析規格維度欄位名稱（優先 SpecDefinitionJson → SpecValueJson keys → 單欄 fallback）
+    var dimNames = new List<string>();
+    if (!string.IsNullOrWhiteSpace(Model?.SpecDefinitionJson) && Model.SpecDefinitionJson != "[]")
+    {
+        try
+        {
+            var arr = JsonSerializer.Deserialize<JsonElement[]>(Model.SpecDefinitionJson);
+            if (arr != null)
+                dimNames = arr
+                    .Where(el => el.TryGetProperty("name", out _))
+                    .Select(el => el.GetProperty("name").GetString() ?? "")
+                    .Where(n => n.Length > 0)
+                    .ToList();
+        }
+        catch { }
+    }
+    if (dimNames.Count == 0 && Model?.Variants != null)
+    {
+        var firstWithSpec = Model.Variants.FirstOrDefault(v => !v.IsDeleted && v.SpecValues.Count > 0);
+        if (firstWithSpec != null) dimNames = firstWithSpec.SpecValues.Keys.ToList();
+    }
+    bool hasMultiDims = dimNames.Count > 0;
 }
 
 @* ────────────────── 待審核 Action Bar ────────────────── *@
@@ -56,20 +73,38 @@
     </div>
 }
 
+@* ────────────────── 成功訊息 ────────────────── *@
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible border-0 rounded-3 shadow-sm mb-4 d-flex align-items-center gap-2" role="alert">
+        <i class="bx bx-check-circle fs-5"></i>
+        <span>@TempData["SuccessMessage"]</span>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 @* ────────────────── 頁面標題列 ────────────────── *@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="fw-bold mb-1" style="color:#1e2d3d;">商品詳情</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0 fs-sm">
-                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Products")">商品總覽</a></li>
+                <li class="breadcrumb-item"><a href="@(ViewBag.ReturnUrl ?? Url.Action("Index", "Products"))">@(ViewBag.ReturnUrl != null && ((string)ViewBag.ReturnUrl).Contains("Inventory") ? "庫存監控" : "商品總覽")</a></li>
                 <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
             </ol>
         </nav>
     </div>
-    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
-        <i class="bx bx-arrow-back me-1"></i>返回
-    </a>
+    <div class="d-flex gap-2">
+        @if (Model.Status == 1)
+        {
+            <button class="btn btn-danger btn-sm px-3" data-bs-toggle="modal" data-bs-target="#forceUnpublishModal">
+                <i class="bx bx-block me-1"></i>強制下架
+            </button>
+        }
+        <a href="@(ViewBag.ReturnUrl ?? Url.Action("Index", "Products"))" class="btn btn-outline-secondary btn-sm">
+            <i class="bx bx-arrow-back me-1"></i>返回
+        </a>
+    </div>
 </div>
 
 @* ────────────────── 主體雙欄佈局 ────────────────── *@
@@ -248,7 +283,7 @@
 
 @* ────────────────── 規格與庫存明細 ────────────────── *@
 <div class="card shadow-sm border-0 rounded-4 mb-4">
-    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+    <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0" style="color:#1e2d3d;">
             <i class="bx bx-list-ul me-2 text-primary"></i>規格與庫存明細
         </h5>
@@ -261,10 +296,16 @@
                     <thead>
                         <tr>
                             <th>SKU 代碼</th>
-                            <th>規格名稱</th>
-                            @foreach (var key in specKeys)
+                            @if (hasMultiDims)
                             {
-                                <th>@key</th>
+                                foreach (var dim in dimNames)
+                                {
+                                    <th>@dim</th>
+                                }
+                            }
+                            else
+                            {
+                                <th>規格名稱</th>
                             }
                             <th class="text-end">售價</th>
                             <th class="text-center">庫存</th>
@@ -276,12 +317,17 @@
                         {
                             <tr>
                                 <td><code class="sku-code">@v.SkuCode</code></td>
-                                <td class="fw-medium">@v.VariantName</td>
-                                @foreach (var key in specKeys)
+                                @if (hasMultiDims)
                                 {
-                                    <td>
-                                        <span class="spec-opt">@(v.SpecValues.GetValueOrDefault(key, "-"))</span>
-                                    </td>
+                                    foreach (var dim in dimNames)
+                                    {
+                                        var cellVal = v.SpecValues.TryGetValue(dim, out var sv) ? sv : "-";
+                                        <td class="fw-medium">@cellVal</td>
+                                    }
+                                }
+                                else
+                                {
+                                    <td class="fw-medium">@v.VariantName</td>
                                 }
                                 <td class="text-end fw-bold text-primary">NT$ @v.Price.ToString("N0")</td>
                                 <td class="text-center">
@@ -314,9 +360,35 @@
         {
             <div class="text-center py-5 text-muted">
                 <i class="bx bx-package fs-1 d-block mb-2 opacity-50"></i>
-                <p class="mb-0">暫無規格資訊</p>
+                <p class="mb-1">暫無規格資訊</p>
             </div>
         }
+    </div>
+</div>
+
+@* ────────────────── 強制下架 Modal ────────────────── *@
+<div class="modal fade" id="forceUnpublishModal" tabindex="-1" aria-labelledby="forceUnpublishModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="forceUnpublishModalLabel">
+                    <i class="bx bx-block text-danger me-2"></i>強制下架商品
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">強制下架後，商品將立即從前台隱藏。此操作僅限管理員執行。</p>
+                <label class="form-label fw-medium mb-2">下架原因（選填）</label>
+                <textarea id="forceUnpublishReasonInput" class="form-control" rows="3"
+                          placeholder="請輸入下架原因，將記錄於系統中..."></textarea>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" onclick="confirmForceUnpublish(@Model.Id)">
+                    <i class="bx bx-block me-1"></i>確認強制下架
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -347,9 +419,16 @@
 </div>
 
 @* ────────────────── AJAX Scripts ────────────────── *@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     async function approveProduct(id) {
-        if (!confirm('確定要核准此商品上架嗎？')) return;
+        const result = await Swal.fire({
+            title: '確認核准上架', text: '確定要核准此商品上架嗎？',
+            icon: 'question', showCancelButton: true,
+            confirmButtonColor: '#38a169', cancelButtonColor: '#a0aec0',
+            confirmButtonText: '確認上架', cancelButtonText: '取消'
+        });
+        if (!result.isConfirmed) return;
 
         const res = await fetch('/Products/ApproveProduct', {
             method: 'POST',
@@ -357,23 +436,18 @@
             body: JSON.stringify({ id })
         });
         const data = await res.json();
-
         if (data.success) {
-            alert(data.message);
+            await Swal.fire({ title: '成功', text: data.message, icon: 'success', timer: 1500 });
             location.reload();
         } else {
-            alert('操作失敗，請稍後再試。');
+            Swal.fire({ title: '失敗', text: '操作失敗，請稍後再試。', icon: 'error' });
         }
     }
 
     async function confirmReject(id) {
         const reason = document.getElementById('rejectReasonInput').value.trim();
         const errEl = document.getElementById('rejectReasonError');
-
-        if (!reason) {
-            errEl.classList.remove('d-none');
-            return;
-        }
+        if (!reason) { errEl.classList.remove('d-none'); return; }
         errEl.classList.add('d-none');
 
         const res = await fetch('/Products/RejectProduct', {
@@ -382,13 +456,29 @@
             body: JSON.stringify({ id, reason })
         });
         const data = await res.json();
-
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('rejectModal'))?.hide();
-            alert(data.message);
+            await Swal.fire({ title: '已退回', text: data.message, icon: 'success', timer: 1800 });
             location.reload();
         } else {
-            alert('操作失敗，請稍後再試。');
+            Swal.fire({ title: '失敗', text: '操作失敗，請稍後再試。', icon: 'error' });
+        }
+    }
+
+    async function confirmForceUnpublish(id) {
+        const reason = document.getElementById('forceUnpublishReasonInput').value.trim();
+        const res = await fetch('/Products/ForceUnpublish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, reason })
+        });
+        const data = await res.json();
+        bootstrap.Modal.getInstance(document.getElementById('forceUnpublishModal'))?.hide();
+        if (data.success) {
+            await Swal.fire({ title: '已強制下架', text: data.message, icon: 'success', timer: 1800 });
+            location.reload();
+        } else {
+            Swal.fire({ title: '操作失敗', text: data.message, icon: 'error' });
         }
     }
 </script>
@@ -415,7 +505,7 @@
     }
     .product-thumb:hover {
         opacity: 1;
-        border-color: #696cff;
+        border-color: #0D9488;
         transform: translateY(-2px);
     }
 

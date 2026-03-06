@@ -99,5 +99,47 @@ namespace ISpanShop.Services.Interfaces
         /// </summary>
         /// <param name="top">最多取幾筆，預設 10</param>
         IEnumerable<ProductReviewDto> GetRecentRejectedProducts(int top = 10);
+
+        /// <summary>
+        /// 管理員後台新增商品（略過審核，直接設為上架）
+        /// </summary>
+        void CreateProductAdmin(ProductAdminCreateDto dto);
+
+        /// <summary>
+        /// 更新商品基本資料
+        /// </summary>
+        void UpdateProduct(ProductUpdateDto dto);
+
+        /// <summary>
+        /// 軟刪除商品（IsDeleted = true）
+        /// </summary>
+        void SoftDeleteProduct(int id);
+
+        /// <summary>
+        /// 根據 ID 取得規格詳情 DTO
+        /// </summary>
+        ProductVariantDetailDto? GetVariantById(int id);
+
+        /// <summary>
+        /// 為商品新增規格（自動產生 SKU、重算價格區間）。
+        /// 回傳 null 表示成功；回傳錯誤訊息字串表示失敗。
+        /// </summary>
+        string? AddVariant(int productId, ProductVariantCreateDto dto);
+
+        /// <summary>
+        /// 更新規格（SKU/售價/庫存/安全庫存）並重算商品價格區間
+        /// </summary>
+        void UpdateVariant(ProductVariantUpdateDto dto);
+
+        /// <summary>
+        /// 軟刪除規格（IsDeleted = true）並重算商品價格區間
+        /// </summary>
+        void SoftDeleteVariant(int id);
+
+        /// <summary>取得全站商品各狀態統計數字</summary>
+        (int Total, int Published, int Unpublished, int Pending) GetProductStatusCounts();
+
+        /// <summary>管理員強制下架（儲存下架原因）</summary>
+        void ForceUnpublish(int id, string? reason);
     }
 }

@@ -685,8 +685,6 @@ namespace ISpanShop.Models
 				foreach (var p in pendingReviewProducts)
 				{
 					p.Status = 2;
-					if (!p.Name.StartsWith("[待審核] "))
-						p.Name = "[待審核] " + p.Name;
 				}
 
 				context.Products.AddRange(products);
@@ -711,14 +709,13 @@ namespace ISpanShop.Models
 
 			var needed = 15 - currentCount;
 			var candidates = context.Products
-				.Where(p => p.Status != 2 && !p.Name.StartsWith("[待審核] "))
+				.Where(p => p.Status != 2 && p.IsDeleted != true)
 				.Take(needed)
 				.ToList();
 
 			foreach (var p in candidates)
 			{
 				p.Status = 2;
-				p.Name = "[待審核] " + p.Name;
 				p.UpdatedAt = DateTime.Now;
 			}
 

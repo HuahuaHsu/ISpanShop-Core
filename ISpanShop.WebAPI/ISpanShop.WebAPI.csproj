@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ISpanShop.Common\ISpanShop.Common.csproj" />
     <ProjectReference Include="..\ISpanShop.Models\ISpanShop.Models.csproj" />
+    <ProjectReference Include="..\ISpanShop.Repositories\ISpanShop.Repositories.csproj" />
     <ProjectReference Include="..\ISpanShop.Services\ISpanShop.Services.csproj" />
   </ItemGroup>
 

@@ -209,6 +209,90 @@ namespace ISpanShop.Repositories
                 .ToList();
         }
 
+        // ── 新版綁定管理 ──────────────────────────────────────────
+
+        public List<BoundSpecDetailDto> GetBoundSpecsWithDetails(int categoryId)
+        {
+            var mappings = _db.CategorySpecMappings
+                .Where(m => m.CategoryId == categoryId)
+                .OrderBy(m => m.Sort)
+                .ThenBy(m => m.CategorySpecId)
+                .ToList();
+
+            if (!mappings.Any()) return new List<BoundSpecDetailDto>();
+
+            var specIds  = mappings.Select(m => m.CategorySpecId).ToList();
+            var specs    = _db.CategorySpecs.Where(s => specIds.Contains(s.Id)).ToList();
+            var options  = _db.CategorySpecOptions
+                .Where(o => specIds.Contains(o.CategorySpecId))
+                .OrderBy(o => o.SortOrder)
+                .ToList();
+
+            return mappings.Select(m =>
+            {
+                var spec = specs.First(s => s.Id == m.CategorySpecId);
+                return new BoundSpecDetailDto
+                {
+                    SpecId       = m.CategorySpecId,
+                    Name         = spec.Name,
+                    InputType    = spec.InputType,
+                    IsRequired   = spec.IsRequired,
+                    IsFilterable = m.IsFilterable,
+                    Sort         = m.Sort,
+                    Options      = options
+                        .Where(o => o.CategorySpecId == m.CategorySpecId)
+                        .Select(o => o.OptionName)
+                        .ToList()
+                };
+            }).ToList();
+        }
+
+        public void BindSpec(int categoryId, int specId)
+        {
+            if (_db.CategorySpecMappings.Any(m => m.CategoryId == categoryId && m.CategorySpecId == specId))
+                return;
+
+            var maxSort = _db.CategorySpecMappings
+                .Where(m => m.CategoryId == categoryId)
+                .Select(m => (int?)m.Sort)
+                .Max() ?? 0;
+
+            _db.CategorySpecMappings.Add(new CategorySpecMapping
+            {
+                CategoryId     = categoryId,
+                CategorySpecId = specId,
+                IsFilterable   = false,
+                Sort           = maxSort + 1
+            });
+            _db.SaveChanges();
+        }
+
+        public void UnbindSpec(int categoryId, int specId)
+        {
+            var mapping = _db.CategorySpecMappings
+                .FirstOrDefault(m => m.CategoryId == categoryId && m.CategorySpecId == specId);
+            if (mapping == null) return;
+            _db.CategorySpecMappings.Remove(mapping);
+            _db.SaveChanges();
+        }
+
+        public void UpdateBindingSort(int categoryId, List<int> orderedSpecIds)
+        {
+            var mappings = _db.CategorySpecMappings
+                .Where(m => m.CategoryId == categoryId)
+                .ToList();
+
+            for (int i = 0; i < orderedSpecIds.Count; i++)
+            {
+                var m = mappings.FirstOrDefault(x => x.CategorySpecId == orderedSpecIds[i]);
+                if (m != null) m.Sort = i + 1;
+            }
+            _db.SaveChanges();
+        }
+
+        public bool HasBindings(int specId)
+            => _db.CategorySpecMappings.Any(m => m.CategorySpecId == specId);
+
         // ── 私有：寫入選項 ──
         private void WriteOptions(int specId, List<string> options)
         {

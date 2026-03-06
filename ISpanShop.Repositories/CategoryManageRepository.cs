@@ -17,19 +17,27 @@ namespace ISpanShop.Repositories
         {
             var all = _db.Categories.ToList();
 
+            // 預先計算各分類商品數（非刪除的商品）
+            var productCounts = _db.Products
+                .Where(p => p.IsDeleted != true)
+                .GroupBy(p => p.CategoryId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
             CategoryManageDto ToDto(Category c) => new CategoryManageDto
             {
-                Id         = c.Id,
-                Name       = c.Name,
-                ParentId   = c.ParentId,
-                ParentName = c.ParentId.HasValue
+                Id           = c.Id,
+                Name         = c.Name,
+                NameEn       = c.NameEn,
+                ParentId     = c.ParentId,
+                ParentName   = c.ParentId.HasValue
                     ? all.FirstOrDefault(x => x.Id == c.ParentId)?.Name
                     : null,
-                SortOrder  = c.Sort ?? 0,
-                IsActive   = c.IsVisible ?? true,
-                ImageUrl   = c.IconUrl,
-                ChildCount = all.Count(x => x.ParentId == c.Id),
-                Children   = all
+                SortOrder    = c.Sort ?? 0,
+                IsActive     = c.IsVisible ?? true,
+                ImageUrl     = c.IconUrl,
+                ProductCount = productCounts.TryGetValue(c.Id, out var cnt) ? cnt : 0,
+                ChildCount   = all.Count(x => x.ParentId == c.Id),
+                Children     = all
                     .Where(x => x.ParentId == c.Id)
                     .OrderBy(x => x.Sort ?? 0)
                     .Select(x => ToDto(x))
@@ -50,20 +58,28 @@ namespace ISpanShop.Repositories
             if (c == null) return null;
             return new CategoryManageDto
             {
-                Id        = c.Id,
-                Name      = c.Name,
-                ParentId  = c.ParentId,
-                SortOrder = c.Sort ?? 0,
-                IsActive  = c.IsVisible ?? true,
-                ImageUrl  = c.IconUrl
+                Id           = c.Id,
+                Name         = c.Name,
+                NameEn       = c.NameEn,
+                ParentId     = c.ParentId,
+                SortOrder    = c.Sort ?? 0,
+                IsActive     = c.IsVisible ?? true,
+                ImageUrl     = c.IconUrl,
+                ProductCount = _db.Products.Count(p => p.CategoryId == id && p.IsDeleted != true)
             };
         }
 
-        public void Create(string name, int? parentId, int sortOrder, string? imageUrl)
+        public int GetProductCount(int categoryId)
+        {
+            return _db.Products.Count(p => p.CategoryId == categoryId && p.IsDeleted != true);
+        }
+
+        public void Create(string name, string? nameEn, int? parentId, int sortOrder, string? imageUrl)
         {
             _db.Categories.Add(new Category
             {
                 Name      = name,
+                NameEn    = nameEn,
                 ParentId  = parentId,
                 Sort      = sortOrder,
                 IsVisible = true,
@@ -72,11 +88,12 @@ namespace ISpanShop.Repositories
             _db.SaveChanges();
         }
 
-        public void Update(int id, string name, int? parentId, int sortOrder, string? imageUrl)
+        public void Update(int id, string name, string? nameEn, int? parentId, int sortOrder, string? imageUrl)
         {
             var c = _db.Categories.FirstOrDefault(x => x.Id == id);
             if (c == null) return;
             c.Name     = name;
+            c.NameEn   = nameEn;
             c.ParentId = parentId;
             c.Sort     = sortOrder;
             c.IconUrl  = imageUrl;

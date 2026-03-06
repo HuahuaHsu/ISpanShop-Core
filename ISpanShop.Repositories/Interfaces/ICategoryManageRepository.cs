@@ -7,8 +7,9 @@ namespace ISpanShop.Repositories.Interfaces
     {
         IEnumerable<CategoryManageDto> GetTree();
         CategoryManageDto? GetById(int id);
-        void Create(string name, int? parentId, int sortOrder, string? imageUrl);
-        void Update(int id, string name, int? parentId, int sortOrder, string? imageUrl);
+        int GetProductCount(int categoryId);
+        void Create(string name, string? nameEn, int? parentId, int sortOrder, string? imageUrl);
+        void Update(int id, string name, string? nameEn, int? parentId, int sortOrder, string? imageUrl);
         void Delete(int id);
         void UpdateIsActive(int id, bool isActive);
         void UpdateSortOrder(int id, int sortOrder);

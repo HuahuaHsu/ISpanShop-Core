@@ -3,6 +3,7 @@ namespace ISpanShop.Models.DTOs
     public class CategoryCreateDto
     {
         public string Name { get; set; } = string.Empty;
+        public string? NameEn { get; set; }
         public int? ParentId { get; set; }
         public int SortOrder { get; set; } = 0;
         public string? ImageUrl { get; set; }
@@ -12,6 +13,7 @@ namespace ISpanShop.Models.DTOs
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string? NameEn { get; set; }
         public int? ParentId { get; set; }
         public int SortOrder { get; set; }
         public string? ImageUrl { get; set; }

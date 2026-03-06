@@ -28,7 +28,7 @@ namespace ISpanShop.MVC.Controllers
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest(new { success = false, message = "名稱不能空白" });
-            _svc.Create(dto.Name.Trim(), dto.ParentId, dto.SortOrder, dto.ImageUrl);
+            _svc.Create(dto.Name.Trim(), dto.NameEn?.Trim(), dto.ParentId, dto.SortOrder, dto.ImageUrl);
             return Json(new { success = true });
         }
 
@@ -37,13 +37,16 @@ namespace ISpanShop.MVC.Controllers
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest(new { success = false, message = "名稱不能空白" });
-            _svc.Update(dto.Id, dto.Name.Trim(), dto.ParentId, dto.SortOrder, dto.ImageUrl);
+            _svc.Update(dto.Id, dto.Name.Trim(), dto.NameEn?.Trim(), dto.ParentId, dto.SortOrder, dto.ImageUrl);
             return Json(new { success = true });
         }
 
         [HttpPost]
         public IActionResult Delete([FromBody] IdDto dto)
         {
+            var productCount = _svc.GetProductCount(dto.Id);
+            if (productCount > 0)
+                return Json(new { success = false, message = $"此分類有 {productCount} 筆商品，請先移除商品再刪除" });
             var ok = _svc.Delete(dto.Id);
             if (!ok) return Json(new { success = false, message = "此分類有子分類，無法刪除" });
             return Json(new { success = true });
@@ -63,13 +66,11 @@ namespace ISpanShop.MVC.Controllers
             return Json(new { success = true });
         }
 
-        /// <summary>
-        /// AJAX：取得某分類底下的商品數量（目前回傳 0，之後串接真實資料）
-        /// </summary>
         [HttpGet]
         public IActionResult GetProductCount(int categoryId)
         {
-            return Json(new { count = 0 });
+            var count = _svc.GetProductCount(categoryId);
+            return Json(new { count });
         }
     }
 }

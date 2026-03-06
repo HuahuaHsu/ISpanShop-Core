@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <title>@ViewData["Title"] - ISpanShop 後台管理系統</title>
-    <link rel="icon" type="image/x-icon" href="~/sneat/assets/img/favicon/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="~/favicon-shop.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
@@ -556,7 +556,7 @@
         <aside id="layout-menu">
             <div class="app-brand">
                 <a href="/" style="display:flex;align-items:center;text-decoration:none;overflow:hidden;">
-                    <span style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#696cff,#9155fd);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <span style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                         <i class="bx bx-store-alt" style="font-size:1.35rem;color:#fff;"></i>
                     </span>
                     <span class="app-brand-text">ISpanShop</span>
@@ -575,7 +575,12 @@
                     </a>
                 </li>
 
-                <li class="menu-header"><span>商品管理</span></li>
+                @{
+                    var catCtrl   = ViewContext.RouteData.Values["controller"]?.ToString();
+                    var isCatActive = catCtrl == "CategoryManage" || catCtrl == "CategorySpecs";
+                    var isInvActive = catCtrl == "Inventory";
+                }
+                <li class="menu-header"><span>營運管理</span></li>
                 <li class="menu-item has-sub @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
                     <span class="menu-link">
                         <span class="mini-wrap">
@@ -583,31 +588,73 @@
                             <span class="menu-short">商品</span>
                         </span>
                         <i class="menu-icon bx bx-store"></i>
-                        <span class="menu-label">商品管理</span>
+                        <span class="menu-label">商品監管</span>
                         <i class="menu-arrow bx bx-chevron-right"></i>
                     </span>
                     <div class="menu-sub">
                         <ul>
                             <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
-                                <a href="@Url.Action("Index", "Products")" class="menu-link">全站商品總覽</a>
+                                <a href="@Url.Action("Index", "Products")" class="menu-link">商品總覽</a>
                             </li>
                             <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" && ViewContext.RouteData.Values["action"]?.ToString() == "PendingReview" ? "active" : "")">
-                                <a href="@Url.Action("PendingReview", "Products")" class="menu-link">待審核商品</a>
-                            </li>
-                            <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "CategoryManage" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
-                                <a href="@Url.Action("Index", "CategoryManage")" class="menu-link">分類管理</a>
-                            </li>
-                            <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "CategorySpecs" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
-                                <a href="@Url.Action("Index", "CategorySpecs")" class="menu-link">分類規格</a>
+                                <a href="@Url.Action("PendingReview", "Products")" class="menu-link">商品審核</a>
                             </li>
                         </ul>
                     </div>
                     <div class="menu-flyout">
-                        <div class="menu-flyout-title">商品管理</div>
-                        <a href="@Url.Action("Index", "Products")">全站商品總覽</a>
-                        <a href="@Url.Action("PendingReview", "Products")">待審核商品</a>
-                        <a href="@Url.Action("Index", "CategoryManage")">分類管理</a>
-                        <a href="@Url.Action("Index", "CategorySpecs")">分類規格</a>
+                        <div class="menu-flyout-title">商品監管</div>
+                        <a href="@Url.Action("Index", "Products")">商品總覽</a>
+                        <a href="@Url.Action("PendingReview", "Products")">商品審核</a>
+                    </div>
+                </li>
+
+                <li class="menu-item has-sub @(isCatActive ? "active" : "")">
+                    <span class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-category"></i>
+                            <span class="menu-short">分類</span>
+                        </span>
+                        <i class="menu-icon bx bx-category"></i>
+                        <span class="menu-label">分類管理</span>
+                        <i class="menu-arrow bx bx-chevron-right"></i>
+                    </span>
+                    <div class="menu-sub">
+                        <ul>
+                            <li class="menu-item @(catCtrl == "CategoryManage" ? "active" : "")">
+                                <a href="@Url.Action("Index", "CategoryManage")" class="menu-link">分類總覽</a>
+                            </li>
+                            <li class="menu-item @(catCtrl == "CategorySpecs" ? "active" : "")">
+                                <a href="@Url.Action("Index", "CategorySpecs")" class="menu-link">分類屬性</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="menu-flyout">
+                        <div class="menu-flyout-title">分類管理</div>
+                        <a href="@Url.Action("Index", "CategoryManage")">分類總覽</a>
+                        <a href="@Url.Action("Index", "CategorySpecs")">分類屬性</a>
+                    </div>
+                </li>
+
+                <li class="menu-item has-sub @(isInvActive ? "active" : "")">
+                    <span class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-package"></i>
+                            <span class="menu-short">庫存</span>
+                        </span>
+                        <i class="menu-icon bx bx-package"></i>
+                        <span class="menu-label">庫存監控</span>
+                        <i class="menu-arrow bx bx-chevron-right"></i>
+                    </span>
+                    <div class="menu-sub">
+                        <ul>
+                            <li class="menu-item @(isInvActive && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                                <a href="@Url.Action("Index", "Inventory")" class="menu-link">庫存監控</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="menu-flyout">
+                        <div class="menu-flyout-title">庫存監控</div>
+                        <a href="@Url.Action("Index", "Inventory")">庫存監控</a>
                     </div>
                 </li>
 
@@ -730,10 +777,110 @@
         </div>
     </div>
 
+    @* ── 全域確認/提示 Modal ── *@
+    <div class="modal fade" id="globalModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold" id="globalModalTitle"></h5>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <p id="globalModalMessage" class="text-secondary mb-0" style="line-height:1.7;font-size:.93rem;"></p>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4 gap-2" id="globalModalFooter"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="~/sneat/assets/vendor/libs/jquery/jquery.js"></script>
     <script src="~/sneat/assets/vendor/libs/popper/popper.js"></script>
     <script src="~/sneat/assets/vendor/js/bootstrap.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // 搜尋輸入框關閉瀏覽器自動完成（new-password 比 off 更有效）
+        document.querySelectorAll(
+            'input[type="search"], input[type="text"][name="keyword"], input[type="text"][name="search"]'
+        ).forEach(function(el) {
+            el.setAttribute('autocomplete', 'new-password');
+        });
+
+        // 全站 jQuery Validate 訊息中文化（需在 _ValidationScriptsPartial 載入後執行）
+        if (window.jQuery && typeof jQuery.validator !== 'undefined') {
+            jQuery.extend(jQuery.validator.messages, {
+                required: '此欄位為必填',
+                number:   '請輸入有效數字',
+                digits:   '請輸入整數',
+                min:      jQuery.validator.format('數值不得低於 {0}'),
+                max:      jQuery.validator.format('數值不得高於 {0}'),
+                range:    jQuery.validator.format('請輸入 {0} 到 {1} 之間的數值')
+            });
+        }
+    </script>
+
+    <script>
+        // ── 全域 Alert / Confirm ──
+        (function () {
+            function getModal() {
+                return bootstrap.Modal.getOrCreateInstance(document.getElementById('globalModal'));
+            }
+
+            window.showAlert = function (msg, callback) {
+                document.getElementById('globalModalTitle').textContent = '提示';
+                document.getElementById('globalModalMessage').textContent = msg;
+                document.getElementById('globalModalFooter').innerHTML =
+                    '<button type="button" class="btn btn-primary rounded-pill px-5" id="_gOk">確定</button>';
+                document.getElementById('_gOk').onclick = function () {
+                    getModal().hide();
+                    if (callback) callback();
+                };
+                getModal().show();
+            };
+
+            window.showConfirm = function (msg, onConfirm, onCancel) {
+                document.getElementById('globalModalTitle').textContent = '確認';
+                document.getElementById('globalModalMessage').textContent = msg;
+                document.getElementById('globalModalFooter').innerHTML =
+                    '<button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="_gCancel">取消</button>' +
+                    '<button type="button" class="btn btn-primary rounded-pill px-4" id="_gConfirm">確定</button>';
+                document.getElementById('_gConfirm').onclick = function () {
+                    getModal().hide();
+                    if (onConfirm) onConfirm();
+                };
+                document.getElementById('_gCancel').onclick = function () {
+                    getModal().hide();
+                    if (onCancel) onCancel();
+                };
+                getModal().show();
+            };
+        })();
+    </script>
+
+    <script>
+        // 全站 HTML5 驗證訊息中文化
+        document.addEventListener('invalid', function (e) {
+            var v    = e.target.validity;
+            var name = (e.target.name || '').toLowerCase();
+            var isPrice = (name === 'price');
+            if (v.valueMissing)
+                e.target.setCustomValidity('此欄位為必填');
+            else if (v.typeMismatch)
+                e.target.setCustomValidity('格式不正確');
+            else if (v.stepMismatch)
+                e.target.setCustomValidity(isPrice ? '售價必須為整數' : '請輸入有效的數值');
+            else if (v.rangeUnderflow || v.rangeOverflow)
+                e.target.setCustomValidity(isPrice ? '售價必須大於 0' : '數值超出允許範圍');
+            else if (v.tooShort)
+                e.target.setCustomValidity('輸入內容過短');
+            else if (v.tooLong)
+                e.target.setCustomValidity('輸入內容過長');
+            else if (v.patternMismatch)
+                e.target.setCustomValidity('格式不符');
+            else
+                e.target.setCustomValidity('');
+        }, true);
+        document.addEventListener('input', function (e) { e.target.setCustomValidity(''); }, true);
+    </script>
 
     <script>
         (function () {

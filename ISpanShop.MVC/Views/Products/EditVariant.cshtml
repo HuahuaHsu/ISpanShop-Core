@@ -1,0 +1,92 @@
+@model ISpanShop.MVC.Models.ViewModels.ProductVariantEditVm
+@{
+    Layout = "_SneatLayout";
+    ViewData["Title"] = "編輯規格";
+}
+
+<div class="container-fluid py-4 font-noto" style="max-width:700px;">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="@Url.Action("Details", new { id = Model.ProductId })" class="btn btn-outline-secondary rounded-circle p-2 lh-1" style="width:38px;height:38px;">
+            <i class="bx bx-arrow-back"></i>
+        </a>
+        <div>
+            <h2 class="fw-bold mb-0" style="color:#1e2d3d;">編輯規格</h2>
+            <p class="mb-0 fs-7 text-muted">商品：@Model.ProductName</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4 p-md-5">
+            <form asp-action="EditVariant" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="ProductId" />
+                <input type="hidden" asp-for="ProductName" />
+                <input type="hidden" asp-for="VariantName" />
+
+                <div asp-validation-summary="All" class="alert alert-danger rounded-3 mb-4" style="display:@(ViewContext.ModelState.IsValid ? "none" : "block")"></div>
+
+                @* 規格名稱（唯讀） *@
+                <div class="mb-4 px-3 py-3 rounded-3" style="background:#f8f9ff;border:1.5px solid #e0e7ff;">
+                    <div class="fs-7 text-muted fw-bold text-uppercase mb-1" style="letter-spacing:0.5px;">規格名稱（不可修改）</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bx bx-tag text-primary"></i>
+                        <span class="fw-bold fs-5" style="color:#3d5afe;">@Model.VariantName</span>
+                    </div>
+                    <div class="form-text mt-1">若需更改規格組合，請刪除此規格後重新新增。</div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="SkuCode" class="form-label fw-bold text-uppercase fs-7 text-muted">SKU 代碼 <span class="text-danger">*</span></label>
+                        <input asp-for="SkuCode" class="form-control" placeholder="SKU 代碼" autocomplete="new-password" />
+                        <span asp-validation-for="SkuCode" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Price" class="form-label fw-bold text-uppercase fs-7 text-muted">售價 <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">NT$</span>
+                            <input asp-for="Price" class="form-control" type="number" min="1" step="1"
+                                   oninvalid="this.setCustomValidity('售價必須為大於 0 的整數')"
+                                   oninput="this.setCustomValidity('')" />
+                        </div>
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Stock" class="form-label fw-bold text-uppercase fs-7 text-muted">庫存 <span class="text-danger">*</span></label>
+                        <input asp-for="Stock" class="form-control" type="number" min="0"
+                               oninvalid="this.setCustomValidity('庫存數量不得為負數')"
+                               oninput="this.setCustomValidity('')" />
+                        <span asp-validation-for="Stock" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="SafetyStock" class="form-label fw-bold text-uppercase fs-7 text-muted">安全庫存</label>
+                        <input asp-for="SafetyStock" class="form-control" type="number" min="0" />
+                        <span asp-validation-for="SafetyStock" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="@Url.Action("Details", new { id = Model.ProductId })" class="btn btn-outline-secondary rounded-pill px-4">取消</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">
+                        <i class="bx bx-save me-1"></i> 儲存變更
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+    .fs-7 { font-size: 0.85rem; }
+    .card { border-radius: 16px !important; }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

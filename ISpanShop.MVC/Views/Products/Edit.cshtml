@@ -1,0 +1,481 @@
+@model ISpanShop.MVC.Models.ViewModels.ProductEditVm
+@{
+    Layout = "_SneatLayout";
+    ViewData["Title"] = $"編輯商品 - {Model?.Name}";
+    var allCategories = ViewBag.AllCategories as IEnumerable<ISpanShop.Models.DTOs.CategoryDto> ?? Enumerable.Empty<ISpanShop.Models.DTOs.CategoryDto>();
+    var brands = ViewBag.Brands as IEnumerable<(int Id, string Name)> ?? Enumerable.Empty<(int, string)>();
+    var parentCategories = allCategories.Where(c => c.ParentId == null).ToList();
+    var subCategories = allCategories.Where(c => c.ParentId != null).ToList();
+}
+
+<div class="container-fluid py-4 font-noto" style="max-width:960px;">
+    @{ var backUrl = !string.IsNullOrEmpty(Model.ReturnUrl) ? Model.ReturnUrl : Url.Action("Index", "Products"); }
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="@backUrl" class="btn btn-outline-secondary rounded-circle p-2 lh-1" style="width:38px;height:38px;">
+            <i class="bx bx-arrow-back"></i>
+        </a>
+        <div>
+            <h2 class="fw-bold mb-0" style="color:#1e2d3d;">編輯商品</h2>
+            <p class="mb-0 fs-7 text-muted">ID #@Model.Id &nbsp;·&nbsp; @Model.Name</p>
+        </div>
+    </div>
+
+    <form asp-action="Edit" method="post" id="editForm" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ReturnUrl" />
+        <input type="hidden" asp-for="SpecDefinitionJson" id="specDefinitionJson" />
+
+        <div asp-validation-summary="All" class="alert alert-danger rounded-3 mb-4" style="display:@(ViewContext.ModelState.IsValid ? "none" : "block")"></div>
+
+        <div class="row g-4">
+            @* 左欄：基本資料 *@
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                        <h5 class="fw-bold mb-0" style="color:#1e2d3d;"><i class="bx bx-edit-alt me-2 text-primary"></i>基本資料</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="Name" class="form-label fw-bold text-uppercase fs-7 text-muted">商品名稱 <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" placeholder="輸入商品名稱" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-uppercase fs-7 text-muted">主分類</label>
+                                <select id="parentCatEdit" class="form-select">
+                                    <option value="">-- 請選擇主分類 --</option>
+                                    @foreach (var pc in parentCategories)
+                                    {
+                                        <option value="@pc.Id">@pc.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="CategoryId" class="form-label fw-bold text-uppercase fs-7 text-muted">子分類 <span class="text-danger">*</span></label>
+                                <select asp-for="CategoryId" id="subCatEdit" class="form-select">
+                                    <option value="0">-- 請選擇子分類 --</option>
+                                    @foreach (var sc in subCategories)
+                                    {
+                                        <option value="@sc.Id" data-parent="@sc.ParentId" selected="@(sc.Id == Model.CategoryId)">@sc.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="BrandId" class="form-label fw-bold text-uppercase fs-7 text-muted">品牌</label>
+                                <select asp-for="BrandId" class="form-select">
+                                    <option value="">-- 不指定品牌 --</option>
+                                    @foreach (var b in brands)
+                                    {
+                                        <option value="@b.Id" selected="@(b.Id == Model.BrandId)">@b.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label fw-bold text-uppercase fs-7 text-muted">商品描述</label>
+                                <textarea asp-for="Description" class="form-control" rows="5" placeholder="輸入商品詳細描述..."></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-uppercase fs-7 text-muted">主圖</label>
+                                <div class="d-flex gap-3 align-items-start">
+                                    <div class="flex-grow-1">
+                                        @* URL 輸入 *@
+                                        <input asp-for="MainImageUrl" id="editImgUrl" class="form-control" placeholder="https://（貼入外部圖片網址）" />
+                                        <span asp-validation-for="MainImageUrl" class="text-danger small"></span>
+
+                                        @* 分隔 *@
+                                        <div class="d-flex align-items-center gap-2 my-2">
+                                            <hr class="flex-grow-1 m-0" />
+                                            <span class="text-muted" style="font-size:.8rem;white-space:nowrap;">或</span>
+                                            <hr class="flex-grow-1 m-0" />
+                                        </div>
+
+                                        @* 檔案上傳 *@
+                                        <div>
+                                            <label for="editFileInput" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                                <i class="bx bx-upload me-1"></i>選擇檔案上傳
+                                            </label>
+                                            <input type="file" id="editFileInput" name="ImageFile" accept=".jpg,.jpeg,.png,.webp" class="d-none" />
+                                            <span id="editFileLabel" class="text-muted ms-2" style="font-size:.82rem;"></span>
+                                            <span asp-validation-for="ImageFile" class="text-danger small d-block mt-1"></span>
+                                            <div id="editFileError" class="text-danger small mt-1"></div>
+                                            <div class="form-text">上傳優先於網址；支援 jpg / jpeg / png / webp，最大 5 MB</div>
+                                        </div>
+                                    </div>
+
+                                    @* 預覽框 *@
+                                    <div class="rounded-3 border d-flex align-items-center justify-content-center overflow-hidden flex-shrink-0"
+                                         style="width:100px;height:100px;background:#f8fafc;">
+                                        <img id="editImgPreview" src="@Model.MainImageUrl" alt="預覽"
+                                             class="w-100 h-100 object-fit-cover @(string.IsNullOrEmpty(Model.MainImageUrl) ? "d-none" : "")" />
+                                        <i id="editImgIcon" class="bx bx-image text-muted fs-2 @(!string.IsNullOrEmpty(Model.MainImageUrl) ? "d-none" : "")"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* 右欄：規格維度編輯器 *@
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                        <h5 class="fw-bold mb-1" style="color:#1e2d3d;"><i class="bx bx-list-ul me-2 text-primary"></i>規格維度</h5>
+                        <p class="text-muted fs-7 mb-0">設定顏色、尺寸等維度，最多 2 個</p>
+                    </div>
+                    <div class="card-body p-4">
+                        @{
+                            var variantCount = (int)(ViewBag.VariantCount ?? 0);
+                            var variantNames = ViewBag.VariantNames as List<string>;
+                        }
+                        @if (variantCount > 0)
+                        {
+                            <div class="mb-4 p-3 rounded-3" style="background:#f0fdfa;border:1.5px solid #99f6e4;">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="bx bx-package fs-5" style="color:#0D9488;"></i>
+                                    <strong style="color:#0D9488;font-size:.88rem;">此商品已有 @variantCount 個規格組合</strong>
+                                </div>
+                                <div id="inferredDimsArea" style="font-size:.82rem;"></div>
+                            </div>
+                        }
+                        <div id="specEditor"></div>
+                        <div id="specEmpty" class="text-center py-4 text-muted">
+                            <i class="bx bx-category fs-2 mb-2 d-block"></i>
+                            <p class="mb-2 fs-7">尚未設定規格維度</p>
+                            <p class="fs-7 mb-0">點擊下方「新增維度」開始設定</p>
+                        </div>
+                        <div class="mt-3 pt-3 border-top">
+                            <button type="button" id="btnAddDimension" class="btn btn-outline-primary rounded-pill px-4">
+                                <i class="bx bx-plus me-1"></i>新增維度
+                            </button>
+                            <span class="text-muted fs-7 ms-2">最多 2 個</span>
+                            <div class="text-muted fs-7 mt-2" style="font-size:.78rem!important;color:#6b7280!important;">
+                                <i class="bx bx-info-circle me-1"></i>修改規格維度不會影響已建立的規格組合
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="@backUrl" class="btn btn-outline-secondary rounded-pill px-4">取消</a>
+            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">
+                <i class="bx bx-save me-1"></i> 儲存變更
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+    .fs-7 { font-size: 0.85rem; }
+    .card { border-radius: 16px !important; }
+
+    .spec-dim-card {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 0.85rem;
+        background: #f8fafc;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .spec-dim-card:hover { border-color: #0D9488; box-shadow: 0 2px 8px rgba(13,148,136,.08); }
+
+    .spec-dim-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.6rem;
+    }
+    .spec-name-input { max-width: 150px; font-size: .9rem; }
+
+    .spec-dim-opts {
+        min-height: 32px;
+        padding: 4px 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 0.4rem;
+    }
+
+    .spec-opt-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #ccfbf1;
+        color: #0D9488;
+        border-radius: 20px;
+        padding: 0.2em 0.7em;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+    .spec-opt-tag .remove-opt {
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: #0D9488;
+        line-height: 1;
+        border: none;
+        background: none;
+        padding: 0;
+    }
+    .spec-opt-tag .remove-opt:hover { color: #e53e3e; }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // ── Spec Editor ──
+        var specData = [];
+        try {
+            var raw = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SpecDefinitionJson ?? "[]"));
+            specData = JSON.parse(raw) || [];
+            if (!Array.isArray(specData)) specData = [];
+        } catch(e) { specData = []; }
+
+        var variantNamesJson = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            ViewBag.VariantNames as List<string> ?? new List<string>()));
+
+        var firstSpecValueJson = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            (ViewBag.FirstVariantSpecValueJson as string) ?? "{}"));
+
+        // 若 SpecDefinitionJson 為空但已有規格組合，從 firstSpecValueJson 合成 specData
+        if (specData.length === 0 && firstSpecValueJson && firstSpecValueJson !== '{}') {
+            try {
+                var svFirst = JSON.parse(firstSpecValueJson);
+                if (svFirst && typeof svFirst === 'object') {
+                    var svKeys = Object.keys(svFirst);
+                    // 從所有 variantNames 收集每個維度的所有選項值
+                    var dimOptsMap = {};
+                    svKeys.forEach(function(k) { dimOptsMap[k] = []; });
+                    variantNamesJson.forEach(function(varName) {
+                        var parts = (varName || '').split(' / ');
+                        svKeys.forEach(function(k, i) {
+                            var v = (parts[i] || '').trim();
+                            if (v && dimOptsMap[k].indexOf(v) === -1) dimOptsMap[k].push(v);
+                        });
+                    });
+                    specData = svKeys.map(function(k) {
+                        return { name: k, options: dimOptsMap[k] };
+                    });
+                }
+            } catch(e) {}
+        }
+
+        function escHtml(str) {
+            return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function syncHidden() {
+            document.getElementById('specDefinitionJson').value = JSON.stringify(specData);
+        }
+
+        function renderTags(options, dimIdx) {
+            if (!options || options.length === 0) return '<span class="text-muted fs-7">尚無選項，請在下方輸入並按 Enter 新增</span>';
+            return options.map(function(opt, optIdx) {
+                return '<span class="spec-opt-tag">' + escHtml(opt) +
+                    '<button type="button" class="remove-opt" onclick="removeOpt(' + dimIdx + ',' + optIdx + ')" title="移除">&times;</button>' +
+                    '</span>';
+            }).join('');
+        }
+
+        function renderSpec() {
+            var editor = document.getElementById('specEditor');
+            var empty  = document.getElementById('specEmpty');
+            editor.innerHTML = '';
+            if (specData.length === 0) {
+                empty.style.display = '';
+                document.getElementById('btnAddDimension').disabled = false;
+                return;
+            }
+            empty.style.display = 'none';
+
+            specData.forEach(function(dim, dimIdx) {
+                var card = document.createElement('div');
+                card.className = 'spec-dim-card';
+                card.innerHTML =
+                    '<div class="spec-dim-header">' +
+                        '<div class="d-flex align-items-center gap-2">' +
+                            '<i class="bx bx-tag-alt" style="color:#0D9488;"></i>' +
+                            '<input type="text" class="form-control form-control-sm fw-bold spec-name-input" ' +
+                                'placeholder="維度名稱（如：顏色）" value="' + escHtml(dim.name) + '" ' +
+                                'onchange="specData[' + dimIdx + '].name = this.value; syncHidden();" />' +
+                        '</div>' +
+                        '<button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2" ' +
+                            'onclick="removeDim(' + dimIdx + ')" title="刪除此維度">' +
+                            '<i class="bx bx-trash"></i>' +
+                        '</button>' +
+                    '</div>' +
+                    '<div class="spec-dim-opts">' + renderTags(dim.options, dimIdx) + '</div>' +
+                    '<div class="input-group input-group-sm mt-2">' +
+                        '<input type="text" class="form-control" id="optInput_' + dimIdx + '" ' +
+                            'placeholder="輸入選項值，按 Enter 新增" ' +
+                            'onkeydown="handleOptKeydown(event,' + dimIdx + ')" />' +
+                        '<button type="button" class="btn btn-outline-secondary" onclick="addOpt(' + dimIdx + ')">' +
+                            '<i class="bx bx-plus"></i>' +
+                        '</button>' +
+                    '</div>';
+                editor.appendChild(card);
+            });
+            document.getElementById('btnAddDimension').disabled = (specData.length >= 2);
+        }
+
+        // 從現有規格組合名稱推測維度與選項（含維度名稱優先邏輯）
+        function inferAndShowDims() {
+            var area = document.getElementById('inferredDimsArea');
+            if (!area || !variantNamesJson || variantNamesJson.length === 0) return;
+
+            // 1. 優先從 SpecDefinitionJson 取維度名稱
+            var dimNames = [];
+            if (specData.length > 0) {
+                dimNames = specData.map(function(d) { return d.name || ''; });
+            } else {
+                // 2. 再從第一個 variant 的 SpecValueJson keys 取
+                try {
+                    var sv = JSON.parse(firstSpecValueJson);
+                    if (sv && typeof sv === 'object') {
+                        dimNames = Object.keys(sv);
+                    }
+                } catch(e) {}
+            }
+
+            // 收集每個位置的唯一值
+            var positions = [];
+            variantNamesJson.forEach(function(n) {
+                var parts = (n || '').split(' / ');
+                parts.forEach(function(p, i) {
+                    if (!positions[i]) positions[i] = [];
+                    var v = p.trim();
+                    if (v && positions[i].indexOf(v) === -1) positions[i].push(v);
+                });
+            });
+
+            if (positions.length === 0) { area.innerHTML = ''; return; }
+
+            var html = '';
+            positions.forEach(function(vals, i) {
+                // 3. fallback: 規格N
+                var label = (dimNames[i] && dimNames[i].trim()) ? dimNames[i] : ('規格' + (i + 1));
+                html += '<div class="mb-1"><span style="color:#6b7280;margin-right:6px;font-size:.78rem;">' + escHtml(label) + '：</span>';
+                vals.forEach(function(v) {
+                    html += '<span style="display:inline-block;background:#ccfbf1;color:#0D9488;border-radius:20px;padding:1px 9px;margin:2px;font-size:.78rem;font-weight:600;">' + escHtml(v) + '</span>';
+                });
+                html += '</div>';
+            });
+            area.innerHTML = html;
+        }
+
+        function removeDim(idx) { specData.splice(idx, 1); syncHidden(); renderSpec(); }
+
+        function addOpt(dimIdx) {
+            var input = document.getElementById('optInput_' + dimIdx);
+            var val = (input.value || '').trim();
+            if (!val) return;
+            if (!specData[dimIdx].options) specData[dimIdx].options = [];
+            if (specData[dimIdx].options.indexOf(val) === -1) {
+                specData[dimIdx].options.push(val);
+                syncHidden(); renderSpec();
+            }
+            var newInput = document.getElementById('optInput_' + dimIdx);
+            if (newInput) { newInput.value = ''; newInput.focus(); }
+        }
+
+        function handleOptKeydown(e, dimIdx) { if (e.key === 'Enter') { e.preventDefault(); addOpt(dimIdx); } }
+
+        function removeOpt(dimIdx, optIdx) { specData[dimIdx].options.splice(optIdx, 1); syncHidden(); renderSpec(); }
+
+        document.getElementById('btnAddDimension').addEventListener('click', function () {
+            if (specData.length >= 2) return;
+            specData.push({ name: '', options: [] });
+            syncHidden(); renderSpec();
+            var inputs = document.querySelectorAll('.spec-dim-card .spec-name-input');
+            if (inputs.length > 0) inputs[inputs.length - 1].focus();
+        });
+
+        syncHidden();
+        renderSpec();
+        inferAndShowDims();
+
+        // ── 主分類 → 子分類 聯動（保留現有選取）──
+        var currentCategoryId = @Model.CategoryId;
+        document.querySelectorAll('#subCatEdit option[data-parent]').forEach(function(opt) {
+            if (parseInt(opt.value) === currentCategoryId) {
+                document.getElementById('parentCatEdit').value = opt.getAttribute('data-parent');
+            }
+        });
+
+        document.getElementById('parentCatEdit').addEventListener('change', function () {
+            var pid = this.value;
+            var subSel = document.getElementById('subCatEdit');
+            subSel.innerHTML = '<option value="0">-- 請選擇子分類 --</option>';
+            if (!pid) return;
+            fetch('@Url.Action("GetSubCategories", "Products")?parentId=' + pid)
+                .then(r => r.json())
+                .then(function (subs) {
+                    subs.forEach(function (s) {
+                        var opt = document.createElement('option');
+                        opt.value = s.id; opt.textContent = s.name;
+                        subSel.appendChild(opt);
+                    });
+                });
+        });
+
+        // ── 主圖即時預覽（URL）──
+        document.getElementById('editImgUrl').addEventListener('input', function () {
+            if (document.getElementById('editFileInput').files.length > 0) return;
+            var url  = this.value.trim();
+            var img  = document.getElementById('editImgPreview');
+            var icon = document.getElementById('editImgIcon');
+            if (url) {
+                img.src = url;
+                img.classList.remove('d-none');
+                icon.classList.add('d-none');
+                img.onerror = function () { img.classList.add('d-none'); icon.classList.remove('d-none'); };
+            } else {
+                img.classList.add('d-none');
+                icon.classList.remove('d-none');
+            }
+        });
+
+        // ── 檔案上傳：驗證 + 預覽 ──
+        document.getElementById('editFileInput').addEventListener('change', function () {
+            var errEl = document.getElementById('editFileError');
+            var label = document.getElementById('editFileLabel');
+            errEl.textContent = '';
+            if (!this.files || !this.files[0]) { label.textContent = ''; return; }
+
+            var file = this.files[0];
+            var allowed = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!allowed.includes(file.type)) {
+                errEl.textContent = '僅支援 jpg、jpeg、png、webp 格式。';
+                this.value = ''; label.textContent = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                errEl.textContent = '檔案大小不可超過 5 MB。';
+                this.value = ''; label.textContent = '';
+                return;
+            }
+
+            label.textContent = file.name;
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var img  = document.getElementById('editImgPreview');
+                var icon = document.getElementById('editImgIcon');
+                img.src = e.target.result;
+                img.classList.remove('d-none');
+                icon.classList.add('d-none');
+            };
+            reader.readAsDataURL(file);
+        });
+    </script>
+}
