@@ -1,0 +1,2982 @@
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 547，層級 16，狀態 0，行 13
+INSERT 陳述式與 FOREIGN KEY 條件約束 "FK_Users_Roles" 衝突。衝突發生在資料庫 "ISpanShopDB"，資料表 "dbo.Roles", column 'Id'。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 19
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.MemberProfiles'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 25
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Stores'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 53
+無法插入 NULL 值到資料行 'UserId'，資料表 'ISpanShopDB.dbo.Orders'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+訊息 515，層級 16，狀態 2，行 89
+無法插入 NULL 值到資料行 'OrderId'，資料表 'ISpanShopDB.dbo.OrderDetails'; 資料行不得有 Null。INSERT 失敗。
+陳述式已經結束。
+Seed data generation completed: 30 users/stores and 300 orders added.
+
+完成時間: 2026-03-06T20:15:53.2872227+08:00

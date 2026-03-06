@@ -55,7 +55,7 @@
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div class="d-flex align-items-center gap-3">
                     <h5 class="mb-0 fw-bold">營收表現分析</h5>
-                    <select id="periodFilter" class="form-select form-select-sm w-auto border-0 bg-light fw-bold" onchange="refreshMetrics()">
+                    <select id="periodFilter" class="form-select form-select-sm w-auto border-0 bg-light fw-bold" onchange="refreshAllDashboard()">
                         <option value="7days">近 7 天</option>
                         <option value="month" selected>近一個月 (30天)</option>
                         <option value="3months">近三個月</option>
@@ -119,7 +119,7 @@
     <div class="col-12 col-xl-8 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 fw-bold">趨勢分析</h5>
+                <h5 class="card-title mb-0 fw-bold">年度營收趨勢 (最近12個月)</h5>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="btn btn-label-secondary" onclick="toggleTrendChartType('line')"><i class="bx bx-line-chart"></i></button>
                     <button type="button" class="btn btn-label-secondary" onclick="toggleTrendChartType('bar')"><i class="bx bx-bar-chart-alt-2"></i></button>
@@ -131,11 +131,11 @@
         </div>
     </div>
 
-    <!-- 商品銷售比例 -->
+    <!-- 類別銷售比例 -->
     <div class="col-12 col-xl-4 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header">
-                <h5 class="card-title mb-0 fw-bold">銷售佔比</h5>
+                <h5 class="card-title mb-0 fw-bold">類別銷量佔比</h5>
             </div>
             <div class="card-body">
                 <div id="productPieChart"></div>
@@ -147,7 +147,7 @@
     <div class="col-12 col-xl-6 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 fw-bold">熱銷排行 Top 10</h5>
+                <h5 class="card-title mb-0 fw-bold">熱銷商品 Top 10 (依類別著色)</h5>
                 <select id="top10OrderBy" class="form-select form-select-sm w-auto" onchange="loadTop10Chart()">
                     <option value="revenue">依銷售額</option>
                     <option value="volume">依銷量</option>
@@ -159,11 +159,16 @@
         </div>
     </div>
 
-    <!-- 類別貢獻度 -->
+    <!-- 類別貢獻度 (需求：切換 Bar/Treemap/Radar) -->
     <div class="col-12 col-xl-6 mb-4">
         <div class="card h-100 border-0 shadow-sm">
-            <div class="card-header">
-                <h5 class="card-title mb-0 fw-bold">類別貢獻度</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold">類別營收貢獻度</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('bar')" title="柱狀圖"><i class="bx bx-bar-chart-square"></i></button>
+                    <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('treemap')" title="矩形圖"><i class="bx bx-grid-alt"></i></button>
+                    <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('radar')" title="雷達圖"><i class="bx bx-radar"></i></button>
+                </div>
             </div>
             <div class="card-body">
                 <div id="categoryChart"></div>
@@ -176,7 +181,19 @@
     <script src="~/sneat/assets/vendor/libs/apex-charts/apexcharts.js"></script>
     <script>
         let trendChart, pieChart, top10Chart, categoryChart;
-        const colors = ['#696cff', '#71dd37', '#03c3ec', '#ffab00', '#ff3e1d', '#8592a3'];
+        let currentCategoryChartType = 'bar'; // 預設為柱狀圖
+        const palette = ['#696cff', '#71dd37', '#03c3ec', '#ffab00', '#ff3e1d', '#8592a3', '#e3028a', '#00d2d3', '#54a0ff', '#5f27cd'];
+        
+        const categoryColorMap = {};
+        let colorIndex = 0;
+
+        function getCategoryColor(name) {
+            if (!categoryColorMap[name]) {
+                categoryColorMap[name] = palette[colorIndex % palette.length];
+                colorIndex++;
+            }
+            return categoryColorMap[name];
+        }
 
         $(document).ready(function() {
             refreshAllDashboard();
@@ -190,20 +207,14 @@
             loadCategoryContribution();
         }
 
-        // 僅刷新受時間維度影響的小卡
         function refreshMetrics() {
             const period = $('#periodFilter').val();
             const storeId = $('#storeFilter').val();
-
             $.get(`/Orders/GetDashboardKpis?period=${period}&storeId=${storeId}`, function(data) {
-                // 更新大型英雄卡 (待出貨總數雖然不限時間，但隨商店切換更新是合理的)
                 $('#kpiPendingShip').text(data.pendingShipmentCount);
-                
-                // 更新右側表現分析卡
                 $('#kpiNetRevenue').text('$' + data.netRevenue.toLocaleString());
                 $('#kpiItemsPerOrder').text(data.itemsPerOrder.toFixed(1));
                 $('#kpiReturnRate').text(data.returnRate.toFixed(1) + '%');
-
                 updateGrowth('#kpiRevGrowth', data.netRevenueGrowthRate, false);
                 updateGrowth('#kpiItemsGrowth', data.itemsPerOrderGrowthRate, false);
                 updateGrowth('#kpiReturnGrowth', data.returnRateGrowthRate, true);
@@ -214,10 +225,8 @@
             const el = $(selector);
             const isNegative = rate < 0;
             el.removeClass('text-success text-danger');
-            
             let colorClass = isNegative ? 'text-danger' : 'text-success';
             if(invert) colorClass = isNegative ? 'text-success' : 'text-danger';
-            
             el.addClass(colorClass).html(`${rate >= 0 ? '↑' : '↓'} ${Math.abs(rate)}% <span class="text-muted fw-normal">vs 前期</span>`);
         }
 
@@ -229,8 +238,8 @@
                     chart: { height: 350, type: 'line', toolbar: { show: false } },
                     stroke: { curve: 'smooth', width: 3 },
                     xaxis: { categories: data.labels },
-                    colors: [colors[0]],
-                    grid: { borderColor: '#f1f1f1', padding: { bottom: 15 } }
+                    colors: [palette[0]],
+                    grid: { borderColor: '#f1f1f1' }
                 };
                 if(trendChart) trendChart.destroy();
                 trendChart = new ApexCharts(document.querySelector("#trendChart"), options);
@@ -247,11 +256,12 @@
             const storeId = $('#storeFilter').val();
             $.get(`/Orders/GetProductSalesChart?type=Pie&period=${period}&storeId=${storeId}`, function(data) {
                 if(!data.series || data.series.length === 0) return;
+                const chartColors = data.labels.map(name => getCategoryColor(name));
                 const options = {
                     series: data.series[0].data,
                     labels: data.labels,
                     chart: { type: 'donut', height: 350 },
-                    colors: colors,
+                    colors: chartColors,
                     legend: { position: 'bottom' },
                     plotOptions: { pie: { donut: { size: '70%' } } }
                 };
@@ -266,12 +276,17 @@
             const storeId = $('#storeFilter').val();
             const orderBy = $('#top10OrderBy').val();
             $.get(`/Orders/GetTop10Products?period=${period}&storeId=${storeId}&orderBy=${orderBy}`, function(data) {
+                const barColors = data.map(item => getCategoryColor(item.categoryName));
                 const options = {
-                    series: [{ name: orderBy === 'revenue' ? '銷售額' : '銷量', data: data.map(x => orderBy === 'revenue' ? x.salesRevenue : x.salesVolume) }],
+                    series: [{ 
+                        name: orderBy === 'revenue' ? '銷售額' : '銷量', 
+                        data: data.map(x => orderBy === 'revenue' ? x.salesRevenue : x.salesVolume) 
+                    }],
                     chart: { type: 'bar', height: 350, toolbar: { show: false } },
-                    plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
+                    plotOptions: { bar: { horizontal: true, borderRadius: 4, distributed: true } },
                     xaxis: { categories: data.map(x => x.productName) },
-                    colors: [colors[1]]
+                    colors: barColors,
+                    legend: { show: false }
                 };
                 if(top10Chart) top10Chart.destroy();
                 top10Chart = new ApexCharts(document.querySelector("#top10Chart"), options);
@@ -279,17 +294,56 @@
             });
         }
 
+        function toggleCategoryChartType(type) {
+            currentCategoryChartType = type;
+            loadCategoryContribution();
+        }
+
         function loadCategoryContribution() {
             const period = $('#periodFilter').val();
             const storeId = $('#storeFilter').val();
             $.get(`/Orders/GetCategoryContribution?period=${period}&storeId=${storeId}`, function(data) {
-                const options = {
-                    series: data.series,
-                    chart: { type: 'radar', height: 350 },
-                    labels: data.labels,
-                    colors: [colors[2]],
-                    fill: { opacity: 0.4 }
+                if(!data.series || data.series.length === 0) return;
+                
+                const chartColors = data.labels.map(name => getCategoryColor(name));
+                let options = {
+                    chart: { height: 350, toolbar: { show: false } },
+                    colors: chartColors
                 };
+
+                if (currentCategoryChartType === 'treemap') {
+                    const treemapData = data.labels.map((label, index) => ({ x: label, y: data.series[0].data[index] }));
+                    options = {
+                        ...options,
+                        series: [{ data: treemapData }],
+                        chart: { ...options.chart, type: 'treemap' },
+                        plotOptions: { treemap: { distributed: true, enableShades: false } },
+                        dataLabels: { enabled: true, formatter: (text, op) => [text, '$' + op.value.toLocaleString()] }
+                    };
+                } else if (currentCategoryChartType === 'radar') {
+                    options = {
+                        ...options,
+                        series: data.series,
+                        labels: data.labels,
+                        chart: { ...options.chart, type: 'radar' },
+                        fill: { opacity: 0.4 },
+                        stroke: { width: 2 },
+                        markers: { size: 4 },
+                        colors: [palette[0]] // 雷達圖單色較好看
+                    };
+                } else {
+                    // 預設：柱狀圖 (Bar)
+                    options = {
+                        ...options,
+                        series: data.series,
+                        chart: { ...options.chart, type: 'bar' },
+                        plotOptions: { bar: { distributed: true, borderRadius: 4, columnWidth: '50%' } },
+                        xaxis: { categories: data.labels },
+                        legend: { show: false },
+                        dataLabels: { enabled: true, formatter: (val) => '$' + val.toLocaleString() }
+                    };
+                }
+
                 if(categoryChart) categoryChart.destroy();
                 categoryChart = new ApexCharts(document.querySelector("#categoryChart"), options);
                 categoryChart.render();

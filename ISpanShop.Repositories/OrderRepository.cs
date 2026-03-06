@@ -179,7 +179,7 @@ namespace ISpanShop.Repositories
 			var query = _context.OrderDetails
 				.Include(od => od.Order)
 				.Include(od => od.Product)
-				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate);
+				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
 
 			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
 
@@ -205,33 +205,57 @@ namespace ISpanShop.Repositories
 
 		public async Task<ApexChartDataDto> GetProductSalesPieChartAsync(int? storeId, DateTime startDate, DateTime endDate)
 		{
-			var dto = await GetProductSalesBarChartAsync(storeId, startDate, endDate);
-			if (dto.Series.Count > 0)
-			{
-				dto.Series[0].Name = "銷售比例";
-			}
-			return dto;
-		}
+			// 需求：改為抓取「類別」占比 (銷售量)
+			var query = _context.OrderDetails
+				.Include(od => od.Order)
+				.Include(od => od.Product)
+				.ThenInclude(p => p.Category)
+				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
 
-		public async Task<ApexChartDataDto> GetMonthlySalesTrendAsync(int? storeId, int year)
-		{
-			var query = _context.Orders.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Year == year && o.Status == 4); // 僅計算已完成訂單
+			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
 
-			if (storeId.HasValue) query = query.Where(o => o.StoreId == storeId.Value);
-
-			var monthlyData = await query
-				.GroupBy(o => o.CreatedAt.Value.Month)
-				.Select(g => new { Month = g.Key, Revenue = g.Sum(o => o.FinalAmount) })
+			var groupedData = await query
+				.GroupBy(od => od.Product.Category.Name)
+				.Select(g => new { CategoryName = g.Key, TotalSales = g.Sum(od => od.Quantity) })
+				.OrderByDescending(x => x.TotalSales)
 				.ToListAsync();
 
 			var dto = new ApexChartDataDto();
 			var seriesData = new List<decimal>();
 
-			for (int i = 1; i <= 12; i++)
+			foreach (var item in groupedData)
 			{
-				dto.Labels.Add($"{i}月");
-				var monthData = monthlyData.FirstOrDefault(m => m.Month == i);
+				dto.Labels.Add(item.CategoryName ?? "未分類");
+				seriesData.Add(item.TotalSales);
+			}
+
+			dto.Series.Add(new ChartSeriesDto { Name = "類別銷售比例", Data = seriesData });
+			return dto;
+		}
+
+		public async Task<ApexChartDataDto> GetMonthlySalesTrendAsync(int? storeId, DateTime startDate, DateTime endDate)
+		{
+			// 僅計算已完成訂單 (Status == 3: Completed)
+			var query = _context.Orders.Where(o => o.CreatedAt.HasValue && o.CreatedAt >= startDate && o.CreatedAt <= endDate && o.Status == 3);
+
+			if (storeId.HasValue) query = query.Where(o => o.StoreId == storeId.Value);
+
+			var monthlyData = await query
+				.GroupBy(o => new { o.CreatedAt.Value.Year, o.CreatedAt.Value.Month })
+				.Select(g => new { g.Key.Year, g.Key.Month, Revenue = g.Sum(o => o.FinalAmount) })
+				.ToListAsync();
+
+			var dto = new ApexChartDataDto();
+			var seriesData = new List<decimal>();
+
+			// 生成從 startDate 到 endDate 的月份標籤
+			DateTime current = new DateTime(startDate.Year, startDate.Month, 1);
+			while (current <= endDate)
+			{
+				dto.Labels.Add($"{current.Year}/{current.Month:D2}");
+				var monthData = monthlyData.FirstOrDefault(m => m.Year == current.Year && m.Month == current.Month);
 				seriesData.Add(monthData != null ? monthData.Revenue : 0);
+				current = current.AddMonths(1);
 			}
 
 			dto.Series.Add(new ChartSeriesDto { Name = "月營收", Data = seriesData });
@@ -243,15 +267,17 @@ namespace ISpanShop.Repositories
 			var query = _context.OrderDetails
 				.Include(od => od.Order)
 				.Include(od => od.Product)
-				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate);
+				.ThenInclude(p => p.Category)
+				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
 
 			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
 
 			var groupedQuery = query
-				.GroupBy(od => od.Product.Name)
+				.GroupBy(od => new { od.Product.Name, CategoryName = od.Product.Category.Name })
 				.Select(g => new TopProductSalesDto
 				{
-					ProductName = g.Key,
+					ProductName = g.Key.Name,
+					CategoryName = g.Key.CategoryName ?? "未分類",
 					SalesVolume = g.Sum(od => od.Quantity),
 					SalesRevenue = g.Sum(od => (od.Price ?? 0) * od.Quantity)
 				});
@@ -267,7 +293,7 @@ namespace ISpanShop.Repositories
 				.Include(od => od.Order)
 				.Include(od => od.Product)
 				.ThenInclude(p => p.Category)
-				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate);
+				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
 
 			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
 

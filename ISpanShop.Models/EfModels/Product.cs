@@ -39,6 +39,8 @@ public partial class Product
 
     public string RejectReason { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     public virtual Brand Brand { get; set; }
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();

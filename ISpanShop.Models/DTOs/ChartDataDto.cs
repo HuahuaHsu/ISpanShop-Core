@@ -23,6 +23,7 @@ namespace ISpanShop.Models.DTOs
 	public class TopProductSalesDto
 	{
 		public string ProductName { get; set; }
+		public string CategoryName { get; set; } // 新增：用於統一顏色
 		public int SalesVolume { get; set; }
 		public decimal SalesRevenue { get; set; }
 	}

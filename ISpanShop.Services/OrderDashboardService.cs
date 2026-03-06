@@ -119,8 +119,12 @@ namespace ISpanShop.Services
 
 		public async Task<ApexChartDataDto> GetMonthlySalesTrendAsync(int? storeId, int? year)
 		{
-			int targetYear = year ?? DateTime.Now.Year;
-			return await _orderRepository.GetMonthlySalesTrendAsync(storeId, targetYear);
+			// 需求：抓取最近一年的有數據月份 (Rolling 12 Months)
+			var now = DateTime.Now;
+			var endDate = now;
+			var startDate = new DateTime(now.Year, now.Month, 1).AddMonths(-11); // 從 11 個月前的 1 號開始
+
+			return await _orderRepository.GetMonthlySalesTrendAsync(storeId, startDate, endDate);
 		}
 
 		public async Task<List<TopProductSalesDto>> GetTop10ProductsAsync(int? storeId, string period, string orderBy)

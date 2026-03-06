@@ -19,6 +19,10 @@ public partial class Category
 
     public bool? IsVisible { get; set; }
 
+    public string Icon { get; set; }
+
+    public string NameEn { get; set; }
+
     public virtual ICollection<CategorySpecMapping> CategorySpecMappings { get; set; } = new List<CategorySpecMapping>();
 
     public virtual ICollection<Category> InverseParent { get; set; } = new List<Category>();

@@ -23,7 +23,7 @@ namespace ISpanShop.Repositories.Interfaces
 		Task<DashboardKpiRawDataDto> GetDashboardKpisAsync(int? storeId, DateTime startDate, DateTime endDate, DateTime prevStartDate, DateTime prevEndDate);
 		Task<ApexChartDataDto> GetProductSalesBarChartAsync(int? storeId, DateTime startDate, DateTime endDate);
 		Task<ApexChartDataDto> GetProductSalesPieChartAsync(int? storeId, DateTime startDate, DateTime endDate);
-		Task<ApexChartDataDto> GetMonthlySalesTrendAsync(int? storeId, int year);
+		Task<ApexChartDataDto> GetMonthlySalesTrendAsync(int? storeId, DateTime startDate, DateTime endDate);
 		Task<List<TopProductSalesDto>> GetTop10ProductsAsync(int? storeId, DateTime startDate, DateTime endDate, string orderBy);
 		Task<ApexChartDataDto> GetCategoryContributionAsync(int? storeId, DateTime startDate, DateTime endDate);
 	}
