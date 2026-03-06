@@ -1,5 +1,5 @@
-﻿using ISpanShop.Models.EfModels;
-using ISpanShop.Models.EfModels.DTOs;
+﻿using ISpanShop.Models.DTOs;
+using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -19,56 +19,13 @@ namespace ISpanShop.Repositories
 			_context = context;
 		}
 
-		public async Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedOrdersAsync(OrderSearchDto search)
-		{
-			var query = _context.Orders
-				.Include(o => o.User)
-				.Include(o => o.Store)
-				.AsQueryable();
-
-			// 篩選條件
-			if (!string.IsNullOrWhiteSpace(search.OrderNumber))
-			{
-				query = query.Where(o => o.OrderNumber.Contains(search.OrderNumber));
-			}
-
-			if (search.Status.HasValue)
-			{
-				query = query.Where(o => o.Status == (byte)search.Status.Value);
-			}
-
-			if (search.StartDate.HasValue)
-			{
-				query = query.Where(o => o.CreatedAt >= search.StartDate.Value);
-			}
-
-			if (search.EndDate.HasValue)
-			{
-				// 包含當天 23:59:59
-				var endDate = search.EndDate.Value.Date.AddDays(1).AddTicks(-1);
-				query = query.Where(o => o.CreatedAt <= endDate);
-			}
-
-			// 計算總筆數
-			int totalCount = await query.CountAsync();
-
-			// 執行分頁與排序
-			var items = await query
-				.OrderByDescending(o => o.CreatedAt)
-				.Skip((search.PageNumber - 1) * search.PageSize)
-				.Take(search.PageSize)
-				.ToListAsync();
-
-			return (items, totalCount);
-		}
-
 		public async Task<Order> GetOrderByIdAsync(long id)
 		{
 			return await _context.Orders
 				.Include(o => o.User)
 				.Include(o => o.Store)
 				.Include(o => o.OrderDetails)
-					.ThenInclude(od => od.Product) // 如果明細需要產品關聯
+					.ThenInclude(od => od.Product)
 				.FirstOrDefaultAsync(o => o.Id == id);
 		}
 
@@ -78,16 +35,259 @@ namespace ISpanShop.Repositories
 			if (order != null)
 			{
 				order.Status = status;
-
-				// 如果狀態更新為「已完成」，可同步設定 CompletedAt
-				if (status == 3) // 假設 3 是 Completed
+				if (status == 3) // 已完成 (Completed = 3)
 				{
 					order.CompletedAt = DateTime.Now;
 				}
-
 				await _context.SaveChangesAsync();
 			}
 		}
 
+		public async Task<PagedResultDto<OrderListDto>> GetFilteredOrdersAsync(OrderSearchDto criteria)
+		{
+			var query = _context.Orders
+				.Include(o => o.User)
+				.ThenInclude(u => u.MemberProfile)
+				.Include(o => o.Store)
+				.AsQueryable();
+
+			// A1. 基礎資訊篩選
+			if (!string.IsNullOrEmpty(criteria.Keyword))
+			{
+				var kw = criteria.Keyword.Trim();
+				query = query.Where(o =>
+					o.OrderNumber.Contains(kw) ||
+					o.UserId.ToString() == kw ||
+					o.RecipientName.Contains(kw) ||
+					o.RecipientPhone.Contains(kw));
+			}
+
+			// A2. 訂單狀態
+			if (criteria.Statuses != null && criteria.Statuses.Any())
+			{
+				var byteStatuses = criteria.Statuses.Select(s => (byte)s).ToList();
+				query = query.Where(o => o.Status.HasValue && byteStatuses.Contains(o.Status.Value));
+			}
+
+			// A3. 金額區間
+			if (criteria.MinAmount.HasValue)
+				query = query.Where(o => o.FinalAmount >= criteria.MinAmount.Value);
+			if (criteria.MaxAmount.HasValue)
+				query = query.Where(o => o.FinalAmount <= criteria.MaxAmount.Value);
+
+			// A4 & A5. 日期篩選
+			if (criteria.StartDate.HasValue || criteria.EndDate.HasValue)
+			{
+				DateTime start = criteria.StartDate ?? DateTime.MinValue;
+				DateTime end = criteria.EndDate ?? DateTime.MaxValue;
+
+				query = criteria.DateDimension switch
+				{
+					2 => query.Where(o => o.PaymentDate >= start && o.PaymentDate <= end),
+					3 => query.Where(o => o.CompletedAt >= start && o.CompletedAt <= end),
+					_ => query.Where(o => o.CreatedAt >= start && o.CreatedAt <= end)
+				};
+			}
+
+			// A6. 商店過濾
+			if (criteria.StoreId.HasValue)
+				query = query.Where(o => o.StoreId == criteria.StoreId.Value);
+			if (!string.IsNullOrEmpty(criteria.StoreName))
+				query = query.Where(o => o.Store != null && o.Store.StoreName.Contains(criteria.StoreName));
+
+			// B. 動態排序
+			query = criteria.SortBy switch
+			{
+				"TotalAmount" => criteria.IsDescending ? query.OrderByDescending(o => o.FinalAmount) : query.OrderBy(o => o.FinalAmount),
+				"Status" => criteria.IsDescending ? query.OrderByDescending(o => o.Status) : query.OrderBy(o => o.Status),
+				"MemberName" => criteria.IsDescending ? query.OrderByDescending(o => o.User.MemberProfile.FullName) : query.OrderBy(o => o.User.MemberProfile.FullName),
+				_ => criteria.IsDescending ? query.OrderByDescending(o => o.CreatedAt) : query.OrderBy(o => o.CreatedAt)
+			};
+
+			var totalCount = await query.CountAsync();
+			var items = await query
+				.Skip((criteria.PageNumber - 1) * criteria.PageSize)
+				.Take(criteria.PageSize)
+				.Select(o => new OrderListDto
+				{
+					OrderId = (int)o.Id,
+					OrderUuid = o.OrderNumber,
+					MemberName = o.User != null && o.User.MemberProfile != null ? o.User.MemberProfile.FullName : "無",
+					TotalAmount = o.FinalAmount,
+					StatusId = o.Status.HasValue ? (int)o.Status.Value : 0,
+					// StatusName 邏輯對應 (與 OrderStatus Enum 同步)
+					StatusName = o.Status == 0 ? "待付款" :
+								 o.Status == 1 ? "待出貨" :
+								 o.Status == 2 ? "運送中" :
+								 o.Status == 3 ? "已完成" :
+								 o.Status == 4 ? "已取消" : "未知",
+					OrderDate = o.CreatedAt ?? DateTime.MinValue,
+					PaymentDate = o.PaymentDate,
+					CompletedAt = o.CompletedAt,
+					RecipientName = o.RecipientName,
+					RecipientPhone = o.RecipientPhone,
+					StoreName = o.Store != null ? o.Store.StoreName : "平台"
+				})
+				.ToListAsync();
+
+			return new PagedResultDto<OrderListDto> { Items = items, TotalCount = totalCount, PageNumber = criteria.PageNumber, PageSize = criteria.PageSize };
+		}
+
+		// -------------------------------------------------------------------------
+		// 以下為圖表與 KPI 查詢實作 (透過 GroupBy, Sum, Count 等彙整 DB 資料)
+		// -------------------------------------------------------------------------
+
+		public async Task<DashboardKpiRawDataDto> GetDashboardKpisAsync(int? storeId, DateTime startDate, DateTime endDate, DateTime prevStartDate, DateTime prevEndDate)
+		{
+			var query = _context.Orders.AsNoTracking();
+			if (storeId.HasValue) query = query.Where(o => o.StoreId == storeId.Value);
+
+			var currentOrders = await query.Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate).ToListAsync();
+			var prevOrders = await query.Where(o => o.CreatedAt >= prevStartDate && o.CreatedAt <= prevEndDate).ToListAsync();
+
+			// 依據新 Enum: 3=已完成 (Completed)
+			var currentNetRevenue = currentOrders.Where(o => o.Status == 3).Sum(o => o.FinalAmount);
+			var prevNetRevenue = prevOrders.Where(o => o.Status == 3).Sum(o => o.FinalAmount);
+
+			var lowStockProductCount = await _context.ProductVariants.AsNoTracking().CountAsync(p => p.Stock < 10);
+
+			var currentOrderIds = currentOrders.Select(o => o.Id).ToList();
+			var prevOrderIds = prevOrders.Select(o => o.Id).ToList();
+
+			var currentItemsSold = currentOrderIds.Any() ? await _context.OrderDetails.Where(od => currentOrderIds.Contains(od.OrderId)).SumAsync(od => od.Quantity) : 0;
+			var prevItemsSold = prevOrderIds.Any() ? await _context.OrderDetails.Where(od => prevOrderIds.Contains(od.OrderId)).SumAsync(od => od.Quantity) : 0;
+
+			return new DashboardKpiRawDataDto
+			{
+				NetRevenue = currentNetRevenue,
+				PrevNetRevenue = prevNetRevenue,
+				TotalOrders = currentOrders.Count,
+				PrevTotalOrders = prevOrders.Count,
+				ReturnOrders = currentOrders.Count(o => o.Status == 4), // 4=已取消 (Cancelled)
+				PrevReturnOrders = prevOrders.Count(o => o.Status == 4),
+				TotalItemsSold = currentItemsSold,
+				PrevTotalItemsSold = prevItemsSold,
+				// 待出貨數通常顯示「當前所有」需要處理的訂單，不應受時間區間限制
+				PendingShipmentCount = await _context.Orders.CountAsync(o => o.Status == 1), 
+				PendingRefundCount = 0, 
+				LowStockProductCount = lowStockProductCount
+			};
+		}
+
+		public async Task<ApexChartDataDto> GetProductSalesBarChartAsync(int? storeId, DateTime startDate, DateTime endDate)
+		{
+			var query = _context.OrderDetails
+				.Include(od => od.Order)
+				.Include(od => od.Product)
+				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate);
+
+			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
+
+			var groupedData = await query
+				.GroupBy(od => od.Product.Name)
+				.Select(g => new { ProductName = g.Key, TotalSales = g.Sum(od => od.Quantity) })
+				.OrderByDescending(x => x.TotalSales)
+				.Take(10)
+				.ToListAsync();
+
+			var dto = new ApexChartDataDto();
+			var seriesData = new List<decimal>();
+
+			foreach (var item in groupedData)
+			{
+				dto.Labels.Add(item.ProductName ?? "未命名商品");
+				seriesData.Add(item.TotalSales);
+			}
+
+			dto.Series.Add(new ChartSeriesDto { Name = "銷售量", Data = seriesData });
+			return dto;
+		}
+
+		public async Task<ApexChartDataDto> GetProductSalesPieChartAsync(int? storeId, DateTime startDate, DateTime endDate)
+		{
+			var dto = await GetProductSalesBarChartAsync(storeId, startDate, endDate);
+			if (dto.Series.Count > 0)
+			{
+				dto.Series[0].Name = "銷售比例";
+			}
+			return dto;
+		}
+
+		public async Task<ApexChartDataDto> GetMonthlySalesTrendAsync(int? storeId, int year)
+		{
+			var query = _context.Orders.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Year == year && o.Status == 4); // 僅計算已完成訂單
+
+			if (storeId.HasValue) query = query.Where(o => o.StoreId == storeId.Value);
+
+			var monthlyData = await query
+				.GroupBy(o => o.CreatedAt.Value.Month)
+				.Select(g => new { Month = g.Key, Revenue = g.Sum(o => o.FinalAmount) })
+				.ToListAsync();
+
+			var dto = new ApexChartDataDto();
+			var seriesData = new List<decimal>();
+
+			for (int i = 1; i <= 12; i++)
+			{
+				dto.Labels.Add($"{i}月");
+				var monthData = monthlyData.FirstOrDefault(m => m.Month == i);
+				seriesData.Add(monthData != null ? monthData.Revenue : 0);
+			}
+
+			dto.Series.Add(new ChartSeriesDto { Name = "月營收", Data = seriesData });
+			return dto;
+		}
+
+		public async Task<List<TopProductSalesDto>> GetTop10ProductsAsync(int? storeId, DateTime startDate, DateTime endDate, string orderBy)
+		{
+			var query = _context.OrderDetails
+				.Include(od => od.Order)
+				.Include(od => od.Product)
+				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate);
+
+			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
+
+			var groupedQuery = query
+				.GroupBy(od => od.Product.Name)
+				.Select(g => new TopProductSalesDto
+				{
+					ProductName = g.Key,
+					SalesVolume = g.Sum(od => od.Quantity),
+					SalesRevenue = g.Sum(od => (od.Price ?? 0) * od.Quantity)
+				});
+
+			return orderBy.ToLower() == "volume"
+				? await groupedQuery.OrderByDescending(x => x.SalesVolume).Take(10).ToListAsync()
+				: await groupedQuery.OrderByDescending(x => x.SalesRevenue).Take(10).ToListAsync();
+		}
+
+		public async Task<ApexChartDataDto> GetCategoryContributionAsync(int? storeId, DateTime startDate, DateTime endDate)
+		{
+			var query = _context.OrderDetails
+				.Include(od => od.Order)
+				.Include(od => od.Product)
+				.ThenInclude(p => p.Category)
+				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate);
+
+			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
+
+			var groupedData = await query
+				.GroupBy(od => od.Product.Category.Name)
+				.Select(g => new { CategoryName = g.Key, Revenue = g.Sum(od => (od.Price ?? 0) * od.Quantity) })
+				.OrderByDescending(x => x.Revenue)
+				.ToListAsync();
+
+			var dto = new ApexChartDataDto();
+			var seriesData = new List<decimal>();
+
+			foreach (var item in groupedData)
+			{
+				dto.Labels.Add(item.CategoryName ?? "未分類");
+				seriesData.Add(item.Revenue);
+			}
+
+			dto.Series.Add(new ChartSeriesDto { Name = "營收佔比", Data = seriesData });
+			return dto;
+		}
 	}
 }

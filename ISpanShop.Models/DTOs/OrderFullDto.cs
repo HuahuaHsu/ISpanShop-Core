@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ISpanShop.Models.EfModels.DTOs
+namespace ISpanShop.Models.DTOs
 {
 	public class OrderFullDto : OrderDto
 	{

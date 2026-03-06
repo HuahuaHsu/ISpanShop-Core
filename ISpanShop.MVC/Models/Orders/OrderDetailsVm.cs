@@ -1,4 +1,4 @@
-﻿using ISpanShop.Models.EfModels.DTOs;
+﻿using ISpanShop.Models.DTOs;
 
 namespace ISpanShop.MVC.Models.Orders
 {

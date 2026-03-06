@@ -1,5 +1,5 @@
 ﻿using ISpanShop.Common.Enums;
-using ISpanShop.Models.EfModels.DTOs;
+using ISpanShop.Models.DTOs;
 using ISpanShop.Repositories.Interfaces;
 using ISpanShop.Services.Interfaces;
 using System;
@@ -19,36 +19,9 @@ namespace ISpanShop.Services
 			_orderRepository = orderRepository;
 		}
 
-		public async Task<PagedResultDto<OrderDto>> GetOrdersAsync(OrderSearchDto search)
+		public async Task<PagedResultDto<OrderListDto>> GetFilteredOrdersAsync(OrderSearchDto criteria)
 		{
-			var (entities, totalCount) = await _orderRepository.GetPagedOrdersAsync(search);
-
-			// Entity 轉換為 DTO
-			var dtos = entities.Select(o => new OrderDto
-			{
-				Id = o.Id,
-				OrderNumber = o.OrderNumber,
-				UserId = o.UserId,
-				UserName = o.User?.Account ?? "未知用戶",
-				StoreId = o.StoreId,
-				StoreName = o.Store?.StoreName ?? "未知商店",
-				TotalAmount = o.TotalAmount,
-				ShippingFee = o.ShippingFee,
-				FinalAmount = o.FinalAmount,
-				Status = (OrderStatus)(o.Status ?? 0),
-				RecipientName = o.RecipientName,
-				RecipientPhone = o.RecipientPhone,
-				RecipientAddress = o.RecipientAddress,
-				CreatedAt = o.CreatedAt
-			}).ToList();
-
-			return new PagedResultDto<OrderDto>
-			{
-				Items = dtos,
-				TotalCount = totalCount,
-				PageNumber = search.PageNumber,
-				PageSize = search.PageSize
-			};
+			return await _orderRepository.GetFilteredOrdersAsync(criteria);
 		}
 
 		public async Task<OrderFullDto> GetOrderDetailAsync(long id)
@@ -91,7 +64,6 @@ namespace ISpanShop.Services
 
 		public async Task UpdateStatusAsync(long id, OrderStatus status)
 		{
-			// 可以在此加入額外的商務檢核（例如：已取消的訂單不能再改為已出貨）
 			await _orderRepository.UpdateStatusAsync(id, (byte)status);
 		}
 	}

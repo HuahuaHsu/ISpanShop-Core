@@ -1,5 +1,5 @@
 ﻿using ISpanShop.Common.Enums;
-using ISpanShop.Models.EfModels.DTOs;
+using ISpanShop.Models.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,10 @@ namespace ISpanShop.Services.Interfaces
 {
 	public interface IOrderService
 	{
-		Task<PagedResultDto<OrderDto>> GetOrdersAsync(OrderSearchDto search);
+		/// <summary>
+		/// 取得分頁與篩選後的訂單列表 (A & B 需求)
+		/// </summary>
+		Task<PagedResultDto<OrderListDto>> GetFilteredOrdersAsync(OrderSearchDto criteria);
 
 		/// <summary>
 		/// 取得訂單明細資訊

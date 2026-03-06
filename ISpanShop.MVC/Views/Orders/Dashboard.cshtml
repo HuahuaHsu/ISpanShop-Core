@@ -1,0 +1,299 @@
+@model ISpanShop.MVC.Models.Orders.OrderDashboardVm
+@{
+    ViewData["Title"] = "訂單分析儀表板";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/sneat/assets/vendor/libs/apex-charts/apex-charts.css" />
+    <style>
+        .card-header .btn-group .btn { padding: 0.25rem 0.5rem; }
+        .hero-card {
+            background: linear-gradient(135deg, #696cff 0%, #4339f2 100%);
+            color: #fff;
+            border: none;
+            transition: transform 0.2s;
+        }
+        .hero-card:hover { transform: translateY(-5px); }
+        .hero-card .avatar-initial { background: rgba(255,255,255,0.2) !important; color: #fff !important; }
+        .hero-card .text-muted { color: rgba(255,255,255,0.7) !important; }
+        
+        .metric-card { border-left: 4px solid #696cff; }
+        .metric-card.border-info { border-left-color: #03c3ec !important; }
+        .metric-card.border-danger { border-left-color: #ff3e1d !important; }
+        
+        .cursor-pointer { cursor: pointer; }
+    </style>
+}
+
+<!-- 頂部：維度切換與待辦中心 -->
+<div class="row mb-4">
+    <!-- 左側：核心待辦中心 (不隨時間變動) -->
+    <div class="col-12 col-lg-4 mb-4 mb-lg-0">
+        <div class="card hero-card h-100 shadow-lg cursor-pointer" onclick="window.location.href='/Orders/Index?Statuses=1'">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="avatar avatar-lg">
+                        <span class="avatar-initial rounded-circle"><i class="bx bx-package fs-2"></i></span>
+                    </div>
+                    <span class="badge bg-white text-primary fw-bold">Active Tasks</span>
+                </div>
+                <div>
+                    <h1 class="display-4 fw-bold text-white mb-1" id="kpiPendingShip">0</h1>
+                    <h4 class="text-white mb-2">待出貨訂單總數</h4>
+                    <p class="text-muted mb-4 small">這是當前系統中所有需要處理的訂單，不限時間區間。</p>
+                </div>
+                <button class="btn btn-white w-100 fw-bold" style="color: #696cff;">
+                    <i class="bx bx-right-arrow-alt me-1"></i> 立即前往處理
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右側：表現分析區 (隨時間與商店變動) -->
+    <div class="col-12 col-lg-8">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <h5 class="mb-0 fw-bold">營收表現分析</h5>
+                    <select id="periodFilter" class="form-select form-select-sm w-auto border-0 bg-light fw-bold" onchange="refreshMetrics()">
+                        <option value="7days">近 7 天</option>
+                        <option value="month" selected>近一個月 (30天)</option>
+                        <option value="3months">近三個月</option>
+                        <option value="year">近一年</option>
+                    </select>
+                </div>
+                <div class="d-flex gap-2">
+                    <select id="storeFilter" class="form-select form-select-sm w-auto border-0 bg-light" onchange="refreshAllDashboard()">
+                        <option value="">全平台資料</option>
+                        @foreach (var item in Model.StoreOptions)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <!-- 實收營收 -->
+                    <div class="col-md-4">
+                        <div class="p-3 rounded bg-light metric-card">
+                            <div class="d-flex align-items-center mb-1">
+                                <i class="bx bx-money text-primary me-2"></i>
+                                <span class="text-muted small fw-bold">實收營收</span>
+                            </div>
+                            <h3 class="mb-1 fw-bold" id="kpiNetRevenue">$0</h3>
+                            <div id="kpiRevGrowth" class="small fw-bold">0%</div>
+                        </div>
+                    </div>
+                    <!-- 連帶率 -->
+                    <div class="col-md-4">
+                        <div class="p-3 rounded bg-light metric-card border-info">
+                            <div class="d-flex align-items-center mb-1">
+                                <i class="bx bx-cart text-info me-2"></i>
+                                <span class="text-muted small fw-bold">連帶率</span>
+                            </div>
+                            <h3 class="mb-1 fw-bold" id="kpiItemsPerOrder">0.0</h3>
+                            <div id="kpiItemsGrowth" class="small fw-bold">0%</div>
+                        </div>
+                    </div>
+                    <!-- 退貨率 -->
+                    <div class="col-md-4">
+                        <div class="p-3 rounded bg-light metric-card border-danger">
+                            <div class="d-flex align-items-center mb-1">
+                                <i class="bx bx-refresh text-danger me-2"></i>
+                                <span class="text-muted small fw-bold">退訂/取消率</span>
+                            </div>
+                            <h3 class="mb-1 fw-bold" id="kpiReturnRate">0%</h3>
+                            <div id="kpiReturnGrowth" class="small fw-bold">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 圖表區 -->
+<div class="row">
+    <!-- 年度銷售趨勢圖 -->
+    <div class="col-12 col-xl-8 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold">趨勢分析</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-label-secondary" onclick="toggleTrendChartType('line')"><i class="bx bx-line-chart"></i></button>
+                    <button type="button" class="btn btn-label-secondary" onclick="toggleTrendChartType('bar')"><i class="bx bx-bar-chart-alt-2"></i></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="trendChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 商品銷售比例 -->
+    <div class="col-12 col-xl-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0 fw-bold">銷售佔比</h5>
+            </div>
+            <div class="card-body">
+                <div id="productPieChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 熱銷排行 Top 10 -->
+    <div class="col-12 col-xl-6 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold">熱銷排行 Top 10</h5>
+                <select id="top10OrderBy" class="form-select form-select-sm w-auto" onchange="loadTop10Chart()">
+                    <option value="revenue">依銷售額</option>
+                    <option value="volume">依銷量</option>
+                </select>
+            </div>
+            <div class="card-body">
+                <div id="top10Chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 類別貢獻度 -->
+    <div class="col-12 col-xl-6 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0 fw-bold">類別貢獻度</h5>
+            </div>
+            <div class="card-body">
+                <div id="categoryChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/sneat/assets/vendor/libs/apex-charts/apexcharts.js"></script>
+    <script>
+        let trendChart, pieChart, top10Chart, categoryChart;
+        const colors = ['#696cff', '#71dd37', '#03c3ec', '#ffab00', '#ff3e1d', '#8592a3'];
+
+        $(document).ready(function() {
+            refreshAllDashboard();
+        });
+
+        function refreshAllDashboard() {
+            refreshMetrics();
+            loadTrendChart();
+            loadPieChart();
+            loadTop10Chart();
+            loadCategoryContribution();
+        }
+
+        // 僅刷新受時間維度影響的小卡
+        function refreshMetrics() {
+            const period = $('#periodFilter').val();
+            const storeId = $('#storeFilter').val();
+
+            $.get(`/Orders/GetDashboardKpis?period=${period}&storeId=${storeId}`, function(data) {
+                // 更新大型英雄卡 (待出貨總數雖然不限時間，但隨商店切換更新是合理的)
+                $('#kpiPendingShip').text(data.pendingShipmentCount);
+                
+                // 更新右側表現分析卡
+                $('#kpiNetRevenue').text('$' + data.netRevenue.toLocaleString());
+                $('#kpiItemsPerOrder').text(data.itemsPerOrder.toFixed(1));
+                $('#kpiReturnRate').text(data.returnRate.toFixed(1) + '%');
+
+                updateGrowth('#kpiRevGrowth', data.netRevenueGrowthRate, false);
+                updateGrowth('#kpiItemsGrowth', data.itemsPerOrderGrowthRate, false);
+                updateGrowth('#kpiReturnGrowth', data.returnRateGrowthRate, true);
+            });
+        }
+
+        function updateGrowth(selector, rate, invert) {
+            const el = $(selector);
+            const isNegative = rate < 0;
+            el.removeClass('text-success text-danger');
+            
+            let colorClass = isNegative ? 'text-danger' : 'text-success';
+            if(invert) colorClass = isNegative ? 'text-success' : 'text-danger';
+            
+            el.addClass(colorClass).html(`${rate >= 0 ? '↑' : '↓'} ${Math.abs(rate)}% <span class="text-muted fw-normal">vs 前期</span>`);
+        }
+
+        function loadTrendChart() {
+            const storeId = $('#storeFilter').val();
+            $.get(`/Orders/GetMonthlyTrend?storeId=${storeId}`, function(data) {
+                const options = {
+                    series: data.series,
+                    chart: { height: 350, type: 'line', toolbar: { show: false } },
+                    stroke: { curve: 'smooth', width: 3 },
+                    xaxis: { categories: data.labels },
+                    colors: [colors[0]],
+                    grid: { borderColor: '#f1f1f1', padding: { bottom: 15 } }
+                };
+                if(trendChart) trendChart.destroy();
+                trendChart = new ApexCharts(document.querySelector("#trendChart"), options);
+                trendChart.render();
+            });
+        }
+
+        function toggleTrendChartType(type) {
+            if(trendChart) trendChart.updateOptions({ chart: { type: type } });
+        }
+
+        function loadPieChart() {
+            const period = $('#periodFilter').val();
+            const storeId = $('#storeFilter').val();
+            $.get(`/Orders/GetProductSalesChart?type=Pie&period=${period}&storeId=${storeId}`, function(data) {
+                if(!data.series || data.series.length === 0) return;
+                const options = {
+                    series: data.series[0].data,
+                    labels: data.labels,
+                    chart: { type: 'donut', height: 350 },
+                    colors: colors,
+                    legend: { position: 'bottom' },
+                    plotOptions: { pie: { donut: { size: '70%' } } }
+                };
+                if(pieChart) pieChart.destroy();
+                pieChart = new ApexCharts(document.querySelector("#productPieChart"), options);
+                pieChart.render();
+            });
+        }
+
+        function loadTop10Chart() {
+            const period = $('#periodFilter').val();
+            const storeId = $('#storeFilter').val();
+            const orderBy = $('#top10OrderBy').val();
+            $.get(`/Orders/GetTop10Products?period=${period}&storeId=${storeId}&orderBy=${orderBy}`, function(data) {
+                const options = {
+                    series: [{ name: orderBy === 'revenue' ? '銷售額' : '銷量', data: data.map(x => orderBy === 'revenue' ? x.salesRevenue : x.salesVolume) }],
+                    chart: { type: 'bar', height: 350, toolbar: { show: false } },
+                    plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
+                    xaxis: { categories: data.map(x => x.productName) },
+                    colors: [colors[1]]
+                };
+                if(top10Chart) top10Chart.destroy();
+                top10Chart = new ApexCharts(document.querySelector("#top10Chart"), options);
+                top10Chart.render();
+            });
+        }
+
+        function loadCategoryContribution() {
+            const period = $('#periodFilter').val();
+            const storeId = $('#storeFilter').val();
+            $.get(`/Orders/GetCategoryContribution?period=${period}&storeId=${storeId}`, function(data) {
+                const options = {
+                    series: data.series,
+                    chart: { type: 'radar', height: 350 },
+                    labels: data.labels,
+                    colors: [colors[2]],
+                    fill: { opacity: 0.4 }
+                };
+                if(categoryChart) categoryChart.destroy();
+                categoryChart = new ApexCharts(document.querySelector("#categoryChart"), options);
+                categoryChart.render();
+            });
+        }
+    </script>
+}

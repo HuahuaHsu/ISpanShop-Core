@@ -37,6 +37,7 @@ namespace ISpanShop.MVC
 
 			// 註冊服務層 (Services)
 			builder.Services.AddScoped<IOrderService, OrderService>();
+			builder.Services.AddScoped<IOrderDashboardService, OrderDashboardService>();
 
 
 			var app = builder.Build();
@@ -58,7 +59,7 @@ namespace ISpanShop.MVC
 
 			app.MapControllerRoute(
 				name: "default",
-				pattern: "{controller=Home}/{action=Index}/{id?}");
+				pattern: "{controller=Orders}/{action=Dashboard}/{id?}");
 
 
 			using (var scope = app.Services.CreateScope())
