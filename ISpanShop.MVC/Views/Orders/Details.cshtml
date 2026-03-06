@@ -29,7 +29,7 @@
                         <div class="col-6">
                             <p><strong>客戶名稱:</strong> @Model.Order.UserName</p>
                             <p><strong>下單時間:</strong> @Model.Order.CreatedAt?.ToString("yyyy-MM-dd HH:mm")</p>
-                            <p><strong>目前狀態:</strong> <span class="badge bg-info text-dark">@Model.Order.Status</span></p>
+                            <p><strong>目前狀態:</strong> <span class="badge bg-info text-dark">@Model.Order.Status.GetDisplayName()</span></p>
                         </div>
                         <div class="col-6">
                             <p><strong>收件人:</strong> @Model.Order.RecipientName</p>
@@ -87,9 +87,9 @@
                         <div class="mb-3">
                             <label class="form-label">選擇新狀態</label>
                             <select name="status" class="form-select">
-                                @foreach (var status in Enum.GetValues(typeof(OrderStatus)))
+                                @foreach (var status in Enum.GetValues(typeof(OrderStatus)).Cast<OrderStatus>())
                                 {
-                                    <option value="@((byte)status)" selected="@(Model.Order.Status == (OrderStatus)status)">@status</option>
+                                    <option value="@((byte)status)" selected="@(Model.Order.Status == status)">@status.GetDisplayName()</option>
                                 }
                             </select>
                         </div>

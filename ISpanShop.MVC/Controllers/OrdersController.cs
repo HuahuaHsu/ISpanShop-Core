@@ -32,7 +32,7 @@ namespace ISpanShop.MVC.Controllers
 		public async Task<IActionResult> UpdateStatus(long id, OrderStatus status)
 		{
 			await _orderService.UpdateStatusAsync(id, status);
-			TempData["SuccessMessage"] = $"訂單狀態已更新為 {status}";
+			TempData["SuccessMessage"] = $"訂單狀態已更新為 {status.GetDisplayName()}";
 			return RedirectToAction(nameof(Details), new { id });
 		}
 public IActionResult Index()
@@ -44,15 +44,7 @@ public IActionResult Index()
 			.Select(s => new SelectListItem
 			{
 				Value = ((byte)s).ToString(),
-				Text = s switch
-				{
-					OrderStatus.Pending => "待付款 (Pending)",
-					OrderStatus.Processing => "待出貨 (Processing)",
-					OrderStatus.Shipped => "運送中 (Shipped)",
-					OrderStatus.Completed => "已完成 (Completed)",
-					OrderStatus.Cancelled => "已取消 (Cancelled)",
-					_ => s.ToString()
-				}
+				Text = s.GetDisplayName()
 			}).ToList(),
 		DateDimensionOptions = new List<SelectListItem>
 		{
