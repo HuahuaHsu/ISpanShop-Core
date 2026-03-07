@@ -39,11 +39,7 @@
                     <td>
                         @if (item.Status == 0)
                         {
-                           @*  <a href="@Url.Action("Pay", "Payment", new { orderNumber = item.OrderNumber })"
-                               class="btn btn-primary btn-sm" target="_blank">
-                                前往付款
-                            </a> *@
-                            <a href="@Url.Action("Pay", "PaymentNewebPay", new { orderNumber = item.OrderNumber })"
+                            <a href="@Url.Action("Pay", "Payment", new { orderNumber = item.OrderNumber })"
                                class="btn btn-primary btn-sm" target="_blank">
                                 前往付款
                             </a>
