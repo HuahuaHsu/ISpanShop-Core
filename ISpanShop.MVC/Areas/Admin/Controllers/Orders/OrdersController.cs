@@ -36,26 +36,32 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 			TempData["SuccessMessage"] = $"訂單狀態已更新為 {status.GetDisplayName()}";
 			return RedirectToAction(nameof(Details), new { id });
 		}
-public IActionResult Index()
-{
-	var vm = new OrderIndexVm
-	{
-		StatusOptions = Enum.GetValues(typeof(OrderStatus))
-			.Cast<OrderStatus>()
-			.Select(s => new SelectListItem
-			{
-				Value = ((byte)s).ToString(),
-				Text = s.GetDisplayName()
-			}).ToList(),
-		DateDimensionOptions = new List<SelectListItem>
+		public async Task<IActionResult> Index()
 		{
-			new SelectListItem { Value = "1", Text = "下單日期" },
-			new SelectListItem { Value = "2", Text = "付款日期" },
-			new SelectListItem { Value = "3", Text = "完成日期" }
+			var counts = await _orderService.GetOrderStatusCountsAsync();
+
+			var vm = new OrderIndexVm
+			{
+				StatusOptions = Enum.GetValues(typeof(OrderStatus))
+					.Cast<OrderStatus>()
+					.Select(s => new SelectListItem
+					{
+						Value = ((byte)s).ToString(),
+						Text = s.GetDisplayName()
+					}).ToList(),
+				DateDimensionOptions = new List<SelectListItem>
+				{
+					new SelectListItem { Value = "1", Text = "下單日期" },
+					new SelectListItem { Value = "2", Text = "付款日期" },
+					new SelectListItem { Value = "3", Text = "完成日期" }
+				},
+				CountTotal = counts.Values.Sum(),
+				CountPendingPayment = counts.TryGetValue(0, out int cp) ? cp : 0,
+				CountPendingShipment = counts.TryGetValue(1, out int cs) ? cs : 0,
+				CountCompleted = counts.TryGetValue(3, out int cc) ? cc : 0
+			};
+			return View(vm);
 		}
-	};
-	return View(vm);
-}
 
 		[HttpPost]
 		public async Task<IActionResult> GetOrderListAjax([FromBody] OrderSearchDto searchParams)

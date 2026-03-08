@@ -12,6 +12,12 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Orders
 		public List<SelectListItem> StatusOptions { get; set; } = new List<SelectListItem>();
 		public List<SelectListItem> StoreOptions { get; set; } = new List<SelectListItem>();
 		public List<SelectListItem> DateDimensionOptions { get; set; } = new List<SelectListItem>();
+
+		// KPI 統計數量
+		public int CountTotal { get; set; }
+		public int CountPendingPayment { get; set; }
+		public int CountPendingShipment { get; set; }
+		public int CountCompleted { get; set; }
 	}
 }
 

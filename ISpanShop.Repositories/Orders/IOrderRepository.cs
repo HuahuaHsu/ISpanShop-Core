@@ -12,6 +12,11 @@ namespace ISpanShop.Repositories.Orders
 	public interface IOrderRepository
 	{
 		// 取得單筆訂單完整資訊（含明細與關聯資料）
+		/// <summary>
+		/// 取得各狀態訂單數量統計
+		/// </summary>
+		Task<IDictionary<byte, int>> GetOrderStatusCountsAsync();
+
 		Task<Order> GetOrderByIdAsync(long id);
 
 		// 更新訂單狀態

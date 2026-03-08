@@ -19,6 +19,14 @@ namespace ISpanShop.Repositories.Orders
 			_context = context;
 		}
 
+		public async Task<IDictionary<byte, int>> GetOrderStatusCountsAsync()
+		{
+			return await _context.Orders
+				.GroupBy(o => o.Status)
+				.Select(g => new { Status = g.Key ?? 0, Count = g.Count() })
+				.ToDictionaryAsync(x => x.Status, x => x.Count);
+		}
+
 		public async Task<Order> GetOrderByIdAsync(long id)
 		{
 			return await _context.Orders
