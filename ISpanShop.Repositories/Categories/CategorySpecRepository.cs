@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using ISpanShop.Models.DTOs.Categories;
+using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Products;
 using ISpanShop.Repositories.Categories;
 using ISpanShop.Repositories.Inventories;
+using Microsoft.EntityFrameworkCore;
 
 namespace ISpanShop.Repositories.Categories
 {
@@ -299,6 +302,53 @@ namespace ISpanShop.Repositories.Categories
 
         public bool HasBindings(int specId)
             => _db.CategorySpecMappings.Any(m => m.CategorySpecId == specId);
+
+        // ── 屬性庫分頁查詢 ────────────────────────────────────────
+        public async Task<PagedResult<CategorySpecDto>> GetPagedAsync(int pageNumber, int pageSize)
+        {
+            var query = _db.CategorySpecs.OrderBy(s => s.SortOrder).ThenBy(s => s.Id);
+
+            var totalCount = await query.CountAsync();
+
+            var specs = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var specIds = specs.Select(s => s.Id).ToList();
+
+            var options = await _db.CategorySpecOptions
+                .Where(o => specIds.Contains(o.CategorySpecId))
+                .OrderBy(o => o.SortOrder)
+                .ToListAsync();
+
+            var mappings = await _db.CategorySpecMappings
+                .Where(m => specIds.Contains(m.CategorySpecId))
+                .Join(_db.Categories, m => m.CategoryId, c => c.Id,
+                      (m, c) => new { m.CategorySpecId, c.Name })
+                .ToListAsync();
+
+            var data = specs.Select(s => new CategorySpecDto
+            {
+                Id               = s.Id,
+                Name             = s.Name,
+                InputType        = s.InputType,
+                IsRequired       = s.IsRequired,
+                AllowCustomInput = s.AllowCustomInput,
+                SortOrder        = s.SortOrder,
+                IsActive         = s.IsActive,
+                Options          = options
+                    .Where(o => o.CategorySpecId == s.Id)
+                    .Select(o => o.OptionName)
+                    .ToList(),
+                BoundCategoryNames = mappings
+                    .Where(m => m.CategorySpecId == s.Id)
+                    .Select(m => m.Name)
+                    .ToList()
+            }).ToList();
+
+            return PagedResult<CategorySpecDto>.Create(data, totalCount, pageNumber, pageSize);
+        }
 
         // ── 私有：寫入選項 ──
         private void WriteOptions(int specId, List<string> options)

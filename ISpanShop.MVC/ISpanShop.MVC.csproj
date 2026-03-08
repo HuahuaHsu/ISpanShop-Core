@@ -7,9 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\Orders\**" />
     <Compile Remove="Views\Products\**" />
+    <Content Remove="Views\Orders\**" />
     <Content Remove="Views\Products\**" />
+    <EmbeddedResource Remove="Views\Orders\**" />
     <EmbeddedResource Remove="Views\Products\**" />
+    <None Remove="Views\Orders\**" />
     <None Remove="Views\Products\**" />
   </ItemGroup>
 
@@ -26,7 +30,6 @@
 
   <ItemGroup>
     <Folder Include="Models\Orders\" />
-    <Folder Include="Views\Orders\" />
   </ItemGroup>
 
 </Project>

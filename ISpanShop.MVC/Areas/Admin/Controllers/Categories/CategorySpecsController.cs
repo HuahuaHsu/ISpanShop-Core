@@ -19,11 +19,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
             _categorySpecService = categorySpecService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
-            var specs = _categorySpecService.GetAll();
-            ViewBag.Categories = _categorySpecService.GetAllCategories();
-            return View(specs);
+            const int pageSize = 10;
+            var pagedSpecs = await _categorySpecService.GetPagedAsync(page, pageSize);
+            ViewBag.Categories    = _categorySpecService.GetAllCategories();
+            ViewBag.AllSpecsForJs = _categorySpecService.GetAll();
+            return View(pagedSpecs);
         }
 
         /// <summary>

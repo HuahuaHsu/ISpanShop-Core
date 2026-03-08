@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using ISpanShop.Models.DTOs.Categories;
+using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Repositories.Products;
 using ISpanShop.Repositories.Categories;
 using ISpanShop.Repositories.Inventories;
@@ -95,6 +97,9 @@ namespace ISpanShop.Services.Categories
 
         public bool HasBindings(int specId)
             => _categorySpecRepository.HasBindings(specId);
+
+        public async Task<PagedResult<CategorySpecDto>> GetPagedAsync(int pageNumber, int pageSize)
+            => await _categorySpecRepository.GetPagedAsync(pageNumber, pageSize);
 
         private static bool NeedsOptions(string inputType)
         {

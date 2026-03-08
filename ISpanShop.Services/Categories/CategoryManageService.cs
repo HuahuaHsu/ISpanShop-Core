@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using ISpanShop.Models.DTOs.Categories;
 using ISpanShop.Repositories.Products;
 using ISpanShop.Repositories.Categories;
@@ -21,15 +22,7 @@ namespace ISpanShop.Services.Categories
         public void Update(int id, string name, string? nameEn, int? parentId, int sortOrder, string? imageUrl)
             => _repo.Update(id, name, nameEn, parentId, sortOrder, imageUrl);
 
-        public bool Delete(int id)
-        {
-            var cat = _repo.GetById(id);
-            if (cat == null) return false;
-            if (cat.ChildCount > 0) return false;
-            if (cat.ProductCount > 0) return false;
-            _repo.Delete(id);
-            return true;
-        }
+        public async Task DeleteAsync(int id) => await _repo.DeleteAsync(id);
 
         public void UpdateIsActive(int id, bool isActive) => _repo.UpdateIsActive(id, isActive);
         public void UpdateSortOrder(int id, int sortOrder) => _repo.UpdateSortOrder(id, sortOrder);

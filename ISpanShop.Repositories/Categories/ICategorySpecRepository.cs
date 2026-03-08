@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using ISpanShop.Models.DTOs.Categories;
+using ISpanShop.Models.DTOs.Common;
 
 namespace ISpanShop.Repositories.Categories
 {
@@ -24,5 +26,8 @@ namespace ISpanShop.Repositories.Categories
         void UnbindSpec(int categoryId, int specId);
         void UpdateBindingSort(int categoryId, List<int> orderedSpecIds);
         bool HasBindings(int specId);
+
+        // ── 屬性庫分頁查詢 ───────────────────────────────────────
+        Task<PagedResult<CategorySpecDto>> GetPagedAsync(int pageNumber, int pageSize);
     }
 }

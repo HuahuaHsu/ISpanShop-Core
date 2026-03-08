@@ -1,4 +1,6 @@
-﻿using ISpanShop.Models.DTOs.Categories;
+﻿using System;
+using System.Threading.Tasks;
+using ISpanShop.Models.DTOs.Categories;
 using ISpanShop.Services.Products;
 using ISpanShop.Services.Categories;
 using ISpanShop.Services.Inventories;
@@ -45,14 +47,17 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         }
 
         [HttpPost]
-        public IActionResult Delete([FromBody] IdDto dto)
+        public async Task<IActionResult> Delete([FromBody] IdDto dto)
         {
-            var productCount = _svc.GetProductCount(dto.Id);
-            if (productCount > 0)
-                return Json(new { success = false, message = $"此分類有 {productCount} 筆商品，請先移除商品再刪除" });
-            var ok = _svc.Delete(dto.Id);
-            if (!ok) return Json(new { success = false, message = "此分類有子分類，無法刪除" });
-            return Json(new { success = true });
+            try
+            {
+                await _svc.DeleteAsync(dto.Id);
+                return Json(new { success = true });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]

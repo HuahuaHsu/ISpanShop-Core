@@ -1,14 +1,14 @@
-﻿@model IEnumerable<ISpanShop.Models.DTOs.Categories.CategorySpecDto>
+﻿@model ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.Models.DTOs.Categories.CategorySpecDto>
 @using System.Text.Json
 
 @{
     Layout = "~/Views/Shared/_SneatLayout.cshtml";
     ViewData["Title"] = "分類屬性管理";
 
-    var allSpecs  = Model.ToList();
-    var catDtos   = (IEnumerable<ISpanShop.Models.DTOs.Categories.CategoryDto>)ViewBag.Categories;
-    var parents   = catDtos.Where(c => c.ParentId == null).OrderBy(c => c.Id).ToList();
-    var children  = catDtos.Where(c => c.ParentId != null).OrderBy(c => c.Name).ToList();
+    var allSpecsJs = ((IEnumerable<ISpanShop.Models.DTOs.Categories.CategorySpecDto>)ViewBag.AllSpecsForJs).ToList();
+    var catDtos    = (IEnumerable<ISpanShop.Models.DTOs.Categories.CategoryDto>)ViewBag.Categories;
+    var parents    = catDtos.Where(c => c.ParentId == null).OrderBy(c => c.Id).ToList();
+    var children   = catDtos.Where(c => c.ParentId != null).OrderBy(c => c.Name).ToList();
 
     string InputTypeLabel(string t) => t switch
     {
@@ -106,9 +106,9 @@
                         <i class="bx bx-unlink fs-1 d-block mb-2 opacity-50"></i>
                         此分類尚未綁定任何屬性，點擊「綁定屬性」開始設定
                     </div>
-                    <div id="boundTableWrap" class="d-none">
+                    <div id="boundTableWrap" class="d-none" style="max-height:400px;overflow-y:auto;">
                         <table class="table table-hover align-middle bound-table mb-0">
-                            <thead>
+                            <thead style="position:sticky;top:0;z-index:2;">
                                 <tr>
                                     <th width="40"></th>
                                     <th>屬性名稱</th>
@@ -131,13 +131,13 @@
             <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex align-items-center justify-content-between">
                 <h5 class="fw-bold mb-0" style="color:#1e2d3d;">
                     <i class="bx bx-library me-2 text-secondary"></i>屬性庫
-                    <span class="badge bg-secondary-subtle text-secondary rounded-pill ms-1 fw-normal" style="font-size:.78rem;">@allSpecs.Count</span>
+                    <span class="badge bg-secondary-subtle text-secondary rounded-pill ms-1 fw-normal" style="font-size:.78rem;">@Model.TotalCount</span>
                 </h5>
                 <input id="libSearch" class="form-control form-control-sm rounded-pill"
                        style="max-width:220px;" placeholder="搜尋屬性...">
             </div>
             <div class="card-body px-4 pb-4">
-                @if (!allSpecs.Any())
+                @if (Model.TotalCount == 0)
                 {
                     <div class="text-center py-5 text-muted">
                         <i class="bx bx-category-alt fs-1 d-block mb-2 opacity-50"></i>
@@ -159,7 +159,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var spec in allSpecs)
+                                @foreach (var spec in Model.Data)
                                 {
                                     <tr>
                                         <td class="fw-semibold">@spec.Name</td>
@@ -223,6 +223,50 @@
                             </tbody>
                         </table>
                     </div>
+
+                    @* 分頁導覽 *@
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav class="mt-4 mb-2">
+                            <ul class="pagination justify-content-center gap-2">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link shadow-sm rounded-pill px-3"
+                                       href="@Url.Action("Index", new { page = Model.CurrentPage - 1 })">
+                                        <i class="bx bx-chevron-left me-1"></i> 上一頁
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    if (i == 1 || i == Model.TotalPages ||
+                                        (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
+                                    {
+                                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                            <a class="page-link shadow-sm rounded-circle fw-bold"
+                                               style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;"
+                                               href="@Url.Action("Index", new { page = i })">@i</a>
+                                        </li>
+                                    }
+                                    else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
+                                    {
+                                        <li class="page-item disabled">
+                                            <span class="page-link border-0 bg-transparent fw-bold"
+                                                  style="color:#a0aec0;">...</span>
+                                        </li>
+                                    }
+                                }
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link shadow-sm rounded-pill px-3"
+                                       href="@Url.Action("Index", new { page = Model.CurrentPage + 1 })">
+                                        下一頁 <i class="bx bx-chevron-right ms-1"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                        <p class="text-center mb-0 text-muted small">
+                            共 <span class="fw-bold text-primary">@Model.TotalCount</span> 筆，
+                            第 <span class="fw-bold text-primary">@Model.CurrentPage</span> / @Model.TotalPages 頁
+                        </p>
+                    }
                 }
             </div>
         </div>
@@ -389,7 +433,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
 <script>
 // ── 初始資料（Server 序列化）─────────────────────
-const allSpecsData = @Html.Raw(JsonSerializer.Serialize(allSpecs.Select(s => new {
+const allSpecsData = @Html.Raw(JsonSerializer.Serialize(allSpecsJs.Select(s => new {
     id               = s.Id,
     name             = s.Name,
     inputType        = s.InputType,

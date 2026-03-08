@@ -238,13 +238,24 @@ else
                                 onclick="event.stopPropagation(); openEdit(@parent.Id)">
                             編輯
                         </button>
-                        @* 修改一：有子分類 → 不顯示刪除按鈕；無子分類 → 顯示（JS 內再檢查商品數）*@
+                        @* 有子分類 → 不顯示刪除；無子分類 → 依 ProductCount 決定啟用或禁用 *@
                         @if (!parent.Children.Any())
                         {
-                            <button class="act-btn act-del"
-                                    onclick="event.stopPropagation(); deleteCategory(@parent.Id, '@Html.Raw(parent.Name.Replace("'", "\\'"))')">
-                                刪除
-                            </button>
+                            @if (parent.ProductCount == 0)
+                            {
+                                <button class="act-btn act-del"
+                                        onclick="event.stopPropagation(); deleteCategory(@parent.Id, '@Html.Raw(parent.Name.Replace("'", "\\'"))')">
+                                    刪除
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="act-btn act-del" disabled
+                                        style="opacity:.45;cursor:not-allowed;"
+                                        title="該分類尚有 @parent.ProductCount 筆商品，無法刪除">
+                                    刪除
+                                </button>
+                            }
                         }
                     </div>
 
@@ -280,11 +291,22 @@ else
                                                title="數字越小排越前面">
                                     </div>
                                     <button class="act-btn act-edit" onclick="openEdit(@child.Id)">編輯</button>
-                                    @* 修改一：子分類無 children，直接顯示刪除（JS 內檢查商品數）*@
-                                    <button class="act-btn act-del"
-                                            onclick="deleteCategory(@child.Id, '@Html.Raw(child.Name.Replace("'", "\\'"))')">
-                                        刪除
-                                    </button>
+                                    @* 依 ProductCount / ChildCount 決定刪除按鈕是否可用 *@
+                                    @if (child.ProductCount == 0 && child.ChildCount == 0)
+                                    {
+                                        <button class="act-btn act-del"
+                                                onclick="deleteCategory(@child.Id, '@Html.Raw(child.Name.Replace("'", "\\'"))')">
+                                            刪除
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="act-btn act-del" disabled
+                                                style="opacity:.45;cursor:not-allowed;"
+                                                title="該分類尚有 @(child.ProductCount > 0 ? $"{child.ProductCount} 筆商品" : "子分類")，無法刪除">
+                                            刪除
+                                        </button>
+                                    }
                                 </div>
                             }
                         </div>

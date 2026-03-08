@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using ISpanShop.Models.DTOs.Categories;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Products;
 using ISpanShop.Repositories.Categories;
 using ISpanShop.Repositories.Inventories;
+using Microsoft.EntityFrameworkCore;
 
 namespace ISpanShop.Repositories.Categories
 {
@@ -102,13 +105,24 @@ namespace ISpanShop.Repositories.Categories
             _db.SaveChanges();
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
-            // 有子分類不允許刪除
-            if (_db.Categories.Any(x => x.ParentId == id)) return;
-            var c = _db.Categories.FirstOrDefault(x => x.Id == id);
-            if (c != null) _db.Categories.Remove(c);
-            _db.SaveChanges();
+            bool hasProducts = await _db.Products
+                .AnyAsync(p => p.CategoryId == id && p.IsDeleted != true);
+            if (hasProducts)
+                throw new InvalidOperationException("此分類底下尚有商品，請先移除商品後再刪除！");
+
+            bool hasChildren = await _db.Categories
+                .AnyAsync(c => c.ParentId == id);
+            if (hasChildren)
+                throw new InvalidOperationException("此分類底下尚有子分類，無法刪除！");
+
+            var c = await _db.Categories.FirstOrDefaultAsync(x => x.Id == id);
+            if (c == null)
+                throw new InvalidOperationException("找不到指定的分類！");
+
+            _db.Categories.Remove(c);
+            await _db.SaveChangesAsync();
         }
 
         public void UpdateIsActive(int id, bool isActive)
