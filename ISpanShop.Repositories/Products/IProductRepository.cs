@@ -171,5 +171,69 @@ namespace ISpanShop.Repositories.Products
         /// 管理員強制下架商品，儲存下架原因
         /// </summary>
         void ForceUnpublish(int id, string? reason);
+
+        // ═══════════════════════════════════════════════════════════
+        //  非同步版本（效能最佳化：async/await + 投影 + 真分頁）
+        // ═══════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// [Async] 分頁取得商品列表，直接投影至 <see cref="ProductListDto"/>，SQL 端分頁
+        /// </summary>
+        Task<(IEnumerable<ProductListDto> Items, int TotalCount)> GetProductsPagedAsync(ProductSearchCriteria criteria);
+
+        /// <summary>
+        /// [Async] 取得待審核商品列表，直接投影至 <see cref="ProductReviewDto"/>
+        /// </summary>
+        Task<IEnumerable<ProductReviewDto>> GetPendingProductsAsync();
+
+        /// <summary>
+        /// [Async] 分頁取得待審核商品（ReviewStatus == 0），直接投影至 <see cref="ProductReviewDto"/>
+        /// </summary>
+        Task<(IEnumerable<ProductReviewDto> Items, int TotalCount)> GetPendingProductsPagedAsync(int page, int pageSize);
+
+        /// <summary>
+        /// [Async] 分頁取得已退回商品（ReviewStatus == 2），直接投影至 <see cref="ProductReviewDto"/>
+        /// </summary>
+        Task<(IEnumerable<ProductReviewDto> Items, int TotalCount)> GetRejectedProductsPagedAsync(int page, int pageSize);
+
+        /// <summary>
+        /// [Async] 取得最近退回商品清單，直接投影至 <see cref="ProductReviewDto"/>
+        /// </summary>
+        Task<IEnumerable<ProductReviewDto>> GetRecentRejectedProductsAsync(int top);
+
+        /// <summary>
+        /// [Async] 核准商品審核（Status → 1 上架，記錄審核人）
+        /// </summary>
+        Task ApproveProductAsync(int id, string adminId);
+
+        /// <summary>
+        /// [Async] 退回商品審核（Status → 3，記錄退回原因、審核人與時間）
+        /// </summary>
+        Task RejectProductAsync(int id, string adminId, string reason);
+
+        /// <summary>
+        /// [Async] 提交商品審核：自動違禁詞攔截或轉為待審核
+        /// </summary>
+        Task SubmitProductForReviewAsync(int productId);
+
+        /// <summary>
+        /// [Async] 軟刪除所有過期退回商品，回傳清理筆數
+        /// </summary>
+        Task<int> CleanupExpiredRejectedAsync(int expirationSeconds);
+
+        /// <summary>
+        /// [Async] 重設為待審核：清空審核結果欄位，商品回到 Status=2 / ReviewStatus=0
+        /// </summary>
+        Task ResetToPendingAsync(int productId);
+
+        /// <summary>
+        /// [Async] 取得全站商品各狀態筆數
+        /// </summary>
+        Task<(int Total, int Published, int Unpublished, int Pending)> GetStatusCountsAsync();
+
+        /// <summary>
+        /// [Async] 管理員強制下架商品，儲存下架原因
+        /// </summary>
+        Task ForceUnpublishAsync(int id, string? reason);
     }
 }

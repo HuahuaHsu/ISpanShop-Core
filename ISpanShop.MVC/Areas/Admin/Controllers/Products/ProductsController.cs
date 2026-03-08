@@ -69,7 +69,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// <param name="status">商品狀態</param>
         /// <param name="page">頁碼（從 1 開始）</param>
         /// <returns>商品列表 View</returns>
-        public IActionResult Index(int? parentCategoryId, int? categoryId, string? keyword, int? storeId, int? brandId, int? status, DateTime? startDate, DateTime? endDate, string? sort = null, int page = 1)
+        public async Task<IActionResult> Index(int? parentCategoryId, int? categoryId, string? keyword, int? storeId, int? brandId, int? status, DateTime? startDate, DateTime? endDate, string? sort = null, int page = 1)
         {
             var criteria = new ProductSearchCriteria
             {
@@ -86,8 +86,8 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                 PageSize = 10
             };
 
-            // 取得分頁商品列表
-            var pagedDtos = _productService.GetProductsPaged(criteria);
+            // 取得分頁商品列表（async + 投影 + SQL 分頁）
+            var pagedDtos = await _productService.GetProductsPagedAsync(criteria);
 
             // 將 DTO 轉換為 ViewModel
             var pagedVm = PagedResult<ProductListVm>.Create(
@@ -133,7 +133,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
             ViewBag.CurrentSort = sort;
 
             // 統計摘要卡片（全站，不受篩選影響）
-            var counts = _productService.GetProductStatusCounts();
+            var counts = await _productService.GetProductStatusCountsAsync();
             ViewBag.CountTotal      = counts.Total;
             ViewBag.CountPublished  = counts.Published;
             ViewBag.CountUnpublished= counts.Unpublished;
@@ -146,12 +146,12 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// 待審核商品列表
         /// </summary>
         /// <returns>待審核商品列表 View</returns>
-        public IActionResult PendingReview(int pendingPage = 1, int rejectedPage = 1)
+        public async Task<IActionResult> PendingReview(int pendingPage = 1, int rejectedPage = 1)
         {
             const int pageSize = 10;
 
             // 分頁取待審核 (ReviewStatus == 0)
-            var pendingPaged = _productService.GetPendingProductsPaged(pendingPage, pageSize);
+            var pendingPaged = await _productService.GetPendingProductsPagedAsync(pendingPage, pageSize);
             var pendingVm = PagedResult<ProductReviewListVm>.Create(
                 pendingPaged.Data.Select(dto => new ProductReviewListVm
                 {
@@ -173,7 +173,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                 pendingPaged.TotalCount, pendingPage, pageSize);
 
             // 分頁取已退回 (ReviewStatus == 2)
-            var rejectedPaged = _productService.GetRejectedProductsPaged(rejectedPage, pageSize);
+            var rejectedPaged = await _productService.GetRejectedProductsPagedAsync(rejectedPage, pageSize);
             ViewBag.RejectedRecords = PagedResult<ProductReviewListVm>.Create(
                 rejectedPaged.Data.Select(dto => new ProductReviewListVm
                 {
@@ -214,14 +214,14 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// [AJAX] 核准商品審核 - 將狀態設為 1 (上架)
         /// </summary>
         [HttpPost]
-        public IActionResult ApproveProduct([FromBody] RejectDto dto)
+        public async Task<IActionResult> ApproveProduct([FromBody] RejectDto dto)
         {
             if (dto == null || dto.Id <= 0)
                 return Json(new { success = false, message = "無效的請求資料。" });
             try
             {
                 var adminId = User.Identity?.Name ?? "Admin";
-                _productService.ApproveProduct(dto.Id, adminId);
+                await _productService.ApproveProductAsync(dto.Id, adminId);
                 return Json(new { success = true, message = "商品已核准上架。" });
             }
             catch (Exception ex)
@@ -234,14 +234,14 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// [AJAX] 退回商品審核 - 將狀態設為 3 (審核退回)
         /// </summary>
         [HttpPost]
-        public IActionResult RejectProduct([FromBody] RejectDto dto)
+        public async Task<IActionResult> RejectProduct([FromBody] RejectDto dto)
         {
             if (dto == null || dto.Id <= 0)
                 return Json(new { success = false, message = "無效的請求資料。" });
             try
             {
                 var adminId = User.Identity?.Name ?? "Admin";
-                _productService.RejectProduct(dto.Id, adminId, dto.Reason ?? string.Empty);
+                await _productService.RejectProductAsync(dto.Id, adminId, dto.Reason ?? string.Empty);
                 return Json(new { success = true, message = $"商品已退回。退回原因：{dto.Reason}" });
             }
             catch (Exception ex)
@@ -254,13 +254,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// [AJAX] 重新審核 - 將已退回商品重設為待審核（清空審核結果欄位）
         /// </summary>
         [HttpPost]
-        public IActionResult UndoReject([FromBody] RejectDto dto)
+        public async Task<IActionResult> UndoReject([FromBody] RejectDto dto)
         {
             if (dto == null || dto.Id <= 0)
                 return Json(new { success = false, message = "無效的請求資料。" });
             try
             {
-                _productService.ResetToPending(dto.Id);
+                await _productService.ResetToPendingAsync(dto.Id);
                 return Json(new { success = true, message = "商品已移回待審核佇列。" });
             }
             catch (Exception ex)
@@ -273,13 +273,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// [AJAX] 重新送審 - 前台賣家或管理員呼叫，效果同 UndoReject
         /// </summary>
         [HttpPost]
-        public IActionResult ResetToPending([FromBody] RejectDto dto)
+        public async Task<IActionResult> ResetToPending([FromBody] RejectDto dto)
         {
             if (dto == null || dto.Id <= 0)
                 return Json(new { success = false, message = "無效的請求資料。" });
             try
             {
-                _productService.ResetToPending(dto.Id);
+                await _productService.ResetToPendingAsync(dto.Id);
                 return Json(new { success = true, message = "商品已重新送審，等待審核中。" });
             }
             catch (Exception ex)
@@ -335,13 +335,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// [AJAX] 管理員強制下架商品（違規處理）
         /// </summary>
         [HttpPost]
-        public IActionResult ForceUnpublish([FromBody] RejectDto dto)
+        public async Task<IActionResult> ForceUnpublish([FromBody] RejectDto dto)
         {
             if (dto == null || dto.Id <= 0)
                 return Json(new { success = false, message = "無效的請求資料。" });
             try
             {
-                _productService.ForceUnpublish(dto.Id, dto.Reason);
+                await _productService.ForceUnpublishAsync(dto.Id, dto.Reason);
                 return Json(new { success = true, message = "商品已強制下架。" });
             }
             catch (Exception ex)
@@ -485,11 +485,11 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// 傳入 days=0 代表「只要被退回就視為過期」，方便 Demo 展示。
         /// </summary>
         [HttpPost]
-        public IActionResult ForceCleanupExpiredProducts(int expirationSeconds = 60)
+        public async Task<IActionResult> ForceCleanupExpiredProducts(int expirationSeconds = 60)
         {
             try
             {
-                int count = _productService.CleanupExpiredRejectedProducts(expirationSeconds);
+                int count = await _productService.CleanupExpiredRejectedProductsAsync(expirationSeconds);
                 return Json(new { success = true, cleaned = count, message = $"已清理 {count} 筆過期退回商品。" });
             }
             catch (Exception ex)

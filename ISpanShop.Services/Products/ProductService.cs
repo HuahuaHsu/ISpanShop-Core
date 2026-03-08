@@ -560,5 +560,66 @@ namespace ISpanShop.Services.Products
                 UpdatedAt    = p.UpdatedAt,
                 MainImageUrl = p.ProductImages?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
             };
+
+        // ═══════════════════════════════════════════════════════════
+        //  非同步實作（async/await + 投影 + 真分頁）
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductReviewDto>> GetPendingProductsAsync()
+            => await _productRepository.GetPendingProductsAsync();
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductListDto>> GetProductsPagedAsync(ProductSearchCriteria criteria)
+        {
+            var (items, totalCount) = await _productRepository.GetProductsPagedAsync(criteria);
+            return PagedResult<ProductListDto>.Create(items.ToList(), totalCount, criteria.PageNumber, criteria.PageSize);
+        }
+
+        /// <inheritdoc/>
+        public async Task ApproveProductAsync(int id, string adminId)
+            => await _productRepository.ApproveProductAsync(id, adminId);
+
+        /// <inheritdoc/>
+        public async Task RejectProductAsync(int id, string adminId, string reason)
+            => await _productRepository.RejectProductAsync(id, adminId, reason);
+
+        /// <inheritdoc/>
+        public async Task SubmitProductForReviewAsync(int productId)
+            => await _productRepository.SubmitProductForReviewAsync(productId);
+
+        /// <inheritdoc/>
+        public async Task<int> CleanupExpiredRejectedProductsAsync(int expirationSeconds = 60)
+            => await _productRepository.CleanupExpiredRejectedAsync(expirationSeconds);
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductReviewDto>> GetRecentRejectedProductsAsync(int top = 10)
+            => await _productRepository.GetRecentRejectedProductsAsync(top);
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductReviewDto>> GetPendingProductsPagedAsync(int page, int pageSize)
+        {
+            var (items, total) = await _productRepository.GetPendingProductsPagedAsync(page, pageSize);
+            return PagedResult<ProductReviewDto>.Create(items.ToList(), total, page, pageSize);
+        }
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductReviewDto>> GetRejectedProductsPagedAsync(int page, int pageSize)
+        {
+            var (items, total) = await _productRepository.GetRejectedProductsPagedAsync(page, pageSize);
+            return PagedResult<ProductReviewDto>.Create(items.ToList(), total, page, pageSize);
+        }
+
+        /// <inheritdoc/>
+        public async Task ResetToPendingAsync(int productId)
+            => await _productRepository.ResetToPendingAsync(productId);
+
+        /// <inheritdoc/>
+        public async Task<(int Total, int Published, int Unpublished, int Pending)> GetProductStatusCountsAsync()
+            => await _productRepository.GetStatusCountsAsync();
+
+        /// <inheritdoc/>
+        public async Task ForceUnpublishAsync(int id, string? reason)
+            => await _productRepository.ForceUnpublishAsync(id, reason);
     }
 }

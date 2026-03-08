@@ -555,5 +555,364 @@ namespace ISpanShop.Repositories.Products
             product.UpdatedAt = DateTime.Now;
             _context.SaveChanges();
         }
+
+        // ═══════════════════════════════════════════════════════════
+        //  非同步實作（async/await + 投影 + 真分頁）
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<(IEnumerable<ProductListDto> Items, int TotalCount)>
+            GetProductsPagedAsync(ProductSearchCriteria criteria)
+        {
+            var query = _context.Products
+                .AsNoTracking()
+                .Where(p => p.IsDeleted != true)
+                .AsQueryable();
+
+            if (criteria.CategoryId.HasValue)
+                query = query.Where(p => p.CategoryId == criteria.CategoryId.Value);
+            else if (criteria.ParentCategoryId.HasValue)
+                query = query.Where(p => p.Category.ParentId == criteria.ParentCategoryId.Value);
+
+            if (!string.IsNullOrWhiteSpace(criteria.Keyword))
+            {
+                var keyword = criteria.Keyword.Trim().ToLower();
+                query = query.Where(p =>
+                    p.Name.ToLower().Contains(keyword) ||
+                    (p.Description != null && p.Description.ToLower().Contains(keyword)));
+            }
+
+            if (criteria.StoreId.HasValue)
+                query = query.Where(p => p.StoreId == criteria.StoreId.Value);
+
+            if (criteria.BrandId.HasValue)
+                query = query.Where(p => p.BrandId == criteria.BrandId.Value);
+
+            if (criteria.Status.HasValue)
+                query = query.Where(p => p.Status == criteria.Status.Value);
+            else
+                query = query.Where(p => p.Status != 2);
+
+            if (criteria.StartDate.HasValue)
+                query = query.Where(p => p.CreatedAt >= criteria.StartDate.Value);
+
+            if (criteria.EndDate.HasValue)
+            {
+                var endOfDay = criteria.EndDate.Value.AddDays(1).AddTicks(-1);
+                query = query.Where(p => p.CreatedAt <= endOfDay);
+            }
+
+            query = criteria.SortOrder switch
+            {
+                "name_asc"    => query.OrderBy(p => p.Name),
+                "name_desc"   => query.OrderByDescending(p => p.Name),
+                "price_asc"   => query.OrderBy(p => p.MinPrice),
+                "price_desc"  => query.OrderByDescending(p => p.MinPrice),
+                "status_asc"  => query.OrderBy(p => p.Status),
+                "status_desc" => query.OrderByDescending(p => p.Status),
+                "date_asc"    => query.OrderBy(p => p.CreatedAt),
+                _             => query.OrderByDescending(p => p.CreatedAt)
+            };
+
+            // COUNT 在 SQL 端完成
+            int totalCount = await query.CountAsync();
+
+            // Skip/Take 接在 IQueryable 後 → SQL 端分頁；Select 投影只取所需欄位
+            var items = await query
+                .Skip((criteria.PageNumber - 1) * criteria.PageSize)
+                .Take(criteria.PageSize)
+                .Select(p => new ProductListDto
+                {
+                    Id           = p.Id,
+                    StoreName    = p.Store != null ? p.Store.StoreName : "未知商店",
+                    CategoryName = p.Category != null ? p.Category.Name : "未分類",
+                    BrandName    = p.Brand != null ? p.Brand.Name : "未設定",
+                    Name         = p.Name,
+                    MinPrice     = p.MinPrice,
+                    MaxPrice     = p.MaxPrice,
+                    Status       = p.Status,
+                    CreatedAt    = p.CreatedAt,
+                    ReviewStatus = p.ReviewStatus,
+                    ReviewedBy   = p.ReviewedBy,
+                    ReviewDate   = p.ReviewDate,
+                    RejectReason = p.RejectReason,
+                    MainImageUrl =
+                        p.ProductImages.Where(img => img.IsMain == true)
+                                       .Select(img => img.ImageUrl).FirstOrDefault()
+                        ?? p.ProductImages.Select(img => img.ImageUrl).FirstOrDefault()
+                        ?? "https://via.placeholder.com/400x400?text=No+Image"
+                })
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductReviewDto>> GetPendingProductsAsync()
+        {
+            return await _context.Products
+                .AsNoTracking()
+                .Where(p => p.ReviewStatus == 0 && p.IsDeleted != true)
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new ProductReviewDto
+                {
+                    Id           = p.Id,
+                    StoreId      = p.StoreId,
+                    CategoryName = p.Category != null ? p.Category.Name : "未分類",
+                    BrandName    = p.Brand != null ? p.Brand.Name : "未設定",
+                    StoreName    = p.Store != null ? p.Store.StoreName : "未知商店",
+                    Name         = p.Name,
+                    Description  = p.Description,
+                    Status       = p.Status ?? 0,
+                    ReviewStatus = p.ReviewStatus,
+                    ReviewedBy   = p.ReviewedBy,
+                    ReviewDate   = p.ReviewDate,
+                    CreatedAt    = p.CreatedAt,
+                    UpdatedAt    = p.UpdatedAt,
+                    MainImageUrl = p.ProductImages
+                        .Where(img => img.IsMain == true)
+                        .Select(img => img.ImageUrl).FirstOrDefault()
+                })
+                .ToListAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<(IEnumerable<ProductReviewDto> Items, int TotalCount)>
+            GetPendingProductsPagedAsync(int page, int pageSize)
+        {
+            var query = _context.Products
+                .AsNoTracking()
+                .Where(p => p.ReviewStatus == 0 && p.IsDeleted != true)
+                .OrderByDescending(p => p.CreatedAt);
+
+            int total = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new ProductReviewDto
+                {
+                    Id           = p.Id,
+                    StoreId      = p.StoreId,
+                    CategoryName = p.Category != null ? p.Category.Name : "未分類",
+                    BrandName    = p.Brand != null ? p.Brand.Name : "未設定",
+                    StoreName    = p.Store != null ? p.Store.StoreName : "未知商店",
+                    Name         = p.Name,
+                    Description  = p.Description,
+                    Status       = p.Status ?? 0,
+                    ReviewStatus = p.ReviewStatus,
+                    ReviewedBy   = p.ReviewedBy,
+                    ReviewDate   = p.ReviewDate,
+                    CreatedAt    = p.CreatedAt,
+                    UpdatedAt    = p.UpdatedAt,
+                    MainImageUrl = p.ProductImages
+                        .Where(img => img.IsMain == true)
+                        .Select(img => img.ImageUrl).FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return (items, total);
+        }
+
+        /// <inheritdoc/>
+        public async Task<(IEnumerable<ProductReviewDto> Items, int TotalCount)>
+            GetRejectedProductsPagedAsync(int page, int pageSize)
+        {
+            var query = _context.Products
+                .AsNoTracking()
+                .Where(p => p.ReviewStatus == 2 && p.IsDeleted != true)
+                .OrderByDescending(p => p.ReviewDate ?? p.UpdatedAt);
+
+            int total = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new ProductReviewDto
+                {
+                    Id           = p.Id,
+                    StoreId      = p.StoreId,
+                    CategoryName = p.Category != null ? p.Category.Name : "未分類",
+                    BrandName    = p.Brand != null ? p.Brand.Name : "未設定",
+                    StoreName    = p.Store != null ? p.Store.StoreName : "未知商店",
+                    Name         = p.Name,
+                    Description  = p.Description,
+                    Status       = p.Status ?? 0,
+                    ReviewStatus = p.ReviewStatus,
+                    ReviewedBy   = p.ReviewedBy,
+                    ReviewDate   = p.ReviewDate,
+                    RejectReason = p.RejectReason,
+                    CreatedAt    = p.CreatedAt,
+                    UpdatedAt    = p.UpdatedAt,
+                    MainImageUrl = p.ProductImages
+                        .Where(img => img.IsMain == true)
+                        .Select(img => img.ImageUrl).FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return (items, total);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductReviewDto>> GetRecentRejectedProductsAsync(int top)
+        {
+            return await _context.Products
+                .AsNoTracking()
+                .Where(p => p.ReviewStatus == 2 && p.IsDeleted != true)
+                .OrderByDescending(p => p.UpdatedAt)
+                .Take(top)
+                .Select(p => new ProductReviewDto
+                {
+                    Id           = p.Id,
+                    StoreId      = p.StoreId,
+                    CategoryName = p.Category != null ? p.Category.Name : "未分類",
+                    BrandName    = p.Brand != null ? p.Brand.Name : "未設定",
+                    StoreName    = p.Store != null ? p.Store.StoreName : "未知商店",
+                    Name         = p.Name,
+                    Description  = p.Description,
+                    Status       = p.Status ?? 0,
+                    ReviewStatus = p.ReviewStatus,
+                    ReviewedBy   = p.ReviewedBy,
+                    ReviewDate   = p.ReviewDate,
+                    RejectReason = p.RejectReason,
+                    CreatedAt    = p.CreatedAt,
+                    UpdatedAt    = p.UpdatedAt,
+                    MainImageUrl = p.ProductImages
+                        .Where(img => img.IsMain == true)
+                        .Select(img => img.ImageUrl).FirstOrDefault()
+                })
+                .ToListAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task ApproveProductAsync(int id, string adminId)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null) return;
+
+            product.Status       = 1;
+            product.ReviewStatus = 1;
+            product.ReviewedBy   = adminId;
+            product.RejectReason = null;
+            product.ReviewDate   = null;
+            product.UpdatedAt    = DateTime.Now;
+            if (product.Name != null && product.Name.StartsWith("[待審核]"))
+                product.Name = product.Name.Substring("[待審核]".Length).TrimStart();
+
+            await _context.SaveChangesAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task RejectProductAsync(int id, string adminId, string reason)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null) return;
+
+            product.Status       = 3;
+            product.ReviewStatus = 2;
+            product.ReviewedBy   = adminId;
+            product.RejectReason = reason;
+            product.ReviewDate   = DateTime.Now;
+            product.UpdatedAt    = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task SubmitProductForReviewAsync(int productId)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null) return;
+
+            var badWords = new[]
+            {
+                "高仿", "原單", "槍械", "毒品", "贗品", "假貨", "冒牌", "盜版",
+                "走私", "非法", "詐騙", "傳銷", "洗錢", "賭博", "色情",
+                "暴力", "恐怖", "炸藥", "大麻", "槍", "彈藥", "仿冒", "武器"
+            };
+            string combined = (product.Name + " " + (product.Description ?? "")).ToLower();
+            string? hit = badWords.FirstOrDefault(w => combined.Contains(w.ToLower()));
+
+            if (hit != null)
+            {
+                product.Status       = 3;
+                product.ReviewStatus = 2;
+                product.ReviewedBy   = "System";
+                product.RejectReason = $"自動攔截：內容含違禁詞「{hit}」";
+                product.ReviewDate   = DateTime.Now;
+            }
+            else
+            {
+                product.Status       = 2;
+                product.ReviewStatus = 0;
+                product.ReviewedBy   = null;
+                product.RejectReason = null;
+                product.ReviewDate   = null;
+            }
+            product.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> CleanupExpiredRejectedAsync(int expirationSeconds)
+        {
+            var cutoff = DateTime.Now.AddSeconds(-expirationSeconds);
+            var expired = await _context.Products
+                .Where(p => p.ReviewStatus == 2
+                         && p.ReviewDate != null
+                         && p.ReviewDate <= cutoff
+                         && p.IsDeleted != true)
+                .ToListAsync();
+
+            foreach (var p in expired)
+            {
+                p.IsDeleted = true;
+                p.UpdatedAt = DateTime.Now;
+            }
+            await _context.SaveChangesAsync();
+            return expired.Count;
+        }
+
+        /// <inheritdoc/>
+        public async Task ResetToPendingAsync(int productId)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null) return;
+
+            product.Status       = 2;
+            product.ReviewStatus = 0;
+            product.ReviewedBy   = null;
+            product.ReviewDate   = null;
+            product.RejectReason = null;
+            product.UpdatedAt    = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<(int Total, int Published, int Unpublished, int Pending)> GetStatusCountsAsync()
+        {
+            var q = _context.Products.Where(p => p.IsDeleted != true);
+            return (
+                await q.CountAsync(),
+                await q.CountAsync(p => p.Status == 1),
+                await q.CountAsync(p => p.Status == 0),
+                await q.CountAsync(p => p.ReviewStatus == 0)
+            );
+        }
+
+        /// <inheritdoc/>
+        public async Task ForceUnpublishAsync(int id, string? reason)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null) return;
+
+            product.Status       = 0;
+            product.RejectReason = reason;
+            product.UpdatedAt    = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

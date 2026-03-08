@@ -165,5 +165,65 @@ namespace ISpanShop.Services.Products
 
         /// <summary>管理員強制下架（儲存下架原因）</summary>
         void ForceUnpublish(int id, string? reason);
+
+        // ═══════════════════════════════════════════════════════════
+        //  非同步版本（效能最佳化：async/await + 投影 + 真分頁）
+        // ═══════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// [Async] 取得待審核商品列表
+        /// </summary>
+        Task<IEnumerable<ProductReviewDto>> GetPendingProductsAsync();
+
+        /// <summary>
+        /// [Async] 分頁取得商品列表，支援分類篩選
+        /// </summary>
+        Task<PagedResult<ProductListDto>> GetProductsPagedAsync(ProductSearchCriteria criteria);
+
+        /// <summary>
+        /// [Async] 核准商品（待審核 → 上架，記錄審核人）
+        /// </summary>
+        Task ApproveProductAsync(int id, string adminId);
+
+        /// <summary>
+        /// [Async] 退回商品（待審核 → 審核退回，記錄原因、審核人與退回時間）
+        /// </summary>
+        Task RejectProductAsync(int id, string adminId, string reason);
+
+        /// <summary>
+        /// [Async] 提交商品審核：自動違禁詞攔截或轉為待審核佇列
+        /// </summary>
+        Task SubmitProductForReviewAsync(int productId);
+
+        /// <summary>
+        /// [Async] 清理過期退回商品（IsDeleted=true），回傳清理筆數
+        /// </summary>
+        Task<int> CleanupExpiredRejectedProductsAsync(int expirationSeconds = 60);
+
+        /// <summary>
+        /// [Async] 取得最近退回的商品清單（ReviewStatus == 2），依 UpdatedAt 降冪排序
+        /// </summary>
+        Task<IEnumerable<ProductReviewDto>> GetRecentRejectedProductsAsync(int top = 10);
+
+        /// <summary>
+        /// [Async] 分頁取得待審核商品（ReviewStatus == 0）
+        /// </summary>
+        Task<PagedResult<ProductReviewDto>> GetPendingProductsPagedAsync(int page, int pageSize);
+
+        /// <summary>
+        /// [Async] 分頁取得已退回商品（ReviewStatus == 2）
+        /// </summary>
+        Task<PagedResult<ProductReviewDto>> GetRejectedProductsPagedAsync(int page, int pageSize);
+
+        /// <summary>
+        /// [Async] 重設為待審核：清空審核結果欄位，商品回到 Status=2 / ReviewStatus=0
+        /// </summary>
+        Task ResetToPendingAsync(int productId);
+
+        /// <summary>[Async] 取得全站商品各狀態統計數字</summary>
+        Task<(int Total, int Published, int Unpublished, int Pending)> GetProductStatusCountsAsync();
+
+        /// <summary>[Async] 管理員強制下架（儲存下架原因）</summary>
+        Task ForceUnpublishAsync(int id, string? reason);
     }
 }
