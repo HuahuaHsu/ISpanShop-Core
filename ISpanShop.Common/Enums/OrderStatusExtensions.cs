@@ -13,6 +13,8 @@ namespace ISpanShop.Common.Enums
                 OrderStatus.Shipped => "運送中",
                 OrderStatus.Completed => "已完成",
                 OrderStatus.Cancelled => "已取消",
+                OrderStatus.Returning => "退貨/款中",
+                OrderStatus.Refunded => "已退款",
                 _ => status.ToString()
             };
         }

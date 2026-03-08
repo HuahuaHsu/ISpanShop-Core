@@ -725,15 +725,19 @@
                             <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
                                 <a href="@Url.Action("Index", "Orders")" class="menu-link">全部訂單</a>
                             </li>
-                            <li class="menu-item"><a href="#" class="menu-link">待出貨</a></li>
-                            <li class="menu-item"><a href="#" class="menu-link">退貨申請</a></li>
+                            <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "ShipmentWorkstation" ? "active" : "")">
+                                <a href="@Url.Action("Index", "ShipmentWorkstation")" class="menu-link">待出貨</a>
+                            </li>
+                            <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "ReturnRequests" ? "active" : "")">
+                                <a href="@Url.Action("Index", "ReturnRequests")" class="menu-link">退貨申請</a>
+                            </li>
                         </ul>
                     </div>
                     <div class="menu-flyout">
                         <div class="menu-flyout-title">訂單管理</div>
                         <a href="@Url.Action("Index", "Orders")">全部訂單</a>
-                        <a href="#">待出貨</a>
-                        <a href="#">退貨申請</a>
+                        <a href="@Url.Action("Index", "ShipmentWorkstation")">待出貨</a>
+                        <a href="@Url.Action("Index", "ReturnRequests")">退貨申請</a>
                     </div>
                 </li>
 

@@ -20,5 +20,10 @@ namespace ISpanShop.Models.DTOs.Orders
 		public string RecipientName { get; set; }
 		public string RecipientPhone { get; set; }
 		public string StoreName { get; set; }
+
+		// 出貨工作台專用：揀貨摘要 (例如: A商品x2, B商品x1)
+		public string ItemsSummary { get; set; }
+		// 出貨等待時長 (毫秒或 TimeSpan 字串)
+		public string WaitingTime { get; set; }
 	}
 }

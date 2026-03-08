@@ -29,7 +29,7 @@
 <div class="row mb-4">
     <!-- 左側：核心待辦中心 (不隨時間變動) -->
     <div class="col-12 col-lg-4 mb-4 mb-lg-0">
-        <div class="card hero-card h-100 shadow-lg cursor-pointer" onclick="window.location.href='/Orders/Index?Statuses=1'">
+        <div class="card hero-card h-100 shadow-lg cursor-pointer" onclick="window.location.href='@Url.Action("Index", "ShipmentWorkstation")'">
             <div class="card-body d-flex flex-column justify-content-between p-4">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="avatar avatar-lg">
@@ -42,9 +42,9 @@
                     <h4 class="text-white mb-2">待出貨訂單總數</h4>
                     <p class="text-muted mb-4 small">這是當前系統中所有需要處理的訂單，不限時間區間。</p>
                 </div>
-                <button class="btn btn-white w-100 fw-bold" style="color: #696cff;">
+                <a href="@Url.Action("Index", "ShipmentWorkstation")" class="btn btn-white w-100 fw-bold" style="color: #696cff; text-decoration: none;">
                     <i class="bx bx-right-arrow-alt me-1"></i> 立即前往處理
-                </button>
+                </a>
             </div>
         </div>
     </div>
