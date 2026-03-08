@@ -110,9 +110,15 @@ namespace ISpanShop.MVC
 				name: "areas",
 				pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
+			// ★ 支援直接以 /Orders/ 做存取，以及讓根目錄預設導向 訂單儀表板
 			app.MapControllerRoute(
 				name: "default",
-				pattern: "{controller=Orders}/{action=Dashboard}/{id?}");
+				pattern: "{controller=Orders}/{action=Dashboard}/{id?}",
+				defaults: new { area = "Admin" });
+
+			app.MapControllerRoute(
+				name: "home",
+				pattern: "Home/{action=Index}/{id?}");
 
 
 			using (var scope = app.Services.CreateScope())

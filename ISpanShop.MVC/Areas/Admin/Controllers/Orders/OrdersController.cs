@@ -1,5 +1,6 @@
 ﻿using ISpanShop.Common.Enums;
 using ISpanShop.Models.DTOs.Orders;
+using ISpanShop.MVC.Areas.Admin.Controllers;
 using ISpanShop.MVC.Areas.Admin.Models.Orders;
 using ISpanShop.Services.Orders;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 {
-	public class OrdersController : Controller
+	public class OrdersController : AdminBaseController
 	{
 		private readonly IOrderService _orderService;
 		private readonly IOrderDashboardService _dashboardService;
