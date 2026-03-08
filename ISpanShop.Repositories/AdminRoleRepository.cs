@@ -20,39 +20,32 @@ namespace ISpanShop.Repositories
 		}
 
 		/// <summary>
-		/// 取得所有可用的角色列表
+		/// 取得所有管理員列表
 		/// </summary>
-		public IEnumerable<AdminRoleDto> GetAllRoles()
+		public IEnumerable<AdminPermissionDto> GetAllPermissions()
 		{
-			var roles = new List<AdminRoleDto>();
-
+			var permissions = new List<AdminPermissionDto>();
 			try
 			{
 				using (SqlConnection conn = new SqlConnection(_connectionString))
 				{
 					conn.Open();
-
 					string query = @"
-						SELECT 
-							Id AS RoleId,
-							RoleName,
-							Description
-						FROM Roles
-						ORDER BY RoleName";
+                SELECT Id AS PermissionId, PermissionKey, Description
+                FROM Permissions
+                ORDER BY Id";
 
 					using (SqlCommand cmd = new SqlCommand(query, conn))
+					using (SqlDataReader reader = cmd.ExecuteReader())
 					{
-						using (SqlDataReader reader = cmd.ExecuteReader())
+						while (reader.Read())
 						{
-							while (reader.Read())
+							permissions.Add(new AdminPermissionDto
 							{
-								roles.Add(new AdminRoleDto
-								{
-									RoleId = (int)reader["RoleId"],
-									RoleName = reader["RoleName"]?.ToString(),
-									Description = reader["Description"]?.ToString()
-								});
-							}
+								PermissionId = (int)reader["PermissionId"],
+								PermissionKey = reader["PermissionKey"]?.ToString()!,
+								Description = reader["Description"]?.ToString()
+							});
 						}
 					}
 				}
@@ -61,8 +54,7 @@ namespace ISpanShop.Repositories
 			{
 				throw new InvalidOperationException("資料庫查詢失敗", ex);
 			}
-
-			return roles;
+			return permissions;
 		}
 
 		

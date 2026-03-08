@@ -23,9 +23,9 @@ namespace ISpanShop.Services
 			return _adminRepository.GetAllAdmins();
 		}
 
-		public IEnumerable<AdminRoleDto> GetAllRoles()
+		public IEnumerable<AdminPermissionDto> GetAllPermissions()
 		{
-			return _roleRepository.GetAllRoles();
+			return _roleRepository.GetAllPermissions();
 		}
 
 		public bool UpdateAdminRole(int adminId, int roleId, int currentAdminId)

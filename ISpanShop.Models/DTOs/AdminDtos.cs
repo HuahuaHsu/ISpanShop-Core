@@ -32,13 +32,13 @@ namespace ISpanShop.Models.DTOs
 	/// <summary>
 	/// 角色資料傳輸物件 - 用於下拉選單
 	/// </summary>
-	public class AdminRoleDto
+	public class AdminPermissionDto
 	{
 		[Display(Name = "角色ID")]
-		public int RoleId { get; set; }
+		public int PermissionId { get; set; }
 
 		[Display(Name = "角色名稱")]
-		public string RoleName { get; set; }
+		public string PermissionKey { get; set; }
 
 		[Display(Name = "描述")]
 		public string Description { get; set; }

@@ -16,7 +16,7 @@ namespace ISpanShop.MVC.Models.Admins
 		/// <summary>
 		/// 角色下拉選單來源
 		/// </summary>
-		public List<AdminRoleDto> RoleOptions { get; set; } = new List<AdminRoleDto>();
+		public List<AdminPermissionDto> PermissionOptions { get; set; } = new();
 
 		/// <summary>
 		/// 操作結果訊息（成功/失敗）

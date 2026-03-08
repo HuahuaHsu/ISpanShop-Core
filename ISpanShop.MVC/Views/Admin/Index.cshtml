@@ -26,8 +26,8 @@
                 <tr class="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider">
                     <th class="p-4 font-medium">帳號</th>
                     <th class="p-4 font-medium">電子信箱</th>
-                    <th class="p-4 font-medium">目前角色</th>
-                    <th class="p-4 font-medium">新角色</th>
+                    <th class="p-4 font-medium">角色</th>
+                    <th class="p-4 font-medium">權限</th>
                     <th class="p-4 font-medium">建立時間</th>
                     <th class="p-4 font-medium text-right">操作</th>
                 </tr>
@@ -52,21 +52,13 @@
                             <td class="p-4">
                                 <form method="post" asp-action="UpdateRole" class="flex space-x-2">
                                     <input type="hidden" name="adminId" value="@admin.AdminId" />
-                                    
-                                    <select name="roleId" class="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">-- 選擇角色 --</option>
-                                        @foreach (var role in Model.RoleOptions)
+
+                                    <select name="permissionId" class="border border-gray-300 rounded px-3 py-1 text-sm">
+                                        <option value="">-- 選擇權限 --</option>
+                                        @foreach (var p in Model.PermissionOptions)
                                         {
-                                            if (role.RoleId == admin.RoleId)
-                                            {
-                                                <option value="@role.RoleId" selected>@role.RoleName</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@role.RoleId">@role.RoleName</option>
-                                            }
+                                            <option value="@p.PermissionId">@p.Description</option>
                                         }
-                                        
                                     </select>
 
                                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded text-sm transition-colors">

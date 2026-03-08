@@ -9,9 +9,9 @@ namespace ISpanShop.Repositories.Interfaces
 	public interface IAdminRoleRepository
 	{
 		/// <summary>
-		/// 取得所有可用的角色列表
+		/// 取得所有可用的管理員權限列表
 		/// </summary>
-		/// <returns>角色 DTO 列表</returns>
-		IEnumerable<AdminRoleDto> GetAllRoles();
+		/// <returns>管理員權限 DTO 列表</returns>
+		IEnumerable<AdminPermissionDto> GetAllPermissions();
 	}
 }
