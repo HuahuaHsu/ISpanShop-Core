@@ -141,9 +141,9 @@ namespace ISpanShop.MVC
 				await context.Database.ExecuteSqlRawAsync(@"
 					IF NOT EXISTS (
 						SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-						WHERE TABLE_NAME = 'Products' AND COLUMN_NAME = 'RejectDate'
+						WHERE TABLE_NAME = 'Products' AND COLUMN_NAME = 'ReviewDate'
 					)
-					ALTER TABLE Products ADD RejectDate DATETIME NULL");
+					ALTER TABLE Products ADD ReviewDate DATETIME NULL");
 
 				// 確保 Categories 資料表有 NameEn 欄位（英文名稱）
 				await context.Database.ExecuteSqlRawAsync(@"

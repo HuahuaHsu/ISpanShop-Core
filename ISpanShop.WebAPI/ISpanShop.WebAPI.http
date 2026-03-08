@@ -1,6 +1,0 @@
-@ISpanShop.WebAPI_HostAddress = http://localhost:5093
-
-GET {{ISpanShop.WebAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

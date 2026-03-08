@@ -8,5 +8,6 @@ public partial class Product
 {
     public int ReviewStatus { get; set; }
     public string? ReviewedBy { get; set; }
-    public DateTime? RejectDate { get; set; }
+    /// <summary>審核時間（通過與退回共用）</summary>
+    public DateTime? ReviewDate { get; set; }
 }

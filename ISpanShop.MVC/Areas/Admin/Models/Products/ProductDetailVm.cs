@@ -21,6 +21,10 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Products
         public string? SpecDefinitionJson { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        /// <summary>審核狀態 (0=待審核, 1=通過, 2=退回)</summary>
+        public int ReviewStatus { get; set; }
+        public string? ReviewedBy { get; set; }
+        public DateTime? ReviewDate { get; set; }
 
         public List<string> Images { get; set; } = new();
         public List<ProductVariantDetailVm> Variants { get; set; } = new();

@@ -1,0 +1,152 @@
+﻿@model IEnumerable<ISpanShop.Models.DTOs.Products.ProductListDto>
+
+@{
+    ViewData["Title"] = "賣家商品管理";
+    const int expirationDays = 90;
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">🛍️ 賣家商品管理</h2>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>商品名稱</th>
+                        <th>分類</th>
+                        <th>價格</th>
+                        <th>上架狀態</th>
+                        <th>審核狀態</th>
+                        <th>退回原因 / 倒數</th>
+                        <th>建檔日期</th>
+                         <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@item.Name</td>
+                            <td>@item.CategoryName</td>
+                            <td>
+                                @if (item.MinPrice == item.MaxPrice)
+                                {
+                                    <span>NT$ @item.MinPrice?.ToString("N0")</span>
+                                }
+                                else
+                                {
+                                    <span>NT$ @item.MinPrice?.ToString("N0") ~ @item.MaxPrice?.ToString("N0")</span>
+                                }
+                            </td>
+                            <td>
+                                @{
+                                    var (sBadge, sText) = item.Status switch
+                                    {
+                                        1 => ("bg-success", "已上架"),
+                                        2 => ("bg-warning text-dark", "待審核"),
+                                        3 => ("bg-danger", "審核退回"),
+                                        _ => ("bg-secondary", "已下架")
+                                    };
+                                }
+                                <span class="badge @sBadge">@sText</span>
+                            </td>
+                            <td>
+                                @{
+                                    var (rBadge, rText) = item.ReviewStatus switch
+                                    {
+                                        1 => ("bg-success", "✅ 已通過"),
+                                        2 => ("bg-danger",  "❌ 已退回"),
+                                        _ => ("bg-warning text-dark", "⏳ 待審核")
+                                    };
+                                }
+                                <span class="badge @rBadge">@rText</span>
+                            </td>
+                            <td>
+                                @{
+                                    int daysLeftForItem = item.ReviewDate.HasValue
+                                        ? expirationDays - (int)(DateTime.Now - item.ReviewDate.Value).TotalDays
+                                        : int.MaxValue;
+                                }
+                                @if (item.ReviewStatus == 2)
+                                {
+                                    <span class="text-danger fw-semibold">⚠️ @(item.RejectReason ?? "請洽管理員")</span>
+                                    <br />
+                                    @if (!item.ReviewDate.HasValue)
+                                    {
+                                        <span class="badge bg-secondary mt-1">⚠️ 已退回（無時間記錄）</span>
+                                    }
+                                    else if (daysLeftForItem > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark mt-1">⏳ 剩餘 @daysLeftForItem 天將自動刪除</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger mt-1">⚠️ 即將刪除</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                                                        <td class="text-muted small">@item.CreatedAt?.ToString("yyyy-MM-dd")</td>
+                            <td class="text-end">
+                                @if (item.ReviewStatus == 2)
+                                {
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                            onclick="resetToPending(@item.Id, '@item.Name.Replace("'", "\\'")') ">
+                                        <i class="bx bx-revision me-1"></i>🔄 重新送審
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5 text-muted">
+            <div style="font-size:3rem;">📦</div>
+            <p class="mt-2">目前沒有任何商品</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        var urlResetToPending = '@Url.Action("ResetToPending", "Products", new { area = "Admin" })';
+
+        window.resetToPending = function (id, name) {
+            Swal.fire({
+                title: '重新送審',
+                html: '確定要將商品<br><strong>「' + name + '」</strong><br>重新送審嗎？審核人員將重新審核此商品。',
+                icon: 'question', showCancelButton: true,
+                confirmButtonColor: '#3182ce', cancelButtonColor: '#a0aec0',
+                confirmButtonText: '確認送審', cancelButtonText: '取消'
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                fetch(urlResetToPending, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('input[name=__RequestVerificationToken]')?.value ?? '' },
+                    body: JSON.stringify({ id: parseInt(id) })
+                })
+                .then(r => r.json()).then(function (res) {
+                    if (res.success) {
+                        Swal.fire({ title: '送審成功！', text: res.message, icon: 'success',
+                                    confirmButtonColor: '#1abb9c', timer: 2000, timerProgressBar: true })
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire({ title: '操作失敗', text: res.message, icon: 'error' });
+                    }
+                }).catch(() => Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }));
+            });
+        };
+    </script>
+}

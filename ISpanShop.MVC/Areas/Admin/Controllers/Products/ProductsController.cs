@@ -146,41 +146,55 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// 待審核商品列表
         /// </summary>
         /// <returns>待審核商品列表 View</returns>
-        public IActionResult PendingReview()
+        public IActionResult PendingReview(int pendingPage = 1, int rejectedPage = 1)
         {
-            // 待審核商品（Status == 2）
-            var pendingProductDtos = _productService.GetPendingProducts();
-            var viewModels = pendingProductDtos.Select(dto => new ProductReviewListVm
-            {
-                Id          = dto.Id,
-                StoreId     = dto.StoreId,
-                CategoryName = dto.CategoryName,
-                BrandName   = dto.BrandName,
-                StoreName   = dto.StoreName,
-                Name        = dto.Name,
-                Description = dto.Description,
-                Status      = dto.Status,
-                CreatedAt   = dto.CreatedAt,
-                UpdatedAt   = dto.UpdatedAt,
-                MainImageUrl = dto.MainImageUrl
-            }).ToList();
+            const int pageSize = 10;
 
-            // 近期退回紀錄（Status == 3，取最新 10 筆）
-            var rejectedDtos = _productService.GetRecentRejectedProducts(10);
-            ViewBag.RejectedRecords = rejectedDtos.Select(dto => new ProductReviewListVm
-            {
-                Id           = dto.Id,
-                StoreId      = dto.StoreId,
-                StoreName    = dto.StoreName,
-                CategoryName = dto.CategoryName,
-                Name         = dto.Name,
-                Status       = dto.Status,
-                RejectReason = dto.RejectReason,
-                UpdatedAt    = dto.UpdatedAt,
-                MainImageUrl = dto.MainImageUrl
-            }).ToList();
+            // 分頁取待審核 (ReviewStatus == 0)
+            var pendingPaged = _productService.GetPendingProductsPaged(pendingPage, pageSize);
+            var pendingVm = PagedResult<ProductReviewListVm>.Create(
+                pendingPaged.Data.Select(dto => new ProductReviewListVm
+                {
+                    Id           = dto.Id,
+                    StoreId      = dto.StoreId,
+                    CategoryName = dto.CategoryName,
+                    BrandName    = dto.BrandName,
+                    StoreName    = dto.StoreName,
+                    Name         = dto.Name,
+                    Description  = dto.Description,
+                    Status       = dto.Status,
+                    ReviewStatus = dto.ReviewStatus,
+                    ReviewedBy   = dto.ReviewedBy,
+                    ReviewDate   = dto.ReviewDate,
+                    CreatedAt    = dto.CreatedAt,
+                    UpdatedAt    = dto.UpdatedAt,
+                    MainImageUrl = dto.MainImageUrl
+                }).ToList(),
+                pendingPaged.TotalCount, pendingPage, pageSize);
 
-            return View(viewModels);
+            // 分頁取已退回 (ReviewStatus == 2)
+            var rejectedPaged = _productService.GetRejectedProductsPaged(rejectedPage, pageSize);
+            ViewBag.RejectedRecords = PagedResult<ProductReviewListVm>.Create(
+                rejectedPaged.Data.Select(dto => new ProductReviewListVm
+                {
+                    Id           = dto.Id,
+                    StoreId      = dto.StoreId,
+                    StoreName    = dto.StoreName,
+                    CategoryName = dto.CategoryName,
+                    Name         = dto.Name,
+                    Status       = dto.Status,
+                    ReviewStatus = dto.ReviewStatus,
+                    ReviewedBy   = dto.ReviewedBy,
+                    ReviewDate   = dto.ReviewDate,
+                    RejectReason = dto.RejectReason,
+                    UpdatedAt    = dto.UpdatedAt,
+                    MainImageUrl = dto.MainImageUrl
+                }).ToList(),
+                rejectedPaged.TotalCount, rejectedPage, pageSize);
+
+            ViewBag.RejectedPage = rejectedPage;
+
+            return View(pendingVm);
         }
 
         /// <summary>
@@ -237,7 +251,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         }
 
         /// <summary>
-        /// [AJAX] 重新審核 - 將已退回商品 (Status=3) 的狀態重設為待審核 (Status=2)
+        /// [AJAX] 重新審核 - 將已退回商品重設為待審核（清空審核結果欄位）
         /// </summary>
         [HttpPost]
         public IActionResult UndoReject([FromBody] RejectDto dto)
@@ -246,8 +260,27 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                 return Json(new { success = false, message = "無效的請求資料。" });
             try
             {
-                _productService.ChangeProductStatus(dto.Id, 2);
+                _productService.ResetToPending(dto.Id);
                 return Json(new { success = true, message = "商品已移回待審核佇列。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 重新送審 - 前台賣家或管理員呼叫，效果同 UndoReject
+        /// </summary>
+        [HttpPost]
+        public IActionResult ResetToPending([FromBody] RejectDto dto)
+        {
+            if (dto == null || dto.Id <= 0)
+                return Json(new { success = false, message = "無效的請求資料。" });
+            try
+            {
+                _productService.ResetToPending(dto.Id);
+                return Json(new { success = true, message = "商品已重新送審，等待審核中。" });
             }
             catch (Exception ex)
             {
@@ -509,6 +542,9 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                 SpecDefinitionJson = productDto.SpecDefinitionJson,
                 CreatedAt          = productDto.CreatedAt,
                 UpdatedAt          = productDto.UpdatedAt,
+                ReviewStatus       = productDto.ReviewStatus,
+                ReviewedBy         = productDto.ReviewedBy,
+                ReviewDate         = productDto.ReviewDate,
                 Images             = productDto.Images,
                 Variants = productDto.Variants.Select(v => new ProductVariantDetailVm
                 {

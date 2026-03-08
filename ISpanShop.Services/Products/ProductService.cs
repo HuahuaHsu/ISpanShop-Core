@@ -137,6 +137,9 @@ namespace ISpanShop.Services.Products
                 Name        = p.Name,
                 Description = p.Description,
                 Status      = p.Status ?? 0,
+                ReviewStatus = p.ReviewStatus,
+                ReviewedBy  = p.ReviewedBy,
+                ReviewDate  = p.ReviewDate,
                 CreatedAt   = p.CreatedAt,
                 UpdatedAt   = p.UpdatedAt,
                 MainImageUrl = p.ProductImages
@@ -172,6 +175,10 @@ namespace ISpanShop.Services.Products
                 MinPrice = p.MinPrice,
                 MaxPrice = p.MaxPrice,
                 Status = p.Status,
+                ReviewStatus = p.ReviewStatus,
+                ReviewedBy   = p.ReviewedBy,
+                ReviewDate   = p.ReviewDate,
+                RejectReason = p.RejectReason,
                 MainImageUrl = p.ProductImages
                     ?.FirstOrDefault(img => img.IsMain==true)?.ImageUrl 
                     ?? p.ProductImages?.FirstOrDefault()?.ImageUrl 
@@ -202,7 +209,11 @@ namespace ISpanShop.Services.Products
                     ?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
                     ?? p.ProductImages?.FirstOrDefault()?.ImageUrl
                     ?? "https://via.placeholder.com/400x400?text=No+Image",
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt,
+                ReviewStatus = p.ReviewStatus,
+                ReviewedBy   = p.ReviewedBy,
+                ReviewDate   = p.ReviewDate,
+                RejectReason = p.RejectReason
             }).ToList();
 
             return PagedResult<ProductListDto>.Create(dtos, totalCount, criteria.PageNumber, criteria.PageSize);
@@ -258,6 +269,9 @@ namespace ISpanShop.Services.Products
                 SpecDefinitionJson = product.SpecDefinitionJson,
                 CreatedAt          = product.CreatedAt,
                 UpdatedAt          = product.UpdatedAt,
+                ReviewStatus       = product.ReviewStatus,
+                ReviewedBy         = product.ReviewedBy,
+                ReviewDate         = product.ReviewDate,
                 Images = product.ProductImages?
                     .OrderBy(img => img.SortOrder)
                     .Select(img => img.ImageUrl)
@@ -504,22 +518,47 @@ namespace ISpanShop.Services.Products
         public IEnumerable<ProductReviewDto> GetRecentRejectedProducts(int top = 10)
         {
             return _productRepository.GetRecentRejectedProducts(top)
-                .Select(p => new ProductReviewDto
-                {
-                    Id          = p.Id,
-                    StoreId     = p.StoreId,
-                    CategoryName = p.Category?.Name ?? "未分類",
-                    BrandName   = p.Brand?.Name ?? "未設定",
-                    StoreName   = p.Store?.StoreName ?? "未知商店",
-                    Name        = p.Name,
-                    Description = p.Description,
-                    Status      = p.Status ?? 3,
-                    RejectReason = p.RejectReason,
-                    CreatedAt   = p.CreatedAt,
-                    UpdatedAt   = p.UpdatedAt,
-                    MainImageUrl = p.ProductImages
-                        ?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
-                }).ToList();
+                .Select(p => ToReviewDto(p)).ToList();
         }
+
+        /// <summary>分頁取得待審核商品（ReviewStatus == 0）</summary>
+        public PagedResult<ProductReviewDto> GetPendingProductsPaged(int page, int pageSize)
+        {
+            var (items, total) = _productRepository.GetPendingProductsPaged(page, pageSize);
+            return PagedResult<ProductReviewDto>.Create(
+                items.Select(p => ToReviewDto(p)).ToList(), total, page, pageSize);
+        }
+
+        /// <summary>分頁取得已退回商品（ReviewStatus == 2）</summary>
+        public PagedResult<ProductReviewDto> GetRejectedProductsPaged(int page, int pageSize)
+        {
+            var (items, total) = _productRepository.GetRejectedProductsPaged(page, pageSize);
+            return PagedResult<ProductReviewDto>.Create(
+                items.Select(p => ToReviewDto(p)).ToList(), total, page, pageSize);
+        }
+
+        /// <summary>重設為待審核：清空審核結果欄位</summary>
+        public void ResetToPending(int productId)
+            => _productRepository.ResetToPending(productId);
+
+        private static ProductReviewDto ToReviewDto(ISpanShop.Models.EfModels.Product p) =>
+            new ProductReviewDto
+            {
+                Id           = p.Id,
+                StoreId      = p.StoreId,
+                CategoryName = p.Category?.Name ?? "未分類",
+                BrandName    = p.Brand?.Name ?? "未設定",
+                StoreName    = p.Store?.StoreName ?? "未知商店",
+                Name         = p.Name,
+                Description  = p.Description,
+                Status       = p.Status ?? 0,
+                ReviewStatus = p.ReviewStatus,
+                ReviewedBy   = p.ReviewedBy,
+                ReviewDate   = p.ReviewDate,
+                RejectReason = p.RejectReason,
+                CreatedAt    = p.CreatedAt,
+                UpdatedAt    = p.UpdatedAt,
+                MainImageUrl = p.ProductImages?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
+            };
     }
 }

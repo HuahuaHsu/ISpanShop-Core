@@ -49,7 +49,7 @@ namespace ISpanShop.Repositories.Products
         }
 
         /// <summary>
-        /// 取得待審核商品列表 (Status == 2)
+        /// 取得待審核商品列表 (ReviewStatus == 0)
         /// </summary>
         /// <returns>待審核商品集合</returns>
         public IEnumerable<Product> GetPendingProducts()
@@ -58,7 +58,7 @@ namespace ISpanShop.Repositories.Products
                 .Include(p => p.Store)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
-                .Where(p => p.Status == 2 && p.IsDeleted != true)
+                .Where(p => p.ReviewStatus == 0 && p.IsDeleted != true)
                 .ToList();
         }
 
@@ -282,7 +282,7 @@ namespace ISpanShop.Repositories.Products
             product.ReviewStatus = 1;
             product.ReviewedBy   = adminId;
             product.RejectReason = null;
-            product.RejectDate   = null;
+            product.ReviewDate   = null;
             product.UpdatedAt    = DateTime.Now;
             if (product.Name != null && product.Name.StartsWith("[待審核]"))
                 product.Name = product.Name.Substring("[待審核]".Length).TrimStart();
@@ -301,7 +301,7 @@ namespace ISpanShop.Repositories.Products
             product.ReviewStatus = 2;
             product.ReviewedBy   = adminId;
             product.RejectReason = reason;
-            product.RejectDate   = DateTime.Now;
+            product.ReviewDate   = DateTime.Now;
             product.UpdatedAt    = DateTime.Now;
             _context.SaveChanges();
         }
@@ -330,7 +330,7 @@ namespace ISpanShop.Repositories.Products
                 product.ReviewStatus = 2;
                 product.ReviewedBy   = "System";
                 product.RejectReason = $"自動攔截：內容含違禁詞「{hit}」";
-                product.RejectDate   = DateTime.Now;
+                product.ReviewDate   = DateTime.Now;
             }
             else
             {
@@ -339,7 +339,7 @@ namespace ISpanShop.Repositories.Products
                 product.ReviewStatus = 0;
                 product.ReviewedBy   = null;
                 product.RejectReason = null;
-                product.RejectDate   = null;
+                product.ReviewDate   = null;
             }
             product.UpdatedAt = DateTime.Now;
             _context.SaveChanges();
@@ -354,8 +354,8 @@ namespace ISpanShop.Repositories.Products
             var cutoff = DateTime.Now.AddDays(-expirationDays);
             var expired = _context.Products
                 .Where(p => p.ReviewStatus == 2
-                         && p.RejectDate != null
-                         && p.RejectDate <= cutoff
+                         && p.ReviewDate != null
+                         && p.ReviewDate <= cutoff
                          && p.IsDeleted != true)
                 .ToList();
 
@@ -379,10 +379,63 @@ namespace ISpanShop.Repositories.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.ProductImages)
-                .Where(p => p.Status == 3 && p.IsDeleted != true)
+                .Where(p => p.ReviewStatus == 2 && p.IsDeleted != true)
                 .OrderByDescending(p => p.UpdatedAt)
                 .Take(top)
                 .ToList();
+        }
+
+        /// <summary>
+        /// 分頁取得待審核商品（ReviewStatus == 0）
+        /// </summary>
+        public (IEnumerable<Product> Items, int TotalCount) GetPendingProductsPaged(int page, int pageSize)
+        {
+            var query = _context.Products
+                .Include(p => p.Store)
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.ProductImages)
+                .Where(p => p.ReviewStatus == 0 && p.IsDeleted != true)
+                .OrderByDescending(p => p.CreatedAt);
+
+            int total = query.Count();
+            var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            return (items, total);
+        }
+
+        /// <summary>
+        /// 分頁取得已退回商品（ReviewStatus == 2）
+        /// </summary>
+        public (IEnumerable<Product> Items, int TotalCount) GetRejectedProductsPaged(int page, int pageSize)
+        {
+            var query = _context.Products
+                .Include(p => p.Store)
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.ProductImages)
+                .Where(p => p.ReviewStatus == 2 && p.IsDeleted != true)
+                .OrderByDescending(p => p.ReviewDate ?? p.UpdatedAt);
+
+            int total = query.Count();
+            var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            return (items, total);
+        }
+
+        /// <summary>
+        /// 重設為待審核：清空審核結果欄位，商品回到 Status=2 / ReviewStatus=0
+        /// </summary>
+        public void ResetToPending(int productId)
+        {
+            var product = _context.Products.Find(productId);
+            if (product == null) return;
+
+            product.Status       = 2;
+            product.ReviewStatus = 0;
+            product.ReviewedBy   = null;
+            product.ReviewDate   = null;
+            product.RejectReason = null;
+            product.UpdatedAt    = DateTime.Now;
+            _context.SaveChanges();
         }
 
         public void UpdateProduct(ProductUpdateDto dto)
@@ -465,9 +518,9 @@ namespace ISpanShop.Repositories.Products
             var q = _context.Products.Where(p => p.IsDeleted != true);
             return (
                 q.Count(),
-                q.Count(p => p.Status == 1),
-                q.Count(p => p.Status == 0),
-                q.Count(p => p.Status == 2)
+                q.Count(p => p.Status == 1),          // 已上架
+                q.Count(p => p.Status == 0),          // 已下架
+                q.Count(p => p.ReviewStatus == 0)     // 待審核（與 PendingReview 列表邏輯一致）
             );
         }
 

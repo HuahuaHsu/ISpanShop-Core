@@ -1,11 +1,13 @@
 ﻿@{
     Layout = "~/Views/Shared/_SneatLayout.cshtml";
 }
-@model IEnumerable<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>
+@model ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>
 
 @{
     ViewData["Title"] = "商品審核中心";
-    var rejectedList = ViewBag.RejectedRecords as IEnumerable<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>;
+    var rejectedPaged = ViewBag.RejectedRecords as ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>;
+    var rejectedList  = rejectedPaged?.Data;
+    int rejectedPage  = ViewBag.RejectedPage ?? 1;
 }
 
 <div class="container-fluid py-4 font-noto">
@@ -14,12 +16,20 @@
         <div>
             <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">商品審核中心</h2>
             <p class="mb-0 fs-7" style="color:#4a5a6a;">
-                待審核商品共 <span class="fw-bold text-warning" id="pendingCount">@(Model?.Count() ?? 0)</span> 筆
+                待審核商品共 <span class="fw-bold text-warning" id="pendingCount">@(Model?.TotalCount ?? 0)</span> 筆
             </p>
         </div>
         <a href="@Url.Action("Index")" class="btn btn-back rounded-pill px-4">
             <i class="bx bx-arrow-back me-1"></i> 回商品總覽
         </a>
+        <form asp-action="ForceCleanupExpiredProducts" method="post" class="d-inline ms-2"
+              onsubmit="return confirm('確認執行：將所有審核退回商品立即標記為已刪除（Demo 用）？');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="expirationDays" value="0" />
+            <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">
+                <i class="bx bx-trash me-1"></i>🗑️ 手動清理過期退回商品
+            </button>
+        </form>
     </div>
 
     @* Bootstrap Nav Tabs *@
@@ -31,7 +41,7 @@
                 <i class="bx bx-hourglass me-1 text-warning"></i>
                 待審核
                 <span class="badge rounded-pill ms-1"
-                      style="background:#fef3c7;color:#92400e;font-size:0.78rem;">@(Model?.Count() ?? 0)</span>
+                      style="background:#fef3c7;color:#92400e;font-size:0.78rem;">@(Model?.TotalCount ?? 0)</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -41,7 +51,7 @@
                 <i class="bx bx-x-circle me-1 text-danger"></i>
                 近期退回紀錄
                 <span class="badge rounded-pill ms-1"
-                      style="background:#fee2e2;color:#991b1b;font-size:0.78rem;">@(rejectedList?.Count() ?? 0)</span>
+                      style="background:#fee2e2;color:#991b1b;font-size:0.78rem;">@(rejectedPaged?.TotalCount ?? 0)</span>
             </button>
         </li>
     </ul>
@@ -50,13 +60,14 @@
 
         <div class="tab-pane fade show active" id="pendingPanel" role="tabpanel">
             <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
-                @if (Model != null && Model.Any())
+                @if (Model != null && Model.Data != null && Model.Data.Any())
                 {
                     <div class="table-responsive">
                         <table class="table table-custom align-middle">
                             <thead>
                                 <tr>
                                     <th>商品名稱</th>
+                                    <th>審核狀態</th>
                                     <th>商店</th>
                                     <th>分類 / 品牌</th>
                                     <th style="min-width:260px;">商品描述摘要</th>
@@ -65,11 +76,22 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var product in Model)
+                                @foreach (var product in Model.Data)
                                 {
                                     <tr data-id="@product.Id">
                                         <td>
                                             <div class="fw-bold" style="color:#1e2d3d;">@product.Name</div>
+                                        </td>
+                                        <td>
+                                            @{
+                                                var (badgeClass, badgeText) = product.ReviewStatus switch
+                                                {
+                                                    1 => ("bg-success", "✅ 已通過"),
+                                                    2 => ("bg-danger",  "❌ 已退回"),
+                                                    _ => ("bg-warning text-dark", "⏳ 待審核")
+                                                };
+                                            }
+                                            <span class="badge @badgeClass">@badgeText</span>
                                         </td>
                                         <td class="fs-7" style="color:#5a6a7a;">@(product.StoreName ?? $"Store #{product.StoreId}")</td>
                                         <td>
@@ -115,6 +137,42 @@
                         <p class="fs-7 mb-0" style="color:#718096;">所有商品均已完成審核，稍後再來查看。</p>
                     </div>
                 }
+
+                @* ── 待審核分頁 ── *@
+                @if (Model != null && Model.TotalPages > 1)
+                {
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center gap-2">
+                            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                <a class="page-link rounded-pill px-3"
+                                   href="@Url.Action("PendingReview", new { pendingPage = Model.CurrentPage - 1, rejectedPage })">
+                                    <i class="bx bx-chevron-left"></i> 上一頁
+                                </a>
+                            </li>
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link rounded-circle fw-bold"
+                                           style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;"
+                                           href="@Url.Action("PendingReview", new { pendingPage = i, rejectedPage })">@i</a>
+                                    </li>
+                                }
+                                else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
+                                {
+                                    <li class="page-item disabled"><span class="page-link border-0 bg-transparent">…</span></li>
+                                }
+                            }
+                            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link rounded-pill px-3"
+                                   href="@Url.Action("PendingReview", new { pendingPage = Model.CurrentPage + 1, rejectedPage })">
+                                    下一頁 <i class="bx bx-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
             </div>
         </div>
 
@@ -130,7 +188,8 @@
                                     <th>商品名稱</th>
                                     <th>商家</th>
                                     <th>退回原因</th>
-                                    <th>退回時間</th>
+                                    <th>審核人</th>
+                                    <th>審核時間</th>
                                     <th class="text-end">操作</th>
                                 </tr>
                             </thead>
@@ -163,7 +222,8 @@
                                                 <span class="fs-7" style="color:#a0aec0;">（未填寫）</span>
                                             }
                                         </td>
-                                        <td class="fs-7" style="color:#4a5a6a;">@(item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                                        <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewedBy ?? "—")</td>
+                                        <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewDate?.ToString("yyyy-MM-dd HH:mm") ?? item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
                                         <td class="text-end">
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-primary rounded-pill px-3"
@@ -183,6 +243,42 @@
                         <div class="mb-2" style="font-size:2rem;">📭</div>
                         <p class="mb-0" style="color:#a0aec0;">近期無退回紀錄</p>
                     </div>
+                }
+
+                @* ── 退回紀錄分頁 ── *@
+                @if (rejectedPaged != null && rejectedPaged.TotalPages > 1)
+                {
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center gap-2">
+                            <li class="page-item @(rejectedPaged.CurrentPage == 1 ? "disabled" : "")">
+                                <a class="page-link rounded-pill px-3"
+                                   href="@Url.Action("PendingReview", new { pendingPage = Model?.CurrentPage ?? 1, rejectedPage = rejectedPaged.CurrentPage - 1 })#rejectedTab">
+                                    <i class="bx bx-chevron-left"></i> 上一頁
+                                </a>
+                            </li>
+                            @for (int i = 1; i <= rejectedPaged.TotalPages; i++)
+                            {
+                                if (i == 1 || i == rejectedPaged.TotalPages || (i >= rejectedPaged.CurrentPage - 2 && i <= rejectedPaged.CurrentPage + 2))
+                                {
+                                    <li class="page-item @(i == rejectedPaged.CurrentPage ? "active" : "")">
+                                        <a class="page-link rounded-circle fw-bold"
+                                           style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;"
+                                           href="@Url.Action("PendingReview", new { pendingPage = Model?.CurrentPage ?? 1, rejectedPage = i })#rejectedTab">@i</a>
+                                    </li>
+                                }
+                                else if (i == rejectedPaged.CurrentPage - 3 || i == rejectedPaged.CurrentPage + 3)
+                                {
+                                    <li class="page-item disabled"><span class="page-link border-0 bg-transparent">…</span></li>
+                                }
+                            }
+                            <li class="page-item @(rejectedPaged.CurrentPage == rejectedPaged.TotalPages ? "disabled" : "")">
+                                <a class="page-link rounded-pill px-3"
+                                   href="@Url.Action("PendingReview", new { pendingPage = Model?.CurrentPage ?? 1, rejectedPage = rejectedPaged.CurrentPage + 1 })#rejectedTab">
+                                    下一頁 <i class="bx bx-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
                 }
             </div>
         </div>

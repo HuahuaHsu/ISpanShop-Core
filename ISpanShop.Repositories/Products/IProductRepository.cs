@@ -118,6 +118,21 @@ namespace ISpanShop.Repositories.Products
         IEnumerable<Product> GetRecentRejectedProducts(int top);
 
         /// <summary>
+        /// 分頁取得待審核商品（ReviewStatus == 0）
+        /// </summary>
+        (IEnumerable<Product> Items, int TotalCount) GetPendingProductsPaged(int page, int pageSize);
+
+        /// <summary>
+        /// 分頁取得已退回商品（ReviewStatus == 2）
+        /// </summary>
+        (IEnumerable<Product> Items, int TotalCount) GetRejectedProductsPaged(int page, int pageSize);
+
+        /// <summary>
+        /// 重設為待審核：清空審核結果欄位，商品回到 Status=2 / ReviewStatus=0
+        /// </summary>
+        void ResetToPending(int productId);
+
+        /// <summary>
         /// 更新商品基本資料（名稱、描述、分類、品牌、規格定義、主圖）
         /// </summary>
         void UpdateProduct(ProductUpdateDto dto);

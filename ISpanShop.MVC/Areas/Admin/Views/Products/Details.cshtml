@@ -73,6 +73,56 @@
     </div>
 }
 
+@* ────────────────── 審核紀錄 Audit Trail ────────────────── *@
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-light border-0 rounded-top-3 d-flex align-items-center gap-2 py-3">
+        <i class="bx bx-history text-secondary fs-5"></i>
+        <span class="fw-bold" style="color:#1e2d3d;">審核紀錄</span>
+    </div>
+    <div class="card-body">
+        @{
+            var (auditBadgeClass, auditStatusText) = Model.ReviewStatus switch
+            {
+                1 => ("bg-success", "✅ 審核通過"),
+                2 => ("bg-danger",  "❌ 已退回"),
+                _ => ("bg-warning text-dark", "⏳ 待審核")
+            };
+        }
+        @if (Model.ReviewStatus == 0 && Model.ReviewedBy == null)
+        {
+            <p class="text-muted mb-0"><i class="bx bx-info-circle me-1"></i>此商品尚未進行審核。</p>
+        }
+        else
+        {
+            <div class="row g-3">
+                <div class="col-auto">
+                    <span class="badge @auditBadgeClass fs-6 px-3 py-2">@auditStatusText</span>
+                </div>
+                <div class="col">
+                    <table class="table table-borderless table-sm mb-0" style="max-width:420px;">
+                        <tr>
+                            <th class="text-muted fw-normal ps-0" style="width:90px;">審核人</th>
+                            <td>@(Model.ReviewedBy ?? "—")</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-normal ps-0">審核時間</th>
+                            <td>@(Model.ReviewDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        </tr>
+                        @if (!string.IsNullOrWhiteSpace(Model.RejectReason))
+                        {
+                            <tr>
+                                <th class="text-muted fw-normal ps-0">退回原因</th>
+                                <td class="text-danger">@Model.RejectReason</td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
 @* ────────────────── 成功訊息 ────────────────── *@
 @if (TempData["SuccessMessage"] != null)
 {
