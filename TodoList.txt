@@ -54,7 +54,7 @@
         位置：ISpanShop.MVC專案 -> Views -> Members 資料夾 (需新增) -> Index.cshtml
         說明：繪製表格。
 
-[]【後台會員管理實作】
+[V]【後台會員管理實作】
 
     1: 定義資料傳輸物件 (ISpanShop.Models)
         目的：對應 Admins 資料表與權限顯示
