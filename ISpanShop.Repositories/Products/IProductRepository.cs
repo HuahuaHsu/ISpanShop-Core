@@ -109,7 +109,7 @@ namespace ISpanShop.Repositories.Products
         /// 軟刪除所有過期退回商品（ReviewStatus==2 且距 RejectDate 已達 expirationDays 天）
         /// 回傳清理筆數。
         /// </summary>
-        int CleanupExpiredRejected(int expirationDays);
+        int CleanupExpiredRejected(int expirationSeconds);
 
         /// <summary>
         /// 取得最近退回的商品清單（Status == 3），依 UpdatedAt 降冪排序

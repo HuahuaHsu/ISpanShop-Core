@@ -19,17 +19,22 @@
                 待審核商品共 <span class="fw-bold text-warning" id="pendingCount">@(Model?.TotalCount ?? 0)</span> 筆
             </p>
         </div>
-        <a href="@Url.Action("Index")" class="btn btn-back rounded-pill px-4">
-            <i class="bx bx-arrow-back me-1"></i> 回商品總覽
-        </a>
-        <form asp-action="ForceCleanupExpiredProducts" method="post" class="d-inline ms-2"
-              onsubmit="return confirm('確認執行：將所有審核退回商品立即標記為已刪除（Demo 用）？');">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="expirationDays" value="0" />
-            <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">
-                <i class="bx bx-trash me-1"></i>🗑️ 手動清理過期退回商品
-            </button>
-        </form>
+        <div class="d-flex justify-content-end gap-2 mb-3">
+            <a href="@Url.Action("Index")" class="btn btn-back rounded-pill px-4">
+                <i class="bx bx-arrow-back me-1"></i> 回商品總覽
+            </a>
+        @*
+            手動清理按鈕已由前端 JS 自動觸發取代，暫時隱藏
+            <form asp-action="ForceCleanupExpiredProducts" method="post"
+                  onsubmit="return confirm('確認執行：將所有審核退回商品立即標記為已刪除（Demo 用）？');">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="expirationSeconds" value="60" />
+                <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">
+                    <i class="bx bx-trash me-1"></i> 手動清理過期退回商品
+                </button>
+            </form>
+        *@
+        </div>
     </div>
 
     @* Bootstrap Nav Tabs *@
@@ -50,7 +55,7 @@
                     type="button" role="tab">
                 <i class="bx bx-x-circle me-1 text-danger"></i>
                 近期退回紀錄
-                <span class="badge rounded-pill ms-1"
+                <span class="badge rounded-pill ms-1" id="rejected-count-badge"
                       style="background:#fee2e2;color:#991b1b;font-size:0.78rem;">@(rejectedPaged?.TotalCount ?? 0)</span>
             </button>
         </li>
@@ -188,6 +193,7 @@
                                     <th>商品名稱</th>
                                     <th>商家</th>
                                     <th>退回原因</th>
+                                    <th>自動刪除倒數</th>
                                     <th>審核人</th>
                                     <th>審核時間</th>
                                     <th class="text-end">操作</th>
@@ -220,6 +226,20 @@
                                             else
                                             {
                                                 <span class="fs-7" style="color:#a0aec0;">（未填寫）</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.ReviewDate.HasValue)
+                                            {
+                                                var expireTime = item.ReviewDate.Value.AddSeconds(60).ToString("yyyy-MM-ddTHH:mm:ss");
+                                                <span class="live-countdown badge bg-warning text-dark"
+                                                      data-expire="@expireTime">
+                                                    ⏳ 計算中...
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="fs-7" style="color:#a0aec0;">—</span>
                                             }
                                         </td>
                                         <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewedBy ?? "—")</td>
@@ -557,6 +577,62 @@
                     });
                 });
             });
+        })();
+    </script>
+
+    <script>
+        // ── 即時倒數計時 + 自動觸發軟刪除並淡出 ──────────────────────
+        (function () {
+            var urlCleanup = '@Url.Action("ForceCleanupExpiredProducts", "Products", new { area = "Admin" })';
+
+            function updateCountdowns() {
+                // :not(.is-processing) 防止重複觸發同一列
+                document.querySelectorAll('.live-countdown:not(.is-processing)').forEach(function (el) {
+                    var expire      = new Date(el.dataset.expire);
+                    var secondsLeft = Math.floor((expire - Date.now()) / 1000);
+
+                    if (secondsLeft > 0) {
+                        el.className  = 'live-countdown badge bg-warning text-dark';
+                        el.textContent = '⏳ 剩餘 ' + secondsLeft + ' 秒';
+                    } else {
+                        // 標記為處理中，避免 setInterval 下一輪重複呼叫
+                        el.classList.add('is-processing');
+                        el.classList.remove('bg-warning', 'text-dark');
+                        el.classList.add('bg-secondary');
+                        el.textContent = '🗑️ 清除中...';
+
+                        var $row = $(el).closest('tr');
+                        $.post(urlCleanup, { expirationSeconds: 60 })
+                            .done(function (res) {
+                                if (res.success) {
+                                    $row.fadeOut(800, function () {
+                                        $(this).remove();
+                                        var $badge = $('#rejected-count-badge');
+                                        var current = parseInt($badge.text(), 10) || 0;
+                                        if (current > 0) $badge.text(current - 1);
+                                    });
+                                } else {
+                                    // 後端回傳失敗（例如已被清除）：直接移除列
+                                    $row.fadeOut(400, function () {
+                                        $(this).remove();
+                                        var $badge = $('#rejected-count-badge');
+                                        var current = parseInt($badge.text(), 10) || 0;
+                                        if (current > 0) $badge.text(current - 1);
+                                    });
+                                }
+                            })
+                            .fail(function () {
+                                // 網路錯誤：還原 badge，讓使用者可重試
+                                el.classList.remove('is-processing', 'bg-secondary');
+                                el.classList.add('bg-danger');
+                                el.textContent = '可立即清理';
+                            });
+                    }
+                });
+            }
+
+            updateCountdowns();                    // 頁面載入立即執行一次，避免短暫顯示「計算中...」
+            setInterval(updateCountdowns, 1000);   // 每秒更新
         })();
     </script>
 }

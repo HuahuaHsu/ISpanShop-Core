@@ -101,7 +101,7 @@ namespace ISpanShop.Services.Products
         /// <summary>
         /// [Demo 專用] 清理過期退回商品（IsDeleted=true），回傳清理筆數
         /// </summary>
-        int CleanupExpiredRejectedProducts(int expirationDays = 90);
+        int CleanupExpiredRejectedProducts(int expirationSeconds = 60);
 
         /// <summary>
         /// 取得最近退回的商品清單（Status == 3），依 UpdatedAt 降冪排序

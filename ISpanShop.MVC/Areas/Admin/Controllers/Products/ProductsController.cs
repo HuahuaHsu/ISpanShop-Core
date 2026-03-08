@@ -485,11 +485,11 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// 傳入 days=0 代表「只要被退回就視為過期」，方便 Demo 展示。
         /// </summary>
         [HttpPost]
-        public IActionResult ForceCleanupExpiredProducts(int days = 0)
+        public IActionResult ForceCleanupExpiredProducts(int expirationSeconds = 60)
         {
             try
             {
-                int count = _productService.CleanupExpiredRejectedProducts(days);
+                int count = _productService.CleanupExpiredRejectedProducts(expirationSeconds);
                 return Json(new { success = true, cleaned = count, message = $"已清理 {count} 筆過期退回商品。" });
             }
             catch (Exception ex)

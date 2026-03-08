@@ -358,9 +358,9 @@ namespace ISpanShop.Services.Products
         /// <summary>
         /// [Demo 專用] 清理過期退回商品（IsDeleted=true），回傳清理筆數
         /// </summary>
-        public int CleanupExpiredRejectedProducts(int expirationDays = 90)
+        public int CleanupExpiredRejectedProducts(int expirationSeconds = 60)
         {
-            return _productRepository.CleanupExpiredRejected(expirationDays);
+            return _productRepository.CleanupExpiredRejected(expirationSeconds);
         }
 
 

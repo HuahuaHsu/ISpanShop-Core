@@ -55,6 +55,7 @@ namespace ISpanShop.Repositories.Products
         public IEnumerable<Product> GetPendingProducts()
         {
             return _context.Products
+                .AsNoTracking()
                 .Include(p => p.Store)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
@@ -85,6 +86,7 @@ namespace ISpanShop.Repositories.Products
         public IEnumerable<Product> GetAllProducts()
         {
             return _context.Products
+                .AsNoTracking()
                 .Include(p => p.Store)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
@@ -117,6 +119,7 @@ namespace ISpanShop.Repositories.Products
         public (IEnumerable<Product> Items, int TotalCount) GetProductsPaged(ProductSearchCriteria criteria)
         {
             var query = _context.Products
+                .AsNoTracking()
                 .Include(p => p.Store)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
@@ -346,12 +349,12 @@ namespace ISpanShop.Repositories.Products
         }
 
         /// <summary>
-        /// 軟刪除所有過期退回商品（ReviewStatus==2 且距 RejectDate 已達 expirationDays 天）
+        /// 軟刪除所有過期退回商品（ReviewStatus==2 且距 ReviewDate 已達 expirationSeconds 秒）
         /// 回傳清理筆數。
         /// </summary>
-        public int CleanupExpiredRejected(int expirationDays)
+        public int CleanupExpiredRejected(int expirationSeconds)
         {
-            var cutoff = DateTime.Now.AddDays(-expirationDays);
+            var cutoff = DateTime.Now.AddSeconds(-expirationSeconds);
             var expired = _context.Products
                 .Where(p => p.ReviewStatus == 2
                          && p.ReviewDate != null
@@ -391,6 +394,7 @@ namespace ISpanShop.Repositories.Products
         public (IEnumerable<Product> Items, int TotalCount) GetPendingProductsPaged(int page, int pageSize)
         {
             var query = _context.Products
+                .AsNoTracking()
                 .Include(p => p.Store)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
@@ -409,6 +413,7 @@ namespace ISpanShop.Repositories.Products
         public (IEnumerable<Product> Items, int TotalCount) GetRejectedProductsPaged(int page, int pageSize)
         {
             var query = _context.Products
+                .AsNoTracking()
                 .Include(p => p.Store)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)

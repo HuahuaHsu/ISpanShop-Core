@@ -459,7 +459,7 @@ function selectCategory(el) {
 
 // ── 載入已綁定屬性 ────────────────────────────────
 async function loadBoundSpecs() {
-    const res = await fetch(`/CategorySpecs/GetBoundSpecs?categoryId=${selectedCatId}`);
+    const res = await fetch(`/Admin/CategorySpecs/GetBoundSpecs?categoryId=${selectedCatId}`);
     boundSpecs = await res.json();
     renderBoundTable();
 }
@@ -517,14 +517,14 @@ function renderBoundTable() {
         handle: '.drag-handle',
         onEnd: async () => {
             const ids = [...tbody.querySelectorAll('tr')].map(r => parseInt(r.dataset.specId));
-            await post('/CategorySpecs/UpdateBindingSort', { categoryId: selectedCatId, orderedSpecIds: ids });
+            await post('/Admin/CategorySpecs/UpdateBindingSort', { categoryId: selectedCatId, orderedSpecIds: ids });
         }
     });
 }
 
 // ── 切換可篩選 ────────────────────────────────────
 async function toggleFilterable(specId, isFilterable) {
-    await post('/CategorySpecs/ToggleFilterable', { categoryId: selectedCatId, specId, isFilterable });
+    await post('/Admin/CategorySpecs/ToggleFilterable', { categoryId: selectedCatId, specId, isFilterable });
 }
 
 // ── 解除綁定 ──────────────────────────────────────
@@ -535,7 +535,7 @@ async function unbindSpec(specId, name) {
         confirmButtonColor:'#e53e3e', confirmButtonText:'確認解除', cancelButtonText:'取消'
     });
     if (!r.isConfirmed) return;
-    await post('/CategorySpecs/UnbindSpec', { categoryId: selectedCatId, specId });
+    await post('/Admin/CategorySpecs/UnbindSpec', { categoryId: selectedCatId, specId });
     toast('已解除綁定', 'success');
     await loadBoundSpecs();
 }
@@ -576,7 +576,7 @@ function filterBindList() {
 async function confirmBind() {
     const ids = [...document.querySelectorAll('.bind-chk:checked')].map(e => +e.value);
     if (!ids.length) { toast('請勾選至少一個屬性', 'warning'); return; }
-    for (const id of ids) await post('/CategorySpecs/BindSpec', { categoryId: selectedCatId, specId: id });
+    for (const id of ids) await post('/Admin/CategorySpecs/BindSpec', { categoryId: selectedCatId, specId: id });
     bootstrap.Modal.getInstance(document.getElementById('bindModal'))?.hide();
     toast(`已綁定 ${ids.length} 個屬性`, 'success');
     await loadBoundSpecs();
@@ -615,7 +615,7 @@ async function saveCreateAttr() {
         sortOrder       : +document.getElementById('createSortOrder').value || 0,
         options         : getOpts('createOptions')
     };
-    const data = await post('/CategorySpecs/CreateAjax', payload);
+    const data = await post('/Admin/CategorySpecs/CreateAjax', payload);
     if (data.success) {
         bootstrap.Modal.getInstance(document.getElementById('createModal'))?.hide();
         toast('屬性新增成功', 'success');
@@ -650,7 +650,7 @@ function onEditTypeChange() {
 async function saveEditAttr() {
     const name = document.getElementById('editAttrName').value.trim();
     if (!name) return;
-    const data = await post('/CategorySpecs/EditAjax', {
+    const data = await post('/Admin/CategorySpecs/EditAjax', {
         id              : +document.getElementById('editAttrId').value,
         name,
         inputType       : document.getElementById('editInputType').value,
@@ -676,7 +676,7 @@ async function deleteSpec(id, name) {
         confirmButtonColor:'#e53e3e', confirmButtonText:'確認刪除', cancelButtonText:'取消'
     });
     if (!r.isConfirmed) return;
-    const data = await post('/CategorySpecs/DeleteAjax', { id });
+    const data = await post('/Admin/CategorySpecs/DeleteAjax', { id });
     if (data.success) {
         toast('屬性已刪除', 'success');
         setTimeout(() => location.reload(), 900);
