@@ -26,8 +26,9 @@ namespace ISpanShop.WebAPI
 			// ==========================================
 			builder.Services.AddSignalR();
 			builder.Services.AddScoped<IChatRepository, ChatRepository>();
-			builder.Services.AddScoped<ISensitiveWordsRepository, SensitiveWordsRepository>();
+			builder.Services.AddScoped<ISensitiveWordRepository, SensitiveWordRepository>();
 			builder.Services.AddScoped<IChatService, ChatService>();
+			builder.Services.AddScoped<ISensitiveWordService, SensitiveWordService>();
 
 			// ?? 非常重要：加入 CORS 政策
 			// 因為你的前端 (MVC) 呼叫 WebAPI 時會跨網域，SignalR 需要允許傳遞憑證

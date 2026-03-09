@@ -1,5 +1,7 @@
 using ISpanShop.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
+using ISpanShop.Repositories;
+using ISpanShop.Services;
 
 namespace ISpanShop.MVC
 {
@@ -15,6 +17,9 @@ namespace ISpanShop.MVC
 			// 這裡的 "DefaultConnection" 必須跟您 appsettings.json或appsettings.Development裡的名字一模一樣
 			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+			builder.Services.AddScoped<ISensitiveWordRepository, SensitiveWordRepository>();
+			builder.Services.AddScoped<ISensitiveWordService, SensitiveWordService>();
 
 			var app = builder.Build();
 

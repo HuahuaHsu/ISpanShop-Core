@@ -6,29 +6,56 @@ using ISpanShop.Models.EfModels; // 你的 EF Models 命名空間
 
 namespace ISpanShop.Repositories
 {
-	// 1. 介面
-	public interface ISensitiveWordsRepository
+	public class SensitiveWordRepository : ISensitiveWordRepository
 	{
-		// 取得所有敏感字清單
-		Task<List<string>> GetAllWordsAsync();
-	}
+		// 注入你的 DbContext
+		private readonly ISpanShopDBContext _context;
 
-	// 2. 實作
-	public class SensitiveWordsRepository : ISensitiveWordsRepository
-	{
-		private readonly ISpanShopDBContext _context; // 替換成你真正的 DbContext 名稱
-
-		public SensitiveWordsRepository(ISpanShopDBContext context)
+		public SensitiveWordRepository(ISpanShopDBContext context)
 		{
 			_context = context;
 		}
 
-		public async Task<List<string>> GetAllWordsAsync()
+		// 實作：取得所有敏感字
+		public async Task<List<SensitiveWord>> GetAllAsync()
 		{
-			// 假設你的 SensitiveWords 表裡面有一個欄位叫 Word 或 Keyword
+			// 將資料表轉換成 List，並用建立時間倒序排列（最新建立的在最上面）
 			return await _context.SensitiveWords
-				.Select(s => s.Word)
+				.OrderByDescending(w => w.CreatedTime)
 				.ToListAsync();
+		}
+
+		// 實作：根據 ID 找敏感字
+		public async Task<SensitiveWord> GetByIdAsync(int id)
+		{
+			return await _context.SensitiveWords
+				.FirstOrDefaultAsync(w => w.Id == id);
+		}
+
+		// 實作：新增
+		public async Task CreateAsync(SensitiveWord sensitiveWord)
+		{
+			_context.SensitiveWords.Add(sensitiveWord);
+			await _context.SaveChangesAsync();
+		}
+
+		// 實作：更新
+		public async Task UpdateAsync(SensitiveWord sensitiveWord)
+		{
+			_context.SensitiveWords.Update(sensitiveWord);
+			await _context.SaveChangesAsync();
+		}
+
+		// 實作：刪除
+		public async Task DeleteAsync(SensitiveWord sensitiveWord)
+		{
+			_context.SensitiveWords.Remove(sensitiveWord);
+			await _context.SaveChangesAsync();
+		}
+
+		public Task<IEnumerable<string>> GetAllWordsAsync()
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

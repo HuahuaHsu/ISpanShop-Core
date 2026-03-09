@@ -18,10 +18,10 @@ namespace ISpanShop.Services
 	{
 		// 宣告兩個唯讀的 Repository 介面
 		private readonly IChatRepository _chatRepo;
-		private readonly ISensitiveWordsRepository _wordRepo;
+		private readonly ISensitiveWordRepository _wordRepo;
 
 		// 透過依賴注入 (DI) 把實體傳進來
-		public ChatService(IChatRepository chatRepo, ISensitiveWordsRepository wordRepo)
+		public ChatService(IChatRepository chatRepo, ISensitiveWordRepository wordRepo)
 		{
 			_chatRepo = chatRepo;
 			_wordRepo = wordRepo;
