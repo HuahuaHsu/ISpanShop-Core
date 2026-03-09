@@ -55,5 +55,51 @@ namespace ISpanShop.MVC.Controllers
 			}
 			return View(vm);
 		}
-	} // <-- 確保所有 Action 都在這個大括號裡面
+		// <-- 確保所有 Action 都在這個大括號裡面
+		// --- 4. 顯示編輯頁面 (GET) ---
+		[HttpGet]
+		public async Task<IActionResult> Edit(int id)
+		{
+			var dto = await _service.GetByIdAsync(id);
+			if (dto == null) return NotFound();
+
+			var vm = new SensitiveWordVm
+			{
+				Id = dto.Id,
+				Word = dto.Word,
+				Category = dto.Category,
+				IsActive = dto.IsActive
+			};
+			return View(vm);
+		}
+
+		// --- 5. 接收編輯後的資料 (POST) ---
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Edit(SensitiveWordVm vm)
+		{
+			if (ModelState.IsValid)
+			{
+				var dto = new SensitiveWordDto
+				{
+					Id = vm.Id,
+					Word = vm.Word,
+					Category = vm.Category,
+					IsActive = vm.IsActive
+				};
+				await _service.UpdateAsync(dto);
+				return RedirectToAction(nameof(Index));
+			}
+			return View(vm);
+		}
+
+		// --- 6. 刪除功能 (通常直接 POST 即可) ---
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Delete(int id)
+		{
+			await _service.DeleteAsync(id);
+			return RedirectToAction(nameof(Index));
+		}
+	}
 }

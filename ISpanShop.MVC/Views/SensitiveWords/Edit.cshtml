@@ -1,0 +1,58 @@
+﻿@model ISpanShop.MVC.Models.ViewModels.SensitiveWordVm
+
+@{
+    ViewData["Title"] = "編輯敏感字";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">編輯敏感字</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        @* 重要：隱藏欄位紀錄 ID，否則更新時會找不到對象 *@
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="Word" class="form-label">敏感字內容</label>
+                            <input asp-for="Word" class="form-control" />
+                            <span asp-validation-for="Word" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Category" class="form-label">分類</label>
+                            <select asp-for="Category" class="form-select">
+                                <option value="髒話">髒話</option>
+                                <option value="政治">政治</option>
+                                <option value="詐騙">詐騙</option>
+                                <option value="廣告">廣告</option>
+                            </select>
+                            <span asp-validation-for="Category" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input class="form-check-input" asp-for="IsActive" />
+                            <label class="form-check-label" asp-for="IsActive">是否啟用</label>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+                            <button type="submit" class="btn btn-warning">更新存檔</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
