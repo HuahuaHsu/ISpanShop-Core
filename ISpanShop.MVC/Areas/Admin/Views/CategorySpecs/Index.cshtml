@@ -503,9 +503,10 @@ function selectCategory(el) {
 
 // ── 載入已綁定屬性 ────────────────────────────────
 async function loadBoundSpecs() {
-    const res = await fetch(`/Admin/CategorySpecs/GetBoundSpecs?categoryId=${selectedCatId}`);
-    boundSpecs = await res.json();
-    renderBoundTable();
+    try {
+        boundSpecs = await apiGet(`/Admin/CategorySpecs/GetBoundSpecs?categoryId=${selectedCatId}`);
+        renderBoundTable();
+    } catch { boundSpecs = []; renderBoundTable(); }
 }
 
 function renderBoundTable() {
@@ -788,8 +789,7 @@ function esc(s) {
 function escJs(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
 async function post(url, body) {
-    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-    return r.json();
+    return apiPost(url, body);
 }
 
 function toast(msg, icon) {

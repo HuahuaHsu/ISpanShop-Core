@@ -75,7 +75,7 @@
                     <div class="input-group">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
                         <input type="text" name="keyword" value="@keyword" class="form-control border-start-0 ps-0"
-                               placeholder="商品名稱、規格名稱、SKU..." autocomplete="new-password">
+                               placeholder="商品名稱、規格名稱、SKU..." autocomplete="one-time-code">
                     </div>
                 </div>
 
@@ -191,10 +191,7 @@
                                 </button>
                             </td>
                             <td>
-                                <a href="@Url.Action("Details", "Products", new { area = "Admin", id = item.ProductId, returnUrl = Url.Action("Index", "Inventory") })"
-                                   class="fw-bold text-decoration-none" style="color:#1e2d3d;">
-                                    @item.ProductName
-                                </a>
+                                <span class="fw-bold" style="color:#1e2d3d;">@item.ProductName</span>
                             </td>
                             <td>
                                 @if (!string.IsNullOrEmpty(item.StoreName))
@@ -260,31 +257,25 @@
                                                     <td><code class="sku-code">@sku.SkuCode</code></td>
                                                     <td class="text-center">
                                                         @{
-                                                            string skuCls = sku.IsLowStock ? "stock-low"
-                                                                          : sku.Stock > 10  ? "stock-ok" : "stock-warn";
+                                                            string skuStockCls = sku.IsZeroStock ? "sku-stock-zero"
+                                                                               : sku.IsLowStock  ? "sku-stock-low"
+                                                                               : "sku-stock-ok";
                                                         }
-                                                        @if (sku.IsZeroStock)
-                                                        {
-                                                            <span class="text-danger fw-bold">@sku.Stock 件</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="stock-badge @skuCls">@sku.Stock 件</span>
-                                                        }
+                                                        <span class="stock-badge @skuStockCls">@sku.Stock 件</span>
                                                     </td>
                                                     <td class="text-center text-muted">@sku.SafetyStock</td>
                                                     <td class="text-center">
                                                         @if (sku.IsZeroStock)
                                                         {
-                                                            <span class="text-danger border border-danger px-2 py-1 rounded" style="font-size:0.85em;">缺貨</span>
+                                                            <span class="status-badge status-zero">缺貨</span>
                                                         }
                                                         else if (sku.IsLowStock)
                                                         {
-                                                            <span class="text-dark border border-warning px-2 py-1 rounded" style="background-color:#fff3cd;font-size:0.85em;">低庫存</span>
+                                                            <span class="status-badge status-low">低庫存</span>
                                                         }
                                                         else
                                                         {
-                                                            <span class="text-success"><i class="bx bx-check"></i> 正常</span>
+                                                            <span class="status-badge status-ok"><i class="bx bx-check me-1"></i>正常</span>
                                                         }
                                                     </td>
                                                 </tr>
@@ -477,30 +468,38 @@
         padding: .28em .85em; border-radius: 20px;
         font-size: .8rem; font-weight: 600;
     }
-    .status-zero { background:#f0f0f0; color:#555;    border:1px solid #ccc; }
-    .status-low  { background:#fde8e8; color:#c53030; border:1px solid #fed7d7; }
+    .status-zero { background:#fde8e8; color:#c53030; border:1px solid #fed7d7; }
+    .status-low  { background:#fff3e0; color:#e65100; border:1px solid #ffcc80; }
     .status-ok   { background:#e6f4ea; color:#1b5e20; border:1px solid #c8e6c9; }
+
+    /* ── SKU sub-table stock badges（獨立顏色，不影響主表格） ── */
+    .sku-stock-ok   { background:#e6f4ea; color:#1b5e20; border:1px solid #c8e6c9; }
+    .sku-stock-low  { background:#fff3e0; color:#e65100; border:1px solid #ffcc80; }
+    .sku-stock-zero { background:#fde8e8; color:#c53030; border:1px solid #fed7d7; }
 
     /* ── Accordion rows ── */
     tr.collapse.show { display: table-row !important; }
     .sku-collapse-row > td { padding: 0 !important; border-top: none !important; border-left: none !important; }
     .sku-detail-wrap {
-        background: #f8f9fc;
+        background: #f8fafc;
         border-left: 3px solid #c7d2fe;
-        padding: .6rem 1rem 1rem 2.5rem;
+        border-radius: 0 0 12px 12px;
+        padding: .75rem 1.25rem 1.25rem 3rem;
+        margin-bottom: 2px;
     }
     /* Prevent .table-inv td rules from bleeding into the inner SKU table */
     .sku-detail-wrap td {
         background: transparent !important;
         border: none !important;
-        padding: .4rem .7rem !important;
+        padding: .55rem .9rem !important;
         font-size: .85rem !important;
         box-shadow: none !important;
     }
     .sku-thead th {
         font-size: .73rem; text-transform: uppercase;
         color: #8592a3; letter-spacing: .04em;
-        background: transparent; border-bottom: 1px solid #e9ecef;
+        background: transparent; border-bottom: 1px solid #e2e8f0;
+        padding: .4rem .9rem !important;
     }
 
     /* ── Toggle chevron animation ── */

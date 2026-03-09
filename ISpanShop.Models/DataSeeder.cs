@@ -698,7 +698,34 @@ namespace ISpanShop.Models
 			}
 		}
 
-		public static async Task EnsurePendingProductsAsync(ISpanShopDBContext context)
+		/// <summary>
+	/// 一次性補充歷史商品的審核人 / 審核時間（只對 ReviewStatus=1 且 ReviewDate=null 的商品執行）
+	/// </summary>
+	public static async Task PatchMissingReviewDataAsync(ISpanShopDBContext context)
+	{
+		var products = context.Products
+			.Where(p => p.ReviewStatus == 1 && p.ReviewDate == null && p.IsDeleted != true)
+			.ToList();
+
+		if (!products.Any())
+		{
+			Console.WriteLine("ℹ️  審核資料補充：無需修補，所有已審核商品均有審核時間。");
+			return;
+		}
+
+		foreach (var product in products)
+		{
+			var baseTime = product.CreatedAt ?? DateTime.Now.AddDays(-30);
+			product.ReviewDate = baseTime.AddMinutes(_random.Next(1, 31));
+			if (string.IsNullOrWhiteSpace(product.ReviewedBy))
+				product.ReviewedBy = "系統自動審核";
+		}
+
+		await context.SaveChangesAsync();
+		Console.WriteLine($"✅ 審核資料補充：已修補 {products.Count} 筆商品的審核人 / 審核時間。");
+	}
+
+	public static async Task EnsurePendingProductsAsync(ISpanShopDBContext context)
 		{
 			var currentCount = context.Products.Count(p => p.Status == 2);
 			if (currentCount >= 15)

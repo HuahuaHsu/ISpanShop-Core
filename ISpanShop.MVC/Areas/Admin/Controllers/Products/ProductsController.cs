@@ -5,12 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ISpanShop.Models.DTOs.Products;
-using ISpanShop.Models.DTOs.Categories;
 using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Services.Products;
-using ISpanShop.Services.Inventories;
 using ISpanShop.MVC.Areas.Admin.Models.Products;
-using ISpanShop.MVC.Areas.Admin.Models.Categories;
 using Microsoft.AspNetCore.Http;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
@@ -351,132 +348,6 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         }
 
         // ────────────────────────────────────────────────────────
-        //  [已移至前台] 管理員商品新增（暫留供前台參考）
-        // ────────────────────────────────────────────────────────
-
-#pragma warning disable CS0809
-        [Obsolete("已移至前台 WebAPI。此 Action 暫不開放，保留程式碼供前台實作參考。")]
-        public IActionResult Create()
-        {
-            return NotFound();
-        }
-
-        [Obsolete("已移至前台 WebAPI。")]
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ProductCreateVm vm)
-        {
-            return NotFound();
-            if (!ModelState.IsValid)
-            {
-                LoadAdminDropdowns();
-                return View(vm);
-            }
-
-            var (imageUrl, uploadError) = await HandleImageUploadAsync(vm.ImageFile, vm.MainImageUrl);
-            if (uploadError != null)
-            {
-                ModelState.AddModelError("ImageFile", uploadError);
-                LoadAdminDropdowns();
-                return View(vm);
-            }
-
-            _productService.CreateProductAdmin(new ProductAdminCreateDto
-            {
-                StoreId      = vm.StoreId,
-                CategoryId   = vm.CategoryId,
-                BrandId      = vm.BrandId,
-                Name         = vm.Name,
-                Description  = vm.Description,
-                Price        = vm.Price,
-                MainImageUrl = imageUrl
-            });
-
-            TempData["SuccessMessage"] = $"商品「{vm.Name}」已成功新增並上架。";
-            return RedirectToAction(nameof(Index));
-        }
-
-        // ────────────────────────────────────────────────────────
-        //  [已移至前台] 管理員商品編輯（暫留供前台參考）
-        // ────────────────────────────────────────────────────────
-
-        [Obsolete("已移至前台 WebAPI。此 Action 暫不開放。")]
-        public IActionResult Edit(int id, string? returnUrl = null)
-        {
-            return NotFound();
-            var dto = _productService.GetProductDetail(id);
-            if (dto == null) return NotFound();
-
-            var vm = new ProductEditVm
-            {
-                Id                 = dto.Id,
-                Name               = dto.Name,
-                Description        = dto.Description,
-                CategoryId         = dto.CategoryId,
-                BrandId            = dto.BrandId,
-                MainImageUrl       = dto.Images?.FirstOrDefault(),
-                SpecDefinitionJson = string.IsNullOrWhiteSpace(dto.SpecDefinitionJson)
-                                     ? "[]" : dto.SpecDefinitionJson,
-                ReturnUrl          = returnUrl
-            };
-
-            var activeVariants = dto.Variants?.Where(v => v.IsDeleted != true).ToList();
-            ViewBag.VariantCount = activeVariants?.Count ?? 0;
-            ViewBag.VariantNames = activeVariants?.Select(v => v.VariantName).ToList();
-            ViewBag.FirstVariantSpecValueJson = activeVariants?
-                .FirstOrDefault(v => !string.IsNullOrEmpty(v.SpecValueJson))?.SpecValueJson ?? "{}";
-
-            LoadAdminDropdowns();
-            return View(vm);
-        }
-
-        [Obsolete("已移至前台 WebAPI。")]
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(ProductEditVm vm)
-        {
-            return NotFound();
-            if (!ModelState.IsValid)
-            {
-                LoadAdminDropdowns();
-                return View(vm);
-            }
-
-            var (imageUrl, uploadError) = await HandleImageUploadAsync(vm.ImageFile, vm.MainImageUrl);
-            if (uploadError != null)
-            {
-                ModelState.AddModelError("ImageFile", uploadError);
-                LoadAdminDropdowns();
-                return View(vm);
-            }
-
-            _productService.UpdateProduct(new ProductUpdateDto
-            {
-                Id                 = vm.Id,
-                Name               = vm.Name,
-                Description        = vm.Description,
-                CategoryId         = vm.CategoryId,
-                BrandId            = vm.BrandId,
-                MainImageUrl       = imageUrl,
-                SpecDefinitionJson = vm.SpecDefinitionJson
-            });
-
-            TempData["SuccessMessage"] = $"商品「{vm.Name}」已成功更新。";
-            if (!string.IsNullOrEmpty(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl))
-                return Redirect(vm.ReturnUrl);
-            return RedirectToAction(nameof(Index));
-        }
-
-        // ────────────────────────────────────────────────────────
-        //  [已移至前台] 軟刪除商品（暫留供前台參考）
-        // ────────────────────────────────────────────────────────
-
-        [Obsolete("已移至前台 WebAPI。管理員請使用 ForceUnpublish 強制下架。")]
-        [HttpPost]
-        public IActionResult DeleteProduct([FromBody] RejectDto dto)
-        {
-            return NotFound();
-        }
-
-        // ────────────────────────────────────────────────────────
         //  [Demo 專用] 強制清理過期退回商品
         // ────────────────────────────────────────────────────────
 
@@ -498,13 +369,6 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
             }
         }
 
-
-        private void LoadAdminDropdowns()
-        {
-            ViewBag.AllCategories = _productService.GetAllCategories().ToList();
-            ViewBag.Stores        = _productService.GetStoreOptions().ToList();
-            ViewBag.Brands        = _productService.GetBrandOptions().ToList();
-        }
 
         /// <summary>
         /// 商品詳情 - 顯示完整的商品資訊、圖片與規格
@@ -563,146 +427,21 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
             return View(viewModel);
         }
 
-        // ────────────────────────────────────────────────────────
-        //  [已移至前台] 規格管理（暫留供前台參考）
-        // ────────────────────────────────────────────────────────
-
-        [Obsolete("已移至前台 WebAPI。")]
-        public IActionResult AddVariant(int productId)
-        {
-            return NotFound();
-            var product = _productService.GetProductDetail(productId);
-            if (product == null) return NotFound();
-
-            // 優先用 SpecDefinitionJson；若空則從現有 variants 的 SpecValueJson 推導
-            string specDefJson;
-            if (!string.IsNullOrWhiteSpace(product.SpecDefinitionJson) && product.SpecDefinitionJson != "[]")
-            {
-                specDefJson = product.SpecDefinitionJson;
-            }
-            else
-            {
-                var activeVariants = product.Variants?.Where(v => v.IsDeleted != true).ToList();
-                specDefJson = SynthesizeSpecDefinition(activeVariants);
-            }
-
-            var vm = new ProductVariantCreateVm
-            {
-                ProductId          = productId,
-                ProductName        = product.Name,
-                SpecDefinitionJson = specDefJson
-            };
-            return View(vm);
-        }
-
-        /// <summary>從 variants 的 SpecValueJson 推導出 SpecDefinitionJson 格式</summary>
-        private static string SynthesizeSpecDefinition(
-            IList<ISpanShop.Models.DTOs.Products.ProductVariantDetailDto>? variants)
-        {
-            if (variants == null || variants.Count == 0) return "[]";
-
-            var dimOptions = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<string>>();
-            foreach (var v in variants)
-            {
-                if (string.IsNullOrWhiteSpace(v.SpecValueJson)) continue;
-                try
-                {
-                    var sv = System.Text.Json.JsonSerializer
-                        .Deserialize<System.Collections.Generic.Dictionary<string, string>>(v.SpecValueJson);
-                    if (sv == null) continue;
-                    foreach (var (key, value) in sv)
-                    {
-                        if (!dimOptions.ContainsKey(key))
-                            dimOptions[key] = new System.Collections.Generic.List<string>();
-                        if (!dimOptions[key].Contains(value))
-                            dimOptions[key].Add(value);
-                    }
-                }
-                catch { }
-            }
-
-            if (dimOptions.Count == 0) return "[]";
-
-            var dims = dimOptions.Select(kvp => new { name = kvp.Key, options = kvp.Value });
-            return System.Text.Json.JsonSerializer.Serialize(dims);
-        }
-
-        [Obsolete("已移至前台 WebAPI。")]
-        [HttpPost, ValidateAntiForgeryToken]
-        public IActionResult AddVariant(ProductVariantCreateVm vm)
-        {
-            return NotFound();
-            if (!ModelState.IsValid) return View(vm);
-
-            var error = _productService.AddVariant(vm.ProductId, new ProductVariantCreateDto
-            {
-                SkuCode       = vm.SkuCode,
-                VariantName   = vm.VariantName,
-                SpecValueJson = vm.SpecValueJson,
-                Price         = vm.Price,
-                Stock         = vm.Stock,
-                SafetyStock   = vm.SafetyStock
-            });
-
-            if (error != null)
-            {
-                ModelState.AddModelError(nameof(vm.SkuCode), error);
-                return View(vm);
-            }
-
-            TempData["SuccessMessage"] = $"規格「{vm.VariantName}」已成功新增。";
-            return RedirectToAction(nameof(Details), new { id = vm.ProductId });
-        }
-
-        [Obsolete("已移至前台 WebAPI。")]
-        public IActionResult EditVariant(int id)
-        {
-            return NotFound();
-            var dto = _productService.GetVariantById(id);
-            if (dto == null) return NotFound();
-
-            var product = _productService.GetProductDetail(dto.ProductId);
-
-            var vm = new ProductVariantEditVm
-            {
-                Id          = dto.Id,
-                ProductId   = dto.ProductId,
-                ProductName = product?.Name ?? string.Empty,
-                VariantName = dto.VariantName,
-                SkuCode     = dto.SkuCode,
-                Price       = dto.Price,
-                Stock       = dto.Stock ?? 0,
-                SafetyStock = dto.SafetyStock ?? 0
-            };
-            return View(vm);
-        }
-
-        [Obsolete("已移至前台 WebAPI。")]
-        [HttpPost, ValidateAntiForgeryToken]
-        public IActionResult EditVariant(ProductVariantEditVm vm)
-        {
-            return NotFound();
-            if (!ModelState.IsValid) return View(vm);
-
-            _productService.UpdateVariant(new ProductVariantUpdateDto
-            {
-                Id          = vm.Id,
-                SkuCode     = vm.SkuCode,
-                Price       = vm.Price,
-                Stock       = vm.Stock,
-                SafetyStock = vm.SafetyStock
-            });
-
-            TempData["SuccessMessage"] = $"規格「{vm.VariantName}」已成功更新。";
-            return RedirectToAction(nameof(Details), new { id = vm.ProductId });
-        }
-
-        [Obsolete("已移至前台 WebAPI。")]
+        /// <summary>
+        /// [AJAX] 模擬系統自動審核 - 新增測試商品並執行違禁詞批次審核
+        /// </summary>
         [HttpPost]
-        public IActionResult DeleteVariant([FromBody] RejectDto dto)
+        public async Task<IActionResult> SimulateAutoReview()
         {
-            return NotFound();
+            try
+            {
+                var result = await _productService.SimulateAutoReviewAsync();
+                return Json(new { success = true, approved = result.ApprovedCount, rejected = result.RejectedCount, manualReview = result.ManualReviewCount });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"模擬失敗：{ex.Message}" });
+            }
         }
     }
-#pragma warning restore CS0809
 }

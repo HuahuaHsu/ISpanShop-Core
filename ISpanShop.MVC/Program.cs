@@ -128,6 +128,8 @@ namespace ISpanShop.MVC
 
 
 				await ISpanShop.Models.DataSeeder.SeedAsync(context);
+				// 補充歷史商品缺少的審核人 / 審核時間（只對 ReviewStatus=1 且 ReviewDate=null 執行一次）
+				await ISpanShop.Models.DataSeeder.PatchMissingReviewDataAsync(context);
 				// 每次啟動確保有 15 筆待審核商品（供測試使用）
 				await ISpanShop.Models.DataSeeder.EnsurePendingProductsAsync(context);
 

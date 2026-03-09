@@ -339,21 +339,20 @@ function openAdd(parentId, parentName) {
 }
 
 // ── 開啟編輯 Modal ──
-function openEdit(id) {
-    fetch('/CategoryManage/GetById?id=' + id)
-        .then(r => r.json())
-        .then(d => {
-            document.getElementById('editId').value = d.id;
-            document.getElementById('modalTitle').textContent = '編輯分類';
-            document.getElementById('catName').value = d.name;
-            document.getElementById('catParent').value = d.parentId || '';
-            document.getElementById('catSort').value = d.sortOrder;
-            new bootstrap.Modal(document.getElementById('catModal')).show();
-        });
+async function openEdit(id) {
+    try {
+        const d = await apiGet('/Admin/CategoryManage/GetById?id=' + id);
+        document.getElementById('editId').value = d.id;
+        document.getElementById('modalTitle').textContent = '編輯分類';
+        document.getElementById('catName').value = d.name;
+        document.getElementById('catParent').value = d.parentId || '';
+        document.getElementById('catSort').value = d.sortOrder;
+        new bootstrap.Modal(document.getElementById('catModal')).show();
+    } catch { showToast('❌ 載入失敗，請重試'); }
 }
 
 // ── 儲存（新增 or 更新）──
-function saveCategory() {
+async function saveCategory() {
     const id       = parseInt(document.getElementById('editId').value);
     const name     = document.getElementById('catName').value.trim();
     const parentId = document.getElementById('catParent').value
@@ -362,61 +361,45 @@ function saveCategory() {
 
     if (!name) { showToast('❌ 分類名稱不能空白'); return; }
 
-    const url  = id === 0 ? '/CategoryManage/Create' : '/CategoryManage/Update';
+    const url  = id === 0 ? '/Admin/CategoryManage/Create' : '/Admin/CategoryManage/Update';
     const body = id === 0
         ? { name, parentId, sortOrder, imageUrl: null }
         : { id, name, parentId, sortOrder, imageUrl: null };
 
-    fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    })
-    .then(r => r.json())
-    .then(d => {
+    try {
+        const d = await apiPost(url, body);
         if (!d.success) { showToast('❌ ' + (d.message || '操作失敗')); return; }
         bootstrap.Modal.getInstance(document.getElementById('catModal')).hide();
         showToast(id === 0 ? '✅ 新增成功' : '✅ 更新成功');
         setTimeout(() => location.reload(), 900);
-    })
-    .catch(() => showToast('❌ 操作失敗，請重試'));
+    } catch { showToast('❌ 操作失敗，請重試'); }
 }
 
 // ── 刪除（先查商品數，有商品則拒絕）──
-function deleteCategory(id, name) {
-    fetch('/CategoryManage/GetProductCount?categoryId=' + id)
-        .then(r => r.json())
-        .then(d => {
-            if (d.count > 0) {
-                // 有商品：灰化按鈕並顯示說明
-                const btn = document.querySelector(
-                    `.act-del[onclick*="deleteCategory(${id},"]`
-                );
-                if (btn) {
-                    btn.disabled = true;
-                    btn.style.opacity = '.45';
-                    btn.style.cursor  = 'not-allowed';
-                    btn.title = `此分類有 ${d.count} 筆商品，請先移除商品再刪除`;
-                    btn.textContent = '無法刪除';
-                }
-                showToast(`❌ 「${name}」有 ${d.count} 筆商品，無法刪除`);
-                return;
+async function deleteCategory(id, name) {
+    try {
+        const d = await apiGet('/Admin/CategoryManage/GetProductCount?categoryId=' + id);
+        if (d.count > 0) {
+            const btn = document.querySelector(`.act-del[onclick*="deleteCategory(${id},"]`);
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '.45';
+                btn.style.cursor  = 'not-allowed';
+                btn.title = `此分類有 ${d.count} 筆商品，請先移除商品再刪除`;
+                btn.textContent = '無法刪除';
             }
-            showConfirm(`確定刪除「${name}」？此操作無法復原。`, function () {
-                fetch('/CategoryManage/Delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id })
-                })
-                .then(r => r.json())
-                .then(res => {
-                    if (!res.success) { showToast('❌ ' + res.message); return; }
-                    showToast('✅ 已刪除');
-                    setTimeout(() => location.reload(), 900);
-                });
-            });
-        })
-        .catch(() => showToast('❌ 無法確認分類狀態，請重試'));
+            showToast(`❌ 「${name}」有 ${d.count} 筆商品，無法刪除`);
+            return;
+        }
+        showConfirm(`確定刪除「${name}」？此操作無法復原。`, async function () {
+            try {
+                const res = await apiPost('/Admin/CategoryManage/Delete', { id });
+                if (!res.success) { showToast('❌ ' + res.message); return; }
+                showToast('✅ 已刪除');
+                setTimeout(() => location.reload(), 900);
+            } catch { showToast('❌ 刪除失敗，請重試'); }
+        });
+    } catch { showToast('❌ 無法確認分類狀態，請重試'); }
 }
 
 // ── 啟用/停用（含確認對話框）──
@@ -433,24 +416,18 @@ function toggleActive(input) {
         ? `確定要啟用「${name}」分類嗎？啟用後可再次使用此分類新增商品。`
         : `確定要停用「${name}」分類嗎？停用後將無法使用此分類新增商品，但已有的商品不受影響。`;
 
-    showConfirm(msg, function () {
-        // 確認：先更新 UI 再呼叫 API
+    showConfirm(msg, async function () {
         input.checked = isActive;
         const badge = document.getElementById('badge-' + id);
-        fetch('/CategoryManage/ToggleActive', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, isActive })
-        })
-        .then(r => r.json())
-        .then(d => {
+        try {
+            const d = await apiPost('/Admin/CategoryManage/ToggleActive', { id, isActive });
             if (!d.success) { input.checked = !isActive; return; }
             if (badge) {
                 badge.textContent = isActive ? '啟用' : '停用';
                 badge.className = 'st-badge ' + (isActive ? 'st-on' : 'st-off');
             }
             showToast(isActive ? '✅ 已啟用' : '🔕 已停用');
-        });
+        } catch { input.checked = !isActive; }
     });
 }
 
@@ -458,14 +435,11 @@ function toggleActive(input) {
 let sortTimer = null;
 function updateSort(id, val) {
     clearTimeout(sortTimer);
-    sortTimer = setTimeout(() => {
-        fetch('/CategoryManage/UpdateSort', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, sortOrder: parseInt(val) || 0 })
-        })
-        .then(r => r.json())
-        .then(() => showToast('✅ 排序已更新'));
+    sortTimer = setTimeout(async () => {
+        try {
+            await apiPost('/Admin/CategoryManage/UpdateSort', { id, sortOrder: parseInt(val) || 0 });
+            showToast('✅ 排序已更新');
+        } catch { showToast('❌ 排序更新失敗'); }
     }, 600);
 }
 

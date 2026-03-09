@@ -105,7 +105,7 @@ document.getElementById('srch').oninput = function(){
 };
 
 // 點選分類
-function pickCat(el){
+async function pickCat(el){
     document.querySelectorAll('.cat-item').forEach(i=>i.classList.remove('active'));
     el.classList.add('active');
     curCatId = +el.dataset.id;
@@ -113,13 +113,13 @@ function pickCat(el){
     document.getElementById('rBody').innerHTML = '<div class="empty-hint"><div>⏳</div><div>載入中...</div></div>';
     document.getElementById('saveBar').classList.add('d-none');
 
-    fetch('/CategoryBinding/GetSpecsForCategory?categoryId=' + curCatId)
-        .then(r=>r.json())
-        .then(d=>{
-            renderSpecs(d.specs);
-            document.getElementById('saveBar').classList.remove('d-none');
-        })
-        .catch(()=>{ document.getElementById('rBody').innerHTML='<div class="empty-hint">載入失敗，請重試</div>'; });
+    try {
+        const d = await apiGet('/Admin/CategoryBinding/GetSpecsForCategory?categoryId=' + curCatId);
+        renderSpecs(d.specs);
+        document.getElementById('saveBar').classList.remove('d-none');
+    } catch {
+        document.getElementById('rBody').innerHTML='<div class="empty-hint">載入失敗，請重試</div>';
+    }
 }
 
 // 渲染規格卡片
@@ -164,24 +164,20 @@ function toggle(card){
 }
 
 // 儲存
-function save(){
+async function save(){
     const ids = [...document.querySelectorAll('.spec-card.on')].map(c=>+c.dataset.id);
     const btn = document.getElementById('saveBtn');
     btn.disabled=true; btn.textContent='儲存中...';
 
-    fetch('/CategoryBinding/SaveBindings',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({categoryId:curCatId, attributeIds:ids})
-    })
-    .then(r=>r.json())
-    .then(()=>{
+    try {
+        await apiPost('/Admin/CategoryBinding/SaveBindings', {categoryId:curCatId, attributeIds:ids});
         btn.disabled=false; btn.textContent='💾 儲存此分類的規格設定';
         const cnt = document.getElementById('cnt-'+curCatId);
         if(cnt){ cnt.textContent=ids.length; cnt.className='cnt-badge'+(ids.length===0?' zero':''); }
         toast('✅ 儲存成功！');
-    })
-    .catch(()=>{ btn.disabled=false; btn.textContent='💾 儲存此分類的規格設定'; toast('❌ 儲存失敗'); });
+    } catch {
+        btn.disabled=false; btn.textContent='💾 儲存此分類的規格設定'; toast('❌ 儲存失敗');
+    }
 }
 
 function toast(msg){
