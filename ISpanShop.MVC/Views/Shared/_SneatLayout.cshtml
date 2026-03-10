@@ -768,7 +768,14 @@
                             <li><a class="dropdown-item" href="#"><i class="bx bx-user me-2"></i>個人資料</a></li>
                             <li><a class="dropdown-item" href="#"><i class="bx bx-cog me-2"></i>設定</a></li>
                             <li><hr class="dropdown-divider" /></li>
-                            <li><a class="dropdown-item" href="#"><i class="bx bx-power-off me-2"></i>登出</a></li>
+                            <li>
+                                <form asp-area="Admin" asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item border-0 bg-transparent w-100 text-start">
+                                        <i class="bx bx-power-off me-2"></i>登出
+                                    </button>
+                                </form>
+                            </li>
                         </ul>
                     </div>
                 </div>

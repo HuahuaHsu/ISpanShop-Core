@@ -725,6 +725,44 @@ namespace ISpanShop.Models
 		Console.WriteLine($"✅ 審核資料補充：已修補 {products.Count} 筆商品的審核人 / 審核時間。");
 	}
 
+	/// <summary>
+	/// 確保資料庫中有一個預設管理員帳號（Admin role + admin user）。
+	/// 帳號：admin　密碼：Admin@1234
+	/// </summary>
+	public static async Task EnsureAdminUserAsync(ISpanShopDBContext context)
+	{
+		// 確保 Admin 角色存在
+		var adminRole = context.Roles.FirstOrDefault(r => r.RoleName == "Admin");
+		if (adminRole == null)
+		{
+			adminRole = new Role { RoleName = "Admin", Description = "後台管理員" };
+			context.Roles.Add(adminRole);
+			await context.SaveChangesAsync();
+			Console.WriteLine("✅ 已建立 Admin 角色");
+		}
+
+		// 確保預設管理員帳號存在
+		var adminUser = context.Users.FirstOrDefault(u => u.Account == "admin");
+		if (adminUser == null)
+		{
+			adminUser = new User
+			{
+				RoleId      = adminRole.Id,
+				Account     = "admin",
+				Password    = "Admin@1234",
+				Email       = "admin@ispanshop.com",
+				IsConfirmed = true,
+				IsBlacklisted = false,
+				IsSeller    = false,
+				CreatedAt   = DateTime.Now,
+				UpdatedAt   = DateTime.Now
+			};
+			context.Users.Add(adminUser);
+			await context.SaveChangesAsync();
+			Console.WriteLine("✅ 已建立預設管理員帳號：admin / Admin@1234");
+		}
+	}
+
 	public static async Task EnsurePendingProductsAsync(ISpanShopDBContext context)
 		{
 			var currentCount = context.Products.Count(p => p.Status == 2);

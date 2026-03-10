@@ -6,6 +6,7 @@ using ISpanShop.Repositories.Inventories;
 using ISpanShop.Services.Products;
 using ISpanShop.Services.Categories;
 using ISpanShop.Services.Inventories;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using ISpanShop.Repositories.Orders;
@@ -21,6 +22,19 @@ namespace ISpanShop.MVC
 
 			// Add services to the container.
 			builder.Services.AddControllersWithViews();
+
+			// ── Cookie 身份驗證 ──
+			builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+				.AddCookie(options =>
+				{
+					options.LoginPath = "/Admin/Account/Login";
+					options.LogoutPath = "/Admin/Account/Logout";
+					options.AccessDeniedPath = "/Admin/Account/Login";
+					options.Cookie.Name = "ISpanShop.Admin.Auth";
+					options.Cookie.HttpOnly = true;
+					options.ExpireTimeSpan = TimeSpan.FromHours(8);
+					options.SlidingExpiration = true;
+				});
 
 			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -103,6 +117,7 @@ namespace ISpanShop.MVC
 				});
 			}
 
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 			// ── Area 路由（後台 MVC，必須在 default 之前）──
@@ -132,6 +147,8 @@ namespace ISpanShop.MVC
 				await ISpanShop.Models.DataSeeder.PatchMissingReviewDataAsync(context);
 				// 每次啟動確保有 15 筆待審核商品（供測試使用）
 				await ISpanShop.Models.DataSeeder.EnsurePendingProductsAsync(context);
+				// 確保後台管理員帳號存在
+				await ISpanShop.Models.DataSeeder.EnsureAdminUserAsync(context);
 
 				// 確保 Products 資料表有 IsDeleted 欄位（軟刪除用）
 				await context.Database.ExecuteSqlRawAsync(@"

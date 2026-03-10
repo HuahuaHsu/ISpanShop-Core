@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ISpanShop.MVC.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    //[Authorize]
+    [Authorize]
     public abstract class AdminBaseController : Controller
     {
     }
