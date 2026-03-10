@@ -14,9 +14,91 @@ namespace ISpanShop.MVC.Models.LoginHistories
 		public List<LoginHistoryItemVm> LoginHistories { get; set; } = new List<LoginHistoryItemVm>();
 
 		/// <summary>
+		/// 分頁資訊
+		/// </summary>
+		public PaginationInfoVm PaginationInfo { get; set; } = new PaginationInfoVm();
+
+		/// <summary>
+		/// 目前查詢條件
+		/// </summary>
+		public LoginHistoryCriteriaVm SearchCriteria { get; set; } = new LoginHistoryCriteriaVm();
+
+		/// <summary>
 		/// 操作結果訊息（成功/失敗）
 		/// </summary>
 		public string Message { get; set; }
+	}
+
+	/// <summary>
+	/// 分頁資訊 ViewModel
+	/// </summary>
+	public class PaginationInfoVm
+	{
+		/// <summary>
+		/// 資料總筆數
+		/// </summary>
+		public int TotalCount { get; set; }
+
+		/// <summary>
+		/// 總頁數
+		/// </summary>
+		public int TotalPages { get; set; }
+
+		/// <summary>
+		/// 目前頁碼
+		/// </summary>
+		public int CurrentPageNumber { get; set; } = 1;
+
+		/// <summary>
+		/// 每頁筆數
+		/// </summary>
+		public int PageSize { get; set; } = 10;
+
+		/// <summary>
+		/// 是否有下一頁
+		/// </summary>
+		public bool HasNextPage { get; set; }
+
+		/// <summary>
+		/// 是否有上一頁
+		/// </summary>
+		public bool HasPreviousPage { get; set; }
+
+		/// <summary>
+		/// 頁碼清單（用於產生分頁按鈕）
+		/// </summary>
+		public List<int> PageNumbers { get; set; } = new List<int>();
+	}
+
+	/// <summary>
+	/// 查詢條件 ViewModel - 用於回填表單
+	/// </summary>
+	public class LoginHistoryCriteriaVm
+	{
+		/// <summary>
+		/// 搜尋關鍵字
+		/// </summary>
+		public string Keyword { get; set; }
+
+		/// <summary>
+		/// 篩選登入狀態
+		/// </summary>
+		public string IsSuccessfulFilter { get; set; }  // "all", "success", "failure"
+
+		/// <summary>
+		/// 排序欄位
+		/// </summary>
+		public string SortColumn { get; set; } = "LoginTime";
+
+		/// <summary>
+		/// 排序方向
+		/// </summary>
+		public string SortDirection { get; set; } = "desc";  // "asc" 或 "desc"
+
+		/// <summary>
+		/// 每頁筆數
+		/// </summary>
+		public int PageSize { get; set; } = 10;
 	}
 
 	/// <summary>
@@ -80,6 +162,91 @@ namespace ISpanShop.MVC.Models.LoginHistories
 				StatusText = GetStatusText(dto.IsSuccessful),
 				StatusClass = GetStatusClass(dto.IsSuccessful)
 			};
+		}
+
+		/// <summary>
+		/// 將 PagedResult 轉換為含分頁資訊的 LoginHistoryIndexVm
+		/// </summary>
+		public static LoginHistoryIndexVm ToPagedViewModel(
+			this PagedResult<LoginHistoryDto> pagedResult,
+			LoginHistoryCriteria criteria)
+		{
+			// 轉換紀錄項目
+			var items = pagedResult.Items
+				.Select(lh => lh.ToViewModel())
+				.ToList();
+
+			// 生成頁碼清單 (顯示最多 5 個頁碼按鈕)
+			var pageNumbers = GeneratePageNumbers(pagedResult.PageNumber, pagedResult.TotalPages);
+
+			var vm = new LoginHistoryIndexVm
+			{
+				LoginHistories = items,
+				PaginationInfo = new PaginationInfoVm
+				{
+					TotalCount = pagedResult.TotalCount,
+					TotalPages = pagedResult.TotalPages,
+					CurrentPageNumber = pagedResult.PageNumber,
+					PageSize = pagedResult.PageSize,
+					HasNextPage = pagedResult.HasNextPage,
+					HasPreviousPage = pagedResult.HasPreviousPage,
+					PageNumbers = pageNumbers
+				},
+				SearchCriteria = new LoginHistoryCriteriaVm
+				{
+					Keyword = criteria.Keyword,
+					IsSuccessfulFilter = criteria.IsSuccessful switch
+					{
+						true => "success",
+						false => "failure",
+						_ => "all"
+					},
+					SortColumn = criteria.SortColumn,
+					SortDirection = criteria.IsAscending ? "asc" : "desc",
+					PageSize = criteria.PageSize
+				}
+			};
+
+			return vm;
+		}
+
+		/// <summary>
+		/// 生成頁碼清單 (顯示最多 5 個頁碼)
+		/// </summary>
+		private static List<int> GeneratePageNumbers(int currentPage, int totalPages)
+		{
+			var pageNumbers = new List<int>();
+
+			if (totalPages <= 5)
+			{
+				// 如果總頁數 <= 5，顯示全部
+				for (int i = 1; i <= totalPages; i++)
+				{
+					pageNumbers.Add(i);
+				}
+			}
+			else
+			{
+				// 否則顯示當前頁碼前後各 2 頁
+				int start = currentPage - 2;
+				if (start < 1) start = 1;
+
+				int end = start + 4;
+				if (end > totalPages) end = totalPages;
+
+				if (end - start < 4)
+				{
+					start = end - 4;
+					if (start < 1) start = 1;
+				}
+
+				for (int i = start; i <= end; i++)
+				{
+					pageNumbers.Add(i);
+				}
+			}
+
+			return pageNumbers;
 		}
 
 		/// <summary>

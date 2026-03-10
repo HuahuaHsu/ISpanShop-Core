@@ -21,5 +21,11 @@ namespace ISpanShop.Services
 		{
 			return _loginHistoryRepository.GetAll();
 		}
+
+		public PagedResult<LoginHistoryDto> SearchPagedLoginHistories(LoginHistoryCriteria criteria)
+		{
+			return _loginHistoryRepository.SearchPaged(criteria);
+		}
 	}
 }
+

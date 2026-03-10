@@ -182,16 +182,16 @@
     - [V] 建立 Controller (LoginHistoryController.cs)，調用 Service 並返回視圖。
     - [V] 建立 View (Index.cshtml)，使用 Bootstrap 5 繪製基本的資料表格。
 
-[ ] 6. 加入進階列表功能 (搜尋、排序與分頁)
+[V ] 6. 加入進階列表功能 (搜尋、排序與分頁)
     位置：跨層級擴充 (Models, Repositories, Services, MVC)
     - 全端功能擴充
     目的：實作動態查詢、分頁邏輯與前端 UI 互動狀態保持。
     實作細項：
-    - [ ] (DTO) 建立 LoginHistoryCriteria.cs，定義搜尋條件 (Keyword, IsSuccessful, SortColumn, IsAscending, PageNumber, PageSize)。
-    - [ ] (Repository) 擴充查詢邏輯，動態套用 .Where, .OrderBy, .Skip().Take()，並回傳總筆數。
-    - [ ] (Service) 擴充邏輯，傳遞 Criteria 給 Repository 並包裝分頁結果給上層。
-    - [ ] (ViewModel) 擴充 Vm，加入分頁資訊 (總頁數、目前頁碼、總筆數) 及保留目前搜尋與排序狀態。
-    - [ ] (View) 擴充搜尋區塊：建立 <form> 表單，包含文字搜尋框與 Checkbox 狀態篩選。
-    - [ ] (View) 擴充下拉式分頁：在表格外側左上角，加入每頁筆數 <select> 切換。
-    - [ ] (View) 擴充表頭點擊排序：將表格 <th> 改為可點擊連結，支援升降冪切換與箭頭圖示顯示。
-    - [ ] (View) 擴充底部導覽分頁：在表格外側右下角，加入 Bootstrap 分頁按鈕元件，點擊時帶上目前的搜尋與排序狀態。
+    - [V] (DTO) 建立 LoginHistoryCriteria.cs，定義搜尋條件 (Keyword, IsSuccessful, SortColumn, IsAscending, PageNumber, PageSize)。
+    - [V] (Repository) 擴充查詢邏輯，動態套用 .Where, .OrderBy, .Skip().Take()，並回傳總筆數。
+    - [V] (Service) 擴充邏輯，傳遞 Criteria 給 Repository 並包裝分頁結果給上層。
+    - [V] (ViewModel) 擴充 Vm，加入分頁資訊 (總頁數、目前頁碼、總筆數) 及保留目前搜尋與排序狀態。
+    - [V] (View) 擴充搜尋區塊：建立 <form> 表單，包含文字搜尋框與 Checkbox 狀態篩選。
+    - [V] (View) 擴充下拉式分頁：在表格外側左上角，加入每頁筆數 <select> 切換。
+    - [V] (View) 擴充表頭點擊排序：將表格 <th> 改為可點擊連結，支援升降冪切換與箭頭圖示顯示。
+    - [V] (View) 擴充底部導覽分頁：在表格外側右下角，加入 Bootstrap 分頁按鈕元件，點擊時帶上目前的搜尋與排序狀態。

@@ -7,6 +7,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="bg-gray-50 h-screen flex overflow-hidden text-gray-800 font-sans">
 
@@ -44,7 +45,7 @@
             </a>
             <a asp-controller="LoginHistory" asp-action="Index"
                class="flex items-center px-6 py-3 border-l-4 transition-colors ">
-                <i data-lucide="store" class="w-5 h-5 mr-3"></i> 登入紀錄
+                <i data-lucide="globe-lock" class="w-5 h-5 mr-3"></i> 登入紀錄
 
             </a>
 

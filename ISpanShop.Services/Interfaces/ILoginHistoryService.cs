@@ -13,5 +13,12 @@ namespace ISpanShop.Services.Interfaces
 		/// </summary>
 		/// <returns>登入紀錄 DTO 列表</returns>
 		IEnumerable<LoginHistoryDto> GetAllLoginHistories();
+
+		/// <summary>
+		/// 依條件進行搜尋、排序、分頁查詢
+		/// </summary>
+		/// <param name="criteria">查詢條件</param>
+		/// <returns>分頁結果</returns>
+		PagedResult<LoginHistoryDto> SearchPagedLoginHistories(LoginHistoryCriteria criteria);
 	}
 }

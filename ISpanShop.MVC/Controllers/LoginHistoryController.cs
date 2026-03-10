@@ -1,3 +1,4 @@
+using ISpanShop.Models.DTOs;
 using ISpanShop.MVC.Models.LoginHistories;
 using ISpanShop.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -17,21 +18,40 @@ namespace ISpanShop.MVC.Controllers
 		}
 
 		/// <summary>
-		/// 登入紀錄列表頁 - 顯示所有登入紀錄
+		/// 登入紀錄列表頁 - 顯示所有登入紀錄（支援搜尋、排序、分頁）
 		/// </summary>
-		public IActionResult Index()
+		public IActionResult Index(
+			string keyword = "",
+			string isSuccessful = "all",
+			string sortColumn = "LoginTime",
+			string sortDirection = "desc",
+			int pageNumber = 1,
+			int pageSize = 10)
 		{
 			try
 			{
-				var loginHistories = _loginHistoryService.GetAllLoginHistories()
-					.Select(lh => lh.ToViewModel())
-					.ToList();
-
-				var viewModel = new LoginHistoryIndexVm
+				// 建立查詢條件
+				var criteria = new LoginHistoryCriteria
 				{
-					LoginHistories = loginHistories,
-					Message = TempData["Message"]?.ToString()
+					Keyword = keyword,
+					IsSuccessful = isSuccessful switch
+					{
+						"success" => true,
+						"failure" => false,
+						_ => null
+					},
+					SortColumn = sortColumn,
+					IsAscending = sortDirection == "asc",
+					PageNumber = pageNumber,
+					PageSize = pageSize
 				};
+
+				// 執行查詢
+				var pagedResult = _loginHistoryService.SearchPagedLoginHistories(criteria);
+
+				// 轉換為 ViewModel
+				var viewModel = pagedResult.ToPagedViewModel(criteria);
+				viewModel.Message = TempData["Message"]?.ToString();
 
 				return View(viewModel);
 			}
