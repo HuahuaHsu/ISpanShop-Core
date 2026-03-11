@@ -33,6 +33,17 @@ namespace ISpanShop.MVC.Controllers
 			// 產生交易編號
 			string merchantTradeNo = _paymentService.GenerateMerchantTradeNo(order);
 
+			// 建立付款日誌 (PaymentLog)
+			var paymentLog = new PaymentLog
+			{
+				OrderId = order.Id,
+				MerchantTradeNo = merchantTradeNo,
+				TradeAmt = order.FinalAmount,
+				CreatedAt = DateTime.Now
+			};
+			_context.PaymentLogs.Add(paymentLog);
+			await _context.SaveChangesAsync();
+
 			// 取得綠界參數
 			var parameters = _paymentService.GetEcpayParameters(order, merchantTradeNo);
 
@@ -62,17 +73,12 @@ namespace ISpanShop.MVC.Controllers
 		/// 綠界回傳網址（模擬交易成功，專題用）
 		/// </summary>
 		[HttpPost]
-		/// <summary>
-		/// 綠界回傳網址（模擬交易成功，專題用）
-		/// </summary>
-		[HttpPost]
 		public async Task<IActionResult> Return()
 		{
 			var form = Request.Form;
 			var dict = form.ToDictionary(k => k.Key, v => v.Value.ToString());
 
 			// 【修改點 1】專題展示必過密技：強制將驗證設為 true，略過 CheckMacValue 錯誤
-			// 原本為：bool isValid = _paymentService.ValidateCheckMacValue(dict);
 			bool isValid = true;
 
 			if (isValid)
@@ -96,7 +102,7 @@ namespace ISpanShop.MVC.Controllers
 						paymentLog.PaymentDate = DateTime.Now;
 
 						var order = await _context.Orders.FindAsync(paymentLog.OrderId);
-						if (order != null && order.Status == 0) // 只有在待付款時才更新
+						if (order != null) 
 						{
 							order.Status = 1; // 1: 已付款
 							order.PaymentDate = paymentLog.PaymentDate;
@@ -118,8 +124,8 @@ namespace ISpanShop.MVC.Controllers
 			// 確保畫面(View)有資料可顯示，若綠界沒傳回，則塞入預設值防呆
 			ViewBag.MerchantTradeNo = form["MerchantTradeNo"];
 			ViewBag.Amount = form["TradeAmt"];
-			ViewBag.TradeDate =   string.IsNullOrEmpty(form["TradeDate"]) ? DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") : form["TradeDate"].ToString();
-			ViewBag.PaymentType =  string.IsNullOrEmpty(form["PaymentType"]) ? "DigitalPayment_IPASS" : form["PaymentType"].ToString();
+			ViewBag.TradeDate = string.IsNullOrEmpty(form["TradeDate"]) ? DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") : form["TradeDate"].ToString();
+			ViewBag.PaymentType = string.IsNullOrEmpty(form["PaymentType"]) ? "DigitalPayment_IPASS" : form["PaymentType"].ToString();
 
 			return View();
 		}

@@ -29,6 +29,18 @@ namespace ISpanShop.MVC.Controllers
 				return NotFound("訂單不存在");
 
 			string merchantTradeNo = _newebPayService.GenerateMerchantTradeNo(order);
+
+			// 建立付款日誌 (PaymentLog)
+			var paymentLog = new PaymentLog
+			{
+				OrderId = order.Id,
+				MerchantTradeNo = merchantTradeNo,
+				TradeAmt = order.FinalAmount,
+				CreatedAt = DateTime.Now
+			};
+			_context.PaymentLogs.Add(paymentLog);
+			await _context.SaveChangesAsync();
+
 			var parameters = _newebPayService.GetNewebPayParameters(order, merchantTradeNo);
 
 			// 生成自動送出表單
@@ -50,13 +62,36 @@ namespace ISpanShop.MVC.Controllers
 		}
 
 		[HttpPost]
-		public IActionResult Return()
+		public async Task<IActionResult> Return()
 		{
+			var form = Request.Form;
+			// 藍新回傳的編號通常在 MerchantOrderNo (如果沒有則從 Form 找)
+			string merchantOrderNo = form["MerchantOrderNo"];
+			
 			// 交易回傳模擬成功
+			var paymentLog = await _context.PaymentLogs
+				.FirstOrDefaultAsync(p => p.MerchantTradeNo == merchantOrderNo);
+
+			if (paymentLog != null)
+			{
+				paymentLog.TradeNo = "NEWB_" + DateTime.Now.ToString("HHmmss");
+				paymentLog.RtnCode = 1;
+				paymentLog.RtnMsg = "交易成功 (專題模擬)";
+				paymentLog.PaymentDate = DateTime.Now;
+
+				var order = await _context.Orders.FindAsync(paymentLog.OrderId);
+				if (order != null)
+				{
+					order.Status = 1; // 已付款
+					order.PaymentDate = paymentLog.PaymentDate;
+					await _context.SaveChangesAsync();
+				}
+			}
+
 			ViewBag.Message = "交易成功（模擬）";
-			ViewBag.MerchantTradeNo = Request.Form["MerchantTradeNo"];
-			ViewBag.Amount = Request.Form["Amt"];
-			ViewBag.PaymentType = Request.Form["ChoosePayment"];
+			ViewBag.MerchantTradeNo = merchantOrderNo;
+			ViewBag.Amount = form["Amt"];
+			ViewBag.PaymentType = string.IsNullOrEmpty(form["PaymentType"]) ? "CreditCard" : form["PaymentType"].ToString();
 			return View();
 		}
 	}
