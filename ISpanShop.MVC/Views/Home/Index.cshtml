@@ -1,8 +1,11 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<ISpanShop.Models.EfModels.Order>
+@* 接下來貼上你原本在 OrderManagement/Index 寫的表格程式碼 *@
+@{
+    ViewData["Title"] = "首頁";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">歡迎來到 ISpanShop 後台</h1>
+    <p>請使用導覽列或點擊下方連結管理訂單。</p>
+    <a href="@Url.Action("Index", "OrderManagement")" class="btn btn-primary">進入訂單管理系統</a>
 </div>

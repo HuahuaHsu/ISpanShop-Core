@@ -1,0 +1,10 @@
+﻿@{
+    ViewData["Title"] = "交易結果";
+}
+
+<h3>@ViewBag.Message</h3>
+<p>訂單編號: @ViewBag.MerchantTradeNo</p>
+<p>交易金額: @ViewBag.Amount</p>
+<p>付款方式: @ViewBag.PaymentType</p>
+
+<a asp-controller="OrderManagement" asp-action="Index">回訂單列表</a>

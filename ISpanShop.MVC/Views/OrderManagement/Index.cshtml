@@ -1,0 +1,62 @@
+﻿@using ISpanShop.Models.EfModels
+@model IEnumerable<Order>
+
+@{
+    ViewData["Title"] = "訂單管理";
+}
+
+<h2>訂單列表</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>訂單編號</th>
+            <th>下單時間</th>
+            <th>總金額</th>
+            <th>狀態</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.OrderNumber</td>
+                    <td>@item.CreatedAt?.ToString("yyyy/MM/dd HH:mm")</td>
+                    <td>@item.FinalAmount.ToString("C0")</td>
+                    <td>
+                        @if (item.Status == 0)
+                        {
+                            <span class="badge bg-warning text-dark">待付款</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">已付款</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.Status == 0)
+                        {
+                            <a href="@Url.Action("Pay", "Payment", new { orderNumber = item.OrderNumber })"
+                               class="btn btn-primary btn-sm" target="_blank">
+                                前往付款
+                            </a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary btn-sm" disabled>完成付款</button>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5" class="text-center">目前沒有訂單資料</td>
+            </tr>
+        }
+    </tbody>
+</table>
