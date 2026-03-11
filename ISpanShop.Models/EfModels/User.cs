@@ -59,6 +59,10 @@ public partial class User
 
     public virtual ICollection<PointHistory> PointHistories { get; set; } = new List<PointHistory>();
 
+    public virtual ICollection<Promotion> PromotionReviewedByNavigations { get; set; } = new List<Promotion>();
+
+    public virtual ICollection<Promotion> PromotionSellers { get; set; } = new List<Promotion>();
+
     public virtual Role Role { get; set; }
 
     public virtual ICollection<Store> Stores { get; set; } = new List<Store>();

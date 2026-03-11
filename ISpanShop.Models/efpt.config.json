@@ -115,6 +115,18 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[PromotionItems]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PromotionRules]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Promotions]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[ReturnRequestImages]",
          "ObjectType": 0
       },

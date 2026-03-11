@@ -61,5 +61,7 @@ public partial class Product
 
     public virtual ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
 
+    public virtual ICollection<PromotionItem> PromotionItems { get; set; } = new List<PromotionItem>();
+
     public virtual Store Store { get; set; }
 }
