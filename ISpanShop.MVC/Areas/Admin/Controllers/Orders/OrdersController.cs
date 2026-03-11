@@ -150,22 +150,28 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 			var data1 = await _dashboardService.GetYearlyRevenueDataAsync(storeId, year1);
 			var data2 = await _dashboardService.GetYearlyRevenueDataAsync(storeId, year2);
 
-			// 建立一個 1~12 月的容器，確保資料對齊
 			var series1 = new decimal[12];
 			var series2 = new decimal[12];
+			decimal total1 = 0;
+			decimal total2 = 0;
 
-			// 邏輯：從 Labels (格式 "YYYY/MM") 提取月份並填入對應位置
 			for (int i = 0; i < data1.Labels.Count; i++)
 			{
 				var month = int.Parse(data1.Labels[i].Split('/')[1]);
-				if (month >= 1 && month <= 12) series1[month - 1] = data1.Series[0].Data[i];
+				var val = data1.Series[0].Data[i];
+				if (month >= 1 && month <= 12) series1[month - 1] = val;
+				total1 += val;
 			}
 
 			for (int i = 0; i < data2.Labels.Count; i++)
 			{
 				var month = int.Parse(data2.Labels[i].Split('/')[1]);
-				if (month >= 1 && month <= 12) series2[month - 1] = -data2.Series[0].Data[i]; // 轉為負值供 Diverging Bar 使用
+				var val = data2.Series[0].Data[i];
+				if (month >= 1 && month <= 12) series2[month - 1] = -val;
+				total2 += val;
 			}
+
+			decimal growthRate = total2 == 0 ? (total1 > 0 ? 100 : 0) : Math.Round(((total1 - total2) / total2) * 100, 1);
 
 			return Json(new
 			{
@@ -174,7 +180,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 				{
 					new { name = year1.ToString(), data = series1 },
 					new { name = year2.ToString(), data = series2 }
-				}
+				},
+				total1,
+				total2,
+				growthRate
 			});
 		}
 	}
