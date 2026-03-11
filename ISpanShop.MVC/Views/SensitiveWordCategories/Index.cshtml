@@ -1,0 +1,137 @@
+@model IEnumerable<ISpanShop.MVC.Models.ViewModels.SensitiveWordCategoryVm>
+
+@{
+    ViewData["Title"] = "敏感字分類管理";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-tags me-2"></i>敏感字分類管理</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+            <i class="fas fa-plus me-1"></i>新增分類
+        </button>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">#</th>
+                        <th>分類名稱</th>
+                        <th>敏感字數量</th>
+                        <th class="text-end pe-4">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">@item.Id</td>
+                                <td><strong>@item.Name</strong></td>
+                                <td><span class="badge bg-secondary">@item.WordCount</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-outline-warning edit-btn" 
+                                            data-id="@item.Id" 
+                                            data-name="@item.Name" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editModal">
+                                        <i class="fas fa-edit"></i> 編輯
+                                    </button>
+                                    <form asp-action="Delete" method="post" class="d-inline ms-1" onsubmit="return confirm('確定要刪除此分類嗎？')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash-alt"></i> 刪除
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">目前尚無分類資料。</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 新增分類 Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">新增分類</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">分類名稱</label>
+                        <input name="Name" class="form-control" placeholder="請輸入分類名稱..." required maxlength="50" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 編輯分類 Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="edit-id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">編輯分類</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">分類名稱</label>
+                        <input name="Name" id="edit-name" class="form-control" required maxlength="50" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // 點擊編輯按鈕時，將資料填入 Modal
+            $('.edit-btn').click(function() {
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                $('#edit-id').val(id);
+                $('#edit-name').val(name);
+            });
+        });
+    </script>
+}

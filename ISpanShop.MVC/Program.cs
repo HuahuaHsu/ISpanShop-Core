@@ -115,6 +115,12 @@ namespace ISpanShop.MVC
 			//2�� ���a
 
 
+			builder.Services.AddScoped<ISensitiveWordRepository, SensitiveWordRepository>();
+			builder.Services.AddScoped<ISensitiveWordService, SensitiveWordService>();
+
+			// 註冊客服工單的 Repo 與 Service
+			builder.Services.AddScoped<ISupportTicketRepository, SupportTicketRepository>();
+			builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
 			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
