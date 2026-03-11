@@ -1,0 +1,246 @@
+@model ISpanShop.MVC.Areas.Admin.Models.Members.MemberEditVm
+
+@{
+    Layout = null;
+
+    var levelBadgeClass = Model.LevelName switch
+    {
+        "金牌會員" => "bg-warning text-dark",
+        "銀牌會員" => "bg-info text-white",
+        "銅牌會員" => "bg-secondary text-white",
+        _ => "bg-dark text-white"
+    };
+    var levelIcon = Model.LevelName switch
+    {
+        "金牌會員" => "bx-medal",
+        "銀牌會員" => "bx-award",
+        "銅牌會員" => "bx-trophy",
+        _ => "bx-star"
+    };
+}
+
+<style>
+    .drawer-edit-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #e2e8f0;
+    }
+    .drawer-form-section {
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    .drawer-form-section:last-of-type {
+        border-bottom: none;
+    }
+    .blacklist-box {
+        background: #fff5f5;
+        border: 1px solid #feb2b2;
+        border-radius: 0.5rem;
+        padding: 1rem 1.25rem;
+    }
+    .blacklist-box .form-check-input:checked {
+        background-color: #ea5455;
+        border-color: #ea5455;
+    }
+    .readonly-field {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+</style>
+
+<form id="drawerEditForm"
+      action="/Admin/Members/Edit/@Model.UserId"
+      method="post"
+      enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="UserId" value="@Model.UserId" />
+    <input type="hidden" name="AvatarUrl" value="@Model.AvatarUrl" id="hiddenAvatarUrl" />
+
+    @* ── 會員資訊頭部 ── *@
+    <div class="d-flex align-items-center gap-3 p-4 border-bottom bg-light">
+        <img src="@Model.AvatarUrl"
+             alt="@Model.FullName"
+             class="drawer-edit-avatar"
+             id="drawerAvatarPreview"
+             onerror="this.src='https://via.placeholder.com/72'" />
+        <div>
+            <div class="fw-bold fs-5" style="color:#1e2d3d;">@Model.FullName</div>
+            <div class="text-muted small">@@@Model.Account</div>
+            <span class="badge @levelBadgeClass mt-1 px-2 py-1">
+                <i class="bx @levelIcon me-1"></i>@Model.LevelName
+            </span>
+        </div>
+        <div class="ms-auto text-center">
+            <div class="text-muted small">點數</div>
+            <div class="fw-bold" style="color:#ff9f43; font-size:1.1rem;">
+                <i class="bx bx-coin"></i> P @Model.PointBalance.ToString("N0")
+            </div>
+        </div>
+    </div>
+
+    @* ── 表單主體 ── *@
+    <div class="p-4">
+
+        @* 基本資料 *@
+        <div class="drawer-form-section">
+            <h6 class="fw-bold mb-3" style="color:#1e2d3d;">
+                <i class="bx bx-user-circle me-2" style="color:#3182ce;"></i>基本資料
+            </h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small">帳號</label>
+                    <input type="text" class="form-control form-control-sm readonly-field"
+                           value="@Model.Account" readonly title="帳號無法修改" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small">
+                        姓名 <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" name="FullName" value="@Model.FullName"
+                           class="form-control form-control-sm"
+                           placeholder="請輸入真實姓名" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small">
+                        電子信箱 <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light"><i class="bx bx-envelope"></i></span>
+                        <input type="email" name="Email" value="@Model.Email"
+                               class="form-control"
+                               placeholder="example@email.com" required />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small">聯絡電話</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light"><i class="bx bx-phone"></i></span>
+                        <input type="tel" name="PhoneNumber" value="@Model.PhoneNumber"
+                               class="form-control"
+                               placeholder="0912-345-678" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* 大頭貼上傳 *@
+        <div class="drawer-form-section">
+            <h6 class="fw-bold mb-3" style="color:#1e2d3d;">
+                <i class="bx bx-image me-2" style="color:#3182ce;"></i>大頭貼
+            </h6>
+            <input type="file" name="AvatarFile" id="drawerAvatarFile"
+                   class="form-control form-control-sm"
+                   accept="image/jpeg,image/jpg,image/png,image/gif" />
+            <small class="text-muted d-block mt-1">
+                <i class="bx bx-info-circle me-1"></i>JPG / PNG / GIF，最大 5MB
+            </small>
+        </div>
+
+        @* 通訊地址 *@
+        <div class="drawer-form-section">
+            <h6 class="fw-bold mb-3" style="color:#1e2d3d;">
+                <i class="bx bx-map me-2" style="color:#3182ce;"></i>通訊地址
+            </h6>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">縣市</label>
+                    @* data-initial-city：供 JS 初始化與城市切換回原值時還原區域 *@
+                    <select name="City"
+                            id="drawerCitySelect"
+                            class="form-select form-select-sm"
+                            data-initial-city="@Model.City">
+                        @foreach (var opt in Model.CityOptions)
+                        {
+                            if (opt.Value == Model.City)
+                            {
+                                <option value="@opt.Value" selected>@opt.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@opt.Value">@opt.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">區域</label>
+                    @* data-initial-region：供 JS 在 AJAX 載入區域後還原 selected *@
+                    <select name="Region"
+                            id="drawerRegionSelect"
+                            class="form-select form-select-sm"
+                            data-initial-region="@Model.Region">
+                        @foreach (var opt in Model.RegionOptions)
+                        {
+                            if (opt.Value == Model.Region)
+                            {
+                                <option value="@opt.Value" selected>@opt.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@opt.Value">@opt.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">街道地址</label>
+                    <input type="text" name="Street" value="@Model.Street"
+                           class="form-control form-control-sm"
+                           placeholder="例：中正路 100 號" />
+                </div>
+            </div>
+        </div>
+
+        @* 黑名單設定 *@
+        <div class="drawer-form-section">
+            <h6 class="fw-bold mb-3" style="color:#1e2d3d;">
+                <i class="bx bx-cog me-2" style="color:#3182ce;"></i>帳號設定
+            </h6>
+            <div class="blacklist-box">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-bold mb-1" style="color:#ea5455;">
+                            <i class="bx bx-block me-2"></i>黑名單狀態
+                        </div>
+                        <small class="text-danger">開啟後，該會員將無法登入與下單</small>
+                    </div>
+                    <div class="form-check form-switch ms-3">
+                        <input type="checkbox"
+                               name="IsBlacklisted"
+                               id="drawerBlacklistSwitch"
+                               class="form-check-input"
+                               role="switch"
+                               value="true"
+                               @(Model.IsBlacklisted ? "checked" : "") />
+                        <label class="form-check-label" for="drawerBlacklistSwitch"></label>
+                    </div>
+                </div>
+            </div>
+
+            @* 賣家資格（僅供檢視）*@
+            <div class="mt-3 p-3 rounded" style="background:#f8f9fa; border:1px solid #e2e8f0;">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="drawerSellerCheck"
+                           @(Model.IsSeller ? "checked" : "") disabled />
+                    <label class="form-check-label fw-semibold" for="drawerSellerCheck">
+                        <i class="bx bx-store-alt me-1"></i>賣家資格（僅供檢視）
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        @* 操作按鈕 *@
+        <div class="d-flex justify-content-end gap-3 pt-2">
+            <button type="button" onclick="closeDrawer()" class="btn btn-label-secondary px-4">
+                <i class="bx bx-x me-1"></i>取消
+            </button>
+            <button type="submit" id="drawerSaveBtn" class="btn btn-primary px-4">
+                <i class="bx bx-save me-1"></i>儲存變更
+            </button>
+        </div>
+
+    </div>
+</form>

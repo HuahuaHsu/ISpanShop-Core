@@ -7,91 +7,95 @@
 }
 
 <style>
-    .font-noto {
-        font-family: 'Noto Sans TC', sans-serif;
-    }
-    .tracking-tight {
-        letter-spacing: -0.025em;
-    }
+    .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+    .tracking-tight { letter-spacing: -0.025em; }
     .member-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        object-fit: cover;
+        width: 48px; height: 48px;
+        border-radius: 50%; object-fit: cover;
         border: 2px solid #f8f9fa;
     }
-    .member-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .member-name {
-        font-weight: 600;
-        color: #1e2d3d;
-        margin-bottom: 2px;
-        font-size: 0.938rem;
-    }
-    .member-account {
-        font-size: 0.813rem;
-        color: #a1acb8;
-    }
-    .member-email {
-        font-size: 0.813rem;
-        color: #718096;
-    }
-    .point-balance {
-        color: #ff9f43;
-        font-weight: 600;
-        font-size: 0.938rem;
-    }
-    .badge-soft {
-        padding: 0.375rem 0.75rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        font-size: 0.813rem;
-    }
-    .bg-label-buyer {
-        background-color: #e3f2fd;
-        color: #1976d2;
-    }
-    .bg-label-seller {
-        background-color: #e8f5e9;
-        color: #388e3c;
-    }
-    .act-group {
-        display: flex;
-        gap: 0.5rem;
-    }
+    .member-info { display: flex; align-items: center; gap: 12px; }
+    .member-name  { font-weight: 600; color: #1e2d3d; margin-bottom: 2px; font-size: 0.938rem; }
+    .member-account { font-size: 0.813rem; color: #a1acb8; }
+    .member-email   { font-size: 0.813rem; color: #718096; }
+    .point-balance  { color: #ff9f43; font-weight: 600; font-size: 0.938rem; }
+    .badge-soft     { padding: 0.375rem 0.75rem; border-radius: 0.5rem; font-weight: 500; font-size: 0.813rem; }
+    .bg-label-buyer  { background-color: #e3f2fd; color: #1976d2; }
+    .bg-label-seller { background-color: #e8f5e9; color: #388e3c; }
+    .act-group { display: flex; gap: 0.5rem; }
     .act-icon {
-        width: 32px;
-        height: 32px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 0.375rem;
-        border: 1px solid #e2e8f0;
-        background: white;
-        color: #64748b;
-        cursor: pointer;
-        transition: all 0.2s;
+        width: 32px; height: 32px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 0.375rem; border: 1px solid #e2e8f0;
+        background: white; color: #64748b; cursor: pointer; transition: all 0.2s;
     }
-    .act-icon:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
-        color: #3182ce;
+    .act-icon:hover     { background: #f8fafc; border-color: #cbd5e1; color: #3182ce; }
+    .act-view:hover     { background: #eff6ff; border-color: #3b82f6; color: #3b82f6; }
+    .table > :not(caption) > * > * { padding: 1rem 0.75rem; }
+
+    /* ── Side Drawer ── */
+    .drawer-overlay {
+        position: fixed; top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 1040;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
-    .act-view:hover {
-        background: #eff6ff;
-        border-color: #3b82f6;
-        color: #3b82f6;
+    .drawer-overlay.show { display: block; opacity: 1; }
+
+    .side-drawer {
+        position: fixed; top: 0; right: -640px;
+        width: 600px; height: 100vh;
+        background: #fff;
+        box-shadow: -6px 0 24px rgba(0, 0, 0, 0.12);
+        z-index: 1050;
+        transition: right 0.3s ease;
+        display: flex; flex-direction: column;
+        overflow: hidden;
     }
-    .table > :not(caption) > * > * {
-        padding: 1rem 0.75rem;
+    .side-drawer.open { right: 0; }
+
+    .drawer-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #fff;
+        flex-shrink: 0;
+    }
+    .drawer-header h5 { margin: 0; font-weight: 700; color: #1e2d3d; }
+    .drawer-body { flex: 1; overflow-y: auto; }
+    .drawer-loading {
+        display: flex; align-items: center; justify-content: center;
+        height: 200px; color: #a1acb8;
+        flex-direction: column; gap: 1rem;
+    }
+
+    /* Toast */
+    .member-toast-container {
+        position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1100;
+        display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .member-toast {
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideInToast 0.3s ease;
+        min-width: 280px;
+    }
+    .member-toast.success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+    .member-toast.error   { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+    @@keyframes slideInToast {
+        from { opacity: 0; transform: translateX(30px); }
+        to   { opacity: 1; transform: translateX(0); }
     }
 </style>
 
 <div class="container-fluid py-4 font-noto">
-    
+
     @* ── 頁首 ── *@
     <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div>
@@ -103,11 +107,8 @@
         <div class="d-flex align-items-center gap-2">
             <form method="get" asp-action="Index" class="d-flex gap-2">
                 <div class="input-group" style="max-width: 320px;">
-                    <input type="text" 
-                           name="keyword" 
-                           value="@Model.Keyword" 
-                           class="form-control" 
-                           placeholder="搜尋姓名、電話或帳號..." 
+                    <input type="text" name="keyword" value="@Model.Keyword"
+                           class="form-control" placeholder="搜尋姓名、電話或帳號..."
                            style="border-radius: 0.375rem 0 0 0.375rem;" />
                     <button type="submit" class="btn btn-primary" style="border-radius: 0 0.375rem 0.375rem 0;">
                         <i class="bx bx-search me-1"></i>搜尋
@@ -128,12 +129,10 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-body py-3">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-4">
-                            <div>
-                                <span class="text-muted fs-7">總會員數</span>
-                                <h4 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.PagedResult.TotalCount</h4>
-                            </div>
+                    <div class="d-flex align-items-center gap-4">
+                        <div>
+                            <span class="text-muted fs-7">總會員數</span>
+                            <h4 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.PagedResult.TotalCount</h4>
                         </div>
                     </div>
                 </div>
@@ -147,38 +146,26 @@
             <table class="table table-hover align-middle mb-0">
                 <thead style="background-color:#f8fafc; border-bottom: 2px solid #e2e8f0;">
                     <tr>
-                        <th style="color:#64748b; font-weight:600; font-size:0.813rem; text-transform:uppercase; letter-spacing:0.05em;">
-                            MEMBER PROFILE
-                        </th>
-                        <th style="color:#64748b; font-weight:600; font-size:0.813rem; text-transform:uppercase; letter-spacing:0.05em;">
-                            身分 ROLE
-                        </th>
-                        <th style="color:#64748b; font-weight:600; font-size:0.813rem; text-transform:uppercase; letter-spacing:0.05em;">
-                            等級 LEVEL
-                        </th>
-                        <th style="color:#64748b; font-weight:600; font-size:0.813rem; text-transform:uppercase; letter-spacing:0.05em;">
-                            點數 BALANCE
-                        </th>
-                        <th style="color:#64748b; font-weight:600; font-size:0.813rem; text-transform:uppercase; letter-spacing:0.05em;">
-                            狀態 STATUS
-                        </th>
-                        <th class="text-end" style="color:#64748b; font-weight:600; font-size:0.813rem; text-transform:uppercase; letter-spacing:0.05em;">
-                            操作
-                        </th>
+                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">MEMBER PROFILE</th>
+                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">身分 ROLE</th>
+                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">等級 LEVEL</th>
+                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">點數 BALANCE</th>
+                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">狀態 STATUS</th>
+                        <th class="text-end" style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">操作</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="memberTableBody">
                     @if (Model.PagedResult.Data.Any())
                     {
                         @foreach (var member in Model.PagedResult.Data)
                         {
-                            <tr>
-                                <!-- 會員資料 (頭像 + 姓名 + 帳號 + Email) -->
+                            @* data-member-id 供 JS 精準更新該列 *@
+                            <tr data-member-id="@member.UserId">
                                 <td>
                                     <div class="member-info">
-                                        <img src="@member.AvatarUrl" 
-                                             alt="@member.FullName" 
-                                             class="member-avatar" 
+                                        <img src="@member.AvatarUrl"
+                                             alt="@member.FullName"
+                                             class="member-avatar member-avatar-img"
                                              onerror="this.src='https://via.placeholder.com/48'" />
                                         <div>
                                             <div class="member-name">@member.FullName</div>
@@ -187,8 +174,6 @@
                                         </div>
                                     </div>
                                 </td>
-
-                                <!-- 身分 (買家/賣家) -->
                                 <td>
                                     <span class="badge badge-soft bg-label-buyer">
                                         <i class="bx bx-shopping-bag me-1"></i>買家
@@ -200,10 +185,8 @@
                                         </span>
                                     }
                                 </td>
-
-                                <!-- 等級 -->
                                 <td>
-                                    <span style="color:#64748b; font-weight:500;">
+                                    <span style="color:#64748b;font-weight:500;">
                                         @{
                                             var levelIcon = member.LevelName switch
                                             {
@@ -216,16 +199,12 @@
                                         <i class="bx @levelIcon me-1"></i>@member.LevelName
                                     </span>
                                 </td>
-
-                                <!-- 點數 -->
                                 <td>
                                     <span class="point-balance">
                                         <i class="bx bx-coin me-1"></i>P @member.PointBalance.ToString("N0")
                                     </span>
                                 </td>
-
-                                <!-- 狀態 -->
-                                <td>
+                                <td class="member-status-cell">
                                     @if (member.IsBlacklisted)
                                     {
                                         <span class="badge bg-label-danger">
@@ -239,15 +218,21 @@
                                         </span>
                                     }
                                 </td>
-
-                                <!-- 操作 -->
                                 <td>
                                     <div class="act-group justify-content-end">
-                                        <a href="@Url.Action("Edit", new { id = member.UserId })" 
-                                           class="act-icon act-view" 
-                                           data-bs-toggle="tooltip" 
-                                           title="編輯會員">
+                                        @* Drawer 優先；Ctrl+點擊可開完整編輯頁 *@
+                                        <button type="button"
+                                                class="act-icon act-view"
+                                                onclick="openDrawer(@member.UserId)"
+                                                data-bs-toggle="tooltip"
+                                                title="編輯會員（側邊面板）">
                                             <i class="bx bx-edit"></i>
+                                        </button>
+                                        <a href="@Url.Action("Edit", new { id = member.UserId })"
+                                           class="act-icon"
+                                           data-bs-toggle="tooltip"
+                                           title="完整編輯頁">
+                                            <i class="bx bx-link-external"></i>
                                         </a>
                                     </div>
                                 </td>
@@ -276,76 +261,51 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <p class="text-muted mb-0 fs-7">
-                            顯示第 @((Model.PagedResult.CurrentPage - 1) * Model.PagedResult.PageSize + 1) 
-                            到 @Math.Min(Model.PagedResult.CurrentPage * Model.PagedResult.PageSize, Model.PagedResult.TotalCount) 
+                            顯示第 @((Model.PagedResult.CurrentPage - 1) * Model.PagedResult.PageSize + 1)
+                            到 @Math.Min(Model.PagedResult.CurrentPage * Model.PagedResult.PageSize, Model.PagedResult.TotalCount)
                             筆，共 @Model.PagedResult.TotalCount 筆
                         </p>
                     </div>
                     <div class="col-md-6">
                         <nav aria-label="會員列表分頁">
                             <ul class="pagination justify-content-end mb-0">
-                                <!-- 上一頁 -->
                                 <li class="page-item @(Model.PagedResult.CurrentPage <= 1 ? "disabled" : "")">
-                                    <a class="page-link" 
-                                       href="@Url.Action("Index", new { keyword = Model.Keyword, page = Model.PagedResult.CurrentPage - 1, pageSize = Model.PagedResult.PageSize })">
+                                    <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = Model.PagedResult.CurrentPage - 1, pageSize = Model.PagedResult.PageSize })">
                                         <i class="bx bx-chevron-left"></i>
                                     </a>
                                 </li>
-
                                 @{
                                     var startPage = Math.Max(1, Model.PagedResult.CurrentPage - 2);
-                                    var endPage = Math.Min(totalPages, Model.PagedResult.CurrentPage + 2);
+                                    var endPage   = Math.Min(totalPages, Model.PagedResult.CurrentPage + 2);
                                 }
-
-                                <!-- 第一頁 -->
                                 @if (startPage > 1)
                                 {
                                     <li class="page-item">
-                                        <a class="page-link" 
-                                           href="@Url.Action("Index", new { keyword = Model.Keyword, page = 1, pageSize = Model.PagedResult.PageSize })">
-                                            1
-                                        </a>
+                                        <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = 1, pageSize = Model.PagedResult.PageSize })">1</a>
                                     </li>
                                     @if (startPage > 2)
                                     {
-                                        <li class="page-item disabled">
-                                            <span class="page-link">...</span>
-                                        </li>
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
                                     }
                                 }
-
-                                <!-- 頁碼 -->
                                 @for (int i = startPage; i <= endPage; i++)
                                 {
                                     <li class="page-item @(i == Model.PagedResult.CurrentPage ? "active" : "")">
-                                        <a class="page-link" 
-                                           href="@Url.Action("Index", new { keyword = Model.Keyword, page = i, pageSize = Model.PagedResult.PageSize })">
-                                            @i
-                                        </a>
+                                        <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = i, pageSize = Model.PagedResult.PageSize })">@i</a>
                                     </li>
                                 }
-
-                                <!-- 最後一頁 -->
                                 @if (endPage < totalPages)
                                 {
                                     @if (endPage < totalPages - 1)
                                     {
-                                        <li class="page-item disabled">
-                                            <span class="page-link">...</span>
-                                        </li>
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
                                     }
                                     <li class="page-item">
-                                        <a class="page-link" 
-                                           href="@Url.Action("Index", new { keyword = Model.Keyword, page = totalPages, pageSize = Model.PagedResult.PageSize })">
-                                            @totalPages
-                                        </a>
+                                        <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = totalPages, pageSize = Model.PagedResult.PageSize })">@totalPages</a>
                                     </li>
                                 }
-
-                                <!-- 下一頁 -->
                                 <li class="page-item @(Model.PagedResult.CurrentPage >= totalPages ? "disabled" : "")">
-                                    <a class="page-link" 
-                                       href="@Url.Action("Index", new { keyword = Model.Keyword, page = Model.PagedResult.CurrentPage + 1, pageSize = Model.PagedResult.PageSize })">
+                                    <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = Model.PagedResult.CurrentPage + 1, pageSize = Model.PagedResult.PageSize })">
                                         <i class="bx bx-chevron-right"></i>
                                     </a>
                                 </li>
@@ -358,31 +318,271 @@
     </div>
 </div>
 
+@* ══════════════════════════════════════════════
+   Side Drawer — 側邊滑出面板
+   ══════════════════════════════════════════════ *@
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<div class="side-drawer" id="memberDrawer">
+    <div class="drawer-header">
+        <h5><i class="bx bx-edit-alt me-2" style="color:#3182ce;"></i>編輯會員資料</h5>
+        <button type="button" class="btn-close" onclick="closeDrawer()" aria-label="關閉"></button>
+    </div>
+    <div class="drawer-body" id="drawerBody">
+        <div class="drawer-loading" id="drawerLoading" style="display:none;">
+            <div class="spinner-border text-primary" role="status"></div>
+            <span class="text-muted">載入中...</span>
+        </div>
+        <div id="drawerContent"></div>
+    </div>
+</div>
+
+@* Toast 容器 *@
+<div class="member-toast-container" id="toastContainer"></div>
+
 @section Scripts {
     <script>
-        // 初始化 Bootstrap Tooltips
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
+        // ── Bootstrap Tooltips（存成陣列以便後續統一 hide）──
+        const _tooltipInstances = [];
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+                _tooltipInstances.push(new bootstrap.Tooltip(el, { trigger: 'hover' }));
             });
         });
 
-        // 顯示成功訊息
+        function hideAllTooltips() {
+            _tooltipInstances.forEach(t => t.hide());
+        }
+
+        // ================================================================
+        // Drawer 控制
+        // ================================================================
+        function openDrawer(memberId) {
+            // 先關閉所有殘留的 tooltip，避免卡在 Drawer 上方
+            hideAllTooltips();
+
+            const drawer   = document.getElementById('memberDrawer');
+            const overlay  = document.getElementById('drawerOverlay');
+            const loading  = document.getElementById('drawerLoading');
+            const content  = document.getElementById('drawerContent');
+
+            content.innerHTML = '';
+            loading.style.display = 'flex';
+            overlay.classList.add('show');
+            drawer.classList.add('open');
+
+            fetch(`/Admin/Members/EditPartial/${memberId}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('伺服器錯誤 ' + res.status);
+                return res.text();
+            })
+            .then(html => {
+                loading.style.display = 'none';
+                content.innerHTML = html;
+                initDrawerForm();
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                content.innerHTML = `<div class="p-4 text-danger"><i class="bx bx-error-circle me-2"></i>載入失敗：${err.message}</div>`;
+            });
+        }
+
+        function closeDrawer() {
+            document.getElementById('memberDrawer').classList.remove('open');
+            document.getElementById('drawerOverlay').classList.remove('show');
+        }
+
+        // Esc 鍵關閉 drawer
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeDrawer();
+        });
+
+        // ================================================================
+        // 初始化 Drawer 內的表單邏輯（每次載入後呼叫）
+        // ================================================================
+        function initDrawerForm() {
+            const form = document.getElementById('drawerEditForm');
+            if (!form) return;
+
+            // 縣市變更 → 更新區域選單
+            const citySelect   = form.querySelector('#drawerCitySelect');
+            const regionSelect = form.querySelector('#drawerRegionSelect');
+            if (citySelect && regionSelect) {
+                // 讀取 data attribute 中的初始值（由 Razor 從 Model 寫入）
+                const initialCity   = citySelect.dataset.initialCity   || '';
+                const initialRegion = regionSelect.dataset.initialRegion || '';
+
+                citySelect.addEventListener('change', function () {
+                    const selectedCity = this.value;
+                    regionSelect.innerHTML = '<option value="">載入中...</option>';
+
+                    fetch(`/Admin/Members/GetRegions?city=${encodeURIComponent(selectedCity)}`)
+                        .then(r => r.json())
+                        .then(regions => {
+                            regionSelect.innerHTML = regions
+                                .map(r => `<option value="${r.value}">${r.text}</option>`)
+                                .join('');
+
+                            // 若城市切換回初始城市，嘗試還原初始區域的 selected 狀態
+                            if (selectedCity === initialCity && initialRegion) {
+                                const matchOpt = regionSelect.querySelector(`option[value="${initialRegion}"]`);
+                                if (matchOpt) matchOpt.selected = true;
+                            }
+                        })
+                        .catch(() => {
+                            regionSelect.innerHTML = '<option value="">載入失敗</option>';
+                        });
+                });
+            }
+
+            // 黑名單 toggle 確認
+            const blacklistSwitch = form.querySelector('#drawerBlacklistSwitch');
+            if (blacklistSwitch) {
+                blacklistSwitch.addEventListener('change', function (e) {
+                    if (e.target.checked) {
+                        if (!confirm('確定要將此會員加入黑名單嗎？\n加入後該會員將無法登入系統。')) {
+                            e.target.checked = false;
+                        }
+                    }
+                });
+            }
+
+            // 圖片預覽
+            const avatarInput = form.querySelector('#drawerAvatarFile');
+            const avatarImg   = form.querySelector('#drawerAvatarPreview');
+            if (avatarInput && avatarImg) {
+                avatarInput.addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                    if (!allowed.includes(file.type)) {
+                        alert('只允許 JPG / PNG / GIF 格式');
+                        this.value = '';
+                        return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('圖片不能超過 5MB');
+                        this.value = '';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = ev => { avatarImg.src = ev.target.result; };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // ── AJAX 表單提交 ──
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const saveBtn = form.querySelector('#drawerSaveBtn');
+                const originalHtml = saveBtn.innerHTML;
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>儲存中...';
+
+                try {
+                    const formData = new FormData(this);
+
+                    // 確保 checkbox 未勾選時也傳遞 false
+                    const blacklistEl = form.querySelector('#drawerBlacklistSwitch');
+                    if (blacklistEl && !blacklistEl.checked) {
+                        formData.set('IsBlacklisted', 'false');
+                    }
+
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        closeDrawer();
+                        updateMemberRow(result.member);
+                        showToast('success', '<i class="bx bx-check-circle me-2"></i>' + result.message);
+                    } else {
+                        showToast('error', '<i class="bx bx-error-circle me-2"></i>' + (result.message || '儲存失敗'));
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalHtml;
+                    }
+                } catch (err) {
+                    showToast('error', '<i class="bx bx-error-circle me-2"></i>發生錯誤，請重試');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        // ================================================================
+        // 更新列表中指定會員那一列的資料（不重整頁面）
+        // ================================================================
+        function updateMemberRow(member) {
+            const row = document.querySelector(`tr[data-member-id="${member.userId}"]`);
+            if (!row) return;
+
+            // 姓名
+            const nameEl = row.querySelector('.member-name');
+            if (nameEl) nameEl.textContent = member.fullName;
+
+            // Email
+            const emailEl = row.querySelector('.member-email');
+            if (emailEl) emailEl.textContent = member.email;
+
+            // 頭像（如果有更新）
+            if (member.avatarUrl) {
+                const avatarImg = row.querySelector('.member-avatar-img');
+                if (avatarImg) avatarImg.src = member.avatarUrl;
+            }
+
+            // 狀態 badge
+            const statusCell = row.querySelector('.member-status-cell');
+            if (statusCell) {
+                if (member.isBlacklisted) {
+                    statusCell.innerHTML = '<span class="badge bg-label-danger"><i class="bx bx-block me-1"></i>停權</span>';
+                } else {
+                    statusCell.innerHTML = '<span class="badge bg-label-success"><i class="bx bx-check-circle me-1"></i>正常</span>';
+                }
+            }
+        }
+
+        // ================================================================
+        // Toast 通知
+        // ================================================================
+        function showToast(type, html) {
+            // 優先使用 SweetAlert（已在 layout 載入）
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: type,
+                    html: html,
+                    timer: 2500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end',
+                    timerProgressBar: true
+                });
+                return;
+            }
+
+            // Fallback：自訂 toast
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `member-toast ${type}`;
+            toast.innerHTML = html;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ── TempData 成功訊息（整頁提交 fallback 後回來顯示）──
         @if (TempData["Success"] != null)
         {
             <text>
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'success',
-                    title: '成功',
-                    text: @Html.Raw(Json.Serialize(TempData["Success"])),
-                    timer: 2500,
-                    showConfirmButton: false
-                });
-            } else {
-                alert(@Html.Raw(Json.Serialize(TempData["Success"])));
-            }
+            document.addEventListener('DOMContentLoaded', function () {
+                showToast('success', @Html.Raw(Json.Serialize(TempData["Success"].ToString())));
+            });
             </text>
         }
     </script>

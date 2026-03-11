@@ -20,5 +20,9 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Members
         public string LevelName { get; set; }
         public int PointBalance { get; set; }
         public bool IsBlacklisted { get; set; }
+        // 地址欄位（供編輯面板讀取與儲存）
+        public string City { get; set; } = "";
+        public string Region { get; set; } = "";
+        public string Street { get; set; } = "";
     }
 }
