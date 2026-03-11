@@ -3,7 +3,8 @@ using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Repositories.Members;
 using System.Collections.Generic;
 
-namespace ISpanShop.Services.Members;
+namespace ISpanShop.Services.Members
+{
 	/// <summary>
 	/// 登入紀錄服務實現 - 處理登入紀錄相關業務邏輯
 	/// </summary>
@@ -26,3 +27,4 @@ namespace ISpanShop.Services.Members;
 			return _loginHistoryRepository.SearchPaged(criteria);
 		}
 	}
+}

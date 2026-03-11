@@ -1,0 +1,157 @@
+@model ISpanShop.Models.EfModels.Role
+
+@{
+    ViewData["Title"] = "新增角色";
+    Layout = "_SneatLayout";
+}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    <!-- 頁面標題 -->
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-area="Admin" asp-controller="Role" asp-action="Index">角色管理</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">新增角色</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold mb-1">
+            <i class="bx bx-plus-circle text-primary me-2"></i>新增角色
+        </h4>
+        <p class="text-muted mb-0">建立新的系統角色</p>
+    </div>
+
+    <!-- 表單卡片 -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bx bx-edit-alt me-2"></i>角色資訊
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-area="Admin" asp-controller="Role" asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <!-- 角色名稱 -->
+                        <div class="mb-3">
+                            <label asp-for="RoleName" class="form-label required">
+                                <i class="bx bx-shield me-1"></i>角色名稱
+                            </label>
+                            <input asp-for="RoleName" 
+                                   class="form-control" 
+                                   placeholder="請輸入角色名稱 (例如：Admin、Manager、User)" 
+                                   maxlength="50"
+                                   required />
+                            <span asp-validation-for="RoleName" class="text-danger small"></span>
+                            <div class="form-text">
+                                <i class="bx bx-info-circle me-1"></i>角色名稱將用於系統權限識別，建議使用英文
+                            </div>
+                        </div>
+
+                        <!-- 描述 -->
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label">
+                                <i class="bx bx-detail me-1"></i>描述
+                            </label>
+                            <textarea asp-for="Description" 
+                                      class="form-control" 
+                                      rows="4" 
+                                      placeholder="請輸入角色的詳細描述與權限說明"
+                                      maxlength="500"></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                            <div class="form-text">
+                                <i class="bx bx-info-circle me-1"></i>詳細說明此角色的用途與權限範圍 (選填)
+                            </div>
+                        </div>
+
+                        <!-- 按鈕群組 -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a asp-area="Admin" asp-controller="Role" asp-action="Index" 
+                               class="btn btn-label-secondary">
+                                <i class="bx bx-arrow-back me-1"></i>取消返回
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bx bx-save me-1"></i>儲存角色
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 提示卡片 -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bx bx-bulb text-warning me-2"></i>角色建立提示
+                    </h6>
+                    <ul class="mb-0 ps-3">
+                        <li class="mb-2">
+                            <strong>角色名稱</strong>：建議使用有意義的英文名稱，方便程式碼中進行權限判斷
+                        </li>
+                        <li class="mb-2">
+                            <strong>描述內容</strong>：清楚說明此角色的職責與權限範圍，便於團隊管理
+                        </li>
+                        <li>
+                            <strong>權限配置</strong>：角色建立後，可在列表頁面配置對應的系統權限
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // 表單驗證與提交處理
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const roleNameInput = document.querySelector('input[name="RoleName"]');
+            
+            // 角色名稱即時驗證
+            if (roleNameInput) {
+                roleNameInput.addEventListener('blur', function() {
+                    const value = this.value.trim();
+                    if (value && !/^[a-zA-Z0-9_-]+$/.test(value)) {
+                        this.classList.add('is-invalid');
+                        let feedback = this.parentElement.querySelector('.invalid-feedback');
+                        if (!feedback) {
+                            feedback = document.createElement('div');
+                            feedback.className = 'invalid-feedback';
+                            this.parentElement.appendChild(feedback);
+                        }
+                        feedback.textContent = '角色名稱僅允許英文、數字、底線和連字號';
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            }
+
+            // 表單提交確認
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    </script>
+
+    <style>
+        .required::after {
+            content: " *";
+            color: #ff4d4f;
+        }
+        
+        .form-control:focus {
+            border-color: #696cff;
+            box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25);
+        }
+    </style>
+}

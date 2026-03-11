@@ -145,6 +145,32 @@ namespace ISpanShop.Repositories.Members
 					return query.OrderByDescending(lh => lh.LoginTime);
 			}
 		}
+
+		public int GetCount()
+		{
+			return _context.LoginHistories.Count();
+		}
+
+		public void AddRange(List<LoginHistoryDto> loginHistories)
+		{
+			if (loginHistories == null || !loginHistories.Any())
+			{
+				return;
+			}
+
+			// 將 DTO 轉換為 Entity
+			var entities = loginHistories.Select(dto => new LoginHistory
+			{
+				UserId = dto.UserId,
+				LoginTime = dto.LoginTime,
+				Ipaddress = dto.Ipaddress,
+				IsSuccessful = dto.IsSuccessful
+			}).ToList();
+
+			// 批次新增
+			_context.LoginHistories.AddRange(entities);
+			_context.SaveChanges();
+		}
 	}
 }
 
