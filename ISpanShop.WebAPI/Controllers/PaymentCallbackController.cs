@@ -25,6 +25,7 @@ namespace ISpanShop.WebAPI.Controllers
 		{
 			// 1. 將回傳資料轉為 Dictionary，以便驗證加密碼
 			var dict = collection.ToDictionary(k => k.Key, v => v.Value.ToString());
+			dict.Remove("CheckMacValue");
 
 			// 2. 驗證 CheckMacValue (確保這封信真的是綠界寄的，不是駭客偽造)
 			if (!_paymentService.ValidateCheckMacValue(dict))

@@ -31,7 +31,8 @@ namespace ISpanShop.Services
 				{ "TotalAmount", order.TotalAmount.ToString("F0") },
 				{ "TradeDesc", EcpayHelper.CleanString("訂單付款") },
 				{ "ItemName", string.IsNullOrEmpty(itemNames) ? "商品1" : itemNames },
-				{ "ReturnURL", "https://localhost:5001/Payment/Return" },
+				{ "ReturnURL", "https://localhost:7028/api/PaymentCallback" }, // WebAPI 的非同步回傳
+				{ "OrderResultURL", "https://localhost:7125/Payment/Return" }, // 使用者瀏覽器跳回的網址
 				{ "ChoosePayment", "ALL" }
 			};
 
