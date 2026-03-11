@@ -11,5 +11,7 @@ namespace ISpanShop.Services
 
 		// 管理員回覆工單並結案
 		Task ReplyAndCloseTicketAsync(int id, string adminReply);
+
+		Task<SupportTicketDto> GetTicketDetailsAsync(int id);
 	}
 }

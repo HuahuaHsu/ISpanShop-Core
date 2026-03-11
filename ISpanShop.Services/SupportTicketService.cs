@@ -59,5 +59,25 @@ namespace ISpanShop.Services
 				await _repo.UpdateAsync(ticket);
 			}
 		}
+		public async Task<SupportTicketDto> GetTicketDetailsAsync(int id)
+		{
+			var e = await _repo.GetByIdAsync(id);
+			if (e == null) return null;
+
+			return new SupportTicketDto
+			{
+				Id = e.Id,
+				UserId = e.UserId,
+				OrderId = e.OrderId,
+				Category = e.Category,
+				Subject = e.Subject,
+				Description = e.Description,
+				AttachmentUrl = e.AttachmentUrl,
+				Status = (byte)(e.Status ?? 0),
+				AdminReply = e.AdminReply,
+				CreatedAt = e.CreatedAt ?? DateTime.MinValue,
+				ResolvedAt = e.ResolvedAt
+			};
+		}
 	}
 }

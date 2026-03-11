@@ -1,0 +1,89 @@
+﻿@model ISpanShop.MVC.Models.ViewModels.SupportTicketVm
+
+@{
+    ViewData["Title"] = "處理客服工單";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">工單資訊 #@Model.Id</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>建立時間：</strong> @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</p>
+                    <p><strong>分類：</strong> <span class="badge bg-secondary">@Model.CategoryName</span></p>
+
+                    @if (Model.OrderId.HasValue)
+                    {
+                        <p><strong>相關訂單編號：</strong> @Model.OrderId</p>
+                    }
+
+                    <hr />
+                    <h5 class="card-title text-primary">@Model.Subject</h5>
+                    <p class="card-text" style="white-space: pre-wrap;">@Model.Description</p>
+
+                    @if (!string.IsNullOrEmpty(Model.AttachmentUrl))
+                    {
+                        <div class="mt-3">
+                            <strong>附件圖片：</strong><br />
+                            <img src="@Model.AttachmentUrl" alt="附件圖片" class="img-fluid rounded border mt-2" style="max-height: 200px;" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">管理員回覆區</h5>
+                </div>
+                <div class="card-body">
+                    @* 如果狀態是2(已結案)，就顯示過去的回覆並鎖定表單 *@
+                    @if (Model.Status == 2)
+                    {
+                        <div class="alert alert-success">
+                            <strong>此工單已結案。</strong>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">歷史回覆紀錄：</label>
+                            <textarea class="form-control" rows="6" readonly>@Model.AdminReply</textarea>
+                        </div>
+                        <a asp-action="Index" class="btn btn-secondary w-100">返回列表</a>
+                    }
+                    else
+                    {
+                        <form asp-action="Reply">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                            @* 隱藏欄位帶上 ID 等必要資訊 *@
+                            <input type="hidden" asp-for="Id" />
+                            <input type="hidden" asp-for="Subject" />
+                            <input type="hidden" asp-for="Description" />
+                            <input type="hidden" asp-for="Category" />
+
+                            <div class="mb-3">
+                                <label asp-for="AdminReply" class="form-label fw-bold text-danger">請輸入回覆內容 (送出後即結案)：</label>
+                                <textarea asp-for="AdminReply" class="form-control" rows="6" placeholder="親愛的顧客您好..."></textarea>
+                                <span asp-validation-for="AdminReply" class="text-danger"></span>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <a asp-action="Index" class="btn btn-outline-secondary">取消並返回</a>
+                                <button type="submit" class="btn btn-primary">送出回覆並結案</button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -18,5 +18,9 @@ namespace ISpanShop.MVC.Models.ViewModels
 		public string AdminReply { get; set; }
 
 		public DateTime CreatedAt { get; set; }
+
+		public string Description { get; set; }
+		public string AttachmentUrl { get; set; }
+		public long? OrderId { get; set; }
 	}
 }
