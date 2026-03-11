@@ -1,0 +1,88 @@
+﻿@model ISpanShop.Models.DTOs.MemberDto
+@{
+    ViewData["Title"] = "會員詳細資料";
+}
+
+<div class="max-w-4xl mx-auto py-8">
+    <form asp-action="Edit" class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <input type="hidden" asp-for="Id" />
+
+        <div class="p-8 grid grid-cols-12 gap-8">
+            <div class="col-span-12 md:col-span-3 flex flex-col items-center text-center">
+                <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-3xl font-bold mb-3">
+                    @* 如果有真實 FullName 取第一個字，否則取 Account *@
+                    @((Model.FullName ?? Model.Account).Substring(0, 1).ToUpper())
+                </div>
+                <h3 class="font-bold text-gray-800">@(Model.FullName ?? Model.Account)</h3>
+                <p class="text-sm text-gray-500">@Model.LevelName</p>
+                <div class="mt-2 text-orange-500 font-bold">P @Model.PointBalance</div>
+            </div>
+
+            <div class="col-span-12 md:col-span-9 space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">帳號</label>
+                        <input asp-for="Account" readonly class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700 cursor-not-allowed" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">姓名</label>
+                        <input asp-for="FullName" readonly class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700 cursor-not-allowed" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Email</label>
+                        <input asp-for="Email" readonly class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700 cursor-not-allowed" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">電話</label>
+                        <input asp-for="PhoneNumber" readonly class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700 cursor-not-allowed" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 uppercase mb-1">通訊地址</label>
+                    <div class="flex space-x-2">
+                        <input asp-for="City" readonly class="w-1/4 px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700" placeholder="縣市" />
+                        <input asp-for="Region" readonly class="w-1/4 px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700" placeholder="區域" />
+                        <input asp-for="Address" readonly class="w-1/2 px-3 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700" placeholder="街道地址" />
+                    </div>
+                </div>
+
+                <hr class="border-gray-100 my-6" />
+
+                <div class="bg-red-50 border border-red-100 rounded-xl p-6 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-red-800 flex items-center">
+                            <i data-lucide="shield-alert" class="w-4 h-4 mr-2"></i> 黑名單狀態
+                        </h4>
+                        <div class="text-xs text-red-600 mt-1">開啟後，該會員將無法登入與下單。</div>
+                    </div>
+
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" asp-for="IsBlacklisted" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    </label>
+                </div>
+
+                <div class="flex items-center p-4 border border-gray-200 rounded-lg bg-gray-50 mt-4">
+                    <input type="checkbox" asp-for="IsSeller" disabled class="w-4 h-4 text-blue-600 border-gray-300 rounded opacity-50">
+                    <input type="hidden" asp-for="IsSeller" />
+
+                    <div class="ml-3">
+                        <span class="block text-sm font-medium text-gray-900">賣家資格</span>
+                        <span class="block text-xs text-gray-500">此狀態僅供檢視，請至賣場管理進行審核。</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-end space-x-3">
+            <a asp-action="Index" class="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm">取消</a>
+            <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md text-sm font-medium">
+                儲存狀態變更
+            </button>
+        </div>
+    </form>
+</div>

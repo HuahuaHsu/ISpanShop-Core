@@ -1,0 +1,197 @@
+[V]建立資料庫連線
+	EF core 反向工程
+	appsettings.json
+		"ConnectionStrings": {
+			"DefaultConnection": "Server=localhost;Database=TodoList;Member Id=sa;Password=your_password;"
+		}
+	在program.cs 註冊DbContext 連線字串
+	  
+
+[V]【後台會員管理實作】
+    [V]1. 建立 MemberDto
+        位置：ISpanShop.Models專案 -> DTOs 資料夾 -> MemberDto.cs
+        -資料存取層 (ISpanShop.Repositories)
+        目的：直接與資料庫對話，負責寫 LINQ 指令。
+
+     [V]2. 建立介面 IMemberRepository
+        位置：ISpanShop.Repositories專案 -> Interfaces 資料夾 -> IMemberRepository.cs
+        說明：定義「搜尋使用者」的方法合約。
+
+     [V]3. 實作 MemberRepository
+        位置：ISpanShop.Repositories專案 -> (根目錄) -> MemberRepository.cs
+        說明：實作介面，使用 EF Core 進行查詢。
+        - 商務邏輯層 (ISpanShop.Services)
+        目的：處理資料轉換 (Entity -> DTO) 與商業規則。
+
+     [V]4. 建立介面 IMemberService
+        位置：ISpanShop.Services專案 -> Interfaces 資料夾 -> IMemberService.cs
+        說明：定義給 MVC Controller 呼叫的方法。
+
+     [V]5. 實作 MemberService
+        位置：ISpanShop.Services專案 -> (根目錄) -> MemberService.cs
+        說明：注入 Repository，取得資料後轉換為 DTO。
+        -依賴注入設定 (ISpanShop.MVC)
+        目的：將上述寫好的 Service 與 Repository 註冊到容器中，讓系統知道 Interface 對應哪個 Class。
+
+     [V]6. 註冊服務
+        位置：ISpanShop.MVC專案 -> Program.cs
+        動作：在 var app = builder.Build(); 這一行之前加入。
+        // 註冊 Repositories註冊 Services
+        builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+        builder.Services.AddScoped<IMemberService, MemberService>();
+         5: 展示層 (ISpanShop.MVC)
+        目的：負責接收請求、組裝 ViewModel 並呈現網頁。
+
+     [V]7. 建立 ViewModel (MemberIndexVm)
+        位置：ISpanShop.MVC專案 -> Models -> Members 資料夾 (需新增) -> MemberIndexVm.cs
+        說明：專門給 View 顯示用的模型 (可能包含顯示格式化)。
+
+     [V]8. 建立 Controller (MembersController)
+        位置：ISpanShop.MVC專案 -> Controllers 資料夾 -> MembersController.cs
+        說明：注入 Service，建立 Index Action。
+     
+     [V]9. 建立 View (Index.cshtml)
+        位置：ISpanShop.MVC專案 -> Views -> Members 資料夾 (需新增) -> Index.cshtml
+        說明：繪製表格。
+
+[V]【後台會員管理實作】
+
+    1: 定義資料傳輸物件 (ISpanShop.Models)
+        目的：對應 Admins 資料表與權限顯示
+        [ V] 建立 AdminsDto 與 AdminsRoleDto
+        - 位置：ISpanShop.Models/DTOs/AdminsDtos.cs
+        - 內容：AdminsDto (AdminId, Account, Email, RoleId, RoleName)
+        - 內容：AdminsRoleDto (RoleId, RoleName) - 用於下拉選單
+
+  
+    2：資料存取層 (ISpanShop.Repositories)
+        目的：直接操作 Admins 資料表 (ADO.NET)
+        [V] 建立介面 IAdminRepository
+            - 位置：ISpanShop.Repositories/Interfaces/IAdminRepository.cs
+            - 方法：
+                IEnumerable<AdminDto> GetAllAdmins()
+                bool UpdateAdminRole(int adminId, int roleId)
+        [V] 實作 AdminRepository
+            - 位置：ISpanShop.Repositories/AdminRepository.cs
+            - SQL GetAllAdmins：
+                SELECT A.Id AS AdminId, A.Account, A.Email,
+                       A.RoleId, R.RoleName
+                FROM Admins A
+                JOIN Roles R ON A.RoleId = R.Id
+            - SQL UpdateAdminRole：
+                UPDATE Admins SET RoleId = @RoleId WHERE Id = @AdminId
+        [V] 建立介面 IAdminRoleRepository（若角色列表需獨立查詢）
+            - 位置：ISpanShop.Repositories/Interfaces/IAdminRoleRepository.cs
+            - 方法：
+                IEnumerable<AdminRoleDto> GetAllRoles()
+        [V] 實作 AdminRoleRepository
+            - 位置：ISpanShop.Repositories/AdminRoleRepository.cs
+            - SQL GetAllRoles：
+                SELECT Id AS RoleId, RoleName FROM Roles
+
+
+      3：商務邏輯層 (ISpanShop.Services)
+        目的：處理管理員相關業務邏輯
+        [ V] 建立介面 IAdminService
+            - 位置：ISpanShop.Services/Interfaces/IAdminService.cs
+            - 方法：
+                IEnumerable<AdminDto> GetAllAdmins() 
+                IEnumerable<AdminRoleDto> GetAllRoles()
+                bool UpdateAdminRole(int adminId, int roleId, int currentAdminId)
+        [ V   ] 實作 AdminService 
+            - 位置：ISpanShop.Services/AdminService.cs
+            - 邏輯：
+                UpdateAdminRole 執行前，檢查
+                adminId != currentAdminId
+                （Self-Lockout Prevention：禁止管理員修改自己的權限）
+                若相同則 throw 或回傳失敗訊息
+
+        4：依賴注入設定 (ISpanShop.MVC)
+        [v ] 在 Program.cs 註冊 Admin 相關服務
+            - 位置：ISpanShop.MVC/Program.cs
+            - 新增：
+                builder.Services.AddScoped<IAdminRepository, AdminRepository>();
+                builder.Services.AddScoped<IAdminRoleRepository, AdminRoleRepository>();
+                builder.Services.AddScoped<IAdminService, AdminService>();
+
+        5：展示層 (ISpanShop.MVC)
+        目的：超級管理員專用的管理介面
+        [v] 建立 ViewModel AdminIndexVm
+            - 位置：ISpanShop.MVC/Models/Admins/AdminIndexVm.cs
+            - 內容：
+                List<AdminDto>     Admins       // 管理員列表
+                List<AdminRoleDto> RoleOptions  // 角色下拉選單來源
+                string             Message      // 操作結果訊息（成功/失敗）
+
+        [V] 建立 AdminsController
+            - 位置：ISpanShop.MVC/Controllers/AdminsController.cs
+            - 權限：[Authorize(Roles = "SuperAdmin")]
+            - Actions：
+                GET  Index()
+                     → 取得所有管理員列表 + 角色選單，回傳 AdminIndexVm
+                POST UpdateRole(int adminId, int roleId)
+                     → 呼叫 AdminService.UpdateAdminRole()
+                     → 操作完成後 RedirectToAction("Index")
+
+        [V] 建立 View Index.cshtml
+            - 位置：ISpanShop.MVC/Views/Admins/Index.cshtml
+            - 功能：
+                - 表格列出所有管理員（帳號、Email、目前角色）
+                - 每列包含 <select> 下拉選單（來源：RoleOptions）
+                - 每列包含「更新」按鈕，POST 至 UpdateRole
+                - 頁面頂端顯示 Message（操作結果提示）
+               // - 自己那列的 <select> 與按鈕設為 disabled
+                 // （前端保護，防止自己修改自己）
+
+ ==================================================================================================================
+   【登入紀錄管理實作與進階列表功能】
+[V] 1. 建立 DTO
+    位置：ISpanShop.Models 專案 -> DTOs 資料夾
+    - 資料傳輸層 (ISpanShop.Models)
+    目的：定義資料庫模型與各層級傳遞用的資料結構。
+    - [V] 建立 LoginHistoryDto.cs，加入 UserAccount 欄位。
+
+[V] 2. 建立 Repository
+    位置：ISpanShop.Repositories 專案 -> Interfaces 與根目錄
+    - 資料存取層 (ISpanShop.Repositories)
+    目的：直接與資料庫對話，負責寫 LINQ 指令。
+    實作細項：
+    - [V] 建立介面 ILoginHistoryRepository.cs。
+    - [V] 實作 LoginHistoryRepository.cs，使用 EF Core (Include/Join) 取得關聯的使用者帳號。
+
+[V] 3. 建立 Service
+    位置：ISpanShop.Services 專案 -> Interfaces 與根目錄
+    - 商務邏輯層 (ISpanShop.Services)
+    目的：處理資料轉換 (Entity -> DTO) 與商業規則。
+    實作細項：
+    - [V] 建立介面 ILoginHistoryService.cs。
+    - [V] 實作 LoginHistoryService.cs，注入 Repository，取得資料後回傳。
+
+[V] 4. 建立 MVC ViewModel
+    位置：ISpanShop.MVC 專案 -> Models/LoginHistories 資料夾
+    - 網頁展示層 (ISpanShop.MVC)
+    目的：將 DTO 封裝進 Vm，準備給 View 渲染畫面。
+    實作細項：
+    - [V] 建立 LoginHistoryIndexVm.cs，加入畫面顯示用的格式化欄位 (如時間字串、狀態文字轉換)。
+
+[V] 5. 建立 MVC Controller 與 View
+    位置：ISpanShop.MVC 專案 -> Controllers 與 Views/LoginHistory 資料夾
+    - 網頁展示層 (ISpanShop.MVC)
+    目的：接收請求，調用 Service 並渲染最終 HTML 介面。
+    實作細項：
+    - [V] 建立 Controller (LoginHistoryController.cs)，調用 Service 並返回視圖。
+    - [V] 建立 View (Index.cshtml)，使用 Bootstrap 5 繪製基本的資料表格。
+
+[V ] 6. 加入進階列表功能 (搜尋、排序與分頁)
+    位置：跨層級擴充 (Models, Repositories, Services, MVC)
+    - 全端功能擴充
+    目的：實作動態查詢、分頁邏輯與前端 UI 互動狀態保持。
+    實作細項：
+    - [V] (DTO) 建立 LoginHistoryCriteria.cs，定義搜尋條件 (Keyword, IsSuccessful, SortColumn, IsAscending, PageNumber, PageSize)。
+    - [V] (Repository) 擴充查詢邏輯，動態套用 .Where, .OrderBy, .Skip().Take()，並回傳總筆數。
+    - [V] (Service) 擴充邏輯，傳遞 Criteria 給 Repository 並包裝分頁結果給上層。
+    - [V] (ViewModel) 擴充 Vm，加入分頁資訊 (總頁數、目前頁碼、總筆數) 及保留目前搜尋與排序狀態。
+    - [V] (View) 擴充搜尋區塊：建立 <form> 表單，包含文字搜尋框與 Checkbox 狀態篩選。
+    - [V] (View) 擴充下拉式分頁：在表格外側左上角，加入每頁筆數 <select> 切換。
+    - [V] (View) 擴充表頭點擊排序：將表格 <th> 改為可點擊連結，支援升降冪切換與箭頭圖示顯示。
+    - [V] (View) 擴充底部導覽分頁：在表格外側右下角，加入 Bootstrap 分頁按鈕元件，點擊時帶上目前的搜尋與排序狀態。

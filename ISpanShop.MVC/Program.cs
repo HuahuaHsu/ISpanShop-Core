@@ -24,6 +24,18 @@ namespace ISpanShop.MVC
 			// Add services to the container.
 			builder.Services.AddControllersWithViews();
 
+			// �o�̪� "DefaultConnection" ������ appsettings.json��appsettings.Development�̪��W�r�@�Ҥ@��
+			builder.Services.AddDbContext<ISpanShopDBContext>
+				(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+				);
+			builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+			builder.Services.AddScoped<MemberService>();
+			builder.Services.AddScoped<IAdminRepository, AdminRepository>();
+			builder.Services.AddScoped<IAdminRoleRepository, AdminRoleRepository>();
+			builder.Services.AddScoped<IAdminService, AdminService>();
+			builder.Services.AddScoped<ILoginHistoryRepository, LoginHistoryRepository>();
+			builder.Services.AddScoped<ILoginHistoryService, LoginHistoryService>();
+
 			// ── Cookie 身份驗證 ──
 			builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
 				.AddCookie(options =>
@@ -102,6 +114,7 @@ namespace ISpanShop.MVC
 
 			app.UseRouting();
 
+			//app.UseAuthorization();
 			// ── 全域例外處理（放在 Routing 之後，授權之前）──
 			app.UseMiddleware<ExceptionHandlingMiddleware>();
 

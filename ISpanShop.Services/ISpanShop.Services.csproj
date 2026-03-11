@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ISpanShop.Common\ISpanShop.Common.csproj" />
     <ProjectReference Include="..\ISpanShop.Models\ISpanShop.Models.csproj" />
     <ProjectReference Include="..\ISpanShop.Repositories\ISpanShop.Repositories.csproj" />

@@ -1,0 +1,269 @@
+@using ISpanShop.MVC.Models.LoginHistories
+@model LoginHistoryIndexVm
+
+@{
+    ViewData["Title"] = "登入紀錄管理";
+    var criteria = Model.SearchCriteria;
+}
+
+<div class="container-fluid px-4 mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-shield-lock me-2"></i>系統登入紀錄
+        </h1>
+        <div>
+            <span class="badge bg-primary rounded-pill px-3 py-2">
+                總筆數: @Model.PaginationInfo.TotalCount
+            </span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            @Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- 搜尋與篩選區域 -->
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-white border-bottom py-3">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-search me-1"></i> 查詢條件</h6>
+        </div>
+        <div class="card-body">
+            <form asp-action="Index" method="get" id="searchForm" class="row g-3">
+                <div class="col-md-4">
+                    <label for="keyword" class="form-label small text-muted">關鍵字 (帳號或 IP)</label>
+                    <input type="text" name="keyword" id="keyword" class="form-control" 
+                           placeholder="搜尋帳號或 IP..." value="@criteria.Keyword">
+                </div>
+                <div class="col-md-3">
+                    <label for="isSuccessful" class="form-label small text-muted">登入狀態</label>
+                    <select name="isSuccessful" id="isSuccessful" class="form-select">
+                        <option value="all" selected="@(criteria.IsSuccessfulFilter == "all")">全部</option>
+                        <option value="success" selected="@(criteria.IsSuccessfulFilter == "success")">登入成功</option>
+                        <option value="failure" selected="@(criteria.IsSuccessfulFilter == "failure")">登入失敗</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="pageSize" class="form-label small text-muted">每頁筆數</label>
+                    <select name="pageSize" id="pageSize" class="form-select" onchange="this.form.submit()">
+                        <option value="10" selected="@(criteria.PageSize == 10)">10</option>
+                        <option value="20" selected="@(criteria.PageSize == 20)">20</option>
+                        <option value="50" selected="@(criteria.PageSize == 50)">50</option>
+                    </select>
+                </div>
+                
+                <input type="hidden" name="sortColumn" value="@criteria.SortColumn" />
+                <input type="hidden" name="sortDirection" value="@criteria.SortDirection" />
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-50">
+                        <i class="search"></i> 搜尋
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary ms-2">重置</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 紀錄列表區域 -->
+    <div class="card shadow-sm overflow-hidden border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr class="text-secondary small text-uppercase">
+                            <th class="ps-4 py-3">
+                                <a asp-action="Index" 
+                                   asp-route-sortColumn="Id" 
+                                   asp-route-sortDirection="@(criteria.SortColumn == "Id" && criteria.SortDirection == "asc" ? "desc" : "asc")"
+                                   asp-route-keyword="@criteria.Keyword"
+                                   asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                   asp-route-pageSize="@criteria.PageSize"
+                                   class="text-decoration-none d-flex align-items-center text-secondary">
+                                    ID
+                                    @if (criteria.SortColumn == "Id")
+                                    {
+                                        <i class="bi bi-sort-@(criteria.SortDirection == "asc" ? "up" : "down") ms-1 text-primary"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th class="py-3">
+                                <a asp-action="Index" 
+                                   asp-route-sortColumn="UserAccount" 
+                                   asp-route-sortDirection="@(criteria.SortColumn == "UserAccount" && criteria.SortDirection == "asc" ? "desc" : "asc")"
+                                   asp-route-keyword="@criteria.Keyword"
+                                   asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                   asp-route-pageSize="@criteria.PageSize"
+                                   class="text-decoration-none d-flex align-items-center text-secondary">
+                                    使用者帳號
+                                    @if (criteria.SortColumn == "UserAccount")
+                                    {
+                                        <i class="bi bi-sort-@(criteria.SortDirection == "asc" ? "up" : "down") ms-1 text-primary"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th class="py-3">
+                                <a asp-action="Index" 
+                                   asp-route-sortColumn="IpAddress" 
+                                   asp-route-sortDirection="@(criteria.SortColumn == "IpAddress" && criteria.SortDirection == "asc" ? "desc" : "asc")"
+                                   asp-route-keyword="@criteria.Keyword"
+                                   asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                   asp-route-pageSize="@criteria.PageSize"
+                                   class="text-decoration-none d-flex align-items-center text-secondary">
+                                    IP 位址
+                                    @if (criteria.SortColumn == "IpAddress")
+                                    {
+                                        <i class="bi bi-sort-@(criteria.SortDirection == "asc" ? "up" : "down") ms-1 text-primary"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th class="py-3">
+                                <a asp-action="Index" 
+                                   asp-route-sortColumn="LoginTime" 
+                                   asp-route-sortDirection="@(criteria.SortColumn == "LoginTime" && criteria.SortDirection == "asc" ? "desc" : "asc")"
+                                   asp-route-keyword="@criteria.Keyword"
+                                   asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                   asp-route-pageSize="@criteria.PageSize"
+                                   class="text-decoration-none d-flex align-items-center text-secondary">
+                                    登入時間
+                                    @if (criteria.SortColumn == "LoginTime")
+                                    {
+                                        <i class="bi bi-sort-@(criteria.SortDirection == "asc" ? "up" : "down") ms-1 text-primary"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th class="text-center py-3">
+                                <a asp-action="Index" 
+                                   asp-route-sortColumn="IsSuccessful" 
+                                   asp-route-sortDirection="@(criteria.SortColumn == "IsSuccessful" && criteria.SortDirection == "asc" ? "desc" : "asc")"
+                                   asp-route-keyword="@criteria.Keyword"
+                                   asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                   asp-route-pageSize="@criteria.PageSize"
+                                   class="text-decoration-none d-inline-flex align-items-center text-secondary">
+                                    狀態
+                                    @if (criteria.SortColumn == "IsSuccessful")
+                                    {
+                                        <i class="bi bi-sort-@(criteria.SortDirection == "asc" ? "up" : "down") ms-1 text-primary"></i>
+                                    }
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        @if (Model.LoginHistories != null && Model.LoginHistories.Any())
+                        {
+                            foreach (var item in Model.LoginHistories)
+                            {
+                                <tr>
+                                    <td class="ps-4 text-muted small">@item.Id</td>
+                                    <td class="fw-bold text-dark">@item.UserAccount</td>
+                                    <td>
+                                        <span class="px-2 py-1 bg-light rounded text-dark small font-monospace">@item.IpAddress</span>
+                                    </td>
+                                    <td class="text-muted small">@item.LoginTimeFormatted</td>
+                                    <td class="text-center">
+                                        <span class="badge @item.StatusClass rounded-pill px-3" style="font-size: 0.75rem;">
+                                            @item.StatusText
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    目前查無符合條件的登入紀錄
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 分頁控制項 -->
+        @if (Model.PaginationInfo.TotalPages > 0)
+        {
+            <div class="card-footer bg-white py-3 border-top">
+                <div class="row align-items-center">
+                    <div class="col-sm-6 text-center text-sm-start mb-3 mb-sm-0 text-muted small">
+                        顯示第 @(((Model.PaginationInfo.CurrentPageNumber - 1) * Model.PaginationInfo.PageSize) + 1) 
+                        至 @(Math.Min(Model.PaginationInfo.CurrentPageNumber * Model.PaginationInfo.PageSize, Model.PaginationInfo.TotalCount)) 
+                        筆，共 @Model.PaginationInfo.TotalCount 筆
+                    </div>
+                    <div class="col-sm-6">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-sm justify-content-center justify-content-sm-end mb-0">
+                                <li class="page-item @(Model.PaginationInfo.CurrentPageNumber == 1 ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-pageNumber="1"
+                                       asp-route-keyword="@criteria.Keyword" asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                       asp-route-sortColumn="@criteria.SortColumn" asp-route-sortDirection="@criteria.SortDirection"
+                                       asp-route-pageSize="@criteria.PageSize">
+                                        <i class="bi bi-chevron-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item @(!Model.PaginationInfo.HasPreviousPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.PaginationInfo.CurrentPageNumber - 1)"
+                                       asp-route-keyword="@criteria.Keyword" asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                       asp-route-sortColumn="@criteria.SortColumn" asp-route-sortDirection="@criteria.SortDirection"
+                                       asp-route-pageSize="@criteria.PageSize">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                                @foreach (var pageNum in Model.PaginationInfo.PageNumbers)
+                                {
+                                    <li class="page-item @(pageNum == Model.PaginationInfo.CurrentPageNumber ? "active" : "")">
+                                        <a class="page-link" asp-action="Index" asp-route-pageNumber="@pageNum"
+                                           asp-route-keyword="@criteria.Keyword" asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                           asp-route-sortColumn="@criteria.SortColumn" asp-route-sortDirection="@criteria.SortDirection"
+                                           asp-route-pageSize="@criteria.PageSize">@pageNum</a>
+                                    </li>
+                                }
+                                <li class="page-item @(!Model.PaginationInfo.HasNextPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.PaginationInfo.CurrentPageNumber + 1)"
+                                       asp-route-keyword="@criteria.Keyword" asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                       asp-route-sortColumn="@criteria.SortColumn" asp-route-sortDirection="@criteria.SortDirection"
+                                       asp-route-pageSize="@criteria.PageSize">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item @(Model.PaginationInfo.CurrentPageNumber == Model.PaginationInfo.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-pageNumber="@Model.PaginationInfo.TotalPages"
+                                       asp-route-keyword="@criteria.Keyword" asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
+                                       asp-route-sortColumn="@criteria.SortColumn" asp-route-sortDirection="@criteria.SortDirection"
+                                       asp-route-pageSize="@criteria.PageSize">
+                                        <i class="bi bi-chevron-double-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <!-- 引入 Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入 Bootstrap 圖示 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        /* 避免 Bootstrap 與 Tailwind 的 base 衝突 */
+        .container-fluid { max-width: 100%; }
+        .table thead th a { transition: color 0.2s; }
+        .table thead th a:hover { color: #0d6efd !important; }
+        .page-link { box-shadow: none !important; }
+        .card { border: 1px solid rgba(0,0,0,.125); }
+        .bg-green-100 { background-color: #d1e7dd !important; color: #0f5132 !important; }
+        .bg-red-100 { background-color: #f8d7da !important; color: #842029 !important; }
+        .bg-gray-100 { background-color: #f8f9fa !important; color: #212529 !important; }
+    </style>
+}
