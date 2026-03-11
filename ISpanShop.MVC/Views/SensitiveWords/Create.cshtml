@@ -23,15 +23,11 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Category" class="form-label">分類</label>
-                            <select asp-for="Category" class="form-select">
+                            <label asp-for="CategoryId" class="form-label">分類</label>
+                            <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId">
                                 <option value="">-- 請選擇分類 --</option>
-                                <option value="髒話">髒話</option>
-                                <option value="政治">政治</option>
-                                <option value="詐騙">詐騙</option>
-                                <option value="廣告">廣告</option>
                             </select>
-                            <span asp-validation-for="Category" class="text-danger"></span>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3 form-check">

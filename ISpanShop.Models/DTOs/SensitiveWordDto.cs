@@ -10,6 +10,8 @@ namespace ISpanShop.Models.DTOs
 	{
 		public int Id { get; set; }
 		public string Word { get; set; }
+
+		public int? CategoryId { get; set; }
 		public string Category { get; set; }
 		public bool IsActive { get; set; }
 		public DateTime CreatedTime { get; set; }

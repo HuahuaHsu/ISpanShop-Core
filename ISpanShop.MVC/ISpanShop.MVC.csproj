@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.12">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ISpanShop.Common\ISpanShop.Common.csproj" />
     <ProjectReference Include="..\ISpanShop.Models\ISpanShop.Models.csproj" />
     <ProjectReference Include="..\ISpanShop.Services\ISpanShop.Services.csproj" />
