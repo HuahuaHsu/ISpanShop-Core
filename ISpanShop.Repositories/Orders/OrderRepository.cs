@@ -19,6 +19,14 @@ namespace ISpanShop.Repositories.Orders
 			_context = context;
 		}
 
+		public async Task<IDictionary<byte, int>> GetOrderStatusCountsAsync()
+		{
+			return await _context.Orders
+				.GroupBy(o => o.Status)
+				.Select(g => new { Status = g.Key ?? 0, Count = g.Count() })
+				.ToDictionaryAsync(x => x.Status, x => x.Count);
+		}
+
 		public async Task<Order> GetOrderByIdAsync(long id)
 		{
 			return await _context.Orders
@@ -26,19 +34,32 @@ namespace ISpanShop.Repositories.Orders
 				.Include(o => o.Store)
 				.Include(o => o.OrderDetails)
 					.ThenInclude(od => od.Product)
+				.Include(o => o.ReturnRequests)
+					.ThenInclude(rr => rr.ReturnRequestImages)
 				.FirstOrDefaultAsync(o => o.Id == id);
 		}
 
 		public async Task UpdateStatusAsync(long id, byte status)
 		{
-			var order = await _context.Orders.FindAsync(id);
+			var order = await _context.Orders.Include(o => o.ReturnRequests).FirstOrDefaultAsync(o => o.Id == id);
 			if (order != null)
 			{
 				order.Status = status;
 				if (status == 3) // 已完成 (Completed = 3)
 				{
 					order.CompletedAt = DateTime.Now;
+					
+					// 如果有退貨申請，標記為已拒絕 (2: Rejected)
+					var rr = order.ReturnRequests.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+					if (rr != null && rr.Status == 0) rr.Status = 2;
 				}
+				else if (status == 6) // 已退款 (Refunded = 6)
+				{
+					// 如果有退貨申請，標記為已核准 (1: Approved)
+					var rr = order.ReturnRequests.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
+					if (rr != null && rr.Status == 0) rr.Status = 1;
+				}
+
 				await _context.SaveChangesAsync();
 			}
 		}
@@ -50,6 +71,13 @@ namespace ISpanShop.Repositories.Orders
 				.ThenInclude(u => u.MemberProfile)
 				.Include(o => o.Store)
 				.AsQueryable();
+
+			// 如果是出貨工作台 (只有待出貨)，載入明細以生成摘要
+			bool isShipmentWorkstation = criteria.Statuses != null && criteria.Statuses.Count == 1 && criteria.Statuses.Contains(1);
+			if (isShipmentWorkstation)
+			{
+				query = query.Include(o => o.OrderDetails);
+			}
 
 			// A1. 基礎資訊篩選
 			if (!string.IsNullOrEmpty(criteria.Keyword))
@@ -105,30 +133,44 @@ namespace ISpanShop.Repositories.Orders
 			};
 
 			var totalCount = await query.CountAsync();
-			var items = await query
+			var orders = await query
 				.Skip((criteria.PageNumber - 1) * criteria.PageSize)
 				.Take(criteria.PageSize)
-				.Select(o => new OrderListDto
+				.ToListAsync();
+
+			var items = orders.Select(o => {
+				var dto = new OrderListDto
 				{
 					OrderId = (int)o.Id,
 					OrderUuid = o.OrderNumber,
 					MemberName = o.User != null && o.User.MemberProfile != null ? o.User.MemberProfile.FullName : "無",
 					TotalAmount = o.FinalAmount,
 					StatusId = o.Status.HasValue ? (int)o.Status.Value : 0,
-					// StatusName 邏輯對應 (與 OrderStatus Enum 同步)
-					StatusName = o.Status == 0 ? "待付款" :
-								 o.Status == 1 ? "待出貨" :
-								 o.Status == 2 ? "運送中" :
-								 o.Status == 3 ? "已完成" :
-								 o.Status == 4 ? "已取消" : "未知",
+					StatusName = o.Status switch {
+						0 => "待付款", 1 => "待出貨", 2 => "運送中", 3 => "已完成",
+						4 => "已取消", 5 => "退貨/款中", 6 => "已退款", _ => "未知"
+					},
 					OrderDate = o.CreatedAt ?? DateTime.MinValue,
 					PaymentDate = o.PaymentDate,
 					CompletedAt = o.CompletedAt,
 					RecipientName = o.RecipientName,
 					RecipientPhone = o.RecipientPhone,
 					StoreName = o.Store != null ? o.Store.StoreName : "平台"
-				})
-				.ToListAsync();
+				};
+
+				if (isShipmentWorkstation && o.OrderDetails != null)
+				{
+					dto.ItemsSummary = string.Join(", ", o.OrderDetails.Select(od => $"{od.ProductName} x{od.Quantity}"));
+					if (o.PaymentDate.HasValue)
+					{
+						var diff = DateTime.Now - o.PaymentDate.Value;
+						dto.WaitingTime = diff.TotalHours >= 24 
+							? $"{(int)diff.TotalDays}天{diff.Hours}小時" 
+							: $"{(int)diff.TotalHours}小時{diff.Minutes}分";
+					}
+				}
+				return dto;
+			}).ToList();
 
 			return new PagedResultDto<OrderListDto> { Items = items, TotalCount = totalCount, PageNumber = criteria.PageNumber, PageSize = criteria.PageSize };
 		}

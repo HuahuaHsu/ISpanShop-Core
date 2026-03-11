@@ -11,6 +11,11 @@ namespace ISpanShop.Services.Orders
 	public interface IOrderService
 	{
 		/// <summary>
+		/// 取得各狀態訂單數量統計
+		/// </summary>
+		Task<IDictionary<byte, int>> GetOrderStatusCountsAsync();
+
+		/// <summary>
 		/// 取得分頁與篩選後的訂單列表 (A & B 需求)
 		/// </summary>
 		Task<PagedResultDto<OrderListDto>> GetFilteredOrdersAsync(OrderSearchDto criteria);

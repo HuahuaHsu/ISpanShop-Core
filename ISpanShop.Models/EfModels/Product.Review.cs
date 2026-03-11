@@ -1,13 +1,13 @@
 namespace ISpanShop.Models.EfModels;
 
 /// <summary>
-/// Product 審核機制擴充欄位（partial class，避免修改 EF Core 自動生成的 Product.cs）
-/// ReviewStatus: 0=待審核, 1=審核通過, 2=已退回
+/// Product 審核機制擴充（屬性已在自動生成的 Product.cs 中定義）
 /// </summary>
 public partial class Product
 {
-    public int ReviewStatus { get; set; }
-    public string? ReviewedBy { get; set; }
-    /// <summary>審核時間（通過與退回共用）</summary>
-    public DateTime? ReviewDate { get; set; }
+    // 這裡不需要重複定義 ReviewStatus, ReviewedBy, ReviewDate
+    // 因為 EF Core Power Tools 已經在 Product.cs 幫您產生了
+    
+    // 您可以在這裡加入額外的唯讀屬性或方法，例如：
+    // public string ReviewStatusText => ReviewStatus == 1 ? "通過" : "待審核";
 }

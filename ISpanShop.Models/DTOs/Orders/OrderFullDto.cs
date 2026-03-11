@@ -15,5 +15,8 @@ namespace ISpanShop.Models.DTOs.Orders
 		public string Note { get; set; }
 		public DateTime? PaymentDate { get; set; }
 		public DateTime? CompletedAt { get; set; }
+
+		// 退貨相關資訊
+		public List<string> ReturnRequestImages { get; set; } = new List<string>();
 	}
 }

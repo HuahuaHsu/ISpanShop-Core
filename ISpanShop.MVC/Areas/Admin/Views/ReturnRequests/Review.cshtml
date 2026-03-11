@@ -1,0 +1,288 @@
+@model ISpanShop.Models.DTOs.Orders.OrderFullDto
+@using ISpanShop.Common.Enums
+
+@{
+    ViewData["Title"] = "退貨/款申請審核 - " + Model.OrderNumber;
+
+    // 定義狀態樣式
+    var statusCss = Model.Status switch
+    {
+        OrderStatus.Returning => "bg-label-warning",
+        OrderStatus.Refunded => "bg-label-success",
+        _ => "bg-label-dark"
+    };
+}
+
+@section Styles {
+    <style>
+        .badge-soft { 
+            padding: .45em .85em; 
+            border-radius: 6px; 
+            font-size: .82rem; 
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            letter-spacing: 0.5px;
+        }
+        
+        .bg-label-warning { background: #FFFBE6 !important; color: #D48806 !important; border: 1px solid #FFE58F; }
+        .bg-label-success { background: #F6FFED !important; color: #52C41A !important; border: 1px solid #B7EB8F; }
+        .bg-label-dark { background: #F5F5F5 !important; color: #8C8C8C !important; border: 1px solid #D9D9D9; }
+        
+        .review-card {
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: none;
+            overflow: hidden;
+        }
+        
+        .review-header {
+            background: linear-gradient(135deg, #f5222d 0%, #ff4d4f 100%);
+            color: white;
+            padding: 1.5rem;
+        }
+        
+        .info-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #8c8c8c;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #262626;
+        }
+    </style>
+}
+
+<div class="container-fluid py-4 font-noto">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-action="Index">退貨管理</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">申請審核</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold mb-0">
+                <i class="bx bx-shield-quarter me-2 text-danger"></i>審核退款申請
+            </h2>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bx bx-arrow-back me-1"></i>返回列表
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- 左側：申請內容 -->
+        <div class="col-lg-8">
+            <div class="card review-card mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bx bx-info-circle me-1 text-primary"></i> 訂單基本資訊</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="info-label">訂單編號</div>
+                                <div class="info-value fw-bold text-danger">#@Model.OrderNumber</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="info-label">下單時間</div>
+                                <div class="info-value">@Model.CreatedAt?.ToString("yyyy-MM-dd HH:mm:ss")</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="info-label">當前狀態</div>
+                                <div><span class="badge-soft @statusCss">@Model.Status.GetDisplayName()</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="info-label">買家名稱</div>
+                                <div class="info-value">@Model.UserName</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="info-label">聯絡電話</div>
+                                <div class="info-value">@Model.RecipientPhone</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="info-label">收貨門市/地址</div>
+                                <div class="info-value">@Model.RecipientAddress</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card review-card">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bx bx-list-ul me-1 text-primary"></i> 退貨商品明細</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">商品名稱</th>
+                                <th>規格</th>
+                                <th class="text-end">單價</th>
+                                <th class="text-center">數量</th>
+                                <th class="text-end pe-4">小計</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Details)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-medium">@item.ProductName</td>
+                                    <td>@item.VariantName</td>
+                                    <td class="text-end">@item.Price.ToString("C0")</td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-end pe-4 fw-bold">@item.SubTotal.ToString("C0")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-light py-3 border-top-0">
+                    <div class="row align-items-center">
+                        <div class="col text-end">
+                            <span class="text-muted fw-bold me-3">應退款總額 (含運費)</span>
+                            <span class="h4 fw-black text-danger mb-0">@Model.FinalAmount.ToString("C0")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：審核操作區 -->
+        <div class="col-lg-4">
+            <div class="card review-card border-top border-5 border-danger mb-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-4">退款審核操作</h5>
+                    
+                    <div class="bg-light p-3 rounded-3 mb-4">
+                        <label class="info-label d-block mb-1">買家退貨/退款原因</label>
+                        <p class="mb-0 text-dark fw-bold">
+                            @(string.IsNullOrEmpty(Model.Note) ? "買家未提供具體原因，請謹慎審核。" : Model.Note)
+                        </p>
+                    </div>
+
+                    <!-- 退貨憑證圖片區 -->
+                    <div class="mb-4">
+                        <label class="info-label d-block mb-2">退貨憑證圖片</label>
+                        <div class="d-flex flex-wrap gap-2" id="evidence-images">
+                            @if(Model.ReturnRequestImages != null && Model.ReturnRequestImages.Any())
+                            {
+                                foreach (var img in Model.ReturnRequestImages)
+                                {
+                                    <div class="position-relative">
+                                        <img src="@img" class="rounded border cursor-pointer img-thumbnail" style="width:100px; height:100px; object-fit:cover;" onclick="zoomImage(this.src)">
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <small class="text-muted italic">買家未上傳圖片憑證</small>
+                            }
+                        </div>
+                    </div>
+
+                    @if (Model.Status == OrderStatus.Returning)
+                    {
+                        <div class="alert alert-warning border-0 small mb-4">
+                            <i class="bx bx-info-circle me-1"></i> 
+                            點擊「核准退款」後，系統將標記訂單為「已退款」。
+                        </div>
+
+                        <div class="d-grid gap-3">
+                            <button type="button" class="btn btn-danger btn-lg rounded-pill" onclick="handleReview('Approve')">
+                                <i class="bx bx-check-double me-1"></i> 核准退款並撥款
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-lg rounded-pill" onclick="handleReview('Reject')">
+                                <i class="bx bx-x me-1"></i> 駁回退款申請
+                            </button>
+                        </div>
+                    }
+                    else if (Model.Status == OrderStatus.Refunded)
+                    {
+                        <div class="text-center py-4">
+                            <div class="display-1 text-success mb-3">
+                                <i class="bx bx-check-shield"></i>
+                            </div>
+                            <h4 class="fw-bold text-success">審核已完成</h4>
+                            <p class="text-muted">此申請已於先前核准並退款結案</p>
+                        </div>
+                    }
+                </div>
+                <div class="card-footer bg-light text-center py-3">
+                    <small class="text-muted">審核歷程將紀錄於系統日誌中</small>
+                </div>
+            </div>
+
+            <!-- 輔助資訊 -->
+            <div class="card review-card">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">審核指引</h6>
+                    <ul class="ps-3 mb-0 small text-muted">
+                        <li class="mb-2">確認商品是否已寄回 (如適用)。</li>
+                        <li class="mb-2">確認退款金額是否符合約定。</li>
+                        <li class="mb-2">如有爭議，請先透過聊聊與買家溝通。</li>
+                        <li>駁回申請將會使訂單恢復為「已完成」狀態。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function handleReview(action) {
+            const title = action === 'Approve' ? '確定要核准退款嗎？' : '確定要駁回申請嗎？';
+            const text = action === 'Approve' ? '此操作將會執行撥款程序，完成後不可撤回。' : '訂單狀態將會恢復為「已完成」。';
+            const confirmButtonColor = action === 'Approve' ? '#f5222d' : '#8c8c8c';
+            const confirmButtonText = action === 'Approve' ? '核准並撥款' : '確定駁回';
+
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: confirmButtonColor,
+                cancelButtonColor: '#e8edf2',
+                confirmButtonText: confirmButtonText,
+                cancelButtonText: '取消',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const url = action === 'Approve' 
+                        ? '@Url.Action("Approve", "ReturnRequests")' 
+                        : '@Url.Action("Reject", "ReturnRequests")';
+                    
+                    $.ajax({
+                        url: url + '/' + @Model.Id,
+                        type: 'POST',
+                        success: function(res) {
+                            if (res.success) {
+                                Swal.fire({
+                                    title: '操作成功',
+                                    text: res.message,
+                                    icon: 'success'
+                                }).then(() => {
+                                    window.location.href = '@Url.Action("Index", "ReturnRequests")';
+                                });
+                            } else {
+                                Swal.fire('錯誤', res.message, 'error');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

@@ -47,6 +47,8 @@ public partial class Order
 
     public virtual ICollection<PaymentLog> PaymentLogs { get; set; } = new List<PaymentLog>();
 
+    public virtual ICollection<ReturnRequest> ReturnRequests { get; set; } = new List<ReturnRequest>();
+
     public virtual Store Store { get; set; }
 
     public virtual ICollection<SupportTicket> SupportTickets { get; set; } = new List<SupportTicket>();

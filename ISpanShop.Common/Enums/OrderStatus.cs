@@ -12,6 +12,8 @@ namespace ISpanShop.Common.Enums
 		Processing = 1, // 處理中
 		Shipped = 2,    // 已出貨
 		Completed = 3,  // 已完成
-		Cancelled = 4   // 已取消
+		Cancelled = 4,  // 已取消
+		Returning = 5,  // 退貨/款中
+		Refunded = 6    // 已退款
 	}
 }

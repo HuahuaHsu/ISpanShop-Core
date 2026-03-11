@@ -19,6 +19,8 @@ public partial class CategorySpec
 
     public bool IsActive { get; set; }
 
+    public bool AllowCustomInput { get; set; }
+
     public virtual ICollection<CategorySpecMapping> CategorySpecMappings { get; set; } = new List<CategorySpecMapping>();
 
     public virtual ICollection<CategorySpecOption> CategorySpecOptions { get; set; } = new List<CategorySpecOption>();

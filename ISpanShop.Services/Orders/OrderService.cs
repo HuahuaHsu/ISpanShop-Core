@@ -18,6 +18,11 @@ namespace ISpanShop.Services.Orders
 			_orderRepository = orderRepository;
 		}
 
+		public async Task<IDictionary<byte, int>> GetOrderStatusCountsAsync()
+		{
+			return await _orderRepository.GetOrderStatusCountsAsync();
+		}
+
 		public async Task<PagedResultDto<OrderListDto>> GetFilteredOrdersAsync(OrderSearchDto criteria)
 		{
 			return await _orderRepository.GetFilteredOrdersAsync(criteria);
@@ -47,6 +52,10 @@ namespace ISpanShop.Services.Orders
 				PaymentDate = o.PaymentDate,
 				CompletedAt = o.CompletedAt,
 				Note = o.Note,
+				ReturnRequestImages = o.ReturnRequests
+					.SelectMany(rr => rr.ReturnRequestImages)
+					.Select(rri => rri.ImageUrl)
+					.ToList(),
 				Details = o.OrderDetails.Select(od => new OrderDetailDto
 				{
 					Id = od.Id,

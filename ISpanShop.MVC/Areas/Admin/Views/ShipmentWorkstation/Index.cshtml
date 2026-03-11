@@ -1,0 +1,227 @@
+@model ISpanShop.MVC.Areas.Admin.Models.Orders.OrderIndexVm
+
+@{
+    ViewData["Title"] = "出貨工作台 (Shipment Workstation)";
+}
+
+@section Styles {
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+        .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+        .cursor-pointer { cursor: pointer; }
+        
+        /* 工作台特有樣式 */
+        .workstation-header { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        .batch-actions { background: #eef2f7; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+        
+        .waiting-time { font-weight: 700; font-size: 0.85rem; }
+        .waiting-urgent { color: #f5222d; animation: pulse 2s infinite; }
+        @@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        .picking-summary { font-size: 0.82rem; color: #595959; background: #fafafa; padding: 4px 8px; border-radius: 4px; border-left: 3px solid #1abb9c; }
+        
+        .stock-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
+        .stock-ok { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .stock-low { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
+    </style>
+}
+
+<div class="container-fluid py-4 font-noto">
+    <div class="workstation-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold mb-1"><i class="bx bx-package me-2 text-primary"></i>出貨工作台</h2>
+                <p class="mb-0 text-muted">目前共有 <span class="fw-bold text-primary">@Model.CountTotal</span> 筆訂單等待出貨</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" onclick="loadShipmentData(1)"><i class="bx bx-refresh"></i> 重新整理</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批次操作區 -->
+    <div class="batch-actions border shadow-sm">
+        <div class="form-check me-3">
+            <input class="form-check-input" type="checkbox" id="selectAll" onclick="toggleSelectAll()">
+            <label class="form-check-label fw-bold" for="selectAll">全選</label>
+        </div>
+        <span class="text-muted me-3">已選取 <span id="selectedCount" class="text-primary fw-bold">0</span> 筆</span>
+        <div class="divider-vertical mx-2"></div>
+        <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="batchMarkAsShipped()">
+            <i class="bx bx-send me-1"></i> 批次更新為「已出貨」
+        </button>
+        <button class="btn btn-outline-info btn-sm rounded-pill px-3" onclick="batchPrint('picking')">
+            <i class="bx bx-printer me-1"></i> 列印揀貨單
+        </button>
+        <button class="btn btn-outline-info btn-sm rounded-pill px-3" onclick="batchPrint('label')">
+            <i class="bx bx-barcode-reader me-1"></i> 列印超商面單
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="shipmentTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th>訂單資訊</th>
+                        <th>揀貨摘要</th>
+                        <th>收件人資訊</th>
+                        <th>等待時長</th>
+                        <th class="text-center">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="shipmentTableBody">
+                    <!-- JS 動態渲染 -->
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination-container p-3 border-top d-flex justify-content-between align-items-center">
+            <div id="paginationInfo" class="text-muted small"></div>
+            <nav id="paginationNav"></nav>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPage = 1;
+
+        $(document).ready(function() {
+            loadShipmentData(1);
+        });
+
+        function loadShipmentData(page) {
+            currentPage = page;
+            $.ajax({
+                url: '@Url.Action("GetShipmentListAjax", "ShipmentWorkstation")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ PageNumber: page, PageSize: 15 }),
+                success: function(res) {
+                    if (res.success) {
+                        renderTable(res.data.items);
+                        renderPagination(res.data);
+                        updateSelectedCount();
+                    }
+                }
+            });
+        }
+
+        function renderTable(items) {
+            const tbody = $('#shipmentTableBody');
+            tbody.empty();
+            if (!items || items.length === 0) {
+                tbody.append('<tr><td colspan="6" class="text-center py-5">🎉 太棒了！目前沒有待出貨的訂單</td></tr>');
+                return;
+            }
+
+            items.forEach(item => {
+                const isUrgent = item.waitingTime && (item.waitingTime.includes('天') || parseInt(item.waitingTime) > 12);
+                tbody.append(`
+                    <tr>
+                        <td>
+                            <input class="form-check-input order-checkbox" type="checkbox" value="${item.orderId}" onchange="updateSelectedCount()">
+                        </td>
+                        <td>
+                            <div class="fw-bold text-primary mb-1">${item.orderUuid}</div>
+                            <div class="small text-muted">${item.memberName} · $${item.totalAmount.toLocaleString()}</div>
+                        </td>
+                        <td>
+                            <div class="picking-summary">${item.itemsSummary || '無明細資料'}</div>
+                            <div class="mt-1">
+                                <span class="stock-badge stock-ok"><i class="bx bx-check"></i> 庫存充足</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-medium">${item.recipientName}</div>
+                            <div class="small text-muted">${item.recipientPhone}</div>
+                            <div class="small text-muted text-truncate" style="max-width: 150px;">${item.storeName}</div>
+                        </td>
+                        <td>
+                            <div class="waiting-time ${isUrgent ? 'waiting-urgent' : ''}">
+                                <i class="bx bx-time-five me-1"></i>${item.waitingTime || '計算中...'}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-icon btn-outline-primary" onclick="markAsShipped(${item.orderId})" title="出貨">
+                                <i class="bx bx-send"></i>
+                            </button>
+                            <a href="@Url.Content("~/Admin/Orders/Details/")${item.orderId}" class="btn btn-sm btn-icon btn-outline-secondary" title="詳情">
+                                <i class="bx bx-show"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function toggleSelectAll() {
+            $('.order-checkbox').prop('checked', $('#selectAll').prop('checked'));
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = $('.order-checkbox:checked').length;
+            $('#selectedCount').text(count);
+        }
+
+        function getSelectedIds() {
+            return $('.order-checkbox:checked').map(function() { return parseInt($(this).val()); }).get();
+        }
+
+        function batchMarkAsShipped() {
+            const ids = getSelectedIds();
+            if (ids.length === 0) { showAlert('請先勾選要處理的訂單'); return; }
+
+            showConfirm(`確定要將這 ${ids.length} 筆訂單標記為「已出貨」嗎？`, function() {
+                $.ajax({
+                    url: '@Url.Action("BatchUpdateStatus", "ShipmentWorkstation")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ OrderIds: ids, NewStatus: 2 }), // 2 = Shipped
+                    success: function(res) {
+                        if (res.success) {
+                            showAlert(res.message, function() { loadShipmentData(currentPage); });
+                        } else {
+                            showAlert('更新失敗: ' + res.message);
+                        }
+                    }
+                });
+            });
+        }
+
+        function markAsShipped(id) {
+            showConfirm('確定將此訂單更新為「已出貨」？', function() {
+                $.ajax({
+                    url: '@Url.Action("BatchUpdateStatus", "ShipmentWorkstation")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ OrderIds: [id], NewStatus: 2 }),
+                    success: function(res) {
+                        if (res.success) {
+                            loadShipmentData(currentPage);
+                        }
+                    }
+                });
+            });
+        }
+
+        function batchPrint(type) {
+            const ids = getSelectedIds();
+            if (ids.length === 0) { showAlert('請先勾選要列印的訂單'); return; }
+            showAlert(`正在生成 ${ids.length} 筆訂單的${type === 'picking' ? '揀貨單' : '面單'}... (示範功能)`);
+        }
+
+        function renderPagination(data) {
+            const nav = $('#paginationNav'); nav.empty();
+            if (data.totalPages <= 1) return;
+            let html = '<ul class="pagination pagination-sm mb-0">';
+            for(let i=1; i<=data.totalPages; i++) {
+                html += `<li class="page-item ${i===data.pageNumber?'active':''}"><a class="page-link" href="javascript:loadShipmentData(${i})">${i}</a></li>`;
+            }
+            html += '</ul>';
+            nav.append(html);
+        }
+    </script>
+}

@@ -103,6 +103,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[ReturnRequestImages]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ReturnRequests]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[ReviewImages]",
          "ObjectType": 0
       },

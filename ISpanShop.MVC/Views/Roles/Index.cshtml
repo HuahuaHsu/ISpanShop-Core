@@ -1,0 +1,63 @@
+@model IEnumerable<ISpanShop.Models.EfModels.Role>
+
+@{
+    ViewData["Title"] = "管理員權限管理";
+}
+
+<div class="bg-white rounded-lg shadow-md p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">角色列表</h1>
+        <a asp-action="Create" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center transition-colors">
+            <i data-lucide="plus" class="w-4 h-4 mr-2"></i> 新增角色
+        </a>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        角色名稱
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        描述
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        操作
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @foreach (var item in Model) {
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        @item.RoleName
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        @item.Description
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end space-x-2">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="text-blue-600 hover:text-blue-900 flex items-center">
+                                <i data-lucide="edit" class="w-4 h-4 mr-1"></i> 編輯
+                            </a>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="text-gray-600 hover:text-gray-900 flex items-center">
+                                <i data-lucide="info" class="w-4 h-4 mr-1"></i> 詳情
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="text-red-600 hover:text-red-900 flex items-center">
+                                <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> 刪除
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        lucide.createIcons();
+    </script>
+}

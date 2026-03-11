@@ -121,6 +121,12 @@ namespace ISpanShop.MVC
 			app.UseAuthentication();
 			app.UseAuthorization();
 
+			// ── 前台訂單追蹤路由 (放在 Area 之前) ──
+			app.MapControllerRoute(
+				name: "order_tracking",
+				pattern: "OrderTracking/{action=Index}/{id?}",
+				defaults: new { controller = "OrderTracking" });
+
 			// ── Area 路由（後台 MVC，必須在 default 之前）──
 			app.MapControllerRoute(
 				name: "areas",

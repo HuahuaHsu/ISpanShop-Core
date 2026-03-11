@@ -1,0 +1,264 @@
+@model ISpanShop.MVC.Areas.Admin.Models.Orders.OrderIndexVm
+@using ISpanShop.Common.Enums
+
+@{
+    ViewData["Title"] = "退貨/款申請管理";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+        .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+        .cursor-pointer { cursor: pointer; }
+        .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 1rem; }
+        
+        /* 統計卡片 - 退貨專用配色 */
+        .stat-card {
+            position: relative;
+            background: #fff;
+            border-radius: 16px;
+            padding: 1.3rem 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,.05);
+            border: 1.5px solid transparent;
+            transition: all .2s;
+            cursor: pointer;
+            overflow: hidden;
+            height: 100%;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.10); }
+        .stat-icon { font-size: 1.7rem; margin-bottom: .2rem; }
+        .stat-num { font-size: 1.9rem; font-weight: 900; line-height: 1; margin-bottom: .15rem; }
+        .stat-label { font-size: .75rem; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; opacity: .65; }
+
+        .stat-total     { border-color: #e2e8f0; }
+        .stat-total     .stat-icon, .stat-total     .stat-num { color: #4a5568; }
+        .stat-pending   { border-color: #ffd8d8; }
+        .stat-pending   .stat-icon, .stat-pending   .stat-num { color: #f5222d; }
+        .stat-completed { border-color: #c6f6d5; }
+        .stat-completed .stat-icon, .stat-completed .stat-num { color: #276749; }
+
+        .stat-active.stat-total      { background: #f7fafc; border-color: #718096; }
+        .stat-active.stat-pending    { background: #fff1f0; border-color: #f5222d; }
+        .stat-active.stat-completed  { background: #f0fff4; border-color: #38a169; }
+
+        .filter-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e8edf2;
+            margin-bottom: 2rem;
+        }
+        .filter-card .form-label {
+            font-size: 0.78rem; font-weight: 700; color: #5a6a7a; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px; display: block;
+        }
+
+        /* 徽章樣式 - 電商質感 */
+        .badge-soft { padding: .45em .85em; border-radius: 6px; font-size: .82rem; font-weight: 600; display: inline-flex; align-items: center; letter-spacing: 0.5px; }
+        .bg-label-warning { background: #FFFBE6 !important; color: #D48806 !important; border: 1px solid #FFE58F; }
+        .bg-label-secondary { background: #FFF1F0 !important; color: #F5222D !important; border: 1px solid #FFA39E; }
+        .bg-label-success { background: #F6FFED !important; color: #52C41A !important; border: 1px solid #B7EB8F; }
+    </style>
+}
+
+<div class="container-fluid py-4 font-noto">
+    <div class="mb-4">
+        <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">
+            <i class="bx bx-undo me-2" style="color:#f5222d;"></i>退貨/款申請管理
+        </h2>
+        <p class="mb-0 fs-7 text-muted">處理買家的售後退貨要求，並進行退款審核與撥款</p>
+    </div>
+
+    <!-- 統計摘要卡片 -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4">
+            <div id="card-all" class="stat-card stat-total stat-active" onclick="filterByStatus(null)">
+                <div class="stat-icon"><i class="bx bx-receipt"></i></div>
+                <div class="stat-num">@Model.CountTotal</div>
+                <div class="stat-label">全部退貨單</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div id="card-5" class="stat-card stat-pending" onclick="filterByStatus(5)">
+                <div class="stat-icon"><i class="bx bx-error-circle"></i></div>
+                <div class="stat-num">@Model.CountPendingPayment</div>
+                <div class="stat-label">待處理申請</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div id="card-6" class="stat-card stat-completed" onclick="filterByStatus(6)">
+                <div class="stat-icon"><i class="bx bx-check-shield"></i></div>
+                <div class="stat-num">@Model.CountCompleted</div>
+                <div class="stat-label">已退款結案</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 篩選卡片 -->
+    <div class="filter-card">
+        <form id="filterForm" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">關鍵字搜尋 (訂單號/姓名/電話)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bx bx-search"></i></span>
+                    <input type="text" class="form-control" name="Keyword" placeholder="輸入關鍵字..." />
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">退貨進度</label>
+                <select class="form-select" name="Statuses" id="statusSelect">
+                    <option value="">-- 全部退貨 --</option>
+                    @foreach (var item in Model.StatusOptions)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-5 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-danger rounded-pill px-4" onclick="loadReturnData(1)">
+                    <i class="bx bx-filter-alt me-1"></i> 執行篩選
+                </button>
+                <button type="reset" class="btn btn-outline-secondary rounded-pill px-4" onclick="resetForm()">
+                    清除條件
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="returnsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>關聯訂單編號</th>
+                        <th>買家名稱</th>
+                        <th>申請退款金額</th>
+                        <th>下單日期</th>
+                        <th>當前狀態</th>
+                        <th class="text-center">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="returnsTableBody">
+                    <!-- JS 動態渲染 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination-container border-top">
+            <div id="paginationInfo" class="text-muted small"></div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0" id="paginationList"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentSort = { SortBy: 'OrderDate', IsDescending: true };
+        let currentPage = 1;
+        const pageSize = 10;
+
+        $(document).ready(function() {
+            loadReturnData(1);
+        });
+
+        function filterByStatus(statusId) {
+            if (statusId === null) {
+                resetForm();
+            } else {
+                $('#statusSelect').val(statusId.toString());
+                loadReturnData(1);
+            }
+            updateCardActiveStatus(statusId);
+        }
+
+        function updateCardActiveStatus(statusId) {
+            $('.stat-card').removeClass('stat-active');
+            if (statusId === null) $('#card-all').addClass('stat-active');
+            else $(`#card-${statusId}`).addClass('stat-active');
+        }
+
+        function resetForm() {
+            $('#filterForm')[0].reset();
+            updateCardActiveStatus(null);
+            loadReturnData(1);
+        }
+
+        function loadReturnData(page) {
+            currentPage = page;
+            const formData = $('#filterForm').serializeArray();
+            let searchParams = { Statuses: [] };
+
+            formData.forEach(item => {
+                if(!item.value) return;
+                if (item.name === 'Statuses') { searchParams.Statuses.push(parseInt(item.value)); }
+                else { searchParams[item.name] = item.value; }
+            });
+            
+            const requestData = { ...searchParams, ...currentSort, PageNumber: page, PageSize: pageSize };
+
+            $.ajax({
+                url: '@Url.Action("GetReturnListAjax", "ReturnRequests")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                success: function(res) {
+                    if (res.success) {
+                        renderTable(res.data.items);
+                        renderPagination(res.data);
+                    }
+                }
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = $('#returnsTableBody');
+            tbody.empty();
+            if(!data || data.length === 0) {
+                tbody.append('<tr><td colspan="6" class="text-center py-5">目前沒有待處理的退貨申請</td></tr>');
+                return;
+            }
+
+            const statusStyles = { 5: 'bg-label-warning', 6: 'bg-label-success' };
+
+            data.forEach(order => {
+                tbody.append(`
+                    <tr>
+                        <td><span class="fw-bold text-danger">${order.orderUuid}</span></td>
+                        <td>${order.memberName}</td>
+                        <td class="fw-bold text-dark">$${order.totalAmount.toLocaleString()}</td>
+                        <td class="small">${new Date(order.orderDate).toLocaleDateString()}</td>
+                        <td><span class="badge-soft ${statusStyles[order.statusId] || 'bg-label-secondary'}">${order.statusName}</span></td>
+                        <td class="text-center">
+                            <a href="@Url.Action("Review", "ReturnRequests")/${order.orderId}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                <i class="bx bx-edit-alt me-1"></i>審核退款
+                            </a>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function renderPagination(data) {
+            const list = $('#paginationList'); list.empty();
+            const info = $('#paginationInfo');
+            if(data.totalCount === 0) { info.text('目前無資料'); return; }
+
+            const startIdx = (data.pageNumber - 1) * data.pageSize + 1;
+            const endIdx = Math.min(data.pageNumber * data.pageSize, data.totalCount);
+            info.text(`顯示第 ${startIdx} 到 ${endIdx} 筆，共 ${data.totalCount} 筆`);
+
+            list.append(`<li class="page-item ${data.pageNumber === 1 ? 'disabled' : ''}"><a class="page-link" href="javascript:loadReturnData(${data.pageNumber - 1})"><i class="bx bx-chevron-left"></i></a></li>`);
+            for (let i = 1; i <= data.totalPages; i++) {
+                if (i == 1 || i == data.totalPages || (i >= data.pageNumber - 2 && i <= data.pageNumber + 2)) {
+                    list.append(`<li class="page-item ${i === data.pageNumber ? 'active' : ''}"><a class="page-link" href="javascript:loadReturnData(${i})">${i}</a></li>`);
+                }
+            }
+            list.append(`<li class="page-item ${data.pageNumber === data.totalPages ? 'disabled' : ''}"><a class="page-link" href="javascript:loadReturnData(${data.pageNumber + 1})"><i class="bx bx-chevron-right"></i></a></li>`);
+        }
+    </script>
+}

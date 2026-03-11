@@ -8,11 +8,45 @@
 @section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+        .font-noto { font-family: 'Noto Sans TC', sans-serif; }
         .select2-container { z-index: 1060 !important; }
         .cursor-pointer { cursor: pointer; }
         .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 1rem; }
         
-        /* 參考 Product 頁面的風格微調 */
+        /* 統計卡片 參考 Product 頁面 */
+        .stat-card {
+            position: relative;
+            background: #fff;
+            border-radius: 16px;
+            padding: 1.3rem 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,.05);
+            border: 1.5px solid transparent;
+            transition: all .2s;
+            cursor: pointer;
+            overflow: hidden;
+            height: 100%;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.10); }
+        .stat-icon { font-size: 1.7rem; margin-bottom: .2rem; }
+        .stat-num { font-size: 1.9rem; font-weight: 900; line-height: 1; margin-bottom: .15rem; }
+        .stat-label { font-size: .75rem; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; opacity: .65; }
+
+        .stat-total     { border-color: #bee3f8; }
+        .stat-total     .stat-icon, .stat-total     .stat-num { color: #2b6cb0; }
+        .stat-pending   { border-color: #fefcbf; }
+        .stat-pending   .stat-icon, .stat-pending   .stat-num { color: #744210; }
+        .stat-processing { border-color: #c6f6d5; }
+        .stat-processing .stat-icon, .stat-processing .stat-num { color: #276749; }
+        .stat-completed { border-color: #e2e8f0; }
+        .stat-completed .stat-icon, .stat-completed .stat-num { color: #4a5568; }
+
+        .stat-active.stat-total      { background: #ebf8ff; border-color: #3182ce; }
+        .stat-active.stat-pending    { background: #fffff0; border-color: #d69e2e; }
+        .stat-active.stat-processing { background: #f0fff4; border-color: #38a169; }
+        .stat-active.stat-completed  { background: #f7fafc; border-color: #718096; }
+
+        /* 篩選卡片 參考 Product 頁面 */
         .filter-card {
             background: #ffffff;
             border-radius: 12px;
@@ -22,22 +56,86 @@
             margin-bottom: 2rem;
         }
         .filter-card .form-label {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 700;
             color: #5a6a7a;
             text-transform: uppercase;
             margin-bottom: 0.5rem;
+            letter-spacing: 1px;
             display: block;
         }
+
+        /* 徽章樣式 - 電商商城質感色系 */
+        .badge-soft { 
+            padding: .45em .85em; 
+            border-radius: 6px; 
+            font-size: .82rem; 
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            letter-spacing: 0.5px;
+        }
+        
+        /* 待付款 - 琥珀色 (Warning) */
+        .bg-label-warning { background: #FFFBE6 !important; color: #D48806 !important; border: 1px solid #FFE58F; }
+        
+        /* 待出貨 (已付款) - 青綠色 (Info/Processing) */
+        .bg-label-info { background: #E6FFFB !important; color: #08979C !important; border: 1px solid #87E8DE; }
+        
+        /* 運送中 - 品牌藍 (Primary) */
+        .bg-label-primary { background: #F0F5FF !important; color: #2F54EB !important; border: 1px solid #ADC6FF; }
+        
+        /* 已完成 - 森林綠 (Success) */
+        .bg-label-success { background: #F6FFED !important; color: #52C41A !important; border: 1px solid #B7EB8F; }
+        
+        /* 已取消 - 玫瑰紅 (Danger/Secondary) */
+        .bg-label-secondary { background: #FFF1F0 !important; color: #F5222D !important; border: 1px solid #FFA39E; }
+        
+        .bg-label-dark { background: #F5F5F5 !important; color: #8C8C8C !important; border: 1px solid #D9D9D9; }
     </style>
 }
 
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0">訂單管理總覽</h2>
+<div class="container-fluid py-4 font-noto">
+    <div class="mb-4">
+        <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">
+            <i class="bx bx-receipt me-2" style="color:#3182ce;"></i>訂單管理總覽
+        </h2>
+        <p class="mb-0 fs-7 text-muted">監控全站訂單狀態、處理出貨與退款流程</p>
     </div>
 
-    <!-- 需求：直接顯示，不用收合按鈕 -->
+    <!-- 統計摘要卡片 -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div id="card-all" class="stat-card stat-total stat-active" onclick="filterByStatus(null)">
+                <div class="stat-icon"><i class="bx bx-list-ul"></i></div>
+                <div class="stat-num">@Model.CountTotal</div>
+                <div class="stat-label">全部訂單</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div id="card-0" class="stat-card stat-pending" onclick="filterByStatus(0)">
+                <div class="stat-icon"><i class="bx bx-time"></i></div>
+                <div class="stat-num">@Model.CountPendingPayment</div>
+                <div class="stat-label">待付款</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div id="card-1" class="stat-card stat-processing" onclick="filterByStatus(1)">
+                <div class="stat-icon"><i class="bx bx-package"></i></div>
+                <div class="stat-num">@Model.CountPendingShipment</div>
+                <div class="stat-label">待出貨</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div id="card-3" class="stat-card stat-completed" onclick="filterByStatus(3)">
+                <div class="stat-icon"><i class="bx bx-check-circle"></i></div>
+                <div class="stat-num">@Model.CountCompleted</div>
+                <div class="stat-label">已完成</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 篩選卡片 -->
     <div class="filter-card">
         <form id="filterForm" class="row g-3 align-items-end">
             <!-- 基礎資訊 -->
@@ -52,7 +150,7 @@
             <!-- 訂單狀態 -->
             <div class="col-md-3">
                 <label class="form-label">訂單狀態</label>
-                <select class="form-select select2" name="Statuses" multiple="multiple">
+                <select class="form-select select2" name="Statuses" multiple="multiple" id="statusSelect">
                     @foreach (var item in Model.StatusOptions)
                     {
                         <option value="@item.Value">@item.Text</option>
@@ -81,7 +179,7 @@
                 </select>
             </div>
 
-            <!-- 需求：選擇日期的區間，像 Product 功能篩選那樣子的風格 (HTML5 Date Input) -->
+            <!-- 日期區間 -->
             <div class="col-md-5 mt-3">
                 <label class="form-label">日期範圍</label>
                 <div class="input-group">
@@ -92,8 +190,22 @@
                 </div>
             </div>
 
+            <!-- 排序方式 -->
+            <div class="col-md-2 mt-3">
+                <label class="form-label">排序方式</label>
+                <select class="form-select" name="SortBy" id="sortSelect">
+                    <option value="OrderDate_desc">下單時間 (新→舊)</option>
+                    <option value="OrderDate_asc">下單時間 (舊→新)</option>
+                    <option value="TotalAmount_desc">總金額 (高→低)</option>
+                    <option value="TotalAmount_asc">總金額 (低→高)</option>
+                    <option value="MemberName_asc">會員名稱 (A→Z)</option>
+                    <option value="MemberName_desc">會員名稱 (Z→A)</option>
+                    <option value="Status_asc">訂單狀態</option>
+                </select>
+            </div>
+
             <!-- 操作按鈕 -->
-            <div class="col-md-7 mt-3 d-flex justify-content-end gap-2">
+            <div class="col-md-5 mt-3 d-flex justify-content-end gap-2">
                 <button type="button" class="btn btn-primary rounded-pill px-4" onclick="loadOrderData(1)">
                     <i class="bx bx-filter-alt me-1"></i> 套用篩選
                 </button>
@@ -104,15 +216,13 @@
         </form>
     </div>
 
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" id="ordersTable">
                 <thead class="table-light">
                     <tr>
-                        <th class="cursor-pointer" onclick="sortBy('OrderDate')">下單時間 <i class="bx bx-sort"></i></th>
-                        <th>付款時間</th>
-                        <th>完成時間</th>
                         <th>訂單編號</th>
+                        <th class="cursor-pointer" onclick="sortBy('OrderDate')">下單時間 <i class="bx bx-sort"></i></th>
                         <th class="cursor-pointer" onclick="sortBy('MemberName')">會員名稱 <i class="bx bx-sort"></i></th>
                         <th>商店</th>
                         <th class="cursor-pointer" onclick="sortBy('TotalAmount')">總金額 <i class="bx bx-sort"></i></th>
@@ -151,19 +261,45 @@
         $(document).ready(function() {
             $('.select2').select2({ placeholder: '選擇狀態', allowClear: true, width: '100%' });
 
-            // 處理 KPI 卡片跳轉
+            // 處理 URL 參數 (如果有)
             const urlParams = new URLSearchParams(window.location.search);
             if(urlParams.get('Statuses')) {
-                $('select[name="Statuses"]').val([urlParams.get('Statuses')]).trigger('change');
+                const status = urlParams.get('Statuses');
+                $('#statusSelect').val([status]).trigger('change');
+                updateCardActiveStatus(status);
             }
 
             loadOrderData(1);
         });
 
+        function filterByStatus(statusId) {
+            if (statusId === null) {
+                resetForm();
+            } else {
+                $('#statusSelect').val([statusId.toString()]).trigger('change');
+                loadOrderData(1);
+            }
+            updateCardActiveStatus(statusId);
+        }
+
+        function updateCardActiveStatus(statusId) {
+            $('.stat-card').removeClass('stat-active');
+            if (statusId === null) {
+                $('#card-all').addClass('stat-active');
+            } else {
+                $(`#card-${statusId}`).addClass('stat-active');
+            }
+        }
+
         function resetForm() {
             $('#filterForm')[0].reset();
             $('.select2').val(null).trigger('change');
+            updateCardActiveStatus(null);
             loadOrderData(1);
+        }
+
+        function handleSortChange() {
+            // 已移除自動觸發，僅保留 sortBy 同步邏輯
         }
 
         function sortBy(column) {
@@ -173,11 +309,25 @@
                 currentSort.SortBy = column;
                 currentSort.IsDescending = true;
             }
+            
+            // 同步下拉選單的值
+            const suffix = currentSort.IsDescending ? 'desc' : 'asc';
+            $('#sortSelect').val(`${column}_${suffix}`);
+            
             loadOrderData(currentPage);
         }
 
         function loadOrderData(page) {
             currentPage = page;
+
+            // 在讀取篩選條件前，先同步下拉選單的排序設定
+            const sortVal = $('#sortSelect').val();
+            if (sortVal) {
+                const parts = sortVal.split('_');
+                currentSort.SortBy = parts[0];
+                currentSort.IsDescending = parts[1] === 'desc';
+            }
+
             const formData = $('#filterForm').serializeArray();
             let searchParams = { Statuses: [] };
 
@@ -196,7 +346,7 @@
             };
 
             $.ajax({
-                url: '/Orders/GetOrderListAjax',
+                url: '@Url.Action("GetOrderListAjax", "Orders")',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(requestData),
@@ -219,7 +369,7 @@
             const tbody = $('#ordersTableBody');
             tbody.empty();
             if(!data || data.length === 0) {
-                tbody.append('<tr><td colspan="9" class="text-center py-5">找不到符合條件的訂單</td></tr>');
+                tbody.append('<tr><td colspan="7" class="text-center py-5">找不到符合條件的訂單</td></tr>');
                 return;
             }
 
@@ -234,17 +384,15 @@
             data.forEach(order => {
                 tbody.append(`
                     <tr>
+                        <td><span class="fw-bold text-primary">${order.orderUuid}</span></td>
                         <td>${formatDateTime(order.orderDate)}</td>
-                        <td>${formatDateTime(order.paymentDate)}</td>
-                        <td>${formatDateTime(order.completedAt)}</td>
-                        <td><span class="fw-medium text-primary">${order.orderUuid}</span></td>
                         <td>${order.memberName}</td>
                         <td><span class="badge bg-label-dark">${order.storeName}</span></td>
                         <td class="fw-bold">$${order.totalAmount.toLocaleString()}</td>
-                        <td><span class="badge ${statusStyles[order.statusId] || 'bg-label-dark'}">${order.statusName}</span></td>
+                        <td><span class="badge-soft ${statusStyles[order.statusId] || 'bg-label-dark'}">${order.statusName}</span></td>
                         <td class="text-center">
-                            <a href="/Orders/Details/${order.orderId}" class="btn btn-sm btn-primary rounded-pill px-3">
-                                訂單詳情
+                            <a href="@Url.Content("~/Admin/Orders/Details/")${order.orderId}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                <i class="bx bx-show me-1"></i>詳情
                             </a>
                         </td>
                     </tr>

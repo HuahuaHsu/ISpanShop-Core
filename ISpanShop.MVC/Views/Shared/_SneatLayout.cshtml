@@ -725,15 +725,29 @@
                             <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
                                 <a href="@Url.Action("Index", "Orders")" class="menu-link">全部訂單</a>
                             </li>
-                            <li class="menu-item"><a href="#" class="menu-link">待出貨</a></li>
-                            <li class="menu-item"><a href="#" class="menu-link">退貨申請</a></li>
+                            <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "ShipmentWorkstation" ? "active" : "")">
+                                <a href="@Url.Action("Index", "ShipmentWorkstation")" class="menu-link">待出貨</a>
+                            </li>
+                            <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "ReturnRequests" ? "active" : "")">
+                                <a href="@Url.Action("Index", "ReturnRequests")" class="menu-link">退貨申請</a>
+                            </li>
+                            <li class="menu-item">
+                                <hr class="mx-3 my-2" style="border-top: 1px solid rgba(255,255,255,0.15);" />
+                            </li>
+                            <li class="menu-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "OrderTracking" ? "active" : "")">
+                                <a href="@Url.Action("Index", "OrderTracking", new { area = "" })" class="menu-link text-info fw-bold">
+                                    <i class="bx bx-search-alt-2 me-2"></i>訂單追蹤(測試)
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     <div class="menu-flyout">
                         <div class="menu-flyout-title">訂單管理</div>
                         <a href="@Url.Action("Index", "Orders")">全部訂單</a>
-                        <a href="#">待出貨</a>
-                        <a href="#">退貨申請</a>
+                        <a href="@Url.Action("Index", "ShipmentWorkstation")">待出貨</a>
+                        <a href="@Url.Action("Index", "ReturnRequests")">退貨申請</a>
+                        <hr class="my-1 border-light opacity-25" />
+                        <a href="@Url.Action("Index", "OrderTracking", new { area = "" })" class="text-info fw-bold">訂單追蹤(測試)</a>
                     </div>
                 </li>
 
