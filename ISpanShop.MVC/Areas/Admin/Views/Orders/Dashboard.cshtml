@@ -638,9 +638,14 @@
                             fontSize: '12px'
                         },
                         formatter: function(val) {
-                            if (denominator === 0) return '0%';
-                            const absPercent = ((val / denominator) * 100).toFixed(1);
-                            return absPercent + '%';
+                            if (type === 'Sales') {
+                                // 銷量顯示：佔全體百分比
+                                if (grandTotalSales === 0) return '0%';
+                                return ((val / grandTotalSales) * 100).toFixed(1) + '%';
+                            } else {
+                                // 營收顯示：格式化金額 (萬)
+                                return '$' + formatRevenue(val);
+                            }
                         },
                         offsetX: 10
                     },
