@@ -26,7 +26,8 @@ namespace ISpanShop.Services.ContentModeration;
 			{
 				Id = e.Id,
 				Word = e.Word,
-				Category = e.Category,
+				CategoryId = e.CategoryId,
+				Category = e.CategoryNavigation?.Name ?? e.Category ?? "未分類",
 				// 【修改這裡】如果 e.IsActive 是 null，就預設為 false
 				IsActive = e.IsActive ?? false,
 				// 【修改這裡】如果 e.CreatedTime 是 null，就給它一個基本時間 (或當下時間)
@@ -43,7 +44,8 @@ namespace ISpanShop.Services.ContentModeration;
 			{
 				Id = entity.Id,
 				Word = entity.Word,
-				Category = entity.Category,
+				CategoryId = entity.CategoryId,
+				Category = entity.CategoryNavigation?.Name ?? entity.Category ?? "未分類",
 				// 【修改這裡】同上，給予預設值防呆
 				IsActive = entity.IsActive ?? false,
 				CreatedTime = entity.CreatedTime ?? DateTime.MinValue
@@ -55,7 +57,7 @@ namespace ISpanShop.Services.ContentModeration;
 			var entity = new SensitiveWord
 			{
 				Word = dto.Word,
-				Category = dto.Category,
+				CategoryId = dto.CategoryId,
 				// dto.IsActive 是 bool，塞進 bool? 的 entity.IsActive 沒問題 (隱含轉換)
 				IsActive = dto.IsActive,
 				CreatedTime = DateTime.Now
@@ -71,7 +73,7 @@ namespace ISpanShop.Services.ContentModeration;
 			if (entity != null)
 			{
 				entity.Word = dto.Word;
-				entity.Category = dto.Category;
+				entity.CategoryId = dto.CategoryId;
 				entity.IsActive = dto.IsActive;
 
 				await _repo.UpdateAsync(entity);

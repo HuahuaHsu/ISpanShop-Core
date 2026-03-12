@@ -65,10 +65,6 @@ namespace ISpanShop.MVC
 					options.SlidingExpiration = true;
 				});
 
-			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
-				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-
 			builder.Services.AddScoped<IProductService, ProductService>();
 
 

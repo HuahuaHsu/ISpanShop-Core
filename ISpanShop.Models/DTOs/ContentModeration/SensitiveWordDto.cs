@@ -12,7 +12,7 @@ namespace ISpanShop.Models.DTOs.ContentModeration
 		public string Word { get; set; }
 
 		public int? CategoryId { get; set; }
-		public string Category { get; set; }
+		public string? Category { get; set; }
 		public bool IsActive { get; set; }
 		public DateTime CreatedTime { get; set; }
 	}
