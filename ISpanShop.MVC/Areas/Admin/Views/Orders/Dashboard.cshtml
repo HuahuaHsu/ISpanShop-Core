@@ -583,7 +583,7 @@
         function showOthersDetail(type) {
             const period = $('#periodFilter').val();
             const storeId = $('#storeFilter').val();
-            const title = type === 'Sales' ? '「其他」類別細節 - 銷售量' : '「其他」類別細節 - 營收額';
+            const title = type === 'Sales' ? '「其他」類別細節 - 銷售量分解' : '「其他」類別細節 - 營收額分解';
             $('#othersDetailTitle').text(title);
 
             $.get(`/Orders/GetOtherCategoriesDetail?type=${type}&period=${period}&storeId=${storeId}`, function(data) {
@@ -592,14 +592,17 @@
                     return;
                 }
 
+                const rawData = data.series[0].data;
+                const totalValue = rawData.reduce((a, b) => a + b, 0);
+
                 const options = {
                     series: [{
-                        name: data.series[0].name,
-                        data: data.series[0].data
+                        name: type === 'Sales' ? '銷售量' : '營收額',
+                        data: rawData
                     }],
                     chart: {
                         type: 'bar',
-                        height: 400,
+                        height: Math.max(400, rawData.length * 40), // 根據資料量動態調整高度
                         toolbar: { show: true },
                         fontFamily: 'Public Sans, -apple-system, sans-serif'
                     },
@@ -608,22 +611,51 @@
                             horizontal: true,
                             borderRadius: 4,
                             distributed: true,
-                            dataLabels: { position: 'top' }
+                            dataLabels: { 
+                                position: 'top'
+                            }
                         }
                     },
+                    dataLabels: {
+                        enabled: true,
+                        textAnchor: 'start',
+                        style: {
+                            colors: ['#566a7f'],
+                            fontWeight: 600,
+                            fontSize: '12px'
+                        },
+                        formatter: function(val) {
+                            if (totalValue === 0) return '0%';
+                            const percentage = ((val / totalValue) * 100).toFixed(1);
+                            return percentage + '%';
+                        },
+                        offsetX: 10
+                    },
                     colors: data.labels.map(name => getCategoryColor(name)),
-                    xaxis: { categories: data.labels },
+                    xaxis: { 
+                        categories: data.labels,
+                        labels: {
+                            formatter: (val) => type === 'Revenue' ? formatRevenue(val) : val
+                        }
+                    },
                     legend: { show: false },
                     tooltip: {
                         y: {
-                            formatter: (val) => type === 'Revenue' ? '$' + val.toLocaleString() : val + ' 件'
+                            formatter: (val) => {
+                                const suffix = type === 'Sales' ? ' 件' : '';
+                                const prefix = type === 'Revenue' ? '$' : '';
+                                return prefix + val.toLocaleString() + suffix;
+                            }
                         }
+                    },
+                    grid: {
+                        xaxis: { lines: { show: true } },
+                        padding: { right: 50 } // 為右側百分比標籤留空間
                     }
                 };
 
                 $('#othersDetailModal').modal('show');
                 
-                // 等 Modal 顯示後再渲染圖表，避免寬度計算錯誤
                 setTimeout(() => {
                     if(othersChart) othersChart.destroy();
                     othersChart = new ApexCharts(document.querySelector("#othersDetailChart"), options);
@@ -687,10 +719,9 @@
                 comparisonChart = new ApexCharts(document.querySelector("#comparisonChart"), barOptions);
                 comparisonChart.render();
 
-                // 2. 更新增長儀表圖 (Gauge Chart)
-                // 支援負成長：取絕對值作為填滿比例，顏色根據正負變更
+                // 2. 更新實心漸層圓環 (Smooth Gradient Radial Bar)
                 const absGrowth = Math.min(Math.abs(data.growthRate), 100);
-                const gaugeOptions = {
+                const radialOptions = {
                     series: [absGrowth],
                     chart: {
                         type: 'radialBar',
@@ -704,19 +735,14 @@
                             hollow: { size: '70%' },
                             track: { 
                                 background: '#f2f2f2', 
-                                strokeWidth: '67%',
+                                strokeWidth: '100%',
                                 margin: 5
                             },
                             dataLabels: {
-                                name: { 
-                                    show: true,
-                                    fontSize: '14px',
-                                    color: '#8592a3',
-                                    offsetY: 40
-                                },
+                                name: { show: false },
                                 value: {
-                                    offsetY: -10,
-                                    fontSize: '28px',
+                                    offsetY: 10,
+                                    fontSize: '32px',
                                     color: data.growthRate >= 0 ? '#696cff' : '#ff3e1d',
                                     fontWeight: 'bold',
                                     formatter: () => (data.growthRate > 0 ? '+' : '') + data.growthRate + '%'
@@ -724,16 +750,28 @@
                             }
                         }
                     },
-                    colors: [data.growthRate >= 0 ? '#696cff' : '#ff3e1d'],
-                    stroke: { 
-                        lineCap: 'butt',
-                        dashArray: 8 // 關鍵：實現分段刻度感
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shade: 'dark',
+                            type: 'horizontal',
+                            shadeIntensity: 0.5,
+                            gradientToColors: [data.growthRate >= 0 ? '#71dd37' : '#ffab00'],
+                            inverseColors: true,
+                            opacityFrom: 1,
+                            opacityTo: 1,
+                            stops: [0, 100]
+                        }
                     },
-                    labels: ['Growth'] // 顯示在中間的標籤
+                    stroke: { 
+                        lineCap: 'round'
+                    },
+                    colors: [data.growthRate >= 0 ? '#696cff' : '#ff3e1d'],
+                    labels: ['Growth']
                 };
 
                 if (growthGaugeChart) growthGaugeChart.destroy();
-                growthGaugeChart = new ApexCharts(document.querySelector("#growthGaugeChart"), gaugeOptions);
+                growthGaugeChart = new ApexCharts(document.querySelector("#growthGaugeChart"), radialOptions);
                 growthGaugeChart.render();
 
             }).fail(function(err) {
