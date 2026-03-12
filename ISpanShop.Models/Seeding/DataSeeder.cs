@@ -387,7 +387,7 @@ namespace ISpanShop.Models.Seeding
 				{
 					RoleId = adminRole.Id,
 					Account = "admin",
-					Password = "Admin@1234",
+					Password = BCrypt.Net.BCrypt.HashPassword("Admin@1234"),  // ✅ 改這行
 					Email = "admin@ispanshop.com",
 					IsConfirmed = true,
 					IsBlacklisted = false,
@@ -397,6 +397,17 @@ namespace ISpanShop.Models.Seeding
 				context.Users.Add(adminUser);
 				await context.SaveChangesAsync();
 				Console.WriteLine("✅ 已建立預設管理員帳號：admin / Admin@1234");
+			}
+			else
+			{
+				// ✅ 帳號已存在，但密碼可能是明碼，自動補上 BCrypt hash
+				bool isAlreadyHashed = adminUser.Password != null && adminUser.Password.StartsWith("$2");
+				if (!isAlreadyHashed)
+				{
+					adminUser.Password = BCrypt.Net.BCrypt.HashPassword("Admin@1234");
+					await context.SaveChangesAsync();
+					Console.WriteLine("✅ 已將 admin 密碼更新為 BCrypt hash");
+				}
 			}
 		}
 

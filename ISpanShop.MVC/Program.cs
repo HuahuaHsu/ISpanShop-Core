@@ -53,17 +53,14 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<ILoginHistoryService, LoginHistoryService>();
 
 			// ── Cookie 身份驗證 ──
-			builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-				.AddCookie(options =>
+			builder.Services.AddAuthentication("AdminCookieAuth")
+				.AddCookie("AdminCookieAuth", options =>
 				{
 					options.LoginPath = "/Admin/Account/Login";
-					options.LogoutPath = "/Admin/Account/Logout";
-					options.AccessDeniedPath = "/Admin/Account/Login";
-					options.Cookie.Name = "ISpanShop.Admin.Auth";
-					options.Cookie.HttpOnly = true;
-					options.ExpireTimeSpan = TimeSpan.FromHours(8);
-					options.SlidingExpiration = true;
+					options.AccessDeniedPath = "/Admin/Account/AccessDenied";
+					options.ExpireTimeSpan = TimeSpan.FromDays(7);
 				});
+
 
 			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -80,6 +77,7 @@ namespace ISpanShop.MVC
 
 			builder.Services.AddScoped<ICategoryManageRepository, CategoryManageRepository>();
 			builder.Services.AddScoped<CategoryManageService>();
+
 
 			// 註冊倉儲層 (Repositories)
 			builder.Services.AddScoped<IOrderRepository, OrderRepository>();
@@ -115,15 +113,12 @@ namespace ISpanShop.MVC
 				});
 			});
 
-			//2�� �̿�`�J (Dependency Injection)�G�O�ѤF�b Program.cs �����U�o�� Service�A�_�h����ɷ|�����G
+			
 
 			builder.Services.AddScoped<PointService>();
 			builder.Services.AddScoped<PaymentService>();
 			builder.Services.AddScoped<CheckoutService>();
 			builder.Services.AddScoped<NewebPayService>();
-
-
-			//2�� ���a
 
 
 			builder.Services.AddScoped<ISensitiveWordRepository, SensitiveWordRepository>();
@@ -163,8 +158,7 @@ namespace ISpanShop.MVC
 					c.SwaggerEndpoint("/swagger/v1/swagger.json", "ISpanShop 前台 API v1");
 				});
 			}
-
-			app.UseAuthentication();
+			app.UseAuthentication(); // 必須在 UseAuthorization 之前
 			app.UseAuthorization();
 
 			// ── Area 路由（後台 MVC，必須在 default 之前）──

@@ -299,7 +299,7 @@ STEP 4：依賴注入設定 (ISpanShop.MVC)
          - IAdminRepository / AdminRepository
          - IAdminService / AdminService
 
-[ ] Program.cs 新增 Cookie 驗證設定
+[V] Program.cs 新增 Cookie 驗證設定
     builder.Services.AddAuthentication("AdminCookieAuth")
         .AddCookie("AdminCookieAuth", options =>
         {
@@ -310,7 +310,7 @@ STEP 4：依賴注入設定 (ISpanShop.MVC)
     app.UseAuthentication(); // 必須在 UseAuthorization 之前
     app.UseAuthorization();
 
-[ ] 確認 BCrypt 套件已安裝
+[V] 確認 BCrypt 套件已安裝
     dotnet add package BCrypt.Net-Next
 
 ------------------------------------------------------------
@@ -319,7 +319,7 @@ STEP 5：展示層 (ISpanShop.MVC) - 管理員管理頁面
 
 [已完成] AdminIndexVm / Index.cshtml（基本列表架構）
 
-[ ] 更新 AdminIndexVm
+[V] 更新 AdminIndexVm
     - 位置：ISpanShop.MVC/Models/Admins/AdminIndexVm.cs
     - 內容：
         List<AdminDto>       Admins
@@ -327,7 +327,7 @@ STEP 5：展示層 (ISpanShop.MVC) - 管理員管理頁面
         string               GeneratedAccount
         string               Message
 
-[ ] 建立 AdminCreateVm
+[V] 建立 AdminCreateVm
     - 位置：ISpanShop.MVC/Models/Admins/AdminCreateVm.cs
     - 內容：
         string                    Password
@@ -335,7 +335,7 @@ STEP 5：展示層 (ISpanShop.MVC) - 管理員管理頁面
         List<AdminLevelDto>       AdminLevelOptions
         （帳號 / Email / RoleId 皆由系統自動處理）
 
-[ ] 更新 AdminsController
+[V] 更新 AdminsController
     - 位置：ISpanShop.MVC/Controllers/AdminsController.cs
 
     GET Index()
@@ -355,7 +355,7 @@ STEP 5：展示層 (ISpanShop.MVC) - 管理員管理頁面
          → TempData["Message"] = 結果訊息
          → RedirectToAction("Index")
 
-[ ] 更新 Index.cshtml
+[V] 更新 Index.cshtml
 
     ★ 建立成功提示區塊：
         @if (TempData["GeneratedAccount"] != null)

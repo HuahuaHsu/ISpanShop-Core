@@ -1,9 +1,8 @@
 using ISpanShop.Models.EfModels;
 using ISpanShop.MVC.Areas.Admin.Models.Account;
+using ISpanShop.Services.Admins;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
@@ -11,11 +10,11 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
     [Area("Admin")]
     public class AccountController : Controller
     {
-        private readonly ISpanShopDBContext _db;
+        private readonly IAdminService _adminService;
 
-        public AccountController(ISpanShopDBContext db)
+        public AccountController(IAdminService adminService)
         {
-            _db = db;
+            _adminService = adminService ?? throw new ArgumentNullException(nameof(adminService));
         }
 
         [HttpGet]
@@ -38,27 +37,17 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
             if (!ModelState.IsValid)
                 return View(model);
 
-            // 查找管理員帳號（Role 為 Admin 的使用者）
-            var user = await _db.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u =>
-                    u.Account == model.Account &&
-                    u.Password == model.Password &&
-                    u.IsBlacklisted != true);
+            // 使用 AdminService 驗證登入（支援 BCrypt 密碼驗證）
+            var admin = _adminService.VerifyLogin(model.Account, model.Password);
 
-            if (user == null)
+            if (admin == null)
             {
                 ModelState.AddModelError(string.Empty, "帳號或密碼不正確，請重新輸入。");
                 return View(model);
             }
 
             // 驗證是否為管理員角色
-            bool isAdmin = user.Role != null &&
-                           (user.Role.RoleName.Contains("Admin") ||
-                            user.Role.RoleName.Contains("admin") ||
-                            user.Role.RoleName == "Administrator");
-
-            if (!isAdmin)
+            if (admin.RoleName != "Admin" && admin.RoleName != "SuperAdmin")
             {
                 ModelState.AddModelError(string.Empty, "您的帳號沒有後台管理權限。");
                 return View(model);
@@ -67,16 +56,17 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
             // 建立 Claims 並登入
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Account),
-                new Claim(ClaimTypes.Role, user.Role.RoleName),
-                new Claim("UserId", user.Id.ToString())
+                new Claim(ClaimTypes.NameIdentifier, admin.UserId.ToString()),
+                new Claim(ClaimTypes.Name, admin.Account),
+                new Claim(ClaimTypes.Role, admin.RoleName),
+                new Claim("userid", admin.UserId.ToString()),
+                new Claim("AdminLevel", admin.AdminLevelId?.ToString() ?? "")
             };
 
             var claimsIdentity = new ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                claims, "AdminCookieAuth");
 
-            var authProperties = new AuthenticationProperties
+            var authProperties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties
             {
                 IsPersistent = model.RememberMe,
                 ExpiresUtc = model.RememberMe
@@ -85,7 +75,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
             };
 
             await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
+                "AdminCookieAuth",
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
 
@@ -99,8 +89,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync("AdminCookieAuth");
             return RedirectToAction("Login", "Account", new { area = "Admin" });
+        }
+
+        public IActionResult AccessDenied()
+        {
+            return View();
         }
     }
 }

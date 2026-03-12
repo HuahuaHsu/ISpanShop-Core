@@ -2,6 +2,7 @@ using ISpanShop.Models.DTOs.Admins;
 using ISpanShop.MVC.Areas.Admin.Models.Admins;
 using ISpanShop.Services.Admins;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
 {
@@ -17,21 +18,26 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
 		}
 
 		/// <summary>
-		/// 管理員列表頁 - 顯示所有管理員及角色更新選項
+		/// 管理員列表頁 - 顯示所有管理員及新增/停用選項
 		/// </summary>
 		public IActionResult Index()
 		{
 			try
 			{
 				var admins = _adminService.GetAllAdmins().ToList();
-				var roles = _adminService.GetAllPermissions().ToList();
-				var permissions = _adminService.GetAllPermissions().ToList(); // ← 新增
+				var permissions = _adminService.GetAllPermissions().ToList();
+				var adminLevels = _adminService.GetSelectableAdminLevels().ToList();
 
 				var viewModel = new AdminIndexVm
 				{
 					Admins = admins,
-					PermissionOptions = permissions, // ← 新增
-					Message = TempData["Message"]?.ToString()
+					PermissionOptions = permissions,
+					Message = TempData["Message"]?.ToString(),
+					GeneratedAccount = TempData["GeneratedAccount"]?.ToString(),
+					CreateForm = new AdminCreateVm
+					{
+						AdminLevelOptions = adminLevels
+					}
 				};
 				return View(viewModel);
 			}
@@ -40,11 +46,85 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
 				var emptyVm = new AdminIndexVm
 				{
 					Admins = new List<AdminDto>(),
-					PermissionOptions = new List<AdminPermissionDto>(), // ← 新增
+					PermissionOptions = new List<AdminPermissionDto>(),
+					CreateForm = new AdminCreateVm(),
 					Message = $"載入管理員列表失敗: {ex.Message}"
 				};
 				return View(emptyVm);
 			}
+		}
+
+		/// <summary>
+		/// 新增管理員
+		/// </summary>
+		[HttpPost]
+		public IActionResult CreateAdmin(AdminCreateVm form)
+		{
+			try
+			{
+				if (!ModelState.IsValid)
+				{
+					TempData["Message"] = "表單驗證失敗，請檢查輸入內容";
+					return RedirectToAction("Index");
+				}
+
+				// 轉換為 DTO
+				var dto = new AdminCreateDto
+				{
+					Password = form.Password,
+					AdminLevelId = form.AdminLevelId
+				};
+
+				// 呼叫服務層
+				var result = _adminService.CreateAdmin(dto);
+
+				if (result.IsSuccess)
+				{
+					TempData["Message"] = result.Message;
+					TempData["GeneratedAccount"] = result.GeneratedAccount;
+				}
+				else
+				{
+					TempData["Message"] = result.Message;
+				}
+			}
+			catch (Exception ex)
+			{
+				TempData["Message"] = $"新增管理員失敗: {ex.Message}";
+			}
+
+			return RedirectToAction("Index");
+		}
+
+		/// <summary>
+		/// 停用管理員
+		/// </summary>
+		[HttpPost]
+		public IActionResult DeactivateAdmin(int userId)
+		{
+			try
+			{
+				// 從 Claims 取得 currentUserId
+				var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+					?? User.FindFirst("userid")?.Value;
+
+				if (!int.TryParse(currentUserIdStr, out int currentUserId))
+				{
+					TempData["Message"] = "無法識別當前登入的管理員";
+					return RedirectToAction("Index");
+				}
+
+				// 呼叫服務層
+				var result = _adminService.DeactivateAdmin(userId, currentUserId);
+
+				TempData["Message"] = result.Message;
+			}
+			catch (Exception ex)
+			{
+				TempData["Message"] = $"停用管理員失敗: {ex.Message}";
+			}
+
+			return RedirectToAction("Index");
 		}
 
 		/// <summary>
