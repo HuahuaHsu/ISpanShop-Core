@@ -83,6 +83,10 @@ namespace ISpanShop.MVC
 			// 註冊服務層 (Services)
 			builder.Services.AddScoped<IOrderService, OrderService>();
 			builder.Services.AddScoped<IOrderDashboardService, OrderDashboardService>();
+			
+			// 評論審核
+			builder.Services.AddScoped<IOrderReviewRepository, OrderReviewRepository>();
+			builder.Services.AddScoped<IOrderReviewService, OrderReviewService>();
 
 
 			builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();

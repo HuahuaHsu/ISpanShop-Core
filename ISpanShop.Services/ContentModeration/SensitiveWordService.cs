@@ -88,4 +88,16 @@ namespace ISpanShop.Services.ContentModeration;
 				await _repo.DeleteAsync(entity);
 			}
 		}
+
+		// [新功能實作] 自動偵測內容是否包含敏感字
+		public async Task<bool> HasSensitiveWordAsync(string content)
+		{
+			if (string.IsNullOrWhiteSpace(content)) return false;
+
+			// 取得所有啟用的敏感字 (例如：["廣告", "詐騙", "三字經"])
+			var sensitiveWords = await _repo.GetAllWordsAsync();
+
+			// 使用 Any 來檢查內容中是否包含任何一個字詞 (這裡可以未來視需求增加正規表示式檢查)
+			return sensitiveWords.Any(word => content.Contains(word));
+		}
 	}

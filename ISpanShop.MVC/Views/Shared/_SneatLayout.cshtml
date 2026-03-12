@@ -736,6 +736,9 @@
                             <li class="menu-item @(ctrl == "SensitiveWordCategories" ? "active" : "")">
                                 <a href="@Url.Action("Index", "SensitiveWordCategories", new { area = "Admin" })" class="menu-link">敏感字分類管理</a>
                             </li>
+                            <li class="menu-item @(ctrl == "OrderReviews" ? "active" : "")">
+                                <a href="@Url.Action("Index", "OrderReviews", new { area = "Admin" })" class="menu-link">評論管理</a>
+                            </li>
                         </ul>
                     </div>
                     <div class="menu-flyout">
@@ -743,6 +746,7 @@
                         <a href="@Url.Action("Index", "SupportTickets", new { area = "Admin" })">客服中心</a>
                         <a href="@Url.Action("Index", "SensitiveWords", new { area = "Admin" })">敏感字管理</a>
                         <a href="@Url.Action("Index", "SensitiveWordCategories", new { area = "Admin" })">敏感字分類管理</a>
+                        <a href="@Url.Action("Index", "OrderReviews", new { area = "Admin" })">評論管理</a>
                     </div>
                 </li>
                 <li class="menu-header"><span>帳號管理</span></li>
