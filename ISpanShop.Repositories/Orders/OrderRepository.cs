@@ -258,17 +258,27 @@ namespace ISpanShop.Repositories.Orders
 
 			var groupedData = await query
 				.GroupBy(od => od.Product.Category.Name)
-				.Select(g => new { CategoryName = g.Key, TotalSales = g.Sum(od => od.Quantity) })
+				.Select(g => new { CategoryName = g.Key ?? "未分類", TotalSales = g.Sum(od => od.Quantity) })
 				.OrderByDescending(x => x.TotalSales)
 				.ToListAsync();
 
 			var dto = new ApexChartDataDto();
 			var seriesData = new List<decimal>();
 
-			foreach (var item in groupedData)
+			// TOP 7 策略：前 7 名保留，其餘歸類為「其他」
+			var top7 = groupedData.Take(7).ToList();
+			var others = groupedData.Skip(7).ToList();
+
+			foreach (var item in top7)
 			{
-				dto.Labels.Add(item.CategoryName ?? "未分類");
+				dto.Labels.Add(item.CategoryName);
 				seriesData.Add(item.TotalSales);
+			}
+
+			if (others.Any())
+			{
+				dto.Labels.Add("其他");
+				seriesData.Add(others.Sum(x => x.TotalSales));
 			}
 
 			dto.Series.Add(new ChartSeriesDto { Name = "類別銷售比例", Data = seriesData });
@@ -344,17 +354,27 @@ namespace ISpanShop.Repositories.Orders
 
 			var groupedData = await query
 				.GroupBy(od => od.Product.Category.Name)
-				.Select(g => new { CategoryName = g.Key, Revenue = g.Sum(od => (od.Price ?? 0) * od.Quantity) })
+				.Select(g => new { CategoryName = g.Key ?? "未分類", Revenue = g.Sum(od => (od.Price ?? 0) * od.Quantity) })
 				.OrderByDescending(x => x.Revenue)
 				.ToListAsync();
 
 			var dto = new ApexChartDataDto();
 			var seriesData = new List<decimal>();
 
-			foreach (var item in groupedData)
+			// TOP 7 策略：前 7 名保留，其餘歸類為「其他」
+			var top7 = groupedData.Take(7).ToList();
+			var others = groupedData.Skip(7).ToList();
+
+			foreach (var item in top7)
 			{
-				dto.Labels.Add(item.CategoryName ?? "未分類");
+				dto.Labels.Add(item.CategoryName);
 				seriesData.Add(item.Revenue);
+			}
+
+			if (others.Any())
+			{
+				dto.Labels.Add("其他");
+				seriesData.Add(others.Sum(x => x.Revenue));
 			}
 
 			dto.Series.Add(new ChartSeriesDto { Name = "營收佔比", Data = seriesData });
