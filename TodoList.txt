@@ -146,31 +146,13 @@
 
  ==================================================================================================================
  ============================================================
-  管理員管理 (Admin Management) - 實作 Todolist
-  對應資料庫：ISpanShopDB
-  管理員來源：Users（RoleId = Admin）
-  權限路徑：Users.AdminLevelId → AdminLevels
-                                → AdminLevelPermissions → Permissions
+ [功能說明]
+  超級管理員新增帳號，系統自動產生帳號與 Email
+  新管理員首次登入後強制修改密碼才可進入後台
   密碼策略：臨時密碼制（首次登入強制修改）
   帳號策略：系統自動生成（ADM001 格式）
 ============================================================
 
-------------------------------------------------------------
-STEP 0：資料庫確認
-------------------------------------------------------------
-
-[ ] Table 更動
-    刪除 RolePermissions
-    新增 AdminLevels
-    新增 AdminLevelPermissions (FK 連到 AdminLevels 和 Permissions)
-    修改 Users 20 AdminLevelId (NULL=Member,有值=Admin) 
-[ ] 查詢 Roles 資料表，確認 Admin 的 RoleId
-    SELECT Id, RoleName FROM Roles
-    （記下 Admin 的 Id，寫死在 Service 層）
-
-[ ] 確認 IsFirstLogin 欄位已新增（上一步已執行）
-    若尚未新增：
-    ALTER TABLE Users ADD IsFirstLogin bit NOT NULL DEFAULT 1;
 
 ------------------------------------------------------------
 STEP 1：定義資料傳輸物件 (ISpanShop.Models)
