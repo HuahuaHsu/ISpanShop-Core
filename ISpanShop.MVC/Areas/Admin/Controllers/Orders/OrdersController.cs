@@ -186,5 +186,12 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 				growthRate
 			});
 		}
+
+		[HttpGet]
+		public async Task<IActionResult> GetOtherCategoriesDetail(int? storeId, string period = "month", string type = "Sales")
+		{
+			var data = await _dashboardService.GetOthersCategoryDetailAsync(storeId, period, type);
+			return Json(data);
+		}
 	}
 }

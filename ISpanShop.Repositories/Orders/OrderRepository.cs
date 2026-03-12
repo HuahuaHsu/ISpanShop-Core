@@ -380,5 +380,54 @@ namespace ISpanShop.Repositories.Orders
 			dto.Series.Add(new ChartSeriesDto { Name = "營收佔比", Data = seriesData });
 			return dto;
 		}
+
+		public async Task<ApexChartDataDto> GetOthersCategoryDetailAsync(int? storeId, DateTime startDate, DateTime endDate, string type)
+		{
+			var query = _context.OrderDetails
+				.Include(od => od.Order)
+				.Include(od => od.Product)
+				.ThenInclude(p => p.Category)
+				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
+
+			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
+
+			var dto = new ApexChartDataDto();
+			var seriesData = new List<decimal>();
+
+			if (type == "Sales")
+			{
+				var groupedData = await query
+					.GroupBy(od => od.Product.Category.Name)
+					.Select(g => new { CategoryName = g.Key ?? "未分類", Value = (decimal)g.Sum(od => od.Quantity) })
+					.OrderByDescending(x => x.Value)
+					.Skip(7)
+					.ToListAsync();
+
+				foreach (var item in groupedData)
+				{
+					dto.Labels.Add(item.CategoryName);
+					seriesData.Add(item.Value);
+				}
+				dto.Series.Add(new ChartSeriesDto { Name = "細節銷售量", Data = seriesData });
+			}
+			else
+			{
+				var groupedData = await query
+					.GroupBy(od => od.Product.Category.Name)
+					.Select(g => new { CategoryName = g.Key ?? "未分類", Value = g.Sum(od => (od.Price ?? 0) * od.Quantity) })
+					.OrderByDescending(x => x.Value)
+					.Skip(7)
+					.ToListAsync();
+
+				foreach (var item in groupedData)
+				{
+					dto.Labels.Add(item.CategoryName);
+					seriesData.Add(item.Value);
+				}
+				dto.Series.Add(new ChartSeriesDto { Name = "細節營收", Data = seriesData });
+			}
+
+			return dto;
+		}
 	}
 }

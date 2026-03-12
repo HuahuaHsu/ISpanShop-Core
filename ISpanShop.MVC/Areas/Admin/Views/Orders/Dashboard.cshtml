@@ -232,6 +232,24 @@
     </div>
 </div>
 
+<!-- 「其他」類別細節彈窗 -->
+<div class="modal fade" id="othersDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="othersDetailTitle">「其他」類別細節分解</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="othersDetailChart"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/sneat/assets/vendor/libs/apex-charts/apexcharts.js"></script>
     <script>
@@ -387,7 +405,18 @@
                 const options = {
                     series: data.series[0].data,
                     labels: data.labels,
-                    chart: { type: 'donut', height: 350 },
+                    chart: { 
+                        type: 'donut', 
+                        height: 350,
+                        events: {
+                            dataPointSelection: function(event, chartContext, config) {
+                                const label = config.w.config.labels[config.dataPointIndex];
+                                if (label === '其他') {
+                                    showOthersDetail('Sales');
+                                }
+                            }
+                        }
+                    },
                     colors: chartColors,
                     legend: { position: 'bottom' },
                     plotOptions: { pie: { donut: { size: '70%' } } }
@@ -471,7 +500,21 @@
                     chart: { 
                         height: 350, 
                         toolbar: { show: false },
-                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                        fontFamily: 'Public Sans, -apple-system, sans-serif',
+                        events: {
+                            dataPointSelection: function(event, chartContext, config) {
+                                let label = "";
+                                if (currentCategoryChartType === 'treemap') {
+                                    label = config.w.config.series[config.seriesIndex].data[config.dataPointIndex].x;
+                                } else if (currentCategoryChartType === 'bar') {
+                                    label = config.w.config.xaxis.categories[config.dataPointIndex];
+                                }
+                                
+                                if (label === '其他') {
+                                    showOthersDetail('Revenue');
+                                }
+                            }
+                        }
                     },
                     colors: chartColors
                 };
@@ -542,6 +585,59 @@
                 if(categoryChart) categoryChart.destroy();
                 categoryChart = new ApexCharts(document.querySelector("#categoryChart"), options);
                 categoryChart.render();
+            });
+        }
+
+        let othersChart;
+        function showOthersDetail(type) {
+            const period = $('#periodFilter').val();
+            const storeId = $('#storeFilter').val();
+            const title = type === 'Sales' ? '「其他」類別細節 - 銷售量' : '「其他」類別細節 - 營收額';
+            $('#othersDetailTitle').text(title);
+
+            $.get(`/Orders/GetOtherCategoriesDetail?type=${type}&period=${period}&storeId=${storeId}`, function(data) {
+                if(!data || !data.series || data.series.length === 0) {
+                    alert('沒有更多細節數據');
+                    return;
+                }
+
+                const options = {
+                    series: [{
+                        name: data.series[0].name,
+                        data: data.series[0].data
+                    }],
+                    chart: {
+                        type: 'bar',
+                        height: 400,
+                        toolbar: { show: true },
+                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: true,
+                            borderRadius: 4,
+                            distributed: true,
+                            dataLabels: { position: 'top' }
+                        }
+                    },
+                    colors: data.labels.map(name => getCategoryColor(name)),
+                    xaxis: { categories: data.labels },
+                    legend: { show: false },
+                    tooltip: {
+                        y: {
+                            formatter: (val) => type === 'Revenue' ? '$' + val.toLocaleString() : val + ' 件'
+                        }
+                    }
+                };
+
+                $('#othersDetailModal').modal('show');
+                
+                // 等 Modal 顯示後再渲染圖表，避免寬度計算錯誤
+                setTimeout(() => {
+                    if(othersChart) othersChart.destroy();
+                    othersChart = new ApexCharts(document.querySelector("#othersDetailChart"), options);
+                    othersChart.render();
+                }, 300);
             });
         }
 
