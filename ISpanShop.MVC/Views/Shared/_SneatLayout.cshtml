@@ -579,7 +579,7 @@
                 @{
                     var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
                     var action = ViewContext.RouteData.Values["action"]?.ToString();
-                    var isCatActive = ctrl == "CategoryManage" || ctrl == "CategorySpecs";
+                    var isCatActive = ctrl == "CategoryManage" || ctrl == "CategoryAttributes";
                     var isInvActive = ctrl == "Inventory";
                     var isOrderActive = ctrl == "Orders" || ctrl == "ShipmentWorkstation" || ctrl == "ReturnRequests" || ctrl == "OrderTracking";
                     var isContentSupportActive = ctrl == "SupportTickets" || ctrl == "SensitiveWords" || ctrl == "SensitiveWordCategories";
@@ -658,15 +658,15 @@
                             <li class="menu-item @(ctrl == "CategoryManage" ? "active" : "")">
                                 <a href="@Url.Action("Index", "CategoryManage", new { area = "Admin" })" class="menu-link">分類總覽</a>
                             </li>
-                            <li class="menu-item @(ctrl == "CategorySpecs" ? "active" : "")">
-                                <a href="@Url.Action("Index", "CategorySpecs", new { area = "Admin" })" class="menu-link">分類屬性</a>
+                            <li class="menu-item @(ctrl == "CategoryAttributes" ? "active" : "")">
+                                <a href="@Url.Action("Index", "CategoryAttributes", new { area = "Admin" })" class="menu-link">分類屬性</a>
                             </li>
                         </ul>
                     </div>
                     <div class="menu-flyout">
                         <div class="menu-flyout-title">分類管理</div>
                         <a href="@Url.Action("Index", "CategoryManage", new { area = "Admin" })">分類總覽</a>
-                        <a href="@Url.Action("Index", "CategorySpecs", new { area = "Admin" })">分類屬性</a>
+                        <a href="@Url.Action("Index", "CategoryAttributes", new { area = "Admin" })">分類屬性</a>
                     </div>
                 </li>
 

@@ -15,8 +15,6 @@ public partial class CategoryAttribute
 
     public bool IsRequired { get; set; }
 
-    public int SortOrder { get; set; }
-
     public bool IsActive { get; set; }
 
     public bool AllowCustomInput { get; set; }

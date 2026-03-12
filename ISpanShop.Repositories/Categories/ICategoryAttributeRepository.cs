@@ -5,7 +5,7 @@ using ISpanShop.Models.DTOs.Common;
 
 namespace ISpanShop.Repositories.Categories
 {
-    public interface ICategorySpecRepository
+    public interface ICategoryAttributeRepository
     {
         IEnumerable<CategorySpecDto> GetAll();
         CategorySpecDto? GetById(int id);
