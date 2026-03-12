@@ -1,0 +1,173 @@
+@model ISpanShop.MVC.Areas.Admin.Models.Points.PointHistoryIndexVm
+
+@{
+    Layout = "~/Views/Shared/_SneatLayout.cshtml";
+    ViewData["Title"] = "點數紀錄查詢";
+}
+
+<style>
+    .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    .point-positive { color: #28c76f; font-weight: 600; }
+    .point-negative { color: #ea5455; font-weight: 600; }
+    .table > :not(caption) > * > * { padding: 1rem 0.75rem; }
+</style>
+
+<div class="container-xxl flex-grow-1 container-p-y font-noto">
+    <div class="d-flex align-items-center justify-content-between">
+        <h4 class="fw-bold py-3 mb-4">
+            <span class="text-muted fw-light">會員管理 /</span> 點數紀錄
+        </h4>
+        <form asp-action="GenerateMockData" method="post">
+            <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('確定要產生 50 筆假資料嗎？');">
+                <i class="bx bx-plus-circle me-1"></i> 產生 50 筆假資料
+            </button>
+        </form>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header border-bottom">
+            <h5 class="card-title mb-3">搜尋篩選</h5>
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">關鍵字 (帳號、姓名、單號、描述)</label>
+                    <input type="text" name="keyword" class="form-control" placeholder="輸入關鍵字..." value="@Model.Keyword">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">會員 ID</label>
+                    <input type="number" name="userId" class="form-control" placeholder="指定會員 ID" value="@Model.UserId">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bx bx-search me-1"></i> 查詢
+                    </button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="@Url.Action("Index")" class="btn btn-label-secondary w-100">清除</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>會員資訊</th>
+                        <th>訂單編號</th>
+                        <th>變動點數</th>
+                        <th>變動後餘額</th>
+                        <th>描述</th>
+                        <th>建立時間</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+                    @if (Model.PagedResult.Data.Any())
+                    {
+                        foreach (var item in Model.PagedResult.Data)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-semibold">@item.FullName</span>
+                                        <small class="text-muted">@item.Account (ID: @item.UserId)</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.OrderNumber))
+                                    {
+                                        <span class="badge bg-label-info">@item.OrderNumber</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.ChangeAmount > 0)
+                                    {
+                                        <span class="point-positive">+@item.ChangeAmount</span>
+                                    }
+                                    else if (item.ChangeAmount < 0)
+                                    {
+                                        <span class="point-negative">@item.ChangeAmount</span>
+                                    }
+                                    else
+                                    {
+                                        <span>0</span>
+                                    }
+                                </td>
+                                <td><span class="fw-bold">@item.BalanceAfter</span></td>
+                                <td><span class="text-wrap" style="min-width: 200px; display: inline-block;">@item.Description</span></td>
+                                <td>@(item.CreatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <i class="bx bx-info-circle fs-2 mb-2"></i>
+                                <p class="mb-0">查無相關點數紀錄</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分頁 -->
+        <div class="card-footer">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    共 @Model.PagedResult.TotalCount 筆紀錄，第 @Model.PagedResult.CurrentPage / @Model.PagedResult.TotalPages 頁
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(Model.PagedResult.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-item page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, userId = Model.UserId, page = Model.PagedResult.CurrentPage - 1 })">
+                                <i class="tf-icon bx bx-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= Model.PagedResult.TotalPages; i++)
+                        {
+                            if (i == 1 || i == Model.PagedResult.TotalPages || (i >= Model.PagedResult.CurrentPage - 2 && i <= Model.PagedResult.CurrentPage + 2))
+                            {
+                                <li class="page-item @(i == Model.PagedResult.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, userId = Model.UserId, page = i })">@i</a>
+                                </li>
+                            }
+                            else if (i == Model.PagedResult.CurrentPage - 3 || i == Model.PagedResult.CurrentPage + 3)
+                            {
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            }
+                        }
+
+                        <li class="page-item @(Model.PagedResult.CurrentPage == Model.PagedResult.TotalPages || Model.PagedResult.TotalPages == 0 ? "disabled" : "")">
+                            <a class="page-item page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, userId = Model.UserId, page = Model.PagedResult.CurrentPage + 1 })">
+                                <i class="tf-icon bx bx-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>

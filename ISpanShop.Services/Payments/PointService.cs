@@ -1,20 +1,24 @@
 using ISpanShop.Models.DTOs.Members;
 using ISpanShop.Models.EfModels;
+using ISpanShop.Repositories.Members;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ISpanShop.Models.DTOs.Common;
 
 namespace ISpanShop.Services.Payments;
 	public class PointService
 	{
 		private readonly ISpanShopDBContext _context;
+        private readonly IPointRepository _repo;
 
-		public PointService(ISpanShopDBContext context)
+		public PointService(ISpanShopDBContext context, IPointRepository repo)
 		{
 			_context = context;
+            _repo = repo;
 		}
 
 		/// <summary>
@@ -79,4 +83,21 @@ namespace ISpanShop.Services.Payments;
 				}
 			}
 		}
+
+        /// <summary>
+        /// 取得分頁的點數紀錄
+        /// </summary>
+        public async Task<PagedResult<PointHistory>> GetPagedHistoryAsync(string keyword, int? userId, int page, int pageSize)
+        {
+            var (items, totalCount) = await _repo.GetPagedPointHistoryAsync(keyword, userId, page, pageSize);
+
+            return new PagedResult<PointHistory>
+            {
+                Data = items.ToList(),
+                TotalCount = totalCount,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+        }
 	}

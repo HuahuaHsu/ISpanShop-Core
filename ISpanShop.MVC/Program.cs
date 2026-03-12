@@ -117,6 +117,7 @@ namespace ISpanShop.MVC
 
 			//2�� �̿�`�J (Dependency Injection)�G�O�ѤF�b Program.cs �����U�o�� Service�A�_�h����ɷ|�����G
 
+			builder.Services.AddScoped<IPointRepository, PointRepository>();
 			builder.Services.AddScoped<PointService>();
 			builder.Services.AddScoped<PaymentService>();
 			builder.Services.AddScoped<CheckoutService>();
