@@ -3,7 +3,8 @@
 @{
     ViewData["Title"] = "管理員管理";
     var currentUserId = User.FindFirst("userid")?.Value ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
-    var activeTab = Model.ActiveTab ?? "tab1";
+    var queryTab = Context.Request.Query["activeTab"].ToString();
+    var activeTab = !string.IsNullOrEmpty(queryTab) ? queryTab : (Model.ActiveTab ?? "tab1");
 }
 
 <div class="container-xxl flex-grow-1 container-p-y">
@@ -362,47 +363,60 @@
 
 @section Scripts {
     <script>
-        // 監聽 Bootstrap Tab 切換，同步 URL 參數與左側選單狀態
-        var triggerTabList = [].slice.call(document.querySelectorAll('button[data-bs-toggle="tab"]'))
-        triggerTabList.forEach(function (tabEl) {
-            tabEl.addEventListener('shown.bs.tab', function (event) {
-                var targetId = event.target.getAttribute('data-bs-target').replace('#', '');
+        document.addEventListener("DOMContentLoaded", function() {
+                var urlParams = new URLSearchParams(window.location.search);
+                var tabFromUrl = urlParams.get('activeTab');
 
-                // 1. 同步 URL，確保重新整理不跑版
-                var url = new URL(window.location);
-                url.searchParams.set('activeTab', targetId);
-                window.history.replaceState({}, '', url);
-
-                // 2. 同步左側選單 (前提是 _Layout.cshtml 需加上對應 ID: menu-admin-tab1, menu-admin-tab2)
-                var menuTab1 = document.getElementById('menu-admin-tab1');
-                var menuTab2 = document.getElementById('menu-admin-tab2');
-
-                if (menuTab1 && menuTab2) {
-                    if (targetId === 'tab1') {
-                        menuTab1.classList.add('active');
-                        menuTab2.classList.remove('active');
-                    } else if (targetId === 'tab2') {
-                        menuTab1.classList.remove('active');
-                        menuTab2.classList.add('active');
+                if (tabFromUrl) {
+                    var tabTriggerEl = document.querySelector('button[data-bs-target="#' + tabFromUrl + '"]');
+                    if (tabTriggerEl) {
+                        var tab = new bootstrap.Tab(tabTriggerEl);
+                        tab.show();
                     }
                 }
-            })
-        });
-
-        // 開啟編輯 Modal 並綁定現有資料
-        function openEditLevelModal(id, name, description, permIds) {
-            document.getElementById('editLevelId').value = id;
-            document.getElementById('editLevelName').value = name;
-            document.getElementById('editLevelDescription').value = description || '';
-
-            // 勾選對應的權限 Checkbox
-            document.querySelectorAll('.edit-perm-checkbox').forEach(cb => {
-                cb.checked = permIds.includes(parseInt(cb.dataset.permid));
             });
 
-            // 觸發 Bootstrap Modal 顯示
-            var editModal = new bootstrap.Modal(document.getElementById('editLevelModal'));
-            editModal.show();
-        }
+            // 監聽 Bootstrap Tab 切換，同步 URL 參數與左側選單狀態
+            var triggerTabList = [].slice.call(document.querySelectorAll('button[data-bs-toggle="tab"]'))
+            triggerTabList.forEach(function (tabEl) {
+                tabEl.addEventListener('shown.bs.tab', function (event) {
+                    var targetId = event.target.getAttribute('data-bs-target').replace('#', '');
+
+                    // 1. 同步 URL，確保重新整理不跑版
+                    var url = new URL(window.location);
+                    url.searchParams.set('activeTab', targetId);
+                    window.history.replaceState({}, '', url);
+
+                    // 2. 同步左側選單狀態
+                    var menuTab1 = document.getElementById('menu-admin-tab1');
+                    var menuTab2 = document.getElementById('menu-admin-tab2');
+
+                    if (menuTab1 && menuTab2) {
+                        if (targetId === 'tab1') {
+                            menuTab1.classList.add('active');
+                            menuTab2.classList.remove('active');
+                        } else if (targetId === 'tab2') {
+                            menuTab1.classList.remove('active');
+                            menuTab2.classList.add('active');
+                        }
+                    }
+                })
+            });
+
+            // 開啟編輯 Modal 並綁定現有資料
+            function openEditLevelModal(id, name, description, permIds) {
+                document.getElementById('editLevelId').value = id;
+                document.getElementById('editLevelName').value = name;
+                document.getElementById('editLevelDescription').value = description || '';
+
+                // 勾選對應的權限 Checkbox
+                document.querySelectorAll('.edit-perm-checkbox').forEach(cb => {
+                    cb.checked = permIds.includes(parseInt(cb.dataset.permid));
+                });
+
+                // 觸發 Bootstrap Modal 顯示
+                var editModal = new bootstrap.Modal(document.getElementById('editLevelModal'));
+                editModal.show();
+            }
     </script>
 }
