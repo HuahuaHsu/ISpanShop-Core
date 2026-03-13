@@ -1,6 +1,7 @@
 using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Models.EfModels;
 using ISpanShop.MVC.Areas.Admin.Models.Points;
+using ISpanShop.Services;
 using ISpanShop.Services.Payments;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +17,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Points
     public class PointsController : AdminBaseController
     {
         private readonly PointService _pointService;
+        private readonly MemberService _memberService;
         private readonly ISpanShopDBContext _context;
 
-        public PointsController(PointService pointService, ISpanShopDBContext context)
+        public PointsController(PointService pointService, MemberService memberService, ISpanShopDBContext context)
         {
             _pointService = pointService;
+            _memberService = memberService;
             _context = context;
         }
 
@@ -55,6 +58,109 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Points
             };
 
             return View("~/Areas/Admin/Views/Points/Index.cshtml", viewModel);
+        }
+
+        [HttpGet("SearchMembers")]
+        public IActionResult SearchMembers(string term)
+        {
+            var members = _memberService.Search(term, null)
+                .Select(m => new { 
+                    id = m.Id, 
+                    text = $"{m.FullName} ({m.Account}) - 餘額: {m.PointBalance}" 
+                })
+                .Take(10);
+            return Json(members);
+        }
+
+        [HttpPost("UpdatePoints")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdatePoints(PointUpdateVm vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "資料格式不正確，請檢查輸入內容。";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // 根據異動類型調整正負號
+            if ((vm.UpdateType == "扣點" || vm.UpdateType == "到期歸零") && vm.ChangeAmount > 0)
+            {
+                vm.ChangeAmount = -vm.ChangeAmount;
+            }
+            else if (vm.UpdateType == "加點" && vm.ChangeAmount < 0)
+            {
+                vm.ChangeAmount = Math.Abs(vm.ChangeAmount);
+            }
+
+            // 取得當前操作者 (管理員)
+            var operatorName = User.Identity?.Name ?? "System";
+
+            // 格式化描述，包含所有 Audit Trail 欄位
+            var formattedDescription = $"[{vm.UpdateType}] 原因: {vm.Reason} | 操作人: {operatorName}";
+            if (!string.IsNullOrEmpty(vm.Remark))
+            {
+                formattedDescription += $" | 備註: {vm.Remark}";
+            }
+
+            var dto = new ISpanShop.Models.DTOs.Members.PointUpdateDTO
+            {
+                UserId = vm.UserId,
+                ChangeAmount = vm.ChangeAmount,
+                OrderNumber = vm.OrderNumber ?? "MANUAL-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                Description = formattedDescription
+            };
+
+            var result = await _pointService.UpdatePointsAsync(dto);
+
+            if (result.IsSuccess)
+            {
+                TempData["Success"] = "點數更新成功！";
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost("BulkUpdatePoints")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkUpdatePoints(BulkPointUpdateVm vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "資料格式不正確。";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // 根據異動類型調整正負號
+            if ((vm.UpdateType == "扣點" || vm.UpdateType == "到期歸零") && vm.ChangeAmount > 0)
+            {
+                vm.ChangeAmount = -vm.ChangeAmount;
+            }
+
+            var operatorName = User.Identity?.Name ?? "System";
+            var formattedDescription = $"[全體-{vm.UpdateType}] 原因: {vm.Reason} | 操作人: {operatorName}";
+            if (!string.IsNullOrEmpty(vm.Remark))
+            {
+                formattedDescription += $" | 備註: {vm.Remark}";
+            }
+
+            var orderNumber = vm.OrderNumber ?? "BULK-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+
+            var result = await _pointService.BulkUpdateAllUsersPointsAsync(vm.ChangeAmount, formattedDescription, orderNumber);
+
+            if (result.IsSuccess)
+            {
+                TempData["Success"] = result.Message;
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost("GenerateMockData")]

@@ -38,4 +38,43 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Points
         [Display(Name = "建立時間")]
         public DateTime? CreatedAt { get; set; }
     }
+
+    public class PointUpdateVm
+    {
+        [Required(ErrorMessage = "請選擇會員")]
+        public int UserId { get; set; }
+
+        [Required(ErrorMessage = "請輸入變動點數")]
+        [Range(-100000, 100000, ErrorMessage = "點數範圍需在 -100,000 到 100,000 之間")]
+        public int ChangeAmount { get; set; }
+
+        [Display(Name = "異動類型")]
+        [Required(ErrorMessage = "請選擇異動類型")]
+        public string UpdateType { get; set; } // 加點 / 扣點 / 到期歸零
+
+        [Display(Name = "異動原因")]
+        [Required(ErrorMessage = "請選擇異動原因")]
+        public string Reason { get; set; }
+
+        [Display(Name = "關聯單號")]
+        public string OrderNumber { get; set; }
+
+        [Display(Name = "詳細備註")]
+        public string Remark { get; set; }
+    }
+
+    public class BulkPointUpdateVm
+    {
+        [Required(ErrorMessage = "請輸入變動點數")]
+        public int ChangeAmount { get; set; }
+
+        [Required(ErrorMessage = "請選擇異動類型")]
+        public string UpdateType { get; set; }
+
+        [Required(ErrorMessage = "請選擇異動原因")]
+        public string Reason { get; set; }
+
+        public string OrderNumber { get; set; }
+        public string Remark { get; set; }
+    }
 }
