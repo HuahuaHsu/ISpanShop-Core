@@ -63,7 +63,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <h5 class="fw-bold mb-3" style="color:#1e2d3d;">@Model.Name</h5>
+                    <h5 class="fw-bold mb-3" style="color:#1e2d3d; word-break: break-word; overflow-wrap: break-word;">@Model.Name</h5>
                     @if (!string.IsNullOrWhiteSpace(Model.Description))
                     {
                         <p class="text-muted mb-3" style="font-size:.875rem; line-height:1.7;">@Model.Description</p>
@@ -248,7 +248,7 @@
                                             ? (decimal)(item.OriginalPrice - item.DiscountPrice.Value) / item.OriginalPrice * 100
                                             : 0;
                                         <tr>
-                                            <td class="fw-semibold" style="font-size:.875rem;">@item.ProductName</td>
+                                            <td class="fw-semibold" style="font-size:.875rem; word-break: break-word; max-width: 200px;">@item.ProductName</td>
                                             <td style="color:#94a3b8; text-decoration:line-through; font-size:.875rem;">NT$ @item.OriginalPrice.ToString("N0")</td>
                                             <td class="fw-bold" style="color:#ea5455; font-size:.938rem;">
                                                 @(item.DiscountPrice.HasValue ? $"NT$ {item.DiscountPrice.Value:N0}" : "-")
@@ -343,3 +343,5 @@
     }
 </script>
 }
+
+
