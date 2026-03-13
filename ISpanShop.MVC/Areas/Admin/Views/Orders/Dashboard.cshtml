@@ -578,7 +578,35 @@
                         plotOptions: { treemap: { distributed: true, enableShades: false } },
                         dataLabels: { 
                             enabled: true, 
-                            formatter: (text, op) => [text, '$' + formatRevenue(op.value)] 
+                            formatter: function(text, op) {
+                                const val = op.value;
+                                const percent = grandTotalRevenue > 0 ? (val / grandTotalRevenue) * 100 : 0;
+                                
+                                // 策略：保留文字的前提下優化顯示
+                                // 1. 極小區塊 (< 3%): 顯示前兩個字 + ".."，不顯示金額 (防止旋轉)
+                                if (percent < 3) {
+                                    return text.length > 2 ? text.substring(0, 2) + ".." : text;
+                                }
+                                // 2. 中小區塊 (3% - 10%): 顯示完整類別名稱，不顯示金額
+                                if (percent < 10) {
+                                    return text;
+                                }
+                                // 3. 大型區塊 (> 10%): 顯示兩行 (名稱 + 金額)
+                                return [text, '$' + formatRevenue(val)];
+                            },
+                            style: {
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                colors: ['#fff'] // 強制白色，配合陰影效果最好
+                            },
+                            dropShadow: {
+                                enabled: true,
+                                top: 1,
+                                left: 1,
+                                blur: 1,
+                                color: '#000',
+                                opacity: 0.5
+                            }
                         },
                         tooltip: {
                             y: { formatter: (val) => '$' + val.toLocaleString() }
