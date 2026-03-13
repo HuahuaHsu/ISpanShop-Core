@@ -17,12 +17,28 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
             _service = service;
         }
 
-        // --- 顯示所有評論 ---
-        public async Task<IActionResult> Index()
+        // --- 顯示所有評論 (支援分頁) ---
+        [HttpGet]
+        public async Task<IActionResult> Index(int page = 1)
         {
+            int pageSize = 10;
             var dtos = await _service.GetAllAsync();
 
-            var vms = dtos.Select(d => new OrderReviewVm
+            // 計算分頁資訊
+            int totalCount = dtos.Count;
+            int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            // 確保當前頁數在合理範圍內
+            page = page < 1 ? 1 : page;
+            if (totalPages > 0 && page > totalPages) page = totalPages;
+
+            // 進行分頁切割 (依照時間由新到舊排序)
+            var pagedDtos = dtos.OrderByDescending(d => d.CreatedAt)
+                               .Skip((page - 1) * pageSize)
+                               .Take(pageSize)
+                               .ToList();
+
+            var vms = pagedDtos.Select(d => new OrderReviewVm
             {
                 Id = d.Id,
                 UserId = d.UserId,
@@ -34,6 +50,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
                 IsAutoFlagged = d.IsAutoFlagged,
                 CreatedAt = d.CreatedAt
             }).ToList();
+
+            // 將分頁資訊存入 ViewBag
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
 
             return View(vms);
         }

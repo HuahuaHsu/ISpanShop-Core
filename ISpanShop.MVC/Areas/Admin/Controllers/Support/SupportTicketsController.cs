@@ -26,13 +26,29 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Support
 		// 模擬一個取得當前管理員等級的服務 (目前假裝是 1: IT工程部)
 		private int GetCurrentAdminLevelId() => 1;
 
-		// 列表頁面 - 顯示所有客服工單
-		public async Task<IActionResult> Index()
+		// 列表頁面 - 顯示所有客服工單 (支援分頁)
+		[HttpGet]
+		public async Task<IActionResult> Index(int page = 1)
 		{
+			int pageSize = 10;
 			var dtos = await _service.GetAllAsync();
 
+			// 計算分頁資訊
+			int totalCount = dtos.Count;
+			int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+			// 確保當前頁數在合理範圍內
+			page = page < 1 ? 1 : page;
+			if (totalPages > 0 && page > totalPages) page = totalPages;
+
+			// 進行分頁切割
+			var pagedDtos = dtos.OrderByDescending(d => d.CreatedAt)
+							   .Skip((page - 1) * pageSize)
+							   .Take(pageSize)
+							   .ToList();
+
 			// DTO 轉 ViewModel
-			var vms = dtos.Select(d => new SupportTicketVm
+			var vms = pagedDtos.Select(d => new SupportTicketVm
 			{
 				Id = d.Id,
 				Subject = d.Subject,
@@ -41,6 +57,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Support
 				AdminReply = d.AdminReply,
 				CreatedAt = d.CreatedAt
 			}).ToList();
+
+			// 將分頁資訊存入 ViewBag
+			ViewBag.CurrentPage = page;
+			ViewBag.TotalPages = totalPages;
 
 			return View(vms);
 		}
