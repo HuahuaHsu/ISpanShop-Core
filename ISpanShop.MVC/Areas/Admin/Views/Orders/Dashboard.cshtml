@@ -502,6 +502,14 @@
                         style: { fontSize: '12px', colors: ['#fff'] },
                         formatter: function(val) {
                             return orderBy === 'revenue' ? '$' + formatRevenue(val) : val;
+                        },
+                        dropShadow: {
+                            enabled: true,
+                            top: 1,
+                            left: 1,
+                            blur: 1,
+                            color: '#000',
+                            opacity: 0.45
                         }
                     },
                     xaxis: { 
