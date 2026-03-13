@@ -212,6 +212,13 @@ namespace ISpanShop.Services.Orders
 				var dto = new CategoryMonthlyDeltaDto { CategoryName = cat };
 				for (int m = 1; m <= 12; m++)
 				{
+					// 未來月份保護：如果 Year1 是今年且月份大於今天，則不計算差額 (設為 0)
+					if (year1 == DateTime.Now.Year && m > DateTime.Now.Month)
+					{
+						dto.MonthlyDeltas.Add(0);
+						continue;
+					}
+
 					decimal v1 = data1.Where(d => d.CategoryName == cat && d.Month == m).Sum(d => d.Revenue);
 					decimal v2 = data2.Where(d => d.CategoryName == cat && d.Month == m).Sum(d => d.Revenue);
 					dto.MonthlyDeltas.Add(v1 - v2); // Year1 - Year2
