@@ -63,18 +63,6 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[CategorySpecMappings]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[CategorySpecOptions]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[CategorySpecs]",
-         "ObjectType": 0
-      },
-      {
          "Name": "[dbo].[ChatMessages]",
          "ObjectType": 0
       },

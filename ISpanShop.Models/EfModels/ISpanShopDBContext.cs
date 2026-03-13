@@ -33,12 +33,6 @@ public partial class ISpanShopDBContext : DbContext
 
     public virtual DbSet<CategoryAttributeOption> CategoryAttributeOptions { get; set; }
 
-    public virtual DbSet<CategorySpec> CategorySpecs { get; set; }
-
-    public virtual DbSet<CategorySpecMapping> CategorySpecMappings { get; set; }
-
-    public virtual DbSet<CategorySpecOption> CategorySpecOptions { get; set; }
-
     public virtual DbSet<ChatMessage> ChatMessages { get; set; }
 
     public virtual DbSet<LoginHistory> LoginHistories { get; set; }
@@ -264,47 +258,6 @@ public partial class ISpanShopDBContext : DbContext
             entity.HasOne(d => d.CategoryAttribute).WithMany(p => p.CategoryAttributeOptions)
                 .HasForeignKey(d => d.CategoryAttributeId)
                 .HasConstraintName("FK_AttributeOptions_Attributes");
-        });
-
-        modelBuilder.Entity<CategorySpec>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__Category__3214EC07CFBDAEA7");
-
-            entity.Property(e => e.InputType)
-                .IsRequired()
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("text");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.Name)
-                .IsRequired()
-                .HasMaxLength(50);
-        });
-
-        modelBuilder.Entity<CategorySpecMapping>(entity =>
-        {
-            entity.HasKey(e => new { e.CategoryId, e.CategorySpecId }).HasName("PK__Category__FF254218D957B0AF");
-
-            entity.HasOne(d => d.Category).WithMany(p => p.CategorySpecMappings)
-                .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK_SpecMappings_Categories");
-
-            entity.HasOne(d => d.CategorySpec).WithMany(p => p.CategorySpecMappings)
-                .HasForeignKey(d => d.CategorySpecId)
-                .HasConstraintName("FK_SpecMappings_Specs");
-        });
-
-        modelBuilder.Entity<CategorySpecOption>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__Category__3214EC0788064871");
-
-            entity.Property(e => e.OptionName)
-                .IsRequired()
-                .HasMaxLength(50);
-
-            entity.HasOne(d => d.CategorySpec).WithMany(p => p.CategorySpecOptions)
-                .HasForeignKey(d => d.CategorySpecId)
-                .HasConstraintName("FK_SpecOptions_Specs");
         });
 
         modelBuilder.Entity<ChatMessage>(entity =>
