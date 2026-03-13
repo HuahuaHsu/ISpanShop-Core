@@ -7,76 +7,204 @@
 }
 
 <style>
-    .font-noto { font-family: 'Noto Sans TC', sans-serif; }
-    .tracking-tight { letter-spacing: -0.025em; }
+    .font-noto {
+        font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .tracking-tight {
+        letter-spacing: -0.025em;
+    }
+
     .member-avatar {
-        width: 48px; height: 48px;
-        border-radius: 50%; object-fit: cover;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
         border: 2px solid #f8f9fa;
     }
-    .member-info { display: flex; align-items: center; gap: 12px; }
-    .member-name  { font-weight: 600; color: #1e2d3d; margin-bottom: 2px; font-size: 0.938rem; }
-    .member-account { font-size: 0.813rem; color: #a1acb8; }
-    .member-email   { font-size: 0.813rem; color: #718096; }
-    .point-balance  { color: #ff9f43; font-weight: 600; font-size: 0.938rem; }
-    .badge-soft     { padding: 0.375rem 0.75rem; border-radius: 0.5rem; font-weight: 500; font-size: 0.813rem; }
-    .bg-label-buyer  { background-color: #e3f2fd; color: #1976d2; }
-    .bg-label-seller { background-color: #e8f5e9; color: #388e3c; }
-    .act-group { display: flex; gap: 0.5rem; }
+
+    .member-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .member-name {
+        font-weight: 600;
+        color: #1e2d3d;
+        margin-bottom: 2px;
+        font-size: 0.938rem;
+    }
+
+    .member-account {
+        font-size: 0.813rem;
+        color: #a1acb8;
+    }
+
+    .member-email {
+        font-size: 0.813rem;
+        color: #718096;
+    }
+
+    .point-balance {
+        color: #ff9f43;
+        font-weight: 600;
+        font-size: 0.938rem;
+    }
+
+    .badge-soft {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.813rem;
+    }
+
+    .bg-label-buyer {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .bg-label-seller {
+        background-color: #e8f5e9;
+        color: #388e3c;
+    }
+
+    .act-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
     .act-icon {
-        width: 32px; height: 32px;
-        display: inline-flex; align-items: center; justify-content: center;
-        border-radius: 0.375rem; border: 1px solid #e2e8f0;
-        background: white; color: #64748b; cursor: pointer; transition: all 0.2s;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
     }
-    .act-icon:hover     { background: #f8fafc; border-color: #cbd5e1; color: #3182ce; }
-    .act-view:hover     { background: #eff6ff; border-color: #3b82f6; color: #3b82f6; }
-    .table > :not(caption) > * > * { padding: 1rem 0.75rem; }
 
-    /* ── Side Drawer ── */
-    .drawer-overlay {
-        position: fixed; top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.45);
-        z-index: 1040;
-        display: none;
+        .act-icon:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #3182ce;
+        }
+
+    .table > :not(caption) > * > * {
+        padding: 1rem 0.75rem;
+    }
+
+    /* 讓資料列顯示為可點擊的手指圖示 */
+    .clickable-row {
+        cursor: pointer;
+    }
+
+    /* ══════════════════════════════════════════════
+                   向左擠壓排版 (Squeeze Layout)
+           ══════════════════════════════════════════════ */
+    .squeeze-layout {
+        display: flex;
+        align-items: flex-start;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    /* 左側主列表區 */
+    .squeeze-main {
+        flex: 1 1 100%;
+        min-width: 0;
+        transition: all 0.3s ease;
+    }
+
+    /* 右側編輯面板區 (預設隱藏) */
+    .squeeze-drawer {
+        flex: 0 0 0;
+        width: 0;
         opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    .drawer-overlay.show { display: block; opacity: 1; }
-
-    .side-drawer {
-        position: fixed; top: 0; right: -640px;
-        width: 600px; height: 100vh;
         background: #fff;
-        box-shadow: -6px 0 24px rgba(0, 0, 0, 0.12);
-        z-index: 1050;
-        transition: right 0.3s ease;
-        display: flex; flex-direction: column;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
         overflow: hidden;
+        position: sticky;
+        top: 80px;
+        height: calc(100vh - 100px);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.45);
     }
-    .side-drawer.open { right: 0; }
 
+    /* 展開狀態 */
+    .squeeze-layout.is-open .squeeze-main {
+        flex: 1 1 calc(100% - 400px);
+        margin-right: 1.5rem;
+    }
+
+    .squeeze-layout.is-open .squeeze-drawer {
+        flex: 0 0 400px;
+        width: 400px;
+        opacity: 1;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Drawer 內部樣式 */
     .drawer-header {
-        display: flex; align-items: center; justify-content: space-between;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         padding: 1rem 1.25rem;
         border-bottom: 1px solid #e2e8f0;
-        background: #fff;
+        background: #f8fafc;
         flex-shrink: 0;
     }
-    .drawer-header h5 { margin: 0; font-weight: 700; color: #1e2d3d; }
-    .drawer-body { flex: 1; overflow-y: auto; }
-    .drawer-loading {
-        display: flex; align-items: center; justify-content: center;
-        height: 200px; color: #a1acb8;
-        flex-direction: column; gap: 1rem;
+
+        .drawer-header h5 {
+            margin: 0;
+            font-weight: 700;
+            color: #1e2d3d;
+        }
+
+    .drawer-body {
+        flex: 1;
+        overflow-y: auto;
+        background: #fff;
     }
 
-    /* Toast */
-    .member-toast-container {
-        position: fixed; top: 1.25rem; right: 1.25rem; z-index: 1100;
-        display: flex; flex-direction: column; gap: 0.5rem;
+    .drawer-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #a1acb8;
+        flex-direction: column;
+        gap: 1rem;
     }
+
+    /* 正在編輯的列高亮效果 (Active Row) */
+    .active-edit-row {
+        background-color: #fffde7 !important;
+        border-left: 4px solid #ffab00 !important;
+        transition: background-color 0.3s ease, border-left 0.3s ease;
+    }
+
+        .active-edit-row td {
+            background-color: transparent !important;
+        }
+
+    /* Toast 通知 */
+    .member-toast-container {
+        position: fixed;
+        top: 1.25rem;
+        right: 1.25rem;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
     .member-toast {
         padding: 0.75rem 1.25rem;
         border-radius: 0.5rem;
@@ -86,260 +214,262 @@
         animation: slideInToast 0.3s ease;
         min-width: 280px;
     }
-    .member-toast.success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
-    .member-toast.error   { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+
+        .member-toast.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .member-toast.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
     @@keyframes slideInToast {
-        from { opacity: 0; transform: translateX(30px); }
-        to   { opacity: 1; transform: translateX(0); }
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
 </style>
 
 <div class="container-fluid py-4 font-noto">
 
-    @* ── 頁首 ── *@
-    <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div>
-            <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">
-                <i class="bx bx-user me-2" style="color:#3182ce;"></i>會員列表
-            </h2>
-            <p class="mb-0 fs-7 text-muted">管理所有會員資料，查看會員狀態與基本資訊</p>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <form method="get" asp-action="Index" class="d-flex gap-2">
-                <select name="status" class="form-select" style="max-width: 150px;">
-                    <option value="all" selected="@(Model.Status == "all" || string.IsNullOrEmpty(Model.Status))">所有狀態</option>
-                    <option value="normal" selected="@(Model.Status == "normal")">正常</option>
-                    <option value="blocked" selected="@(Model.Status == "blocked")">停權</option>
-                </select>
-                <div class="input-group" style="max-width: 320px;">
-                    <input type="text" name="keyword" value="@Model.Keyword"
-                           class="form-control" placeholder="搜尋姓名、電話或帳號..."
-                           style="border-radius: 0.375rem 0 0 0.375rem;" />
-                    <button type="submit" class="btn btn-primary" style="border-radius: 0 0.375rem 0.375rem 0;">
-                        <i class="bx bx-search me-1"></i>搜尋
-                    </button>
-                </div>
-                @if (!string.IsNullOrWhiteSpace(Model.Keyword))
-                {
-                    <a href="@Url.Action("Index")" class="btn btn-label-secondary">
-                        <i class="bx bx-x me-1"></i>清除
-                    </a>
-                }
-            </form>
-        </div>
-    </div>
+    <div class="squeeze-layout" id="pageLayoutWrapper">
 
-    @* ── 統計卡片 ── *@
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body py-3">
-                    <div class="d-flex align-items-center gap-4">
-                        <div>
-                            <span class="text-muted fs-7">總會員數</span>
-                            <h4 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.PagedResult.TotalCount</h4>
+        <div class="squeeze-main">
+            @* ── 頁首 ── *@
+            <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">
+                        <i class="bx bx-user me-2" style="color:#3182ce;"></i>會員列表
+                    </h2>
+                    <p class="mb-0 fs-7 text-muted">管理所有會員資料，查看會員狀態與基本資訊</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <form method="get" asp-action="Index" class="d-flex gap-2">
+                        <select name="status" class="form-select" style="max-width: 150px;">
+                            <option value="all" selected="@(Model.Status == "all" || string.IsNullOrEmpty(Model.Status))">所有狀態</option>
+                            <option value="normal" selected="@(Model.Status == "normal")">正常</option>
+                            <option value="blocked" selected="@(Model.Status == "blocked")">停權</option>
+                        </select>
+                        <div class="input-group" style="max-width: 320px;">
+                            <input type="text" name="keyword" value="@Model.Keyword"
+                                   class="form-control" placeholder="搜尋姓名、電話或帳號..."
+                                   style="border-radius: 0.375rem 0 0 0.375rem;" />
+                            <button type="submit" class="btn btn-primary" style="border-radius: 0 0.375rem 0.375rem 0;">
+                                <i class="bx bx-search me-1"></i>搜尋
+                            </button>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Keyword))
+                        {
+                            <a href="@Url.Action("Index")" class="btn btn-label-secondary">
+                                <i class="bx bx-x me-1"></i>清除
+                            </a>
+                        }
+                    </form>
+                </div>
+            </div>
+
+            @* ── 統計卡片 ── *@
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center gap-4">
+                                <div>
+                                    <span class="text-muted fs-7">總會員數</span>
+                                    <h4 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.PagedResult.TotalCount</h4>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    @* ── 主表格 ── *@
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead style="background-color:#f8fafc; border-bottom: 2px solid #e2e8f0;">
-                    <tr>
-                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">MEMBER PROFILE</th>
-                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">身分 ROLE</th>
-                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">等級 LEVEL</th>
-                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">點數 BALANCE</th>
-                        <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">狀態 STATUS</th>
-                        <th class="text-end" style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">操作</th>
-                    </tr>
-                </thead>
-                <tbody id="memberTableBody">
-                    @if (Model.PagedResult.Data.Any())
-                    {
-                        @foreach (var member in Model.PagedResult.Data)
-                        {
-                            @* data-member-id 供 JS 精準更新該列 *@
-                            <tr data-member-id="@member.UserId">
-                                <td>
-                                    <div class="member-info">
-                                        <img src="@member.AvatarUrl"
-                                             alt="@member.FullName"
-                                             class="member-avatar member-avatar-img"
-                                             onerror="this.src='https://via.placeholder.com/48'" />
-                                        <div>
-                                            <div class="member-name">@member.FullName</div>
-                                            <div class="member-account">@@@member.Account</div>
-                                            <div class="member-email">@member.Email</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge badge-soft bg-label-buyer">
-                                        <i class="bx bx-shopping-bag me-1"></i>買家
-                                    </span>
-                                    @if (member.IsSeller)
-                                    {
-                                        <span class="badge badge-soft bg-label-seller ms-1">
-                                            <i class="bx bx-store-alt me-1"></i>賣家
-                                        </span>
-                                    }
-                                </td>
-                                <td>
-                                    <span style="color:#64748b;font-weight:500;">
-                                        @{
-                                            var levelIcon = member.LevelName switch
-                                            {
-                                                "金牌會員" => "bx-medal",
-                                                "銀牌會員" => "bx-award",
-                                                "銅牌會員" => "bx-trophy",
-                                                _ => "bx-star"
-                                            };
-                                        }
-                                        <i class="bx @levelIcon me-1"></i>@member.LevelName
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="point-balance">
-                                        <i class="bx bx-coin me-1"></i>P @member.PointBalance.ToString("N0")
-                                    </span>
-                                </td>
-                                <td class="member-status-cell">
-                                    @if (member.IsBlacklisted)
-                                    {
-                                        <span class="badge bg-label-danger">
-                                            <i class="bx bx-block me-1"></i>停權
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-label-success">
-                                            <i class="bx bx-check-circle me-1"></i>正常
-                                        </span>
-                                    }
-                                </td>
-                                <td>
-                                    <div class="act-group justify-content-end">
-                                        @* Drawer 優先；Ctrl+點擊可開完整編輯頁 *@
-                                        <button type="button"
-                                                class="act-icon act-view"
-                                                onclick="openDrawer(@member.UserId)"
-                                                data-bs-toggle="tooltip"
-                                                title="編輯會員（側邊面板）">
-                                            <i class="bx bx-edit"></i>
-                                        </button>
-                                        <a href="@Url.Action("Edit", new { id = member.UserId })"
-                                           class="act-icon"
-                                           data-bs-toggle="tooltip"
-                                           title="完整編輯頁">
-                                            <i class="bx bx-link-external"></i>
-                                        </a>
-                                    </div>
-                                </td>
+            @* ── 主表格 ── *@
+            <div class="card shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background-color:#f8fafc; border-bottom: 2px solid #e2e8f0;">
+                            <tr>
+                                <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">MEMBER PROFILE</th>
+                                <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">身分 ROLE</th>
+                                <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">等級 LEVEL</th>
+                                <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">點數 BALANCE</th>
+                                <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">狀態 STATUS</th>
+                                <th class="text-end" style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">設定</th>
                             </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center py-5">
-                                <div class="mb-2" style="color:#a0aec0;font-size:2.5rem;">
-                                    <i class="bx bx-user-x"></i>
-                                </div>
-                                <h5 class="fw-normal" style="color:#718096;">找不到符合條件的會員</h5>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 分頁控制 -->
-        @if (Model.PagedResult.TotalCount > Model.PagedResult.PageSize)
-        {
-            <div class="card-footer bg-white border-top">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p class="text-muted mb-0 fs-7">
-                            顯示第 @((Model.PagedResult.CurrentPage - 1) * Model.PagedResult.PageSize + 1)
-                            到 @Math.Min(Model.PagedResult.CurrentPage * Model.PagedResult.PageSize, Model.PagedResult.TotalCount)
-                            筆，共 @Model.PagedResult.TotalCount 筆
-                        </p>
-                    </div>
-                    <div class="col-md-6">
-                        <nav aria-label="會員列表分頁">
-                            <ul class="pagination justify-content-end mb-0">
-                                <li class="page-item @(Model.PagedResult.CurrentPage <= 1 ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = Model.PagedResult.CurrentPage - 1, pageSize = Model.PagedResult.PageSize })">
-                                        <i class="bx bx-chevron-left"></i>
-                                    </a>
-                                </li>
-                                @{
-                                    var startPage = Math.Max(1, Model.PagedResult.CurrentPage - 2);
-                                    var endPage   = Math.Min(totalPages, Model.PagedResult.CurrentPage + 2);
-                                }
-                                @if (startPage > 1)
+                        </thead>
+                        <tbody id="memberTableBody">
+                            @if (Model.PagedResult.Data.Any())
+                            {
+                                @foreach (var member in Model.PagedResult.Data)
                                 {
-                                    <li class="page-item">
-                                        <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = 1, pageSize = Model.PagedResult.PageSize })">1</a>
-                                    </li>
-                                    @if (startPage > 2)
-                                    {
-                                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                                    }
+                                    @* 增加 class="clickable-row" 以及 onclick 事件 *@
+                                    <tr data-member-id="@member.UserId" class="clickable-row" onclick="openDrawer(@member.UserId)">
+                                        <td>
+                                            <div class="member-info">
+                                                <img src="@member.AvatarUrl"
+                                                     alt="@member.FullName"
+                                                     class="member-avatar member-avatar-img"
+                                                     onerror="this.src='https://via.placeholder.com/48'" />
+                                                <div>
+                                                    <div class="member-name">@member.FullName</div>
+                                                    <div class="member-account">@@@member.Account</div>
+                                                    <div class="member-email">@member.Email</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-soft bg-label-buyer">
+                                                <i class="bx bx-shopping-bag me-1"></i>買家
+                                            </span>
+                                            @if (member.IsSeller)
+                                            {
+                                                <span class="badge badge-soft bg-label-seller ms-1">
+                                                    <i class="bx bx-store-alt me-1"></i>賣家
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span style="color:#64748b;font-weight:500;">
+                                                @{
+                                                    var levelIcon = member.LevelName switch
+                                                    {
+                                                        "金牌會員" => "bx-medal",
+                                                        "銀牌會員" => "bx-award",
+                                                        "銅牌會員" => "bx-trophy",
+                                                        _ => "bx-star"
+                                                    };
+                                                }
+                                                <i class="bx @levelIcon me-1"></i>@member.LevelName
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="point-balance">
+                                                <i class="bx bx-coin me-1"></i>P @member.PointBalance.ToString("N0")
+                                            </span>
+                                        </td>
+                                        <td class="member-status-cell">
+                                            @if (member.IsBlacklisted)
+                                            {
+                                                <span class="badge bg-label-danger">
+                                                    <i class="bx bx-block me-1"></i>停權
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-label-success">
+                                                    <i class="bx bx-check-circle me-1"></i>正常
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="act-group justify-content-end">
+                                                @* 移除原本的 onclick，讓點擊事件統一交給外層的 <tr> 處理，同時移除了完整編輯的 <a> *@
+                                                <button type="button"
+                                                        class="act-icon"
+                                                        data-bs-toggle="tooltip"
+                                                        title="會員設定">
+                                                    <i class="bx bx-edit"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 }
-                                @for (int i = startPage; i <= endPage; i++)
-                                {
-                                    <li class="page-item @(i == Model.PagedResult.CurrentPage ? "active" : "")">
-                                        <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = i, pageSize = Model.PagedResult.PageSize })">@i</a>
-                                    </li>
-                                }
-                                @if (endPage < totalPages)
-                                {
-                                    @if (endPage < totalPages - 1)
-                                    {
-                                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                                    }
-                                    <li class="page-item">
-                                        <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = totalPages, pageSize = Model.PagedResult.PageSize })">@totalPages</a>
-                                    </li>
-                                }
-                                <li class="page-item @(Model.PagedResult.CurrentPage >= totalPages ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = Model.PagedResult.CurrentPage + 1, pageSize = Model.PagedResult.PageSize })">
-                                        <i class="bx bx-chevron-right"></i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="mb-2" style="color:#a0aec0;font-size:2.5rem;">
+                                            <i class="bx bx-user-x"></i>
+                                        </div>
+                                        <h5 class="fw-normal" style="color:#718096;">找不到符合條件的會員</h5>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
+
+                @if (Model.PagedResult.TotalCount > Model.PagedResult.PageSize)
+                {
+                    <div class="card-footer bg-white border-top">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <p class="text-muted mb-0 fs-7">
+                                    顯示第 @((Model.PagedResult.CurrentPage - 1) * Model.PagedResult.PageSize + 1)
+                                    到 @Math.Min(Model.PagedResult.CurrentPage * Model.PagedResult.PageSize, Model.PagedResult.TotalCount)
+                                    筆，共 @Model.PagedResult.TotalCount 筆
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <nav aria-label="會員列表分頁">
+                                    <ul class="pagination justify-content-end mb-0">
+                                        <li class="page-item @(Model.PagedResult.CurrentPage <= 1 ? "disabled" : "")">
+                                            <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = Model.PagedResult.CurrentPage - 1, pageSize = Model.PagedResult.PageSize })"><i class="bx bx-chevron-left"></i></a>
+                                        </li>
+                                        @{
+                                            var startPage = Math.Max(1, Model.PagedResult.CurrentPage - 2);
+                                            var endPage = Math.Min(totalPages, Model.PagedResult.CurrentPage + 2);
+                                        }
+                                        @if (startPage > 1)
+                                        {
+                                            <li class="page-item"><a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = 1, pageSize = Model.PagedResult.PageSize })">1</a></li>
+                                            @if (startPage > 2)
+                                            {
+                                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                                            }
+                                        }
+                                        @for (int i = startPage; i <= endPage; i++)
+                                        {
+                                            <li class="page-item @(i == Model.PagedResult.CurrentPage ? "active" : "")">
+                                                <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = i, pageSize = Model.PagedResult.PageSize })">@i</a>
+                                            </li>
+                                        }
+                                        @if (endPage < totalPages)
+                                        {
+                                            @if (endPage < totalPages - 1)
+                                            {
+                                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                                            }
+                                            <li class="page-item"><a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = totalPages, pageSize = Model.PagedResult.PageSize })">@totalPages</a></li>
+                                        }
+                                        <li class="page-item @(Model.PagedResult.CurrentPage >= totalPages ? "disabled" : "")">
+                                            <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, page = Model.PagedResult.CurrentPage + 1, pageSize = Model.PagedResult.PageSize })"><i class="bx bx-chevron-right"></i></a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                }
             </div>
-        }
-    </div>
-</div>
-
-@* ══════════════════════════════════════════════
-   Side Drawer — 側邊滑出面板
-   ══════════════════════════════════════════════ *@
-
-<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
-
-<div class="side-drawer" id="memberDrawer">
-    <div class="drawer-header">
-        <h5><i class="bx bx-edit-alt me-2" style="color:#3182ce;"></i>編輯會員資料</h5>
-        <button type="button" class="btn-close" onclick="closeDrawer()" aria-label="關閉"></button>
-    </div>
-    <div class="drawer-body" id="drawerBody">
-        <div class="drawer-loading" id="drawerLoading" style="display:none;">
-            <div class="spinner-border text-primary" role="status"></div>
-            <span class="text-muted">載入中...</span>
         </div>
-        <div id="drawerContent"></div>
+
+        <div class="squeeze-drawer" id="memberDrawer">
+            <div class="drawer-header">
+                <h5><i class="bx bx-cog me-2" style="color:#3182ce;"></i>會員設定</h5>
+                <button type="button" class="btn-close" onclick="closeDrawer()" aria-label="關閉"></button>
+            </div>
+            <div class="drawer-body" id="drawerBody">
+                <div class="drawer-loading" id="drawerLoading" style="display:none;">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <span class="text-muted small">載入資料中...</span>
+                </div>
+                <div id="drawerContent"></div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -348,7 +478,7 @@
 
 @section Scripts {
     <script>
-        // ── Bootstrap Tooltips（存成陣列以便後續統一 hide）──
+        // ── Bootstrap Tooltips ──
         const _tooltipInstances = [];
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
@@ -361,22 +491,40 @@
         }
 
         // ================================================================
-        // Drawer 控制
+        // 清除所有列的高亮狀態
+        // ================================================================
+        function clearAllRowHighlights() {
+            document.querySelectorAll('#memberTableBody tr').forEach(row => {
+                row.classList.remove('active-edit-row');
+            });
+        }
+
+        // ================================================================
+        // Drawer & Squeeze 佈局控制
         // ================================================================
         function openDrawer(memberId) {
-            // 先關閉所有殘留的 tooltip，避免卡在 Drawer 上方
             hideAllTooltips();
 
-            const drawer   = document.getElementById('memberDrawer');
-            const overlay  = document.getElementById('drawerOverlay');
-            const loading  = document.getElementById('drawerLoading');
-            const content  = document.getElementById('drawerContent');
+            // 讓 Sneat 左側主選單收合，挪出更多空間
+            document.documentElement.classList.add('layout-menu-collapsed');
 
+            const wrapper = document.getElementById('pageLayoutWrapper');
+            const loading = document.getElementById('drawerLoading');
+            const content = document.getElementById('drawerContent');
+
+            // 處理點擊列的高亮
+            clearAllRowHighlights();
+            const selectedRow = document.querySelector(`tr[data-member-id="${memberId}"]`);
+            if (selectedRow) {
+                selectedRow.classList.add('active-edit-row');
+            }
+
+            // 開啟面板
             content.innerHTML = '';
             loading.style.display = 'flex';
-            overlay.classList.add('show');
-            drawer.classList.add('open');
+            wrapper.classList.add('is-open');
 
+            // AJAX 取得表單視圖
             fetch(`/Admin/Members/EditPartial/${memberId}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
@@ -396,90 +544,59 @@
         }
 
         function closeDrawer() {
-            document.getElementById('memberDrawer').classList.remove('open');
-            document.getElementById('drawerOverlay').classList.remove('show');
+            // 關閉右側面板並清除高亮
+            document.getElementById('pageLayoutWrapper').classList.remove('is-open');
+            clearAllRowHighlights();
         }
 
-        // Esc 鍵關閉 drawer
+        // ================================================================
+        // 全域點擊監聽：點擊 List 與 Drawer 以外的區域就關閉 Drawer
+        // ================================================================
+        document.addEventListener('mousedown', function (e) {
+            const wrapper = document.getElementById('pageLayoutWrapper');
+
+            // 只有在編輯面板是打開的狀態才執行判斷
+            if (wrapper.classList.contains('is-open')) {
+                const drawer = document.getElementById('memberDrawer');
+                const listArea = document.getElementById('memberTableBody');
+
+                // 確認點擊目標是否在 Drawer 內
+                const isClickInsideDrawer = drawer.contains(e.target);
+                // 確認點擊目標是否在會員清單的 <tbody> 內 (如果是，代表點了別行，那就交給那一行去開啟)
+                const isClickInsideList = listArea.contains(e.target);
+
+                // 若既不在面板內，也不在清單內 (比如點到標題、分頁、空白處)，就關閉
+                if (!isClickInsideDrawer && !isClickInsideList) {
+                    closeDrawer();
+                }
+            }
+        });
+
+        // Esc 鍵也可以關閉 drawer
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') closeDrawer();
         });
 
         // ================================================================
-        // 初始化 Drawer 內的表單邏輯（每次載入後呼叫）
+        // 初始化 Drawer 內的表單邏輯
         // ================================================================
         function initDrawerForm() {
             const form = document.getElementById('drawerEditForm');
             if (!form) return;
 
-            // 縣市變更 → 更新區域選單
-            const citySelect   = form.querySelector('#drawerCitySelect');
-            const regionSelect = form.querySelector('#drawerRegionSelect');
-            if (citySelect && regionSelect) {
-                // 讀取 data attribute 中的初始值（由 Razor 從 Model 寫入）
-                const initialCity   = citySelect.dataset.initialCity   || '';
-                const initialRegion = regionSelect.dataset.initialRegion || '';
-
-                citySelect.addEventListener('change', function () {
-                    const selectedCity = this.value;
-                    regionSelect.innerHTML = '<option value="">載入中...</option>';
-
-                    fetch(`/Admin/Members/GetRegions?city=${encodeURIComponent(selectedCity)}`)
-                        .then(r => r.json())
-                        .then(regions => {
-                            regionSelect.innerHTML = regions
-                                .map(r => `<option value="${r.value}">${r.text}</option>`)
-                                .join('');
-
-                            // 若城市切換回初始城市，嘗試還原初始區域的 selected 狀態
-                            if (selectedCity === initialCity && initialRegion) {
-                                const matchOpt = regionSelect.querySelector(`option[value="${initialRegion}"]`);
-                                if (matchOpt) matchOpt.selected = true;
-                            }
-                        })
-                        .catch(() => {
-                            regionSelect.innerHTML = '<option value="">載入失敗</option>';
-                        });
-                });
-            }
-
-            // 黑名單 toggle 確認
+            // 黑名單 toggle 確認防呆
             const blacklistSwitch = form.querySelector('#drawerBlacklistSwitch');
             if (blacklistSwitch) {
                 blacklistSwitch.addEventListener('change', function (e) {
                     if (e.target.checked) {
-                        if (!confirm('確定要將此會員加入黑名單嗎？\n加入後該會員將無法登入系統。')) {
+                        if (!confirm('確定要將此會員加入黑名單嗎？\n加入後該會員將無法登入系統與下單。')) {
                             e.target.checked = false;
                         }
                     }
                 });
             }
 
-            // 圖片預覽
-            const avatarInput = form.querySelector('#drawerAvatarFile');
-            const avatarImg   = form.querySelector('#drawerAvatarPreview');
-            if (avatarInput && avatarImg) {
-                avatarInput.addEventListener('change', function (e) {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-                    if (!allowed.includes(file.type)) {
-                        alert('只允許 JPG / PNG / GIF 格式');
-                        this.value = '';
-                        return;
-                    }
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('圖片不能超過 5MB');
-                        this.value = '';
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = ev => { avatarImg.src = ev.target.result; };
-                    reader.readAsDataURL(file);
-                });
-            }
-
-            // ── AJAX 表單提交 ──
+            // AJAX 提交表單
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
 
@@ -491,9 +608,7 @@
                 try {
                     const formData = new FormData(this);
 
-                    // 確保 checkbox 未勾選時也傳遞 false
-                    const blacklistEl = form.querySelector('#drawerBlacklistSwitch');
-                    if (blacklistEl && !blacklistEl.checked) {
+                    if (blacklistSwitch && !blacklistSwitch.checked) {
                         formData.set('IsBlacklisted', 'false');
                     }
 
@@ -523,32 +638,19 @@
         }
 
         // ================================================================
-        // 更新列表中指定會員那一列的資料（不重整頁面）
+        // 更新列表中指定會員的狀態
         // ================================================================
         function updateMemberRow(member) {
             const row = document.querySelector(`tr[data-member-id="${member.userId}"]`);
             if (!row) return;
 
-            // 姓名
-            const nameEl = row.querySelector('.member-name');
-            if (nameEl) nameEl.textContent = member.fullName;
-
-            // Email
-            const emailEl = row.querySelector('.member-email');
-            if (emailEl) emailEl.textContent = member.email;
-
-            // 頭像（如果有更新）
-            if (member.avatarUrl) {
-                const avatarImg = row.querySelector('.member-avatar-img');
-                if (avatarImg) avatarImg.src = member.avatarUrl;
-            }
-
-            // 狀態 badge
             const statusCell = row.querySelector('.member-status-cell');
             if (statusCell) {
                 if (member.isBlacklisted) {
+                    row.style.backgroundColor = '#fff5f5';
                     statusCell.innerHTML = '<span class="badge bg-label-danger"><i class="bx bx-block me-1"></i>停權</span>';
                 } else {
+                    row.style.backgroundColor = '';
                     statusCell.innerHTML = '<span class="badge bg-label-success"><i class="bx bx-check-circle me-1"></i>正常</span>';
                 }
             }
@@ -558,21 +660,14 @@
         // Toast 通知
         // ================================================================
         function showToast(type, html) {
-            // 優先使用 SweetAlert（已在 layout 載入）
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    icon: type,
-                    html: html,
-                    timer: 2500,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end',
-                    timerProgressBar: true
+                    icon: type, html: html, timer: 2500,
+                    showConfirmButton: false, toast: true, position: 'top-end', timerProgressBar: true
                 });
                 return;
             }
 
-            // Fallback：自訂 toast
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `member-toast ${type}`;
@@ -581,14 +676,13 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // ── TempData 成功訊息（整頁提交 fallback 後回來顯示）──
         @if (TempData["Success"] != null)
         {
-            <text>
-            document.addEventListener('DOMContentLoaded', function () {
-                showToast('success', @Html.Raw(Json.Serialize(TempData["Success"].ToString())));
-            });
-            </text>
+                <text>
+                document.addEventListener('DOMContentLoaded', function () {
+                    showToast('success', @Html.Raw(Json.Serialize(TempData["Success"].ToString())));
+                });
+                </text>
         }
     </script>
 }
