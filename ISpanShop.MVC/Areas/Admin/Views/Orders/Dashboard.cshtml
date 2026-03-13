@@ -188,7 +188,7 @@
                         <div class="row g-4">
                             <!-- 退貨率 -->
                             <div class="col-md-4">
-                                <div class="p-3 rounded bg-light metric-card border-danger">
+                                <div class="p-3 rounded bg-light metric-card border-danger cursor-pointer" onclick="window.location.href='@Url.Action("Index", "ReturnRequests", new { area = "Admin" })'">
                                     <div class="d-flex align-items-center mb-1">
                                         <i class="bx bx-undo text-danger me-2"></i>
                                         <span class="text-muted small fw-bold">退訂/取消率</span>
@@ -199,7 +199,7 @@
                             </div>
                             <!-- 平均出貨時長 -->
                             <div class="col-md-4">
-                                <div class="p-3 rounded bg-light metric-card border-warning">
+                                <div class="p-3 rounded bg-light metric-card border-warning cursor-pointer" onclick="window.location.href='@Url.Action("Index", "ShipmentWorkstation", new { area = "Admin" })'">
                                     <div class="d-flex align-items-center mb-1">
                                         <i class="bx bx-timer text-warning me-2"></i>
                                         <span class="text-muted small fw-bold">平均出貨時長</span>
@@ -214,7 +214,7 @@
                             </div>
                             <!-- 庫存預警數 -->
                             <div class="col-md-4">
-                                <div class="p-3 rounded bg-light metric-card border-secondary">
+                                <div class="p-3 rounded bg-light metric-card border-secondary cursor-pointer" onclick="window.location.href='@Url.Action("Index", "Inventory", new { area = "Admin" })'">
                                     <div class="d-flex align-items-center mb-1">
                                         <i class="bx bx-fridge text-secondary me-2"></i>
                                         <span class="text-muted small fw-bold">庫存預警品項</span>
@@ -442,7 +442,7 @@
                 // 核心概覽
                 $('#kpiNetRevenue').text('$' + data.netRevenue.toLocaleString());
                 $('#kpiItemsPerOrder').text(data.itemsPerOrder.toFixed(1));
-                $('#kpiAov').text('$' + data.averageOrderValue.toLocaleString());
+                $('#kpiAov').text('$' + Math.round(data.averageOrderValue).toLocaleString());
                 updateGrowth('#kpiRevGrowth', data.netRevenueGrowthRate, false);
                 updateGrowth('#kpiItemsGrowth', data.itemsPerOrderGrowthRate, false);
                 updateGrowth('#kpiAovGrowth', data.aovGrowthRate, false);
