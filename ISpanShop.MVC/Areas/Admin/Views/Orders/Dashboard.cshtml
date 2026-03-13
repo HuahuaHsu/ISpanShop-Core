@@ -349,8 +349,8 @@
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center mb-3 px-3">
                             <div>
-                                <h5 class="card-title mb-0 fw-bold">年度成長動能分解 (Growth Bridge)</h5>
-                                <p class="text-muted small mb-0 mt-1">展示各類別對營收變動的具體貢獻</p>
+                                <h5 class="card-title mb-0 fw-bold">年度成長動能分解 (Growth Bridge) <span class="badge bg-label-info ms-2 small comp-year-label"></span></h5>
+                                <p class="text-muted small mb-0 mt-1" id="growthBridgeDesc">展示各類別對營收變動的具體貢獻</p>
                             </div>
                             <span class="badge bg-label-primary">Waterfall Analysis</span>
                         </div>
@@ -358,15 +358,15 @@
                     </div>
                 </div>
 
-                <!-- 新增：類別月度消長趨勢圖 (Category Delta Trend Chart) -->
+                <!-- 新增：類別市佔百分點變動趨勢圖 (Category Market Share Delta Trend Chart) -->
                 <div class="row mt-4 pt-4 border-top">
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center mb-3 px-3">
                             <div>
-                                <h5 class="card-title mb-0 fw-bold">類別月度消長趨勢圖 (Monthly Delta Trend)</h5>
-                                <p class="text-muted small mb-0 mt-1">分析各月份類別表現對比，呈現各分類在各月份的成長與衰退動態。</p>
+                                <h5 class="card-title mb-0 fw-bold">類別市佔百分點變動趨勢圖 (Market Share YoY Delta) <span class="badge bg-label-info ms-2 small comp-year-label"></span></h5>
+                                <p class="text-muted small mb-0 mt-1" id="categoryDeltaDesc">分析各類別市佔率對比去年的增減情況，正值為擴張，負值為萎縮。</p>
                             </div>
-                            <span class="badge bg-label-primary">Trend Analysis</span>
+                            <span class="badge bg-label-primary">Competitive Analysis</span>
                         </div>
                         <div id="categoryDeltaLineChart" class="px-3"></div>
                     </div>
@@ -972,6 +972,11 @@
                 $('#valTotal2').text('$' + formatRevenue(data.total2));
                 $('#growthText').text(data.growthRate + '% Growth');
 
+                // 動態更新圖表註解與標籤
+                $('.comp-year-label').text(`(${y1} vs ${y2})`);
+                $('#growthBridgeDesc').text(`展示各類別在 ${y1} 相對於 ${y2} 的營收變動貢獻`);
+                $('#categoryDeltaDesc').text(`分析各類別在 ${y1} 對比 ${y2} 的市佔率增減情況，正值為擴張，負值為萎縮。`);
+
                 // 1. 更新雙向柱狀圖
                 const barOptions = {
                     series: data.series,
@@ -1162,12 +1167,12 @@
 
         let deltaTrendChart;
         function loadCategoryDeltaTrend(y1, y2, storeId) {
-            $.get(`/Orders/GetCategoryMonthlyDelta?year1=${y1}&year2=${y2}&storeId=${storeId}`, function(data) {
+            $.get(`/Orders/GetCategoryMonthlyGrowth?year1=${y1}&year2=${y2}&storeId=${storeId}`, function(data) {
                 if (!data || data.length === 0) return;
 
                 const trendSeries = data.map(item => ({
                     name: item.categoryName,
-                    data: item.monthlyDeltas
+                    data: item.monthlyGrowthRates
                 }));
 
                 const options = {
@@ -1176,66 +1181,56 @@
                         height: 450,
                         type: 'line',
                         toolbar: { 
-                            show: true,
-                            tools: { download: true, selection: false, zoom: false, pan: false, reset: false }
+                            show: false // 移除匯出、放大縮小等功能
                         },
-                        fontFamily: 'Public Sans, -apple-system, sans-serif',
-                        dropShadow: {
-                            enabled: true,
-                            top: 3,
-                            left: 2,
-                            blur: 4,
-                            opacity: 0.1
-                        }
+                        fontFamily: 'Public Sans, -apple-system, sans-serif'
                     },
                     colors: data.map(item => getCategoryColor(item.categoryName)),
-                    dataLabels: { enabled: false },
                     stroke: {
-                        width: 2, // 稍微調細，減少重疊壓力
-                        curve: 'smooth'
+                        width: 4,
+                        curve: 'smooth',
+                        lineCap: 'round'
                     },
                     legend: {
                         position: 'top',
-                        horizontalAlign: 'right',
-                        offsetY: -10,
-                        onItemHover: {
-                            highlightDataSeries: true // 滑鼠移到圖例時，強調該線條並淡化其他線條
-                        }
-                    },
-                    grid: {
-                        borderColor: '#f1f1f1',
-                        padding: { bottom: 10 }
+                        horizontalAlign: 'center', // 置中顯示，避免靠右被切掉
+                        offsetY: 0, // 移除負向位移，確保不被吃掉
+                        onItemHover: { highlightDataSeries: true }
                     },
                     markers: {
-                        size: 2, // 平時小點
-                        strokeWidth: 0,
-                        hover: {
-                            size: 7, // 懸停時大幅放大，增加選取感
-                            strokeWidth: 2,
-                            strokeColor: '#fff'
-                        }
+                        size: 2,
+                        hover: { size: 7 }
+                    },
+                    annotations: {
+                        yaxis: [{
+                            y: 0,
+                            borderColor: '#8592a3',
+                            strokeDashArray: 0,
+                            label: {
+                                borderColor: '#8592a3',
+                                style: { color: '#fff', background: '#8592a3' },
+                                text: '基準線 (0%)'
+                            }
+                        }]
                     },
                     xaxis: {
-                        categories: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-                        axisBorder: { show: false }
+                        categories: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
                     },
                     yaxis: {
+                        min: -100,
+                        max: 100,
                         labels: {
-                            formatter: (val) => formatRevenue(val)
-                        }
+                            formatter: (val) => (val > 0 ? '+' : '') + val.toFixed(0) + ' pt'
+                        },
+                        tickAmount: 8
                     },
                     tooltip: {
-                        shared: false, // 改為個別顯示
-                        intersect: true, // 滑鼠必須碰到點或線才顯示，增加精準度
+                        shared: false,
+                        intersect: true,
                         y: {
                             formatter: function(val) {
-                                return (val >= 0 ? '成長 ' : '衰退 ') + '$' + Math.abs(val).toLocaleString();
+                                return (val >= 0 ? '市佔擴張 ' : '市佔萎縮 ') + Math.abs(val).toFixed(2) + ' 個百分點';
                             }
-                        }
-                    },
-                    states: {
-                        hover: {
-                            filter: { type: 'none' } // 取消預設的變暗濾鏡，改用我們自定義的高亮
                         }
                     }
                 };

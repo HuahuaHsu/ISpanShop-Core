@@ -246,18 +246,15 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 		[HttpGet]
 		public async Task<IActionResult> GetCategoryMonthlyDelta(int year1, int year2, int? storeId)
 		{
-			// 抓取兩年所有月份的詳細數據
-			var start1 = new DateTime(year1, 1, 1);
-			var end1 = new DateTime(year1, 12, 31, 23, 59, 59);
-			var start2 = new DateTime(year2, 1, 1);
-			var end2 = new DateTime(year2, 12, 31, 23, 59, 59);
-
-			// 這裡假設 Repository 有支援按月拆解的類別營收，如果沒有，我們得從 GetCategoryContribution 組合
-			// 為了簡化並確保相容性，我們直接抓取兩年內所有訂單的類別/月份總計 (這部分邏輯通常在 Service 或 Repo 處理)
-			// 我們暫且呼叫一個假設存在或我們即將擴充的方法
 			var deltaData = await _dashboardService.GetCategoryMonthlyDeltaAsync(storeId, year1, year2);
-
 			return Json(deltaData);
+		}
+
+		[HttpGet]
+		public async Task<IActionResult> GetCategoryMonthlyGrowth(int year1, int year2, int? storeId)
+		{
+			var growthData = await _dashboardService.GetCategoryMonthlyGrowthAsync(storeId, year1, year2);
+			return Json(growthData);
 		}
 
 		[HttpGet]

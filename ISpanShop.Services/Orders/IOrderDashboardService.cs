@@ -24,12 +24,19 @@ namespace ISpanShop.Services.Orders
 		Task<ApexChartDataDto> GetYearlyRevenueDataAsync(int? storeId, int year);
 		Task<ApexChartDataDto> GetCategoryDetailAsync(int? storeId, string period, string type, string categoryName);
 		Task<List<CategoryMonthlyDeltaDto>> GetCategoryMonthlyDeltaAsync(int? storeId, int year1, int year2);
+		Task<List<CategoryMonthlyGrowthDto>> GetCategoryMonthlyGrowthAsync(int? storeId, int year1, int year2);
 	}
 
 	public class CategoryMonthlyDeltaDto
 	{
 		public string CategoryName { get; set; }
 		public List<decimal> MonthlyDeltas { get; set; } = new List<decimal>(); // 12個月的差額
+	}
+
+	public class CategoryMonthlyGrowthDto
+	{
+		public string CategoryName { get; set; }
+		public List<double> MonthlyGrowthRates { get; set; } = new List<double>(); // 12個月的增長率 (百分比數值，如 50.5 代表 50.5%)
 	}
 }
 
