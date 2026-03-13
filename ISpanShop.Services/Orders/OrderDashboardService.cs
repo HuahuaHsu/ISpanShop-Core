@@ -161,5 +161,36 @@ namespace ISpanShop.Services.Orders
 			var (start, end, _, _) = ParsePeriod(period);
 			return await _orderRepository.GetCategoryDetailAsync(storeId, start, end, type, categoryName);
 		}
+
+		public async Task<List<CategoryMonthlyDeltaDto>> GetCategoryMonthlyDeltaAsync(int? storeId, int year1, int year2)
+		{
+			// 抓取兩年內所有訂單的數據 (按月、類別分組)
+			var start1 = new DateTime(year1, 1, 1);
+			var end1 = new DateTime(year1, 12, 31, 23, 59, 59);
+			var start2 = new DateTime(year2, 1, 1);
+			var end2 = new DateTime(year2, 12, 31, 23, 59, 59);
+
+			// 直接呼叫 Repository 獲取兩段時間的所有類別/月度數據
+			var data1 = await _orderRepository.GetCategoryMonthlyRevenueAsync(storeId, start1, end1);
+			var data2 = await _orderRepository.GetCategoryMonthlyRevenueAsync(storeId, start2, end2);
+
+			// 取得所有出現過的類別
+			var allCategories = data1.Select(d => d.CategoryName).Union(data2.Select(d => d.CategoryName)).Distinct().ToList();
+			var result = new List<CategoryMonthlyDeltaDto>();
+
+			foreach (var cat in allCategories)
+			{
+				var dto = new CategoryMonthlyDeltaDto { CategoryName = cat };
+				for (int m = 1; m <= 12; m++)
+				{
+					decimal v1 = data1.Where(d => d.CategoryName == cat && d.Month == m).Sum(d => d.Revenue);
+					decimal v2 = data2.Where(d => d.CategoryName == cat && d.Month == m).Sum(d => d.Revenue);
+					dto.MonthlyDeltas.Add(v1 - v2); // Year1 - Year2
+				}
+				result.Add(dto);
+			}
+
+			return result;
+		}
 	}
 }

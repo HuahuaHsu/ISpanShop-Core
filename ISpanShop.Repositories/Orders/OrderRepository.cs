@@ -458,5 +458,33 @@ namespace ISpanShop.Repositories.Orders
 			dto.Series.Add(new ChartSeriesDto { Name = type == "Sales" ? "銷售量" : "營收額", Data = seriesData });
 			return dto;
 		}
+
+		public async Task<List<CategoryMonthlyRevenueDto>> GetCategoryMonthlyRevenueAsync(int? storeId, DateTime startDate, DateTime endDate)
+		{
+			var query = _context.OrderDetails
+				.Include(od => od.Order)
+				.Include(od => od.Product)
+				.ThenInclude(p => p.Category)
+				.ThenInclude(c => c.Parent)
+				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
+
+			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
+
+			return await query
+				.Select(od => new
+				{
+					ParentCategoryName = od.Product.Category.ParentId == null ? od.Product.Category.Name : od.Product.Category.Parent.Name,
+					Month = od.Order.CreatedAt.Value.Month,
+					Revenue = (od.Price ?? 0) * od.Quantity
+				})
+				.GroupBy(x => new { x.ParentCategoryName, x.Month })
+				.Select(g => new CategoryMonthlyRevenueDto
+				{
+					CategoryName = g.Key.ParentCategoryName ?? "未分類",
+					Month = g.Key.Month,
+					Revenue = g.Sum(x => x.Revenue)
+				})
+				.ToListAsync();
+		}
 	}
 }

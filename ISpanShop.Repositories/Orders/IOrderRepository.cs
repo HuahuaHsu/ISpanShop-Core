@@ -33,5 +33,13 @@ namespace ISpanShop.Repositories.Orders
 		Task<List<TopProductSalesDto>> GetTop10ProductsAsync(int? storeId, DateTime startDate, DateTime endDate, string orderBy);
 		Task<ApexChartDataDto> GetCategoryContributionAsync(int? storeId, DateTime startDate, DateTime endDate);
 		Task<ApexChartDataDto> GetCategoryDetailAsync(int? storeId, DateTime startDate, DateTime endDate, string type, string categoryName);
+		Task<List<CategoryMonthlyRevenueDto>> GetCategoryMonthlyRevenueAsync(int? storeId, DateTime startDate, DateTime endDate);
+	}
+
+	public class CategoryMonthlyRevenueDto
+	{
+		public string CategoryName { get; set; }
+		public int Month { get; set; }
+		public decimal Revenue { get; set; }
 	}
 }

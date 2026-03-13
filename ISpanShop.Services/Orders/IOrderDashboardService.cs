@@ -23,6 +23,13 @@ namespace ISpanShop.Services.Orders
 		Task<List<TopProductSalesDto>> GetTop10ProductsAsync(int? storeId, string period, string orderBy);
 		Task<ApexChartDataDto> GetYearlyRevenueDataAsync(int? storeId, int year);
 		Task<ApexChartDataDto> GetCategoryDetailAsync(int? storeId, string period, string type, string categoryName);
+		Task<List<CategoryMonthlyDeltaDto>> GetCategoryMonthlyDeltaAsync(int? storeId, int year1, int year2);
+	}
+
+	public class CategoryMonthlyDeltaDto
+	{
+		public string CategoryName { get; set; }
+		public List<decimal> MonthlyDeltas { get; set; } = new List<decimal>(); // 12個月的差額
 	}
 }
 
