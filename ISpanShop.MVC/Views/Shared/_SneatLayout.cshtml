@@ -584,6 +584,7 @@
                     var isOrderActive = ctrl == "Orders" || ctrl == "ShipmentWorkstation" || ctrl == "ReturnRequests" || ctrl == "OrderTracking";
                     var isContentSupportActive = ctrl == "SupportTickets" || ctrl == "SensitiveWords" || ctrl == "SensitiveWordCategories";
                     var isPaymentActive = ctrl == "PaymentManagement";
+                    var isPointActive = ctrl == "Points";
                 }
                 <li class="menu-header"><span>營運管理</span></li>
 
@@ -712,6 +713,16 @@
                         </span>
                         <i class="menu-icon bx bx-dollar-circle"></i>
                         <span class="menu-label">金流紀錄</span>
+                    </a>
+                </li>
+                <li class="menu-item @(isPointActive ? "active" : "")">
+                    <a href="@Url.Action("Index", "Points", new { area = "Admin" })" class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-coin"></i>
+                            <span class="menu-short">點數</span>
+                        </span>
+                        <i class="menu-icon bx bx-coin"></i>
+                        <span class="menu-label">點數紀錄</span>
                     </a>
                 </li>
 
