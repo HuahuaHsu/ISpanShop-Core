@@ -469,5 +469,364 @@ namespace ISpanShop.Repositories.Admins
 				throw new InvalidOperationException("查詢超級管理員數量失敗", ex);
 			}
 		}
+
+		/// <summary>取得指定身分的所有權限</summary>
+		public IEnumerable<PermissionDto> GetPermissionsByAdminLevel(int adminLevelId)
+		{
+			var permissions = new List<PermissionDto>();
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+					string query = @"
+                SELECT P.Id AS PermissionId, P.PermissionKey,
+                       P.DisplayName, P.Description
+                FROM   AdminLevelPermissions ALP
+                JOIN   Permissions P ON ALP.PermissionId = P.Id
+                WHERE  ALP.AdminLevelId = @AdminLevelId";
+
+					using (SqlCommand cmd = new SqlCommand(query, conn))
+					{
+						cmd.Parameters.AddWithValue("@AdminLevelId", adminLevelId);
+						using (SqlDataReader reader = cmd.ExecuteReader())
+						{
+							while (reader.Read())
+							{
+								permissions.Add(new PermissionDto
+								{
+									PermissionId = (int)reader["PermissionId"],
+									PermissionKey = reader["PermissionKey"]?.ToString() ?? "",
+									DisplayName = reader["DisplayName"]?.ToString() ?? "",
+									Description = reader["Description"]?.ToString() ?? ""
+								});
+							}
+						}
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("查詢身分權限失敗", ex);
+			}
+			return permissions;
+		}
+
+		/// <summary>取得所有管理員身分（不含 DefaultPermissions，由 Service 補入）</summary>
+		public IEnumerable<AdminLevelDto> GetAllAdminLevels()
+		{
+			var levels = new List<AdminLevelDto>();
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+					string query = @"
+                SELECT Id AS AdminLevelId, LevelName, Description
+                FROM   AdminLevels
+                ORDER BY Id";
+
+					using (SqlCommand cmd = new SqlCommand(query, conn))
+					{
+						using (SqlDataReader reader = cmd.ExecuteReader())
+						{
+							while (reader.Read())
+							{
+								levels.Add(new AdminLevelDto
+								{
+									AdminLevelId = (int)reader["AdminLevelId"],
+									LevelName = reader["LevelName"]?.ToString() ?? "",
+									Description = reader["Description"]?.ToString() ?? ""
+								});
+							}
+						}
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("查詢所有身分失敗", ex);
+			}
+			return levels;
+		}
+
+		/// <summary>更新管理員的身分等級</summary>
+		public bool UpdateAdminLevel(int userId, int adminLevelId)
+		{
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+					string query = @"
+                UPDATE Users
+                SET    AdminLevelId = @AdminLevelId,
+                       UpdatedAt    = GETDATE()
+                WHERE  Id = @UserId";
+
+					using (SqlCommand cmd = new SqlCommand(query, conn))
+					{
+						cmd.Parameters.AddWithValue("@UserId", userId);
+						cmd.Parameters.AddWithValue("@AdminLevelId", adminLevelId);
+						return cmd.ExecuteNonQuery() > 0;
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("更新管理員身分失敗", ex);
+			}
+		}
+
+		/// <summary>新增管理員身分（含預設權限）</summary>
+		public bool CreateAdminLevel(AdminLevelCreateDto dto)
+		{
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+					using (SqlTransaction tx = conn.BeginTransaction())
+					{
+						try
+						{
+							// 1. 新增身分，取得新 ID
+							string insertLevel = @"
+                        INSERT INTO AdminLevels (LevelName, Description)
+                        VALUES (@LevelName, @Description);
+                        SELECT SCOPE_IDENTITY();";
+
+							int newLevelId;
+							using (SqlCommand cmd = new SqlCommand(insertLevel, conn, tx))
+							{
+								cmd.Parameters.AddWithValue("@LevelName", dto.LevelName);
+								cmd.Parameters.AddWithValue("@Description", dto.Description ?? "");
+								newLevelId = Convert.ToInt32(cmd.ExecuteScalar());
+							}
+
+							// 2. 逐筆新增權限對應
+							if (dto.PermissionIds != null && dto.PermissionIds.Count > 0)
+							{
+								string insertPerm = @"
+                            INSERT INTO AdminLevelPermissions (AdminLevelId, PermissionId)
+                            VALUES (@AdminLevelId, @PermissionId)";
+
+								foreach (int permId in dto.PermissionIds)
+								{
+									using (SqlCommand cmd = new SqlCommand(insertPerm, conn, tx))
+									{
+										cmd.Parameters.AddWithValue("@AdminLevelId", newLevelId);
+										cmd.Parameters.AddWithValue("@PermissionId", permId);
+										cmd.ExecuteNonQuery();
+									}
+								}
+							}
+
+							tx.Commit();
+							return true;
+						}
+						catch
+						{
+							tx.Rollback();
+							throw;
+						}
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("新增身分失敗", ex);
+			}
+		}
+
+		/// <summary>覆蓋式更新管理員身分設定</summary>
+		public bool UpdateAdminLevelConfig(AdminLevelUpdateDto dto)
+		{
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+					using (SqlTransaction tx = conn.BeginTransaction())
+					{
+						try
+						{
+							// 1. 更新身分名稱與描述
+							string updateLevel = @"
+                        UPDATE AdminLevels
+                        SET    LevelName   = @LevelName,
+                               Description = @Description
+                        WHERE  Id = @AdminLevelId";
+
+							using (SqlCommand cmd = new SqlCommand(updateLevel, conn, tx))
+							{
+								cmd.Parameters.AddWithValue("@AdminLevelId", dto.AdminLevelId);
+								cmd.Parameters.AddWithValue("@LevelName", dto.LevelName);
+								cmd.Parameters.AddWithValue("@Description", dto.Description ?? "");
+								cmd.ExecuteNonQuery();
+							}
+
+							// 2. 刪除舊權限
+							string deletePerm = @"
+                        DELETE FROM AdminLevelPermissions
+                        WHERE  AdminLevelId = @AdminLevelId";
+
+							using (SqlCommand cmd = new SqlCommand(deletePerm, conn, tx))
+							{
+								cmd.Parameters.AddWithValue("@AdminLevelId", dto.AdminLevelId);
+								cmd.ExecuteNonQuery();
+							}
+
+							// 3. 逐筆新增新權限
+							if (dto.PermissionIds != null && dto.PermissionIds.Count > 0)
+							{
+								string insertPerm = @"
+                            INSERT INTO AdminLevelPermissions (AdminLevelId, PermissionId)
+                            VALUES (@AdminLevelId, @PermissionId)";
+
+								foreach (int permId in dto.PermissionIds)
+								{
+									using (SqlCommand cmd = new SqlCommand(insertPerm, conn, tx))
+									{
+										cmd.Parameters.AddWithValue("@AdminLevelId", dto.AdminLevelId);
+										cmd.Parameters.AddWithValue("@PermissionId", permId);
+										cmd.ExecuteNonQuery();
+									}
+								}
+							}
+
+							tx.Commit();
+							return true;
+						}
+						catch
+						{
+							tx.Rollback();
+							throw;
+						}
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("更新身分設定失敗", ex);
+			}
+		}
+
+		/// <summary>刪除管理員身分（含關聯權限）</summary>
+		public bool DeleteAdminLevel(int adminLevelId)
+		{
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+					using (SqlTransaction tx = conn.BeginTransaction())
+					{
+						try
+						{
+							// 1. 刪除關聯權限
+							string deletePerm = @"
+                        DELETE FROM AdminLevelPermissions
+                        WHERE  AdminLevelId = @AdminLevelId";
+
+							using (SqlCommand cmd = new SqlCommand(deletePerm, conn, tx))
+							{
+								cmd.Parameters.AddWithValue("@AdminLevelId", adminLevelId);
+								cmd.ExecuteNonQuery();
+							}
+
+							// 2. 刪除身分
+							string deleteLevel = @"
+                        DELETE FROM AdminLevels
+                        WHERE  Id = @AdminLevelId";
+
+							using (SqlCommand cmd = new SqlCommand(deleteLevel, conn, tx))
+							{
+								cmd.Parameters.AddWithValue("@AdminLevelId", adminLevelId);
+								cmd.ExecuteNonQuery();
+							}
+
+							tx.Commit();
+							return true;
+						}
+						catch
+						{
+							tx.Rollback();
+							throw;
+						}
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("刪除身分失敗", ex);
+			}
+		}
+
+		/// <summary>確認是否有啟用中的管理員綁定此身分</summary>
+		public bool HasAdminsBoundToLevel(int adminLevelId)
+		{
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+					string query = @"
+                SELECT COUNT(1) FROM Users
+                WHERE  AdminLevelId  = @AdminLevelId
+                  AND  IsBlacklisted = 0";
+
+					using (SqlCommand cmd = new SqlCommand(query, conn))
+					{
+						cmd.Parameters.AddWithValue("@AdminLevelId", adminLevelId);
+						return (int)cmd.ExecuteScalar() > 0;
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("查詢身分綁定人數失敗", ex);
+			}
+		}
+
+		/// <summary>取得所有可用權限</summary>
+		public IEnumerable<PermissionDto> GetAllPermissions()
+		{
+			var permissions = new List<PermissionDto>();
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+					string query = @"
+                SELECT Id AS PermissionId, PermissionKey,
+                       DisplayName, Description
+                FROM   Permissions
+                ORDER BY Id";
+
+					using (SqlCommand cmd = new SqlCommand(query, conn))
+					{
+						using (SqlDataReader reader = cmd.ExecuteReader())
+						{
+							while (reader.Read())
+							{
+								permissions.Add(new PermissionDto
+								{
+									PermissionId = (int)reader["PermissionId"],
+									PermissionKey = reader["PermissionKey"]?.ToString() ?? "",
+									DisplayName = reader["DisplayName"]?.ToString() ?? "",
+									Description = reader["Description"]?.ToString() ?? ""
+								});
+							}
+						}
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("查詢所有權限失敗", ex);
+			}
+			return permissions;
+		}
 	}
 }

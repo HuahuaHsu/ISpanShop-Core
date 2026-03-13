@@ -525,7 +525,7 @@ STEP 1：更新資料傳輸物件 (ISpanShop.Models)
 STEP 2：更新資料存取層 (ISpanShop.Repositories)
 ------------------------------------------------------------
 
-[ ] 更新 IAdminRepository
+[V] 更新 IAdminRepository
     - 位置：ISpanShop.Repositories/Interfaces/IAdminRepository.cs
 
     // 已有方法（確認保留）
@@ -547,76 +547,18 @@ STEP 2：更新資料存取層 (ISpanShop.Repositories)
     bool                           HasAdminsBoundToLevel(int adminLevelId)
     IEnumerable<PermissionDto>     GetAllPermissions()
 
-[ ] 實作新增方法（ADO.NET）
+[V] 實作新增方法（ADO.NET）
     - 位置：ISpanShop.Repositories/AdminRepository.cs
-
     - SQL GetPermissionsByAdminLevel：
-        SELECT P.Id AS PermissionId, P.PermissionKey,
-               P.DisplayName, P.Description
-        FROM   AdminLevelPermissions ALP
-        JOIN   Permissions P ON ALP.PermissionId = P.Id
-        WHERE  ALP.AdminLevelId = @AdminLevelId
-
-    - SQL GetAllAdminLevels：
-        SELECT Id AS AdminLevelId, LevelName, Description
-        FROM   AdminLevels
-        ORDER BY Id
-        // Service 層再為每個 Level 呼叫
-        // GetPermissionsByAdminLevel() 補入 DefaultPermissions
-
+     - SQL GetAllAdminLevels：
     - SQL UpdateAdminLevel（更新帳號身分）：
-        UPDATE Users
-        SET    AdminLevelId = @AdminLevelId,
-               UpdatedAt = GETDATE()
-        WHERE  Id = @UserId
-
     - SQL CreateAdminLevel：
-        INSERT INTO AdminLevels (LevelName, Description)
-        VALUES (@LevelName, @Description);
-
-        SELECT SCOPE_IDENTITY() AS NewLevelId;
-
-        INSERT INTO AdminLevelPermissions (AdminLevelId, PermissionId)
-        VALUES (@NewLevelId, @PermissionId); -- 逐筆
-
     - SQL UpdateAdminLevelConfig（覆蓋式更新）：
-        UPDATE AdminLevels
-        SET    LevelName = @LevelName,
-               Description = @Description
-        WHERE  Id = @AdminLevelId;
-
-        DELETE FROM AdminLevelPermissions
-        WHERE  AdminLevelId = @AdminLevelId;
-
-        INSERT INTO AdminLevelPermissions (AdminLevelId, PermissionId)
-        VALUES (@AdminLevelId, @PermissionId); -- 逐筆
-
     - SQL DeleteAdminLevel：
-        DELETE FROM AdminLevelPermissions
-        WHERE  AdminLevelId = @AdminLevelId;
-
-        DELETE FROM AdminLevels
-        WHERE  Id = @AdminLevelId;
-
-    - SQL HasAdminsBoundToLevel：
-        SELECT COUNT(1) FROM Users
-        WHERE  AdminLevelId = @AdminLevelId
-          AND  IsBlacklisted = 0
-
+     - SQL HasAdminsBoundToLevel：
     - SQL GetAllPermissions：
-        SELECT Id AS PermissionId, PermissionKey,
-               DisplayName, Description
-        FROM   Permissions
-        ORDER BY Id
-
     - SQL CreateAdmin（修改：Account 改為帶入參數）：
-        INSERT INTO Users
-            (RoleId, Account, Password, Email, AdminLevelId,
-             IsConfirmed, IsBlacklisted, IsFirstLogin, CreatedAt)
-        VALUES
-            (1, @Account, @PasswordHash, @Email, @AdminLevelId,
-             1, 0, 1, GETDATE())
-
+       
 ------------------------------------------------------------
 STEP 3：更新商務邏輯層 (ISpanShop.Services)
 ------------------------------------------------------------

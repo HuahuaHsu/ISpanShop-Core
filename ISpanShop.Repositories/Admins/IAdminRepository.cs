@@ -42,5 +42,15 @@ namespace ISpanShop.Repositories.Admins
 
 		/// <summary>取得超級管理員的數量</summary>
 		int GetSuperAdminCount();
+
+		IEnumerable<PermissionDto> GetPermissionsByAdminLevel(int adminLevelId);
+		IEnumerable<AdminLevelDto> GetAllAdminLevels();
+		bool UpdateAdminLevel(int userId, int adminLevelId);
+		bool CreateAdminLevel(AdminLevelCreateDto dto);
+		bool UpdateAdminLevelConfig(AdminLevelUpdateDto dto);
+		bool DeleteAdminLevel(int adminLevelId);
+		bool HasAdminsBoundToLevel(int adminLevelId);
+		IEnumerable<PermissionDto> GetAllPermissions();
+
 	}
 }
