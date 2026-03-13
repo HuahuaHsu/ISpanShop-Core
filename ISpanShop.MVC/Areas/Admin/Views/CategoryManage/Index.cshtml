@@ -280,7 +280,7 @@ else
                     @* 子分類列（可拖曳排序）*@
                     @if (parent.Children.Any())
                     {
-                        <div class="children-wrap open" id="children-@parent.Id">
+                        <div class="children-wrap" id="children-@parent.Id">
                             <div class="sortable-children" data-parent-id="@parent.Id">
                                 @foreach (var child in parent.Children)
                                 {
