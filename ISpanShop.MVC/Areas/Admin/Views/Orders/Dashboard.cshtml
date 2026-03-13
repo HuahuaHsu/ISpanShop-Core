@@ -467,7 +467,12 @@
                         categories: data.map(x => x.productName),
                         labels: {
                             formatter: function(val) {
-                                return orderBy === 'revenue' ? formatRevenue(val) : val;
+                                if (orderBy === 'revenue') {
+                                    return formatRevenue(val);
+                                } else {
+                                    // 銷量(件數)只顯示整數標籤
+                                    return (val % 1 === 0) ? val : '';
+                                }
                             }
                         }
                     },
@@ -650,7 +655,13 @@
                     xaxis: { 
                         categories: data.labels,
                         labels: {
-                            formatter: (val) => type === 'Revenue' ? formatRevenue(val) : val
+                            formatter: function(val) {
+                                if (type === 'Sales') {
+                                    // 銷量(件數)只顯示整數標籤，避免出現 0.5, 1.5 等碎片化刻度
+                                    return (val % 1 === 0) ? val : '';
+                                }
+                                return formatRevenue(val);
+                            }
                         }
                     },
                     legend: { show: false },
