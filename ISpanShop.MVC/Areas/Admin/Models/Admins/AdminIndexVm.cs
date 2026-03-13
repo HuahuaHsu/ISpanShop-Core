@@ -31,7 +31,7 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Admins
 		/// <summary>
 		/// 角色下拉選單來源
 		/// </summary>
-		public List<AdminPermissionDto> PermissionOptions { get; set; } = new();
+		public List<PermissionDto> PermissionOptions { get; set; }
 	}
 }
 

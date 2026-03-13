@@ -11,76 +11,38 @@ namespace ISpanShop.Services.Admins;
 public class AdminService : IAdminService
 {
 	private readonly IAdminRepository _adminRepository;
-	private readonly IAdminRoleRepository _roleRepository;
 
-	public AdminService(IAdminRepository adminRepository, IAdminRoleRepository roleRepository)
+	public AdminService(IAdminRepository adminRepository)
 	{
 		_adminRepository = adminRepository ?? throw new ArgumentNullException(nameof(adminRepository));
-		_roleRepository = roleRepository ?? throw new ArgumentNullException(nameof(roleRepository));
 	}
 
-	public IEnumerable<AdminDto> GetAllAdmins()
+	public IEnumerable<AdminDto> GetAllAdmins() //新增取得所有管理員（含實際權限)
 	{
-		return _adminRepository.GetAllAdmins();
+		var admins = _adminRepository.GetAllAdmins().ToList();
+		foreach (var admin in admins)
+		{
+			if (admin.AdminLevelId.HasValue)
+			{
+				admin.ActualPermissions = _adminRepository
+					.GetPermissionsByAdminLevel(admin.AdminLevelId.Value)
+					.ToList();
+			}
+			else
+			{
+				admin.ActualPermissions = new List<PermissionDto>();
+			}
+		}
+		return admins;
 	}
 
-	public IEnumerable<AdminPermissionDto> GetAllPermissions()
-	{
-		return _roleRepository.GetAllPermissions();
-	}
-
+	
 	public IEnumerable<AdminLevelDto> GetSelectableAdminLevels()
 	{
 		return _adminRepository.GetSelectableAdminLevels();
 	}
 
-	public (bool IsSuccess, string Message, string GeneratedAccount) CreateAdmin(AdminCreateDto dto)
-	{
-		try
-		{
-			// 1. 確認 AdminLevelId 不為 1（不可直接新增超級管理員）
-			if (dto.AdminLevelId == 1)
-			{
-				return (false, "無法直接新增超級管理員", "");
-			}
 
-			// 2. 取得流水號
-			int seq = _adminRepository.GetNextAdminSequence();
-
-			// 3. 組成帳號與 Email
-			string account = $"ADM{seq:D3}";
-			string email = $"{account}@ispan.com";
-
-			// 4. 確認帳號不重複
-			if (_adminRepository.IsAccountExists(account))
-			{
-				return (false, "帳號已存在，請稍後重試", "");
-			}
-
-			// 5. 角色固定為 Admin
-			int roleId = 1;
-
-			// 6. Hash 初始密碼
-			string passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-
-			// 7. 呼叫 Repository.CreateAdmin
-			bool success = _adminRepository.CreateAdmin(account, email, passwordHash, roleId, dto.AdminLevelId);
-
-			if (success)
-			{
-				// 8. 回傳 GeneratedAccount 供畫面顯示
-				return (true, "管理員新增成功", account);
-			}
-			else
-			{
-				return (false, "新增管理員失敗", "");
-			}
-		}
-		catch (Exception ex)
-		{
-			return (false, $"發生錯誤: {ex.Message}", "");
-		}
-	}
 
 	public (bool IsSuccess, string Message) DeactivateAdmin(int userId, int currentUserId)
 	{
@@ -206,4 +168,139 @@ public class AdminService : IAdminService
 		}
 		return _adminRepository.UpdateAdminRole(adminId, roleId);
 	}
+
+	public IEnumerable<AdminLevelDto> GetAllAdminLevels() // 取得所有身分（含預設權限）
+	{
+		var levels = _adminRepository.GetAllAdminLevels().ToList();
+		foreach (var level in levels)
+		{
+			level.DefaultPermissions = _adminRepository
+				.GetPermissionsByAdminLevel(level.AdminLevelId)
+				.ToList();
+		}
+		return levels;
+	}
+
+	public IEnumerable<PermissionDto> GetAllPermissions()
+	{
+		return _adminRepository.GetAllPermissions();
+	}
+
+	public (bool IsSuccess, string Message) CreateAdmin(AdminCreateDto dto)
+	{
+		try
+		{
+			// 1. 確認帳號不重複
+			if (_adminRepository.IsAccountExists(dto.Account))
+				return (false, "帳號已存在，請使用其他帳號");
+
+			// 2. 不可指派超級管理員身分
+			if (dto.AdminLevelId == 1)
+				return (false, "無法直接指派超級管理員身分");
+
+			// 3. Email 自動組成
+			string email = $"{dto.Account}@ispan.com";
+
+			// 4. Hash 密碼
+			string passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+
+			// 5. 新增
+			bool success = _adminRepository.CreateAdmin(
+				dto.Account, email, passwordHash, roleId: 1, dto.AdminLevelId);
+
+			return success
+				? (true, "管理員新增成功")
+				: (false, "新增管理員失敗");
+		}
+		catch (Exception ex)
+		{
+			return (false, $"發生錯誤: {ex.Message}");
+		}
+	}
+
+	public (bool IsSuccess, string Message) UpdateAdmin(AdminUpdateDto dto)
+	{
+		try
+		{
+			// 1. 不可升級為超級管理員
+			if (dto.AdminLevelId == 1)
+				return (false, "無法將管理員升級為超級管理員");
+
+			bool success = _adminRepository.UpdateAdminLevel(dto.UserId, dto.AdminLevelId);
+
+			return success
+				? (true, "管理員身分更新成功")
+				: (false, "更新失敗，請確認管理員是否存在");
+		}
+		catch (Exception ex)
+		{
+			return (false, $"發生錯誤: {ex.Message}");
+		}
+	}
+
+	public (bool IsSuccess, string Message) CreateAdminLevel(AdminLevelCreateDto dto)
+	{
+		try
+		{
+			// 1. 名稱不可為空
+			if (string.IsNullOrWhiteSpace(dto.LevelName))
+				return (false, "身分名稱不可為空");
+
+			bool success = _adminRepository.CreateAdminLevel(dto);
+
+			return success
+				? (true, "身分新增成功")
+				: (false, "新增身分失敗");
+		}
+		catch (Exception ex)
+		{
+			return (false, $"發生錯誤: {ex.Message}");
+		}
+	}
+
+	public (bool IsSuccess, string Message) UpdateAdminLevelConfig(AdminLevelUpdateDto dto)
+	{
+		try
+		{
+			// 1. 系統預設身分不可修改
+			if (dto.AdminLevelId == 1)
+				return (false, "系統預設身分不可修改");
+
+			bool success = _adminRepository.UpdateAdminLevelConfig(dto);
+
+			return success
+				? (true, "身分設定更新成功")
+				: (false, "更新身分設定失敗");
+		}
+		catch (Exception ex)
+		{
+			return (false, $"發生錯誤: {ex.Message}");
+		}
+	}
+
+	public (bool IsSuccess, string Message) DeleteAdminLevel(int adminLevelId)
+	{
+		try
+		{
+			// 1. 系統預設身分不可刪除
+			if (adminLevelId == 1)
+				return (false, "系統預設身分不可刪除");
+
+			// 2. 有管理員綁定此身分則拒絕
+			if (_adminRepository.HasAdminsBoundToLevel(adminLevelId))
+				return (false, "尚有管理員綁定此身分，請先解除綁定");
+
+			bool success = _adminRepository.DeleteAdminLevel(adminLevelId);
+
+			return success
+				? (true, "身分刪除成功")
+				: (false, "刪除身分失敗");
+		}
+		catch (Exception ex)
+		{
+			return (false, $"發生錯誤: {ex.Message}");
+		}
+	}
+
+
 }

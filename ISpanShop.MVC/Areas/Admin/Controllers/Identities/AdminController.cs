@@ -47,7 +47,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
 				var emptyVm = new AdminIndexVm
 				{
 					Admins = new List<AdminDto>(),
-					PermissionOptions = new List<AdminPermissionDto>(),
+					PermissionOptions = new List<PermissionDto>(),
 					CreateForm = new AdminCreateVm(),
 					Message = $"載入管理員列表失敗: {ex.Message}"
 				};
@@ -82,7 +82,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
 				if (result.IsSuccess)
 				{
 					TempData["Message"] = result.Message;
-					TempData["GeneratedAccount"] = result.GeneratedAccount;
+					
 				}
 				else
 				{

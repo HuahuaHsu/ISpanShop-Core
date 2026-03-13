@@ -563,7 +563,7 @@ STEP 2：更新資料存取層 (ISpanShop.Repositories)
 STEP 3：更新商務邏輯層 (ISpanShop.Services)
 ------------------------------------------------------------
 
-[ ] 更新 IAdminService
+[V] 更新 IAdminService
     - 位置：ISpanShop.Services/Interfaces/IAdminService.cs
 
     IEnumerable<AdminDto>      GetAllAdmins()
@@ -588,7 +588,7 @@ STEP 3：更新商務邏輯層 (ISpanShop.Services)
     (bool IsSuccess, string Message)
         DeleteAdminLevel(int adminLevelId)
 
-[ ] 實作 AdminService
+[V] 實作 AdminService
 
     - GetAllAdmins 邏輯：
         1. 呼叫 Repository.GetAllAdmins()
