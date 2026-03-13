@@ -1,1 +1,0 @@
-# ISpanShop-Core

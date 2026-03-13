@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
+namespace ISpanShop.MVC.Areas.Admin.Controllers.Admin
 {
     [Area("Admin")]
     public class AccountController : Controller
@@ -66,7 +66,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
             var claimsIdentity = new ClaimsIdentity(
                 claims, "AdminCookieAuth");
 
-            var authProperties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+            var authProperties = new AuthenticationProperties
             {
                 IsPersistent = model.RememberMe,
                 ExpiresUtc = model.RememberMe

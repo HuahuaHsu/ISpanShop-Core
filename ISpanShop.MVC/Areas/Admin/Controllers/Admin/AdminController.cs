@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 
-namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
+namespace ISpanShop.MVC.Areas.Admin.Controllers.Admin
 {
 	[Area("Admin")]
-	[Authorize(Roles = "SuperAdmin")]
+	//[Authorize(Roles = "SuperAdmin")]
 	public class AdminController : Controller
 	{
 		private readonly IAdminService _adminService;

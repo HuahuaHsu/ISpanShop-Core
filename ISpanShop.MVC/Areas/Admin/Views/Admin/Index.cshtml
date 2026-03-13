@@ -3,207 +3,406 @@
 @{
     ViewData["Title"] = "管理員管理";
     var currentUserId = User.FindFirst("userid")?.Value ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+    var activeTab = Model.ActiveTab ?? "tab1";
 }
 
-<div class="p-6">
-    <div class="mb-6 flex justify-between items-center">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">管理員管理</h2>
-            <p class="text-sm text-gray-600 mt-1">管理系統管理員帳號</p>
-        </div>
-        <button type="button" onclick="openCreateModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
-            + 新增管理員
-        </button>
-    </div>
+<div class="container-xxl flex-grow-1 container-p-y">
+    <h4 class="fw-bold py-3 mb-4">
+        <span class="text-muted fw-light">帳號管理 /</span> 管理員管理
+    </h4>
 
     @* 操作結果提示訊息 *@
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        <div class="mb-6 p-4 rounded-lg @(Model.Message.Contains("成功") ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200")">
-            <p class="@(Model.Message.Contains("成功") ? "text-green-800" : "text-red-800")">
-                @Model.Message
-            </p>
-           
-            
+        <div class="alert @(Model.Message.Contains("成功") ? "alert-success" : "alert-danger") alert-dismissible" role="alert">
+            @Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider">
-                    <th class="p-4 font-medium">帳號</th>
-                    <th class="p-4 font-medium">電子信箱</th>
-                    <th class="p-4 font-medium">角色</th>
-                    <th class="p-4 font-medium">管理員等級</th>
-                    <th class="p-4 font-medium">狀態</th>
-                    <th class="p-4 font-medium">建立時間</th>
-                    <th class="p-4 font-medium text-right">操作</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @if (Model.Admins != null && Model.Admins.Count > 0)
-                {
-                    @foreach (var admin in Model.Admins)
-                    {
-                        <tr class="@(admin.IsBlacklisted ? "bg-gray-100 opacity-60" : "hover:bg-gray-50") transition-colors">
-                            <td class="p-4 font-medium text-gray-900">
-                                @admin.Account
-                                @if (admin.IsBlacklisted)
+    <!-- 包含 Tab 的卡片區塊 -->
+    <div class="card">
+        <div class="card-header border-bottom px-0 pb-0">
+            @* Bootstrap 的 Tab 切換列 *@
+            <ul class="nav nav-tabs nav-fill mb-0" role="tablist">
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(activeTab == "tab1" ? "active" : "")" role="tab" data-bs-toggle="tab" data-bs-target="#tab1" aria-controls="tab1" aria-selected="true">
+                        <i class="bx bx-user me-1"></i> 管理員帳號
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(activeTab == "tab2" ? "active" : "")" role="tab" data-bs-toggle="tab" data-bs-target="#tab2" aria-controls="tab2" aria-selected="false">
+                        <i class="bx bx-check-shield me-1"></i> 身分與權限
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body mt-4">
+            <div class="tab-content p-0">
+
+                @* ── Tab1：管理員帳號列表 ── *@
+                <div class="tab-pane fade @(activeTab == "tab1" ? "show active" : "")" id="tab1" role="tabpanel">
+                    <div class="d-flex justify-content-end mb-3">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                            <i class="bx bx-plus me-1"></i> 新增管理員
+                        </button>
+                    </div>
+                  
+
+                    <div class="table-responsive text-nowrap border rounded">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>帳號</th>
+                                    <th>電子信箱</th>
+                                    <th>身分等級</th>
+                                    <th>實際權限</th>
+                                    <th>狀態</th>
+                                    <th>建立時間</th>
+                                    <th class="text-end">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-border-bottom-0">
+                                @if (Model.Admins != null && Model.Admins.Count > 0)
                                 {
-                                    <span class="text-xs text-gray-500 ml-2">[已停用]</span>
-                                }
-                            </td>
-                            <td class="p-4 text-gray-700">
-                                @admin.Email
-                            </td>
-                            <td class="p-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(admin.RoleName == "SuperAdmin" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800")">
-                                    @admin.RoleName
-                                </span>
-                            </td>
-                            <td class="p-4">
-                                <span class="text-sm text-gray-700">
-                                    @if (!string.IsNullOrEmpty(admin.AdminLevelName))
+                                    @foreach (var admin in Model.Admins)
                                     {
-                                        @admin.AdminLevelName
+                                        <tr class="@(admin.IsBlacklisted ? "bg-lighter text-muted" : "")">
+                                            <td>
+                                                <span class="fw-medium">@admin.Account</span>
+                                                @if (admin.IsBlacklisted)
+                                                {
+                                                    <small class="text-danger ms-1">[已停用]</small>
+                                                }
+                                            </td>
+                                            <td>@admin.Email</td>
+                                            <td>
+                                                @(string.IsNullOrEmpty(admin.AdminLevelName) ? "-" : admin.AdminLevelName)
+                                            </td>
+                                            <td>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    @if (admin.ActualPermissions != null && admin.ActualPermissions.Count > 0)
+                                                    {
+                                                        @foreach (var perm in admin.ActualPermissions)
+                                                        {
+                                                            <span class="badge bg-label-primary">@perm.DisplayName</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (admin.IsBlacklisted)
+                                                {
+                                                    <span class="badge bg-label-danger">停用中</span>
+                                                }
+                                                else if (admin.IsFirstLogin)
+                                                {
+                                                    <span class="badge bg-label-warning">首次登入</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-label-success">啟用</span>
+                                                }
+                                            </td>
+                                            <td>@admin.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td class="text-end">
+                                                @if (!admin.IsBlacklisted && admin.UserId.ToString() != currentUserId && admin.AdminLevelId != 1)
+                                                {
+                                                    <form method="post" asp-action="DeactivateAdmin" class="d-inline" onsubmit="return confirm('確認要停用此管理員嗎？');">
+                                                        <input type="hidden" name="userId" value="@admin.UserId" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">停用</button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <button disabled class="btn btn-sm btn-outline-secondary">停用</button>
+                                                }
+                                            </td>
+                                        </tr>
                                     }
-                                    else
-                                    {
-                                        <span class="text-gray-400">-</span>
-                                    }
-                                </span>
-                            </td>
-                            <td class="p-4">
-                                @if (admin.IsBlacklisted)
-                                {
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        停用中
-                                    </span>
-                                }
-                                else if (admin.IsFirstLogin)
-                                {
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                        首次登入
-                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        啟用
-                                    </span>
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">沒有管理員資料</td>
+                                    </tr>
                                 }
-                            </td>
-                            <td class="p-4 text-gray-600 text-sm">
-                                @admin.CreatedAt.ToString("yyyy-MM-dd HH:mm")
-                            </td>
-                            <td class="p-4 text-right">
-                                <div class="flex justify-end space-x-2">
-                                    @if (!admin.IsBlacklisted && admin.UserId.ToString() != currentUserId)
-                                    {
-                                        <form method="post" asp-action="DeactivateAdmin" style="display:inline;">
-                                            <input type="hidden" name="userId" value="@admin.UserId" />
-                                            <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium" onclick="return confirm('確認要停用此管理員嗎？');">
-                                                停用
-                                            </button>
-                                        </form>
-                                    }
-                                    @if (admin.IsBlacklisted || admin.UserId.ToString() == currentUserId)
-                                    {
-                                        <button disabled class="text-gray-300 text-sm font-medium cursor-not-allowed">
-                                            停用
-                                        </button>
-                                    }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @* ── Tab2：身分與權限設定 ── *@
+                <div class="tab-pane fade @(activeTab == "tab2" ? "show active" : "")" id="tab2" role="tabpanel">
+                    <div class="d-flex justify-content-end mb-3">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createLevelModal">
+                            <i class="bx bx-plus me-1"></i> 新增身分
+                        </button>
+                    </div>
+
+                    <div class="row g-4">
+                        @if (Model.AdminLevels != null && Model.AdminLevels.Count > 0)
+                        {
+                            @foreach (var level in Model.AdminLevels)
+                            {
+                                var isSuperAdmin = level.AdminLevelId == 1;
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card h-100 border shadow-none">
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title d-flex align-items-center gap-2 mb-2">
+                                                @level.LevelName
+                                                @if (isSuperAdmin)
+                                                {
+                                                    <span class="badge bg-label-info" style="font-size: 0.7rem;">系統預設</span>
+                                                }
+                                            </h5>
+                                            <p class="card-text text-muted small mb-3 flex-grow-1">
+                                                @(string.IsNullOrEmpty(level.Description) ? "未提供說明" : level.Description)
+                                            </p>
+                                            <div class="mb-3 border-top pt-3">
+                                                <p class="small fw-semibold mb-2">預設權限：</p>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    @if (level.DefaultPermissions != null && level.DefaultPermissions.Count > 0)
+                                                    {
+                                                        @foreach (var perm in level.DefaultPermissions)
+                                                        {
+                                                            <span class="badge bg-label-secondary">@perm.DisplayName</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted small">尚未設定權限</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-end gap-2 mt-auto">
+                                                @if (!isSuperAdmin)
+                                                {
+                                                    var permIds = string.Join(",", level.DefaultPermissions?.Select(p => p.PermissionId) ?? new List<int>());
+                                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                                            onclick="openEditLevelModal(@level.AdminLevelId, '@level.LevelName', '@level.Description', [@permIds])">
+                                                        編輯
+                                                    </button>
+                                                    <form method="post" asp-action="DeleteAdminLevel" class="d-inline" onsubmit="return confirm('確認刪除此身分？若有管理員綁定將無法刪除。');">
+                                                        <input type="hidden" name="adminLevelId" value="@level.AdminLevelId" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <button disabled class="btn btn-sm btn-outline-secondary">編輯</button>
+                                                    <button disabled class="btn btn-sm btn-outline-secondary">刪除</button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </td>
-                        </tr>
+                            }
+                        }
+                        else
+                        {
+                            <div class="col-12 text-center text-muted py-5 border rounded bg-lighter">
+                                尚未建立任何身分
+                            </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── 新增管理員 Modal ── *@
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom pb-3">
+                <h5 class="modal-title fw-bold">新增管理員</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-action="CreateAdmin">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">登入帳號</label>
+                        <input type="text" value="@Model.NextAccount" class="form-control" readonly />
+                        <div class="form-text">帳號由系統自動生成，不可修改</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adminLevelId" class="form-label">管理員身分 <span class="text-danger">*</span></label>
+                        <select name="adminLevelId" id="adminLevelId" class="form-select" required>
+                            <option value="">-- 請選擇 --</option>
+                            @if (Model.CreateForm?.AdminLevelOptions != null)
+                            {
+                                @foreach (var level in Model.CreateForm.AdminLevelOptions)
+                                {
+                                    <option value="@level.AdminLevelId">@level.LevelName</option>
+                                }
+                            }
+                        </select>
+                        <div class="form-text">*不含超級管理員</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">初始密碼 <span class="text-danger">*</span></label>
+                        <input type="password" name="password" id="password" class="form-control" placeholder="至少 8 個字元，含英文與數字" required minlength="8" />
+                    </div>
+                </div>
+                <div class="modal-footer border-top pt-3">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">新增</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ── 新增身分 Modal ── *@
+<div class="modal fade" id="createLevelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom pb-3">
+                <h5 class="modal-title fw-bold">新增身分</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-action="CreateAdminLevel">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">身分名稱 <span class="text-danger">*</span></label>
+                        <input type="text" name="LevelName" class="form-control" placeholder="例：訂單管理員" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">說明</label>
+                        <input type="text" name="Description" class="form-control" placeholder="選填" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">權限設定</label>
+                        <div class="border rounded p-3 bg-lighter" style="max-height: 200px; overflow-y: auto;">
+                            <div class="row g-2">
+                                @if (Model.AllPermissions != null)
+                                {
+                                    @foreach (var perm in Model.AllPermissions)
+                                    {
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="PermissionIds" value="@perm.PermissionId" id="perm_@perm.PermissionId" />
+                                                <label class="form-check-label" for="perm_@perm.PermissionId">
+                                                    @perm.DisplayName
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top pt-3">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">新增</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ── 編輯身分 Modal ── *@
+<div class="modal fade" id="editLevelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom pb-3">
+                <h5 class="modal-title fw-bold">編輯身分</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-action="UpdateAdminLevel">
+                <input type="hidden" name="AdminLevelId" id="editLevelId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">身分名稱 <span class="text-danger">*</span></label>
+                        <input type="text" name="LevelName" id="editLevelName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">說明</label>
+                        <input type="text" name="Description" id="editLevelDescription" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">權限設定</label>
+                        <div class="border rounded p-3 bg-lighter" style="max-height: 200px; overflow-y: auto;">
+                            <div class="row g-2">
+                                @if (Model.AllPermissions != null)
+                                {
+                                    @foreach (var perm in Model.AllPermissions)
+                                    {
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input edit-perm-checkbox" type="checkbox" name="PermissionIds" value="@perm.PermissionId" id="edit_perm_@perm.PermissionId" data-permid="@perm.PermissionId" />
+                                                <label class="form-check-label" for="edit_perm_@perm.PermissionId">
+                                                    @perm.DisplayName
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top pt-3">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 監聽 Bootstrap Tab 切換，同步 URL 參數與左側選單狀態
+        var triggerTabList = [].slice.call(document.querySelectorAll('button[data-bs-toggle="tab"]'))
+        triggerTabList.forEach(function (tabEl) {
+            tabEl.addEventListener('shown.bs.tab', function (event) {
+                var targetId = event.target.getAttribute('data-bs-target').replace('#', '');
+
+                // 1. 同步 URL，確保重新整理不跑版
+                var url = new URL(window.location);
+                url.searchParams.set('activeTab', targetId);
+                window.history.replaceState({}, '', url);
+
+                // 2. 同步左側選單 (前提是 _Layout.cshtml 需加上對應 ID: menu-admin-tab1, menu-admin-tab2)
+                var menuTab1 = document.getElementById('menu-admin-tab1');
+                var menuTab2 = document.getElementById('menu-admin-tab2');
+
+                if (menuTab1 && menuTab2) {
+                    if (targetId === 'tab1') {
+                        menuTab1.classList.add('active');
+                        menuTab2.classList.remove('active');
+                    } else if (targetId === 'tab2') {
+                        menuTab1.classList.remove('active');
+                        menuTab2.classList.add('active');
                     }
                 }
-                else
-                {
-                    <tr>
-                        <td colspan="7" class="p-8 text-center text-gray-500">
-                            沒有管理員資料
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
+            })
+        });
 
-<!-- 新增管理員 Modal -->
-<div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50" onclick="closeCreateModal(event)">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onclick="event.stopPropagation()">
-        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h3 class="text-lg font-bold text-gray-800">新增管理員</h3>
-            <button type="button" onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-600">
-                <span class="text-2xl">&times;</span>
-            </button>
-        </div>
+        // 開啟編輯 Modal 並綁定現有資料
+        function openEditLevelModal(id, name, description, permIds) {
+            document.getElementById('editLevelId').value = id;
+            document.getElementById('editLevelName').value = name;
+            document.getElementById('editLevelDescription').value = description || '';
 
-        <form method="post" asp-action="CreateAdmin" class="p-6">
-            <div class="space-y-4">
-                <!-- 管理員等級選擇 -->
-                <div>
-                    <label for="adminLevelId" class="block text-sm font-medium text-gray-700 mb-2">
-                        管理員等級 <span class="text-red-500">*</span>
-                    </label>
-                    <select name="adminLevelId" id="adminLevelId" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        <option value="">-- 請選擇 --</option>
-                        @foreach (var level in Model.CreateForm.AdminLevelOptions)
-                        {
-                            <option value="@level.AdminLevelId">@level.LevelName</option>
-                        }
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">*不含超級管理員</p>
-                </div>
-                <!-- 系統自動生成帳號（唯讀） -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">登入帳號</label>
-                    <input type="text" value="@Model.NextAccount"
-                           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-500"
-                           readonly />
-                    <p class="text-xs text-gray-400 mt-1">帳號由系統自動生成，不可修改</p>
-                </div>
-                <!-- 初始密碼輸入 -->
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                        初始密碼 <span class="text-red-500">*</span>
-                    </label>
-                    <input type="password" name="password" id="password" placeholder="至少 8 個字元，含英文與數字"
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           required minlength="8" />
-                    <p class="text-xs text-gray-500 mt-1">帳號與 Email 由系統自動生成</p>
-                </div>
-            </div>
+            // 勾選對應的權限 Checkbox
+            document.querySelectorAll('.edit-perm-checkbox').forEach(cb => {
+                cb.checked = permIds.includes(parseInt(cb.dataset.permid));
+            });
 
-            <div class="mt-6 flex space-x-3">
-                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium">
-                    新增
-                </button>
-                <button type="button" onclick="closeCreateModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition-colors font-medium">
-                    取消
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-    function openCreateModal() {
-        document.getElementById('createModal').classList.remove('hidden');
-    }
-
-    function closeCreateModal(event) {
-        if (event && event.target.id !== 'createModal') return;
-        document.getElementById('createModal').classList.add('hidden');
-    }
-</script>
-
-<style>
-    button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-</style>
+            // 觸發 Bootstrap Modal 顯示
+            var editModal = new bootstrap.Modal(document.getElementById('editLevelModal'));
+            editModal.show();
+        }
+    </script>
+}
