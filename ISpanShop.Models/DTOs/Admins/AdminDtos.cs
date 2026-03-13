@@ -22,10 +22,10 @@ namespace ISpanShop.Models.DTOs.Admins
 		[Display(Name = "角色名稱")]
 		public string RoleName { get; set; }
 
-		[Display(Name = "管理員等級ID")]
+		[Display(Name = "管理員身分ID")]
 		public int? AdminLevelId { get; set; }
 
-		[Display(Name = "管理員等級名稱")]
+		[Display(Name = "管理員身分名稱")]
 		public string AdminLevelName { get; set; }
 
 		[Display(Name = "是否停權")]
@@ -40,9 +40,30 @@ namespace ISpanShop.Models.DTOs.Admins
 		[Display(Name = "更新時間")]
 		public DateTime? UpdatedAt { get; set; }
 
-		[JsonIgnore]//[JsonIgnore] 屬性來隱藏敏感欄位
+		[JsonIgnore]
 		public string PasswordHash { get; set; }
 
+		[Display(Name = "實際權限")]	// 來源：AdminLevelPermissions（依 AdminLevelId 查詢）
+		public List<PermissionDto> ActualPermissions { get; set; } = new List<PermissionDto>();
+	
+	}
+
+	/// <summary>
+	/// 權限資料傳輸物件
+	/// </summary>
+	public class PermissionDto
+	{
+		[Display(Name = "權限ID")]
+		public int PermissionId { get; set; }
+
+		[Display(Name = "權限鍵值")]
+		public string PermissionKey { get; set; }
+
+		[Display(Name = "顯示名稱")]
+		public string DisplayName { get; set; }
+
+		[Display(Name = "描述")]
+		public string Description { get; set; }
 	}
 
 	/// <summary>
@@ -53,6 +74,9 @@ namespace ISpanShop.Models.DTOs.Admins
 		public int AdminLevelId { get; set; }
 		public string LevelName { get; set; }
 		public string Description { get; set; }
+
+		[Display(Name = "預設權限")]
+		public List<PermissionDto> DefaultPermissions { get; set; } = new List<PermissionDto>();
 	}
 
 	/// <summary>
@@ -60,6 +84,11 @@ namespace ISpanShop.Models.DTOs.Admins
 	/// </summary>
 	public class AdminCreateDto
 	{
+		[Required(ErrorMessage = "{0}為必填")]
+		[StringLength(50, MinimumLength = 3, ErrorMessage = "{0}長度必須在3-50個字符之間")]
+		[Display(Name = "帳號")]
+		public string Account { get; set; }
+
 		[Required(ErrorMessage = "{0}為必填")]
 		[Display(Name = "初始密碼")]
 		public string Password { get; set; }
@@ -101,5 +130,61 @@ namespace ISpanShop.Models.DTOs.Admins
 
 		[Display(Name = "描述")]
 		public string Description { get; set; }
+	}
+
+	/// <summary>
+	/// 編輯管理員身分 DTO
+	/// </summary>
+	public class AdminUpdateDto
+	{
+		[Required]
+		[Display(Name = "管理員ID")]
+		public int UserId { get; set; }
+
+		[Required(ErrorMessage = "{0}為必填")]
+		[Display(Name = "管理員等級")]
+		public int AdminLevelId { get; set; }
+	}
+
+	/// <summary>
+	/// 新增管理員等級 DTO
+	/// </summary>
+	public class AdminLevelCreateDto
+	{
+		[Required(ErrorMessage = "{0}為必填")]
+		[StringLength(100, MinimumLength = 2, ErrorMessage = "{0}長度必須在2-100個字符之間")]
+		[Display(Name = "等級名稱")]
+		public string LevelName { get; set; }
+
+		[StringLength(500)]
+		[Display(Name = "描述")]
+		public string Description { get; set; }
+
+		[Required(ErrorMessage = "至少選擇一個權限")]
+		[Display(Name = "權限列表")]
+		public List<int> PermissionIds { get; set; } = new List<int>();
+	}
+
+	/// <summary>
+	/// 編輯管理員等級 DTO
+	/// </summary>
+	public class AdminLevelUpdateDto
+	{
+		[Required]
+		[Display(Name = "等級ID")]
+		public int AdminLevelId { get; set; }
+
+		[Required(ErrorMessage = "{0}為必填")]
+		[StringLength(100, MinimumLength = 2, ErrorMessage = "{0}長度必須在2-100個字符之間")]
+		[Display(Name = "等級名稱")]
+		public string LevelName { get; set; }
+
+		[StringLength(500)]
+		[Display(Name = "描述")]
+		public string Description { get; set; }
+
+		[Required(ErrorMessage = "至少選擇一個權限")]
+		[Display(Name = "權限列表")]
+		public List<int> PermissionIds { get; set; } = new List<int>();
 	}
 }

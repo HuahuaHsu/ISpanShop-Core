@@ -457,22 +457,11 @@ STEP 6：展示層 (ISpanShop.MVC) - 實作管理員登入功能
   - IsSystem 不加欄位，Service 層以 AdminLevelId = 1 判斷
   - 帳號名稱手動輸入
 ============================================================
-
-------------------------------------------------------------
-STEP 0：資料庫確認（全部已就緒，無需異動）
-------------------------------------------------------------
-
-[V] Permissions      6 筆
-[V] AdminLevels      3 筆
-[V] AdminLevelPermissions  10 筆
-[V] Users.AdminLevelId     欄位存在
-[V] Users.IsFirstLogin     欄位存在
-
 ------------------------------------------------------------
 STEP 1：更新資料傳輸物件 (ISpanShop.Models)
 ------------------------------------------------------------
 
-[ ] 更新 AdminDto
+[V] 更新 AdminDto
     - 位置：ISpanShop.Models/DTOs/AdminDtos.cs
     - 內容：
         int                     UserId
@@ -485,7 +474,7 @@ STEP 1：更新資料傳輸物件 (ISpanShop.Models)
         List<PermissionDto>     ActualPermissions
         // 來源：AdminLevelPermissions（依 AdminLevelId 查詢）
 
-[ ] 新增 PermissionDto
+[V] 新增 PermissionDto
     - 位置：ISpanShop.Models/DTOs/AdminDtos.cs
     - 內容：
         int    PermissionId
@@ -493,7 +482,7 @@ STEP 1：更新資料傳輸物件 (ISpanShop.Models)
         string DisplayName
         string Description
 
-[ ] 更新 AdminLevelDto
+[V] 更新 AdminLevelDto
     - 內容：
         int                     AdminLevelId
         string                  LevelName
@@ -501,7 +490,7 @@ STEP 1：更新資料傳輸物件 (ISpanShop.Models)
         List<PermissionDto>     DefaultPermissions
         // 來源：AdminLevelPermissions
 
-[ ] 更新 AdminCreateDto
+[v] 更新 AdminCreateDto
     - 內容：
         string  Account         // 手動輸入（必填）
         string  Password        // 初始密碼（必填）
@@ -510,21 +499,21 @@ STEP 1：更新資料傳輸物件 (ISpanShop.Models)
         // RoleId 固定為 1（Admin）
         // 無 PermissionIds（權限跟身分走）
 
-[ ] 新增 AdminUpdateDto
+[V] 新增 AdminUpdateDto
     - 位置：ISpanShop.Models/DTOs/AdminDtos.cs
     - 用途：編輯管理員身分
     - 內容：
         int  UserId
         int  AdminLevelId       // 只能改身分
 
-[ ] 新增 AdminLevelCreateDto
+[V] 新增 AdminLevelCreateDto
     - 位置：ISpanShop.Models/DTOs/AdminDtos.cs
     - 內容：
         string       LevelName
         string       Description
         List<int>    PermissionIds
 
-[ ] 新增 AdminLevelUpdateDto
+[V] 新增 AdminLevelUpdateDto
     - 位置：ISpanShop.Models/DTOs/AdminDtos.cs
     - 內容：
         int          AdminLevelId
