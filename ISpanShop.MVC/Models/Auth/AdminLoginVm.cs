@@ -12,7 +12,8 @@ namespace ISpanShop.MVC.Models.Auth
         [DataType(DataType.Password)]
         [Display(Name = "密碼")]
         public string Password { get; set; }
+		public bool RememberMe { get; set; }  // 不存在Db，僅供view使用
 
-        public string? Message { get; set; }
+		public string? Message { get; set; }
     }
 }

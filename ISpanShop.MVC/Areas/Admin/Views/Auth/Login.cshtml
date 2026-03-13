@@ -1,4 +1,4 @@
-@model ISpanShop.MVC.Areas.Admin.Models.Account.LoginViewModel
+@model ISpanShop.MVC.Models.Auth.AdminLoginVm
 @{
     Layout = null;
     ViewData["Title"] = "後台登入 - ISpanShop";
@@ -659,7 +659,7 @@
             }
 
             <!-- 表單 -->
-            <form asp-area="Admin" asp-controller="Account" asp-action="Login" method="post" id="loginForm">
+                <form asp-area="Admin" asp-controller="Auth" asp-action="Login" method="post" id="loginForm">
                 @Html.AntiForgeryToken()
                 @if (ViewData["ReturnUrl"] != null)
                 {

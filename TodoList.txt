@@ -462,11 +462,11 @@ STEP 6：展示層 (ISpanShop.MVC) - 實作管理員登入功能
 STEP 0：資料庫確認（全部已就緒，無需異動）
 ------------------------------------------------------------
 
-[✅] Permissions      6 筆
-[✅] AdminLevels      3 筆
-[✅] AdminLevelPermissions  10 筆
-[✅] Users.AdminLevelId     欄位存在
-[✅] Users.IsFirstLogin     欄位存在
+[V] Permissions      6 筆
+[V] AdminLevels      3 筆
+[V] AdminLevelPermissions  10 筆
+[V] Users.AdminLevelId     欄位存在
+[V] Users.IsFirstLogin     欄位存在
 
 ------------------------------------------------------------
 STEP 1：更新資料傳輸物件 (ISpanShop.Models)
@@ -700,8 +700,8 @@ STEP 3：更新商務邏輯層 (ISpanShop.Services)
 STEP 4：依賴注入（無需異動）
 ------------------------------------------------------------
 
-[✅] IAdminRepository / AdminRepository 已註冊
-[✅] IAdminService / AdminService 已註冊
+[V] IAdminRepository / AdminRepository 已註冊
+[V] IAdminService / AdminService 已註冊
 
 ------------------------------------------------------------
 STEP 5：更新展示層 (ISpanShop.MVC)
@@ -735,7 +735,7 @@ STEP 5：更新展示層 (ISpanShop.MVC)
         List<int>    PermissionIds
 
 [ ] 更新 AdminsController
-    - 位置：ISpanShop.MVC/Controllers/AdminsController.cs
+    - 位置：ISpanShop.MVC/Areas/Admin/Controllers/Identities/AdminController.cs
 
     GET Index()
         → admins        = AdminService.GetAllAdmins()
@@ -778,7 +778,7 @@ STEP 5：更新展示層 (ISpanShop.MVC)
         → RedirectToAction("Index")
 
 [ ] 大幅重寫 Index.cshtml
-    - 位置：ISpanShop.MVC/Views/Admins/Index.cshtml
+    - 位置：ISpanShop.MVC/Areas/Admin/Views/Admin/Index.cshtml
 
     ★ 頁面標題：「後台權限與帳號管理」
     ★ 右上角：「+ 新增管理員」按鈕

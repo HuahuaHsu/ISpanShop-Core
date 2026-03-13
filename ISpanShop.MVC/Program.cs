@@ -40,7 +40,6 @@ namespace ISpanShop.MVC
 			// Add services to the container.
 			builder.Services.AddControllersWithViews();
 
-			// �o�̪� "DefaultConnection" ������ appsettings.json��appsettings.Development�̪��W�r�@�Ҥ@��
 			builder.Services.AddDbContext<ISpanShopDBContext>
 				(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 				);
@@ -56,16 +55,13 @@ namespace ISpanShop.MVC
 			builder.Services.AddAuthentication("AdminCookieAuth")
 				.AddCookie("AdminCookieAuth", options =>
 				{
-					options.LoginPath = "/Auth/Login";
-					options.AccessDeniedPath = "/Auth/AccessDenied";
+					options.LoginPath = "/Admin/Auth/Login";
+					options.AccessDeniedPath = "/Admin/Auth/AccessDenied";
 					options.ExpireTimeSpan = TimeSpan.FromDays(7);
 				});
 
 
-			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
-				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-
+		
 			builder.Services.AddScoped<IProductService, ProductService>();
 
 
@@ -166,7 +162,7 @@ namespace ISpanShop.MVC
 				name: "areas",
 				pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-			// ★ 支援直接以 /Orders/ 做存取，以及讓根目錄預設導向 訂單儀表板
+			// 支援直接以 /Orders/ 做存取，以及讓根目錄預設導向 訂單儀表板
 			app.MapControllerRoute(
 				name: "default",
 				pattern: "{controller=Orders}/{action=Dashboard}/{id?}",

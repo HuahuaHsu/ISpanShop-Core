@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace ISpanShop.MVC.Controllers
+namespace ISpanShop.MVC.Areas.Admin.Controllers
 {
-    public class AuthController : Controller
+	[Area("Admin")] //後臺標籤
+	public class AuthController : Controller
     {
         private readonly IAdminService _adminService;
 
@@ -46,9 +47,15 @@ namespace ISpanShop.MVC.Controllers
                     new Claim("IsFirstLogin", "true")
                 };
                 var claimsIdentity = new ClaimsIdentity(claims, "AdminCookieAuth");
-                await HttpContext.SignInAsync("AdminCookieAuth", new ClaimsPrincipal(claimsIdentity));
+				var authProperties = new AuthenticationProperties
+				{
+					IsPersistent = false,
+					ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(15)  // 首次登入15分鐘內完成改密碼
+				};
+
+				await HttpContext.SignInAsync("AdminCookieAuth", new ClaimsPrincipal(claimsIdentity), authProperties);
                 
-                return RedirectToAction("ChangePassword");
+                return RedirectToAction("ChangePassword", "Auth", new { area = "Admin" });//絕對位子
             }
             else
             {
@@ -62,9 +69,17 @@ namespace ISpanShop.MVC.Controllers
                     new Claim("userid", admin.UserId.ToString()) // 為了與現有程式碼相容
                 };
                 var claimsIdentity = new ClaimsIdentity(claims, "AdminCookieAuth");
-                await HttpContext.SignInAsync("AdminCookieAuth", new ClaimsPrincipal(claimsIdentity));
+				// 根據 RememberMe 決定 Cookie 是否持久化
+				var authProperties = new AuthenticationProperties
+				{
+					IsPersistent = form.RememberMe,   // true = 關閉瀏覽器後 Cookie 仍存在
+					ExpiresUtc = form.RememberMe
+						? DateTimeOffset.UtcNow.AddDays(30)   // 記住我：30天
+						: DateTimeOffset.UtcNow.AddMinutes(30)  // 不記住：30分鐘過期
+				};
 
-                return RedirectToAction("Index", "Admin", new { area = "Admin" });
+				await HttpContext.SignInAsync("AdminCookieAuth", new ClaimsPrincipal(claimsIdentity), authProperties);
+				return RedirectToAction("Dashboard", "Orders", new { area = "Admin" });
             }
         }
 
@@ -102,7 +117,7 @@ namespace ISpanShop.MVC.Controllers
                 
                 // 為了嚴格遵守「成功：RedirectToAction("Index", "Admins")」
                 // 我們假設 Index 會處理權限問題。
-                return RedirectToAction("Index", "Admin", new { area = "Admin" });
+                return RedirectToAction("Dashboard", "Orders", new { area = "Admin" });
             }
 
             form.Message = result.Message;
@@ -110,11 +125,11 @@ namespace ISpanShop.MVC.Controllers
             return View(form);
         }
 
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync("AdminCookieAuth");
-            return RedirectToAction("Login");
+            return RedirectToAction("Login", "Auth", new { area = "Admin" }); //給予絕對位置
         }
     }
 }
