@@ -23,10 +23,8 @@
             <p class="@(Model.Message.Contains("成功") ? "text-green-800" : "text-red-800")">
                 @Model.Message
             </p>
-            @if (!string.IsNullOrEmpty(Model.GeneratedAccount))
-            {
-                <p class="text-green-700 mt-2 font-semibold">新增帳號：<span class="font-mono">@Model.GeneratedAccount</span></p>
-            }
+           
+            
         </div>
     }
 
@@ -160,7 +158,14 @@
                     </select>
                     <p class="text-xs text-gray-500 mt-1">*不含超級管理員</p>
                 </div>
-
+                <!-- 系統自動生成帳號（唯讀） -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">登入帳號</label>
+                    <input type="text" value="@Model.NextAccount"
+                           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-500"
+                           readonly />
+                    <p class="text-xs text-gray-400 mt-1">帳號由系統自動生成，不可修改</p>
+                </div>
                 <!-- 初始密碼輸入 -->
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-2">

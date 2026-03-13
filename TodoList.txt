@@ -638,7 +638,7 @@ STEP 4：依賴注入（無需異動）
 STEP 5：更新展示層 (ISpanShop.MVC)
 ------------------------------------------------------------
 
-[ ] 更新 AdminIndexVm
+[V] 更新 AdminIndexVm
     - 位置：ISpanShop.MVC/Models/Admins/AdminIndexVm.cs
     - 內容：
         List<AdminDto>         Admins
@@ -649,7 +649,7 @@ STEP 5：更新展示層 (ISpanShop.MVC)
         string                 Message
         string                 ActiveTab        // "tab1" or "tab2"
 
-[ ] 更新 AdminCreateVm
+[V] 更新 AdminCreateVm
     - 位置：ISpanShop.MVC/Models/Admins/AdminCreateVm.cs
     - 內容：
         string                 Account          // 手動輸入
@@ -658,55 +658,15 @@ STEP 5：更新展示層 (ISpanShop.MVC)
         List<AdminLevelDto>    AdminLevelOptions
         // 無 PermissionIds（權限跟身分走，不可微調）
 
-[ ] 新增 AdminLevelCreateVm
+[V] 新增 AdminLevelCreateVm
     - 位置：ISpanShop.MVC/Models/Admins/AdminLevelCreateVm.cs
     - 內容：
         string       LevelName
         string       Description
         List<int>    PermissionIds
 
-[ ] 更新 AdminsController
+[V] 更新 AdminsController
     - 位置：ISpanShop.MVC/Areas/Admin/Controllers/Identities/AdminController.cs
-
-    GET Index()
-        → admins        = AdminService.GetAllAdmins()
-                          （含 ActualPermissions）
-        → levels        = AdminService.GetAllAdminLevels()
-                          （含 DefaultPermissions）
-        → permissions   = AdminService.GetAllPermissions()
-        → activeTab     = TempData["ActiveTab"] ?? "tab1"
-        → 組成 AdminIndexVm 回傳
-
-    POST CreateAdmin(AdminCreateVm form)
-        → AdminService.CreateAdmin()
-        → TempData["Message"] = 結果訊息
-        → TempData["ActiveTab"] = "tab1"
-        → RedirectToAction("Index")
-
-    POST UpdateAdmin(AdminUpdateDto dto)
-        → AdminService.UpdateAdmin()
-        → TempData["ActiveTab"] = "tab1"
-        → RedirectToAction("Index")
-
-    POST DeactivateAdmin(int userId)
-        → AdminService.DeactivateAdmin()
-        → TempData["ActiveTab"] = "tab1"
-        → RedirectToAction("Index")
-
-    POST CreateAdminLevel(AdminLevelCreateVm form)
-        → AdminService.CreateAdminLevel()
-        → TempData["ActiveTab"] = "tab2"
-        → RedirectToAction("Index")
-
-    POST UpdateAdminLevel(AdminLevelUpdateDto dto)
-        → AdminService.UpdateAdminLevelConfig()
-        → TempData["ActiveTab"] = "tab2"
-        → RedirectToAction("Index")
-
-    POST DeleteAdminLevel(int adminLevelId)
-        → AdminService.DeleteAdminLevel()
-        → TempData["ActiveTab"] = "tab2"
-        → RedirectToAction("Index")
 
 [ ] 大幅重寫 Index.cshtml
     - 位置：ISpanShop.MVC/Areas/Admin/Views/Admin/Index.cshtml

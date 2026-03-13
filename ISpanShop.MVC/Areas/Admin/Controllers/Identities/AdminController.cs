@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
 {
 	[Area("Admin")]
-	[Authorize(Roles = "SuperAdmin")] //正式開啟權限驗證
+	[Authorize(Roles = "SuperAdmin")]
 	public class AdminController : Controller
 	{
 		private readonly IAdminService _adminService;
@@ -18,142 +18,120 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Identities
 			_adminService = adminService ?? throw new ArgumentNullException(nameof(adminService));
 		}
 
-		/// <summary>
-		/// 管理員列表頁 - 顯示所有管理員及新增/停用選項
-		/// </summary>
 		public IActionResult Index()
 		{
 			try
 			{
-				var admins = _adminService.GetAllAdmins().ToList();
-				var adminLevels = _adminService.GetSelectableAdminLevels().ToList();
-
 				var viewModel = new AdminIndexVm
 				{
-					Admins = admins,
-					NextAccount = _adminService.GetNextAccount(),   // 新增
+					Admins = _adminService.GetAllAdmins().ToList(),
+					AdminLevels = _adminService.GetAllAdminLevels().ToList(),
+					AllPermissions = _adminService.GetAllPermissions().ToList(),
+					NextAccount = _adminService.GetNextAccount(),
 					Message = TempData["Message"]?.ToString(),
+					ActiveTab = TempData["ActiveTab"]?.ToString() ?? "tab1",
 					CreateForm = new AdminCreateVm
 					{
-						AdminLevelOptions = adminLevels
+						AdminLevelOptions = _adminService.GetSelectableAdminLevels().ToList()
 					}
 				};
 				return View(viewModel);
 			}
 			catch (Exception ex)
 			{
-				var emptyVm = new AdminIndexVm
+				return View(new AdminIndexVm
 				{
-					Admins = new List<AdminDto>(),
-					CreateForm = new AdminCreateVm(),
-					Message = $"載入管理員列表失敗: {ex.Message}"
-				};
-				return View(emptyVm);
+					Message = $"載入失敗: {ex.Message}"
+				});
 			}
 		}
 
-		/// <summary>
-		/// 新增管理員
-		/// </summary>
 		[HttpPost]
 		public IActionResult CreateAdmin(AdminCreateVm form)
 		{
-			try
+			if (!ModelState.IsValid)
 			{
-				if (!ModelState.IsValid)
-				{
-					TempData["Message"] = "表單驗證失敗，請檢查輸入內容";
-					return RedirectToAction("Index");
-				}
-
-				// 轉換為 DTO
-				var dto = new AdminCreateDto
-				{
-					Password = form.Password,
-					AdminLevelId = form.AdminLevelId
-				};
-
-				// 呼叫服務層
-				var result = _adminService.CreateAdmin(dto);
-
-				if (result.IsSuccess)
-				{
-					TempData["Message"] = result.Message;
-					
-				}
-				else
-				{
-					TempData["Message"] = result.Message;
-				}
-			}
-			catch (Exception ex)
-			{
-				TempData["Message"] = $"新增管理員失敗: {ex.Message}";
+				TempData["Message"] = "表單驗證失敗，請檢查輸入內容";
+				TempData["ActiveTab"] = "tab1";
+				return RedirectToAction("Index");
 			}
 
+			var result = _adminService.CreateAdmin(new AdminCreateDto
+			{
+				Password = form.Password,
+				AdminLevelId = form.AdminLevelId
+			});
+
+			TempData["Message"] = result.Message;
+			TempData["ActiveTab"] = "tab1";
 			return RedirectToAction("Index");
 		}
 
-		/// <summary>
-		/// 停用管理員
-		/// </summary>
+		[HttpPost]
+		public IActionResult UpdateAdmin(AdminUpdateDto dto)
+		{
+			var result = _adminService.UpdateAdmin(dto);
+			TempData["Message"] = result.Message;
+			TempData["ActiveTab"] = "tab1";
+			return RedirectToAction("Index");
+		}
+
 		[HttpPost]
 		public IActionResult DeactivateAdmin(int userId)
 		{
-			try
+			var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+				?? User.FindFirst("userid")?.Value;
+
+			if (!int.TryParse(currentUserIdStr, out int currentUserId))
 			{
-				// 從 Claims 取得 currentUserId
-				var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-					?? User.FindFirst("userid")?.Value;
-
-				if (!int.TryParse(currentUserIdStr, out int currentUserId))
-				{
-					TempData["Message"] = "無法識別當前登入的管理員";
-					return RedirectToAction("Index");
-				}
-
-				// 呼叫服務層
-				var result = _adminService.DeactivateAdmin(userId, currentUserId);
-
-				TempData["Message"] = result.Message;
-			}
-			catch (Exception ex)
-			{
-				TempData["Message"] = $"停用管理員失敗: {ex.Message}";
+				TempData["Message"] = "無法識別當前登入的管理員";
+				TempData["ActiveTab"] = "tab1";
+				return RedirectToAction("Index");
 			}
 
+			var result = _adminService.DeactivateAdmin(userId, currentUserId);
+			TempData["Message"] = result.Message;
+			TempData["ActiveTab"] = "tab1";
 			return RedirectToAction("Index");
 		}
 
-		/// <summary>
-		/// 更新管理員角色
-		/// </summary>
 		[HttpPost]
-		public IActionResult UpdateRole(int adminId, int roleId)
+		public IActionResult CreateAdminLevel(AdminLevelCreateVm form)
 		{
-			try
+			if (!ModelState.IsValid)
 			{
-				var currentAdminIdStr = User.FindFirst("userid")?.Value
-					?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
-
-				if (!int.TryParse(currentAdminIdStr, out int currentAdminId))
-				{
-					TempData["Message"] = "無法識別當前登入的管理員 ID";
-					return RedirectToAction("Index");
-				}
-
-				bool success = _adminService.UpdateAdminRole(adminId, roleId, currentAdminId);
-				TempData["Message"] = success ? "管理員角色更新成功" : "更新失敗，請確認管理員 ID 是否存在";
-			}
-			catch (InvalidOperationException ex)
-			{
-				TempData["Message"] = ex.Message;
-			}
-			catch (Exception ex)
-			{
-				TempData["Message"] = $"更新角色失敗: {ex.Message}";
+				TempData["Message"] = "表單驗證失敗，請檢查輸入內容";
+				TempData["ActiveTab"] = "tab2";
+				return RedirectToAction("Index");
 			}
 
+			var result = _adminService.CreateAdminLevel(new AdminLevelCreateDto
+			{
+				LevelName = form.LevelName,
+				Description = form.Description,
+				PermissionIds = form.PermissionIds
+			});
+
+			TempData["Message"] = result.Message;
+			TempData["ActiveTab"] = "tab2";
+			return RedirectToAction("Index");
+		}
+
+		[HttpPost]
+		public IActionResult UpdateAdminLevel(AdminLevelUpdateDto dto)
+		{
+			var result = _adminService.UpdateAdminLevelConfig(dto);
+			TempData["Message"] = result.Message;
+			TempData["ActiveTab"] = "tab2";
+			return RedirectToAction("Index");
+		}
+
+		[HttpPost]
+		public IActionResult DeleteAdminLevel(int adminLevelId)
+		{
+			var result = _adminService.DeleteAdminLevel(adminLevelId);
+			TempData["Message"] = result.Message;
+			TempData["ActiveTab"] = "tab2";
 			return RedirectToAction("Index");
 		}
 	}
