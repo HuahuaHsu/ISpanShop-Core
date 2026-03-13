@@ -779,6 +779,14 @@
                     </a>
                 </li>
 
+                <li class="menu-header"><span>開發者工具</span></li>
+                <li class="menu-item">
+                    <a href="javascript:void(0)" onclick="seedMockData()" class="menu-link text-warning">
+                        <i class="menu-icon bx bx-vial"></i>
+                        <span class="menu-label">產生儀表板假資料</span>
+                    </a>
+                </li>
+
             </ul>
         </aside>
 
@@ -1042,6 +1050,43 @@
                 flyout.addEventListener('mouseleave', function () { hideFlyout(flyout); });
             });
         })();
+
+        // ── 開發者工具：產生假資料 ──
+        function seedMockData() {
+            showConfirm('確定要產生 30 天內的儀表板假資料嗎？這將會新增多筆會員、訂單與出貨紀錄。', function() {
+                // 顯示 Loading (簡單處理)
+                const btn = event.currentTarget;
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = '<i class="bx bx-loader-alt bx-spin me-1"></i> 產生中...';
+                btn.style.pointerEvents = 'none';
+
+                $.ajax({
+                    url: '/Admin/Orders/SeedDashboardMockData',
+                    type: 'POST',
+                    success: function(res) {
+                        if (res.success) {
+                            showAlert(res.message, function() {
+                                // 如果在儀表板頁面，則重新整理
+                                if (typeof refreshAllDashboard === 'function') {
+                                    refreshAllDashboard();
+                                } else {
+                                    location.reload();
+                                }
+                            });
+                        } else {
+                            showAlert(res.message);
+                        }
+                    },
+                    error: function() {
+                        showAlert('呼叫 API 失敗，請檢查網路或權限');
+                    },
+                    complete: function() {
+                        btn.innerHTML = originalContent;
+                        btn.style.pointerEvents = 'auto';
+                    }
+                });
+            });
+        }
     </script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 ﻿using ISpanShop.Common.Enums;
 using ISpanShop.Models.DTOs.Orders;
+using ISpanShop.Models.EfModels;
+using ISpanShop.Models.Seeding;
 using ISpanShop.MVC.Areas.Admin.Controllers;
 using ISpanShop.MVC.Areas.Admin.Models.Orders;
 using ISpanShop.Services.Orders;
@@ -13,11 +15,27 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 	{
 		private readonly IOrderService _orderService;
 		private readonly IOrderDashboardService _dashboardService;
+		private readonly ISpanShopDBContext _context;
 
-		public OrdersController(IOrderService orderService, IOrderDashboardService dashboardService)
+		public OrdersController(IOrderService orderService, IOrderDashboardService dashboardService, ISpanShopDBContext context)
 		{
 			_orderService = orderService;
 			_dashboardService = dashboardService;
+			_context = context;
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> SeedDashboardMockData()
+		{
+			try
+			{
+				await DashboardMockSeeder.SeedAsync(_context);
+				return Json(new { success = true, message = "成功產生 30 天內假資料 (會員、訂單、回購行為與出貨紀錄)" });
+			}
+			catch (Exception ex)
+			{
+				return Json(new { success = false, message = "產生失敗: " + ex.Message });
+			}
 		}
 
 		public async Task<IActionResult> Details(long id)

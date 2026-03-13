@@ -187,11 +187,15 @@ namespace ISpanShop.Repositories.Orders
 			var currentOrders = await query.Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate).ToListAsync();
 			var prevOrders = await query.Where(o => o.CreatedAt >= prevStartDate && o.CreatedAt <= prevEndDate).ToListAsync();
 
-			// 依據新 Enum: 3=已完成 (Completed)
+			// 依據 Enum: 3=已完成 (Completed)
 			var currentNetRevenue = currentOrders.Where(o => o.Status == 3).Sum(o => o.FinalAmount);
 			var prevNetRevenue = prevOrders.Where(o => o.Status == 3).Sum(o => o.FinalAmount);
 
-			var lowStockProductCount = await _context.ProductVariants.AsNoTracking().CountAsync(p => p.Stock < 10);
+			var currentTotalOrders = currentOrders.Count(o => o.Status > 0);
+			var prevTotalOrders = prevOrders.Count(o => o.Status > 0);
+
+			var currentReturns = currentOrders.Count(o => o.Status == 4 || o.Status == 5 || o.Status == 6);
+			var prevReturns = prevOrders.Count(o => o.Status == 4 || o.Status == 5 || o.Status == 6);
 
 			var currentOrderIds = currentOrders.Select(o => o.Id).ToList();
 			var prevOrderIds = prevOrders.Select(o => o.Id).ToList();
@@ -199,20 +203,43 @@ namespace ISpanShop.Repositories.Orders
 			var currentItemsSold = currentOrderIds.Any() ? await _context.OrderDetails.Where(od => currentOrderIds.Contains(od.OrderId)).SumAsync(od => od.Quantity) : 0;
 			var prevItemsSold = prevOrderIds.Any() ? await _context.OrderDetails.Where(od => prevOrderIds.Contains(od.OrderId)).SumAsync(od => od.Quantity) : 0;
 
+			// 顧客行為 (新註冊會員)
+			var currentNewMembers = await _context.Users.CountAsync(u => u.CreatedAt >= startDate && u.CreatedAt <= endDate);
+			var prevNewMembers = await _context.Users.CountAsync(u => u.CreatedAt >= prevStartDate && u.CreatedAt <= prevEndDate);
+
+			// 本期下單過的不重複會員與回購會員
+			var curUserGroups = currentOrders.Where(o => o.Status > 0).GroupBy(o => o.UserId).Select(g => new { UserId = g.Key, Count = g.Count() }).ToList();
+			var preUserGroups = prevOrders.Where(o => o.Status > 0).GroupBy(o => o.UserId).Select(g => new { UserId = g.Key, Count = g.Count() }).ToList();
+
+			// 營運效率 (出貨時長) - 狀態 >= 2 (運送中或已完成) 且有付款與完成時間
+			var curShipped = currentOrders.Where(o => o.Status >= 2 && o.PaymentDate.HasValue && o.CompletedAt.HasValue).ToList();
+			var preShipped = prevOrders.Where(o => o.Status >= 2 && o.PaymentDate.HasValue && o.CompletedAt.HasValue).ToList();
+
 			return new DashboardKpiRawDataDto
 			{
 				NetRevenue = currentNetRevenue,
 				PrevNetRevenue = prevNetRevenue,
-				TotalOrders = currentOrders.Count,
-				PrevTotalOrders = prevOrders.Count,
-				ReturnOrders = currentOrders.Count(o => o.Status == 4), // 4=已取消 (Cancelled)
-				PrevReturnOrders = prevOrders.Count(o => o.Status == 4),
+				TotalOrders = currentTotalOrders,
+				PrevTotalOrders = prevTotalOrders,
+				ReturnOrders = currentReturns,
+				PrevReturnOrders = prevReturns,
 				TotalItemsSold = currentItemsSold,
 				PrevTotalItemsSold = prevItemsSold,
-				// 待出貨數通常顯示「當前所有」需要處理的訂單，不應受時間區間限制
-				PendingShipmentCount = await _context.Orders.CountAsync(o => o.Status == 1), 
-				PendingRefundCount = 0, 
-				LowStockProductCount = lowStockProductCount
+				PendingShipmentCount = await query.CountAsync(o => o.Status == 1),
+				PendingRefundCount = await _context.ReturnRequests.CountAsync(rr => rr.Status == 0),
+				LowStockProductCount = await _context.ProductVariants.AsNoTracking().CountAsync(p => p.Stock < 10),
+
+				NewMemberCount = currentNewMembers,
+				PrevNewMemberCount = prevNewMembers,
+				UniqueMemberCount = curUserGroups.Count,
+				PrevUniqueMemberCount = preUserGroups.Count,
+				RepeatMemberCount = curUserGroups.Count(m => m.Count > 1),
+				PrevRepeatMemberCount = preUserGroups.Count(m => m.Count > 1),
+
+				TotalFulfillmentTicks = (double)curShipped.Sum(o => (o.CompletedAt.Value - o.PaymentDate.Value).Ticks),
+				PrevTotalFulfillmentTicks = (double)preShipped.Sum(o => (o.CompletedAt.Value - o.PaymentDate.Value).Ticks),
+				ShippedOrderCount = curShipped.Count,
+				PrevShippedOrderCount = preShipped.Count
 			};
 		}
 
