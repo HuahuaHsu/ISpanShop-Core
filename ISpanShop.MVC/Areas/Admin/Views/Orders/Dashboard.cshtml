@@ -92,6 +92,10 @@
                             <div class="d-flex align-items-center mb-1">
                                 <i class="bx bx-cart text-info me-2"></i>
                                 <span class="text-muted small fw-bold">連帶率</span>
+                                <i class="bx bx-info-circle ms-1 text-muted cursor-pointer" 
+                                   data-bs-toggle="tooltip" 
+                                   data-bs-placement="top" 
+                                   title="平均每筆訂單購買的商品件數 (總銷量 / 總訂單數)"></i>
                             </div>
                             <h3 class="mb-1 fw-bold" id="kpiItemsPerOrder">0.0</h3>
                             <div id="kpiItemsGrowth" class="small fw-bold">0%</div>
@@ -298,6 +302,12 @@
         }
 
         $(document).ready(function() {
+            // 初始化 Bootstrap Tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+
             refreshAllDashboard();
         });
 
