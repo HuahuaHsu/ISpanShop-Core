@@ -274,25 +274,22 @@ namespace ISpanShop.Repositories.Orders
 
 		public async Task<ApexChartDataDto> GetProductSalesPieChartAsync(int? storeId, DateTime startDate, DateTime endDate)
 		{
-			// 需求：改為抓取「主類別」占比 (銷售量)
-			var query = _context.OrderDetails
-				.Include(od => od.Order)
-				.Include(od => od.Product)
-				.ThenInclude(p => p.Category)
+			// 需求：改為抓取全站「主類別」構成 (商品數量)
+			var query = _context.Products
+				.Include(p => p.Category)
 				.ThenInclude(c => c.Parent)
-				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
+				.AsNoTracking();
 
-			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
+			if (storeId.HasValue) query = query.Where(p => p.StoreId == storeId.Value);
 
 			var groupedData = await query
-				.Select(od => new
+				.Select(p => new
 				{
-					ParentCategoryName = od.Product.Category.ParentId == null ? od.Product.Category.Name : od.Product.Category.Parent.Name,
-					Quantity = od.Quantity
+					ParentCategoryName = p.Category.ParentId == null ? p.Category.Name : p.Category.Parent.Name
 				})
 				.GroupBy(x => x.ParentCategoryName)
-				.Select(g => new { CategoryName = g.Key ?? "未分類", TotalSales = g.Sum(x => x.Quantity) })
-				.OrderByDescending(x => x.TotalSales)
+				.Select(g => new { CategoryName = g.Key ?? "未分類", ProductCount = g.Count() })
+				.OrderByDescending(x => x.ProductCount)
 				.ToListAsync();
 
 			var dto = new ApexChartDataDto();
@@ -305,16 +302,16 @@ namespace ISpanShop.Repositories.Orders
 			foreach (var item in top10)
 			{
 				dto.Labels.Add(item.CategoryName);
-				seriesData.Add(item.TotalSales);
+				seriesData.Add(item.ProductCount);
 			}
 
 			if (others.Any())
 			{
 				dto.Labels.Add("其他");
-				seriesData.Add(others.Sum(x => x.TotalSales));
+				seriesData.Add(others.Sum(x => x.ProductCount));
 			}
 
-			dto.Series.Add(new ChartSeriesDto { Name = "類別銷售比例", Data = seriesData });
+			dto.Series.Add(new ChartSeriesDto { Name = "類別構成比例", Data = seriesData });
 			return dto;
 		}
 
@@ -352,27 +349,36 @@ namespace ISpanShop.Repositories.Orders
 
 		public async Task<List<TopProductSalesDto>> GetTop10ProductsAsync(int? storeId, DateTime startDate, DateTime endDate, string orderBy)
 		{
+			// 需求：改為抓取「熱銷類別」聚合統計 (初始顯示主類別)
 			var query = _context.OrderDetails
 				.Include(od => od.Order)
 				.Include(od => od.Product)
 				.ThenInclude(p => p.Category)
+				.ThenInclude(c => c.Parent)
 				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
 
 			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
 
 			var groupedQuery = query
-				.GroupBy(od => new { od.Product.Name, CategoryName = od.Product.Category.Name })
+				.Select(od => new
+				{
+					MainCategoryName = od.Product.Category.ParentId == null ? od.Product.Category.Name : od.Product.Category.Parent.Name,
+					Quantity = od.Quantity,
+					Revenue = (od.Price ?? 0) * od.Quantity
+				})
+				.GroupBy(x => x.MainCategoryName)
 				.Select(g => new TopProductSalesDto
 				{
-					ProductName = g.Key.Name,
-					CategoryName = g.Key.CategoryName ?? "未分類",
-					SalesVolume = g.Sum(od => od.Quantity),
-					SalesRevenue = g.Sum(od => (od.Price ?? 0) * od.Quantity)
+					ProductName = g.Key ?? "未分類", // 圖表端使用 ProductName 欄位顯示類別名稱
+					CategoryName = g.Key ?? "未分類",
+					SalesVolume = g.Sum(x => x.Quantity),
+					SalesRevenue = g.Sum(x => x.Revenue)
 				});
 
+			// 移除 Take(10)，顯示所有主類別
 			return orderBy.ToLower() == "volume"
-				? await groupedQuery.OrderByDescending(x => x.SalesVolume).Take(10).ToListAsync()
-				: await groupedQuery.OrderByDescending(x => x.SalesRevenue).Take(10).ToListAsync();
+				? await groupedQuery.OrderByDescending(x => x.SalesVolume).ToListAsync()
+				: await groupedQuery.OrderByDescending(x => x.SalesRevenue).ToListAsync();
 		}
 
 		public async Task<ApexChartDataDto> GetCategoryContributionAsync(int? storeId, DateTime startDate, DateTime endDate)
@@ -423,66 +429,115 @@ namespace ISpanShop.Repositories.Orders
 
 		public async Task<ApexChartDataDto> GetCategoryDetailAsync(int? storeId, DateTime startDate, DateTime endDate, string type, string categoryName)
 		{
-			var query = _context.OrderDetails
-				.Include(od => od.Order)
-				.Include(od => od.Product)
-				.ThenInclude(p => p.Category)
-				.ThenInclude(c => c.Parent)
-				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
-
-			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
-
 			var dto = new ApexChartDataDto();
 			var seriesData = new List<decimal>();
 
-			if (categoryName == "其他")
+			if (type == "Composition")
 			{
-				// 原有邏輯：顯示被擠出 TOP 7 的「主類別」
-				var groupedData = await query
-					.Select(od => new
-					{
-						ParentCategoryName = od.Product.Category.ParentId == null ? od.Product.Category.Name : od.Product.Category.Parent.Name,
-						Quantity = od.Quantity,
-						Revenue = (od.Price ?? 0) * od.Quantity
-					})
-					.GroupBy(x => x.ParentCategoryName)
-					.Select(g => new { 
-						CategoryName = g.Key ?? "未分類", 
-						Sales = (decimal)g.Sum(x => x.Quantity),
-						Revenue = g.Sum(x => x.Revenue)
-					})
-					.OrderByDescending(x => type == "Sales" ? x.Sales : x.Revenue)
-					.Skip(10)
-					.ToListAsync();
+				// 處理「類別構成」的下鑽：顯示子類別下的商品數量
+				var query = _context.Products
+					.Include(p => p.Category)
+					.ThenInclude(c => c.Parent)
+					.AsNoTracking();
 
-				foreach (var item in groupedData)
+				if (storeId.HasValue) query = query.Where(p => p.StoreId == storeId.Value);
+
+				if (categoryName == "其他")
 				{
-					dto.Labels.Add(item.CategoryName);
-					seriesData.Add(type == "Sales" ? item.Sales : item.Revenue);
+					var groupedData = await query
+						.Select(p => new
+						{
+							ParentCategoryName = p.Category.ParentId == null ? p.Category.Name : p.Category.Parent.Name,
+							CategoryName = p.Category.Name
+						})
+						.GroupBy(x => x.ParentCategoryName)
+						.Select(g => new { CategoryName = g.Key ?? "未分類", Count = g.Count() })
+						.OrderByDescending(x => x.Count)
+						.Skip(10)
+						.ToListAsync();
+
+					foreach (var item in groupedData)
+					{
+						dto.Labels.Add(item.CategoryName);
+						seriesData.Add(item.Count);
+					}
 				}
+				else
+				{
+					var groupedData = await query
+						.Where(p => (p.Category.ParentId == null ? p.Category.Name : p.Category.Parent.Name) == categoryName)
+						.GroupBy(p => p.Category.Name)
+						.Select(g => new { CategoryName = g.Key ?? "未分類", Count = g.Count() })
+						.OrderByDescending(x => x.Count)
+						.ToListAsync();
+
+					foreach (var item in groupedData)
+					{
+						dto.Labels.Add(item.CategoryName);
+						seriesData.Add(item.Count);
+					}
+				}
+				dto.Series.Add(new ChartSeriesDto { Name = "商品數量", Data = seriesData });
 			}
 			else
 			{
-				// 新邏輯：顯示指定主類別下的「子類別」
-				var groupedData = await query
-					.Where(od => (od.Product.Category.ParentId == null ? od.Product.Category.Name : od.Product.Category.Parent.Name) == categoryName)
-					.GroupBy(od => od.Product.Category.Name)
-					.Select(g => new { 
-						CategoryName = g.Key ?? "未分類", 
-						Sales = (decimal)g.Sum(od => od.Quantity),
-						Revenue = g.Sum(od => (od.Price ?? 0) * od.Quantity)
-					})
-					.OrderByDescending(x => type == "Sales" ? x.Sales : x.Revenue)
-					.ToListAsync();
+				// 原有銷售/營收邏輯
+				var query = _context.OrderDetails
+					.Include(od => od.Order)
+					.Include(od => od.Product)
+					.ThenInclude(p => p.Category)
+					.ThenInclude(c => c.Parent)
+					.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
 
-				foreach (var item in groupedData)
+				if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
+
+				if (categoryName == "其他")
 				{
-					dto.Labels.Add(item.CategoryName);
-					seriesData.Add(type == "Sales" ? item.Sales : item.Revenue);
+					var groupedData = await query
+						.Select(od => new
+						{
+							ParentCategoryName = od.Product.Category.ParentId == null ? od.Product.Category.Name : od.Product.Category.Parent.Name,
+							Quantity = od.Quantity,
+							Revenue = (od.Price ?? 0) * od.Quantity
+						})
+						.GroupBy(x => x.ParentCategoryName)
+						.Select(g => new { 
+							CategoryName = g.Key ?? "未分類", 
+							Sales = (decimal)g.Sum(x => x.Quantity),
+							Revenue = g.Sum(x => x.Revenue)
+						})
+						.OrderByDescending(x => type == "Sales" ? x.Sales : x.Revenue)
+						.Skip(10)
+						.ToListAsync();
+
+					foreach (var item in groupedData)
+					{
+						dto.Labels.Add(item.CategoryName);
+						seriesData.Add(type == "Sales" ? item.Sales : item.Revenue);
+					}
 				}
+				else
+				{
+					var groupedData = await query
+						.Where(od => (od.Product.Category.ParentId == null ? od.Product.Category.Name : od.Product.Category.Parent.Name) == categoryName)
+						.GroupBy(od => od.Product.Category.Name)
+						.Select(g => new { 
+							CategoryName = g.Key ?? "未分類", 
+							Sales = (decimal)g.Sum(od => od.Quantity),
+							Revenue = g.Sum(od => (od.Price ?? 0) * od.Quantity)
+						})
+						.OrderByDescending(x => type == "Sales" ? x.Sales : x.Revenue)
+						.ToListAsync();
+
+					foreach (var item in groupedData)
+					{
+						dto.Labels.Add(item.CategoryName);
+						seriesData.Add(type == "Sales" ? item.Sales : item.Revenue);
+					}
+				}
+				dto.Series.Add(new ChartSeriesDto { Name = type == "Sales" ? "銷售量" : "營收額", Data = seriesData });
 			}
 
-			dto.Series.Add(new ChartSeriesDto { Name = type == "Sales" ? "銷售量" : "營收額", Data = seriesData });
 			return dto;
 		}
 

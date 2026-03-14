@@ -249,11 +249,11 @@
         </div>
     </div>
 
-    <!-- 類別銷售比例 -->
+    <!-- 全站類別構成 -->
     <div class="col-12 col-xl-4 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header">
-                <h5 class="card-title mb-0 fw-bold">類別銷量佔比</h5>
+                <h5 class="card-title mb-0 fw-bold">全站類別構成</h5>
             </div>
             <div class="card-body">
                 <div id="productPieChart"></div>
@@ -261,11 +261,11 @@
         </div>
     </div>
 
-    <!-- 熱銷排行 Top 10 -->
+    <!-- 熱銷類別 -->
     <div class="col-12 col-xl-6 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 fw-bold">熱銷商品 Top 10 (依類別著色)</h5>
+                <h5 class="card-title mb-0 fw-bold">熱銷類別</h5>
                 <select id="top10OrderBy" class="form-select form-select-sm w-auto" onchange="loadTop10Chart()">
                     <option value="volume">依銷量</option>
                     <option value="revenue">依銷售額</option>
@@ -637,7 +637,7 @@
                         events: {
                             dataPointSelection: function(event, chartContext, config) {
                                 const label = config.w.config.labels[config.dataPointIndex];
-                                showCategoryDetail('Sales', label);
+                                showCategoryDetail('Composition', label);
                             }
                         }
                     },
@@ -661,7 +661,7 @@
                             formatter: function(val, { seriesIndex, dataPointIndex, w }) {
                                 const actualValue = realSeries[dataPointIndex];
                                 const percent = grandTotalSales > 0 ? ((actualValue / grandTotalSales) * 100).toFixed(1) : 0;
-                                return `${actualValue.toLocaleString()} 件 (${percent}%)`;
+                                return `${actualValue.toLocaleString()} 品項 (${percent}%)`;
                             }
                         }
                     },
@@ -702,7 +702,14 @@
                         type: 'bar', 
                         height: 350, 
                         toolbar: { show: false },
-                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                        fontFamily: 'Public Sans, -apple-system, sans-serif',
+                        events: {
+                            dataPointSelection: function(event, chartContext, config) {
+                                const label = config.w.config.xaxis.categories[config.dataPointIndex];
+                                const type = orderBy === 'revenue' ? 'Revenue' : 'Sales';
+                                showCategoryDetail(type, label);
+                            }
+                        }
                     },
                     plotOptions: { 
                         bar: { 
@@ -904,7 +911,7 @@
         function showCategoryDetail(type, categoryName) {
             const period = $('#periodFilter').val();
             const storeId = $('#storeFilter').val();
-            const denominator = type === 'Sales' ? grandTotalSales : grandTotalRevenue;
+            const denominator = (type === 'Sales' || type === 'Composition') ? grandTotalSales : grandTotalRevenue;
             
             $.get(`/Orders/GetCategoryDetail?type=${type}&period=${period}&storeId=${storeId}&categoryName=${encodeURIComponent(categoryName)}`, function(data) {
                 if(!data || !data.series || data.series.length === 0 || data.labels.length === 0) {
@@ -917,13 +924,16 @@
                 const othersToGrandPercent = denominator > 0 ? ((othersTotal / denominator) * 100).toFixed(1) : 0;
 
                 // 動態更新標題
-                const typeText = type === 'Sales' ? '銷售量' : '營收額';
+                let typeText = '營收額';
+                if (type === 'Sales') typeText = '銷售量';
+                if (type === 'Composition') typeText = '商品數';
+
                 const titlePrefix = categoryName === '其他' ? '「其他」類別細節' : `「${categoryName}」子類別明細`;
                 $('#othersDetailTitle').html(`${titlePrefix} - ${typeText}分解 <span class="badge bg-label-primary ms-2">(總計佔全體 ${othersToGrandPercent}%)</span>`);
 
                 const options = {
                     series: [{
-                        name: type === 'Sales' ? '銷售量' : '營收額',
+                        name: typeText,
                         data: rawData
                     }],
                     chart: {
@@ -951,10 +961,10 @@
                             fontSize: '12px'
                         },
                         formatter: function(val) {
-                            if (type === 'Sales') {
-                                // 銷量顯示：佔全體百分比
-                                if (grandTotalSales === 0) return '0%';
-                                return ((val / grandTotalSales) * 100).toFixed(1) + '%';
+                            if (type === 'Sales' || type === 'Composition') {
+                                // 顯示：佔全體百分比
+                                if (denominator === 0) return '0%';
+                                return ((val / denominator) * 100).toFixed(1) + '%';
                             } else {
                                 // 營收顯示：格式化金額 (萬)
                                 return '$' + formatRevenue(val);
@@ -967,8 +977,8 @@
                         categories: data.labels,
                         labels: {
                             formatter: function(val) {
-                                if (type === 'Sales') {
-                                    // 銷量(件數)只顯示整數標籤，避免出現 0.5, 1.5 等碎片化刻度
+                                if (type === 'Sales' || type === 'Composition') {
+                                    // 銷量/商品數只顯示整數標籤
                                     return (val % 1 === 0) ? val : '';
                                 }
                                 return formatRevenue(val);
@@ -979,7 +989,7 @@
                     tooltip: {
                         y: {
                             formatter: (val) => {
-                                const suffix = type === 'Sales' ? ' 件' : '';
+                                const suffix = (type === 'Sales' || type === 'Composition') ? ' 件' : '';
                                 const prefix = type === 'Revenue' ? '$' : '';
                                 return prefix + val.toLocaleString() + suffix;
                             }
