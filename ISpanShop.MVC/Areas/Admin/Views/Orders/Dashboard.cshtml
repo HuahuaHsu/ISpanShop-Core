@@ -277,14 +277,14 @@
         </div>
     </div>
 
-    <!-- 類別貢獻度 (需求：切換 Bar/Treemap/Radar) -->
+    <!-- 類別貢獻度 (需求：切換 Bar/Pie) -->
     <div class="col-12 col-xl-6 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0 fw-bold">類別營收貢獻度</h5>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('bar')" title="柱狀圖"><i class="bx bx-bar-chart-square"></i></button>
-                    <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('treemap')" title="矩形圖"><i class="bx bx-grid-alt"></i></button>
+                    <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('pie')" title="圓餅圖"><i class="bx bx-pie-chart-alt"></i></button>
                 </div>
             </div>
             <div class="card-body">
@@ -724,7 +724,7 @@
                         offsetX: -6,
                         style: { fontSize: '12px', colors: ['#fff'] },
                         formatter: function(val) {
-                            return orderBy === 'revenue' ? '$' + formatRevenue(val) : val;
+                            return orderBy === 'revenue' ? '$' + formatRevenue(val) : val + ' 件';
                         },
                         dropShadow: {
                             enabled: true,
@@ -763,7 +763,11 @@
                         intersect: false,
                         y: {
                             formatter: function(val) {
-                                return orderBy === 'revenue' ? '$' + val.toLocaleString() : val + ' 件';
+                                if (orderBy === 'revenue') {
+                                    return '$' + val.toLocaleString();
+                                } else {
+                                    return val.toLocaleString() + ' 件';
+                                }
                             }
                         }
                     }
@@ -786,7 +790,8 @@
                 if(!data.series || data.series.length === 0) return;
                 
                 // 紀錄全體總營收 (用於彈窗百分比計算)
-                grandTotalRevenue = data.series[0].data.reduce((a, b) => a + b, 0);
+                const rawSeries = data.series[0].data;
+                grandTotalRevenue = rawSeries.reduce((a, b) => a + b, 0);
 
                 const chartColors = data.labels.map(name => getCategoryColor(name));
                 let options = {
@@ -797,8 +802,8 @@
                         events: {
                             dataPointSelection: function(event, chartContext, config) {
                                 let label = "";
-                                if (currentCategoryChartType === 'treemap') {
-                                    label = config.w.config.series[config.seriesIndex].data[config.dataPointIndex].x;
+                                if (currentCategoryChartType === 'pie') {
+                                    label = config.w.config.labels[config.dataPointIndex];
                                 } else if (currentCategoryChartType === 'bar') {
                                     label = config.w.config.xaxis.categories[config.dataPointIndex];
                                 }
@@ -810,47 +815,41 @@
                     colors: chartColors
                 };
 
-                if (currentCategoryChartType === 'treemap') {
-                    const treemapData = data.labels.map((label, index) => ({ x: label, y: data.series[0].data[index] }));
+                if (currentCategoryChartType === 'pie') {
+                    // 視覺優化：設定「最小視覺佔比」為 2%，避免區塊太小點不到
+                    const minVisualPercent = 0.02; 
+                    const visualFloor = grandTotalRevenue * minVisualPercent;
+                    const visualSeries = rawSeries.map(v => Math.max(v, visualFloor));
+
                     options = {
                         ...options,
-                        series: [{ data: treemapData }],
-                        chart: { ...options.chart, type: 'treemap' },
-                        plotOptions: { treemap: { distributed: true, enableShades: false } },
-                        dataLabels: { 
-                            enabled: true, 
-                            formatter: function(text, op) {
-                                const val = op.value;
-                                const percent = grandTotalRevenue > 0 ? (val / grandTotalRevenue) * 100 : 0;
-                                
-                                // 策略：保留文字的前提下優化顯示
-                                // 1. 極小區塊 (< 3%): 顯示前兩個字 + ".."，不顯示金額 (防止旋轉)
-                                if (percent < 3) {
-                                    return text.length > 2 ? text.substring(0, 2) + ".." : text;
-                                }
-                                // 2. 中小區塊 (3% - 10%): 顯示完整類別名稱，不顯示金額
-                                if (percent < 10) {
-                                    return text;
-                                }
-                                // 3. 大型區塊 (> 10%): 顯示兩行 (名稱 + 金額)
-                                return [text, '$' + formatRevenue(val)];
-                            },
-                            style: {
-                                fontSize: '11px',
-                                fontWeight: '600',
-                                colors: ['#fff'] // 強制白色，配合陰影效果最好
-                            },
-                            dropShadow: {
-                                enabled: true,
-                                top: 1,
-                                left: 1,
-                                blur: 1,
-                                color: '#000',
-                                opacity: 0.5
-                            }
+                        series: visualSeries,
+                        labels: data.labels,
+                        chart: { ...options.chart, type: 'donut' },
+                        plotOptions: { 
+                            pie: { 
+                                donut: { size: '70%' },
+                                expandOnClick: true
+                            } 
+                        },
+                        legend: { 
+                            position: 'bottom'
                         },
                         tooltip: {
-                            y: { formatter: (val) => '$' + val.toLocaleString() }
+                            y: {
+                                formatter: function(val, { seriesIndex, dataPointIndex, w }) {
+                                    const actualValue = rawSeries[dataPointIndex];
+                                    const percent = grandTotalRevenue > 0 ? ((actualValue / grandTotalRevenue) * 100).toFixed(1) : 0;
+                                    return `$${actualValue.toLocaleString()} (${percent}%)`;
+                                }
+                            }
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: function (val, opts) {
+                                return val >= 4 ? val.toFixed(1) + "%" : ""; 
+                            },
+                            style: { fontSize: '13px', fontWeight: 'bold' }
                         }
                     };
                 } else {
