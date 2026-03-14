@@ -20,24 +20,22 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
         [HttpGet]
         public async Task<IActionResult> Index(string keyword = "", string status = "all", int page = 1, int pageSize = 10)
         {
-            var query = _context.LoginHistories
-                .Include(l => l.User)
-                .AsQueryable();
+            var query = _context.LoginHistories.AsQueryable();
 
-            // 關鍵字搜尋 (帳號或 IP)
+            // 關鍵字搜尋 (嘗試帳號或 IP)
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                query = query.Where(l => l.User.Account.Contains(keyword) || l.Ipaddress.Contains(keyword));
+                query = query.Where(l => l.AttemptedAccount.Contains(keyword) || l.Ipaddress.Contains(keyword));
             }
 
             // 狀態篩選
             if (status == "success")
             {
-                query = query.Where(l => l.IsSuccessful == true);
+                query = query.Where(l => l.IsSuccess == true);
             }
             else if (status == "failure")
             {
-                query = query.Where(l => l.IsSuccessful == false);
+                query = query.Where(l => l.IsSuccess == false);
             }
 
             // 排序：最新的在前
@@ -53,10 +51,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
                 .Select(l => new LoginLogItemVm
                 {
                     Id = l.Id,
-                    UserAccount = l.User.Account,
+                    UserAccount = l.AttemptedAccount,
                     IpAddress = l.Ipaddress,
-                    LoginTime = l.LoginTime ?? DateTime.Now,
-                    IsSuccessful = l.IsSuccessful ?? false
+                    LoginTime = l.LoginTime,
+                    IsSuccessful = l.IsSuccess
                 })
                 .ToListAsync();
 

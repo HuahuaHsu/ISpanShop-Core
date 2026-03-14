@@ -168,14 +168,14 @@
                             </th>
                             <th class="text-center" style="width: 12%;">
                                 <a asp-action="Index"
-                                   asp-route-sortColumn="IsSuccessful"
-                                   asp-route-sortDirection="@(criteria.SortColumn == "IsSuccessful" && criteria.SortDirection == "asc" ? "desc" : "asc")"
+                                   asp-route-sortColumn="IsSuccess"
+                                   asp-route-sortDirection="@(criteria.SortColumn == "IsSuccess" && criteria.SortDirection == "asc" ? "desc" : "asc")"
                                    asp-route-keyword="@criteria.Keyword"
                                    asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
                                    asp-route-pageSize="@criteria.PageSize"
                                    class="text-decoration-none text-dark d-flex align-items-center justify-content-center">
                                     狀態
-                                    @if (criteria.SortColumn == "IsSuccessful")
+                                    @if (criteria.SortColumn == "IsSuccess")
                                     {
                                         <i class="bx bx-sort-@(criteria.SortDirection == "asc" ? "up" : "down") ms-1 text-primary"></i>
                                     }
@@ -222,13 +222,13 @@
 
                                     <!-- 狀態 -->
                                     <td class="text-center">
-                                        @if (item.IsSuccessful == true)
+                                        @if (item.IsSuccess == true)
                                         {
                                             <span class="badge bg-label-success">
                                                 <i class="bx bx-check-circle me-1"></i>@item.StatusText
                                             </span>
                                         }
-                                        else if (item.IsSuccessful == false)
+                                        else if (item.IsSuccess == false)
                                         {
                                             <span class="badge bg-label-danger">
                                                 <i class="bx bx-x-circle me-1"></i>@item.StatusText

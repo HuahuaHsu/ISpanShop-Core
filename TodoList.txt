@@ -826,6 +826,31 @@ STEP 5：更新展示層 (ISpanShop.MVC)
     - [V] (View) 擴充表頭點擊排序：將表格 <th> 改為可點擊連結，支援升降冪切換與箭頭圖示顯示。
     - [V] (View) 擴充底部導覽分頁：在表格外側右下角，加入 Bootstrap 分頁按鈕元件，點擊時帶上目前的搜尋與排序狀態。
 
+  【Table 重建 記錄錯誤帳號的登入】 
+  [V] 1. 資料模型與 DTO 層：
+       * 更新 LoginHistory.cs (EfModels) 以符合新欄位：UserId (nullable), AttemptedAccount, IPAddress, IsSuccess。
+       * 更新 LoginHistoryDto 結構，增加 AttemptedAccount 欄位並同步型別。
+
+
+   [V] 2. Repository 層 (LoginHistoryRepository)：
+       * 移除關聯查詢：由於現在改為紀錄 AttemptedAccount（嘗試帳號），查詢時不再強迫 JOIN Users
+         表，這解決了「帳號不存在就查不到紀錄」的問題。
+       * 更新欄位映射：所有 CRUD 邏輯均已對應至新欄位名稱（如 IsSuccessful -> IsSuccess）。
+       * 強化排序與搜尋：關鍵字搜尋現在會同時比對 AttemptedAccount 與 IPAddress。
+
+
+   [V] 3. Service 層 (AdminService)：
+       * 實現「不存在帳號」紀錄：在 VerifyLogin 中，若 GetAdminByAccount 回傳 null，現在會主動調用 Repository 紀錄一筆
+         UserId 為 null 但有 AttemptedAccount 的失敗紀錄。
+       * 同步新架構：更新了成功登入時的紀錄邏輯。
+
+
+   [V] 4. Controller 與展示層：
+       * LoginLogsController：移除不再需要的 .Include(l => l.User) 並修正 View 用的對應欄位。
+       * LoginHistoryIndexVm：更新 ViewModel 的轉換擴充方法，將 AttemptedAccount 作為顯示主體。
+       * LoginHistory/Index.cshtml：修正 View 上的排序連結與狀態顯示邏輯，解決因 IsSuccessful 欄位移除導致的編譯錯誤。
+
+
 =====================================================================================================================
 
 【後台管理系統 - 管理員權限頁面優化】 

@@ -25,16 +25,15 @@ namespace ISpanShop.Repositories.Members
 		{
 			return _context.LoginHistories
 				.AsNoTracking()
-				.Include(lh => lh.User)
 				.OrderByDescending(lh => lh.LoginTime)
 				.Select(lh => new LoginHistoryDto
 				{
 					Id = lh.Id,
 					UserId = lh.UserId,
-					UserAccount = lh.User.Account,
+					AttemptedAccount = lh.AttemptedAccount,
 					LoginTime = lh.LoginTime,
 					Ipaddress = lh.Ipaddress,
-					IsSuccessful = lh.IsSuccessful
+					IsSuccess = lh.IsSuccess
 				})
 				.ToList();
 		}
@@ -45,24 +44,22 @@ namespace ISpanShop.Repositories.Members
 			criteria.Validate();
 
 			// 建立查詢的初始 IQueryable
-			IQueryable<LoginHistory> query = _context.LoginHistories
-				.AsNoTracking()
-				.Include(lh => lh.User);
+			IQueryable<LoginHistory> query = _context.LoginHistories.AsNoTracking();
 
 			// 應用搜尋條件 - Keyword (帳號或 IP)
 			if (!string.IsNullOrWhiteSpace(criteria.Keyword))
 			{
 				var keyword = criteria.Keyword.Trim();
 				query = query.Where(lh =>
-					lh.User.Account.Contains(keyword) ||
+					lh.AttemptedAccount.Contains(keyword) ||
 					lh.Ipaddress.Contains(keyword)
 				);
 			}
 
-			// 應用篩選條件 - IsSuccessful
+			// 應用篩選條件 - IsSuccessful (對應到資料庫的 IsSuccess)
 			if (criteria.IsSuccessful.HasValue)
 			{
-				query = query.Where(lh => lh.IsSuccessful == criteria.IsSuccessful.Value);
+				query = query.Where(lh => lh.IsSuccess == criteria.IsSuccessful.Value);
 			}
 
 			// 取得篩選後的總筆數
@@ -79,10 +76,10 @@ namespace ISpanShop.Repositories.Members
 				{
 					Id = lh.Id,
 					UserId = lh.UserId,
-					UserAccount = lh.User.Account,
+					AttemptedAccount = lh.AttemptedAccount,
 					LoginTime = lh.LoginTime,
 					Ipaddress = lh.Ipaddress,
-					IsSuccessful = lh.IsSuccessful
+					IsSuccess = lh.IsSuccess
 				})
 				.ToList();
 
@@ -118,10 +115,11 @@ namespace ISpanShop.Repositories.Members
 						: query.OrderByDescending(lh => lh.Id);
 
 				case "useraccount":
+				case "attemptedaccount":
 				case "account":
 					return isAscending
-						? query.OrderBy(lh => lh.User.Account)
-						: query.OrderByDescending(lh => lh.User.Account);
+						? query.OrderBy(lh => lh.AttemptedAccount)
+						: query.OrderByDescending(lh => lh.AttemptedAccount);
 
 				case "logintime":
 					return isAscending
@@ -134,11 +132,12 @@ namespace ISpanShop.Repositories.Members
 						? query.OrderBy(lh => lh.Ipaddress)
 						: query.OrderByDescending(lh => lh.Ipaddress);
 
+				case "issuccess":
 				case "issuccessful":
 				case "status":
 					return isAscending
-						? query.OrderBy(lh => lh.IsSuccessful)
-						: query.OrderByDescending(lh => lh.IsSuccessful);
+						? query.OrderBy(lh => lh.IsSuccess)
+						: query.OrderByDescending(lh => lh.IsSuccess);
 
 				default:
 					// 預設按登入時間降序
@@ -162,9 +161,10 @@ namespace ISpanShop.Repositories.Members
 			var entities = loginHistories.Select(dto => new LoginHistory
 			{
 				UserId = dto.UserId,
+				AttemptedAccount = dto.AttemptedAccount,
 				LoginTime = dto.LoginTime,
 				Ipaddress = dto.Ipaddress,
-				IsSuccessful = dto.IsSuccessful
+				IsSuccess = dto.IsSuccess
 			}).ToList();
 
 			// 批次新增
@@ -179,9 +179,10 @@ namespace ISpanShop.Repositories.Members
 			var entity = new LoginHistory
 			{
 				UserId = loginHistory.UserId,
-				LoginTime = loginHistory.LoginTime ?? DateTime.Now,
+				AttemptedAccount = loginHistory.AttemptedAccount,
+				LoginTime = loginHistory.LoginTime,
 				Ipaddress = loginHistory.Ipaddress,
-				IsSuccessful = loginHistory.IsSuccessful
+				IsSuccess = loginHistory.IsSuccess
 			};
 
 			_context.LoginHistories.Add(entity);
@@ -189,4 +190,3 @@ namespace ISpanShop.Repositories.Members
 		}
 	}
 }
-

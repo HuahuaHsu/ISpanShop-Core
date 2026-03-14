@@ -1,6 +1,7 @@
 using ISpanShop.Models.DTOs.Members;
 using ISpanShop.Models.DTOs.Common;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ISpanShop.MVC.Areas.Admin.Models.Admins
 {
@@ -110,10 +111,10 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Admins
 		/// <summary>
 		/// 紀錄ID
 		/// </summary>
-		public long Id { get; set; }
+		public int Id { get; set; }
 
 		/// <summary>
-		/// 使用者帳號
+		/// 使用者帳號 (嘗試登入帳號)
 		/// </summary>
 		public string UserAccount { get; set; }
 
@@ -140,7 +141,7 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Admins
 		/// <summary>
 		/// 原始的成功/失敗布林值
 		/// </summary>
-		public bool? IsSuccessful { get; set; }
+		public bool IsSuccess { get; set; }
 	}
 
 	/// <summary>
@@ -156,12 +157,12 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Admins
 			return new LoginHistoryItemVm
 			{
 				Id = dto.Id,
-				UserAccount = dto.UserAccount,
-				LoginTimeFormatted = dto.LoginTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-",
+				UserAccount = dto.AttemptedAccount,
+				LoginTimeFormatted = dto.LoginTime.ToString("yyyy-MM-dd HH:mm:ss"),
 				IpAddress = string.IsNullOrEmpty(dto.Ipaddress) ? "-" : dto.Ipaddress,
-				IsSuccessful = dto.IsSuccessful,
-				StatusText = GetStatusText(dto.IsSuccessful),
-				StatusClass = GetStatusClass(dto.IsSuccessful)
+				IsSuccess = dto.IsSuccess,
+				StatusText = GetStatusText(dto.IsSuccess),
+				StatusClass = GetStatusClass(dto.IsSuccess)
 			};
 		}
 
@@ -253,27 +254,17 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Admins
 		/// <summary>
 		/// 取得登入狀態文字
 		/// </summary>
-		private static string GetStatusText(bool? isSuccessful)
+		private static string GetStatusText(bool isSuccess)
 		{
-			return isSuccessful switch
-			{
-				true => "登入成功",
-				false => "登入失敗",
-				_ => "未知"
-			};
+			return isSuccess ? "登入成功" : "登入失敗";
 		}
 
 		/// <summary>
 		/// 取得登入狀態的 CSS 類別
 		/// </summary>
-		private static string GetStatusClass(bool? isSuccessful)
+		private static string GetStatusClass(bool isSuccess)
 		{
-			return isSuccessful switch
-			{
-				true => "bg-green-100 text-green-800",
-				false => "bg-red-100 text-red-800",
-				_ => "bg-gray-100 text-gray-800"
-			};
+			return isSuccess ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
 		}
 	}
 }

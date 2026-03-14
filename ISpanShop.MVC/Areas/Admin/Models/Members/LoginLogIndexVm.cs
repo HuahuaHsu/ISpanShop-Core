@@ -12,7 +12,7 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Members
 
     public class LoginLogItemVm
     {
-        public long Id { get; set; }
+        public int Id { get; set; }
         public string UserAccount { get; set; }
         public string IpAddress { get; set; }
         public DateTime LoginTime { get; set; }

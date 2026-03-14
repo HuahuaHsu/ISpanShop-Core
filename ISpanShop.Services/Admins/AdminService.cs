@@ -120,9 +120,17 @@ public class AdminService : IAdminService
 			// 1. 呼叫 GetAdminByAccount(account)
 			var admin = _adminRepository.GetAdminByAccount(account);
 
-			// 2. 帳號不存在 → 回傳 null
+			// 2. 帳號不存在 → 也要紀錄失敗 (UserId 為 null)
 			if (admin == null)
 			{
+				_loginHistoryRepository.Add(new LoginHistoryDto
+				{
+					UserId = null,
+					AttemptedAccount = account,
+					LoginTime = DateTime.Now,
+					Ipaddress = ipAddress ?? "Unknown",
+					IsSuccess = false
+				});
 				return null;
 			}
 
@@ -133,9 +141,10 @@ public class AdminService : IAdminService
 			_loginHistoryRepository.Add(new LoginHistoryDto
 			{
 				UserId = admin.UserId,
+				AttemptedAccount = account,
 				LoginTime = DateTime.Now,
 				Ipaddress = ipAddress ?? "Unknown",
-				IsSuccessful = isSuccessful
+				IsSuccess = isSuccessful
 			});
 
 			if (!isSuccessful)

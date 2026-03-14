@@ -8,21 +8,24 @@ namespace ISpanShop.Models.DTOs.Members
 	public class LoginHistoryDto
 	{
 		[Display(Name = "紀錄ID")]
-		public long Id { get; set; }
+		public int Id { get; set; }
 
 		[Display(Name = "使用者ID")]
-		public int UserId { get; set; }
+		public int? UserId { get; set; }
+
+		[Display(Name = "登入嘗試帳號")]
+		public string AttemptedAccount { get; set; }
 
 		[Display(Name = "使用者帳號")]
 		public string UserAccount { get; set; }
 
 		[Display(Name = "登入時間")]
-		public DateTime? LoginTime { get; set; }
+		public DateTime LoginTime { get; set; }
 
 		[Display(Name = "IP位址")]
 		public string Ipaddress { get; set; }
 
-		[Display(Name = "登入狀態")]
-		public bool? IsSuccessful { get; set; }
+		[Display(Name = "是否成功")]
+		public bool IsSuccess { get; set; }
 	}
 }
