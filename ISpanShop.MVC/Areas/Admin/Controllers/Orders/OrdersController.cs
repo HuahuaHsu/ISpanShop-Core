@@ -234,9 +234,9 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 				if (idx2 >= 0) v2 = catData2.Series[0].Data[idx2];
 
 				decimal delta = v1 - v2; // Year1 - Year2 的差額
-				if (delta != 0)
+				if (delta != 0 || v2 != 0)
 				{
-					bridgeData.Add(new { x = cat, y = delta });
+					bridgeData.Add(new { x = cat, y = delta, v2 = v2 });
 				}
 			}
 
