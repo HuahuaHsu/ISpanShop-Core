@@ -1284,8 +1284,13 @@
                         shared: false,
                         intersect: true,
                         y: {
-                            formatter: function(val) {
-                                return (val >= 0 ? '市佔擴張 ' : '市佔萎縮 ') + Math.abs(val).toFixed(2) + '%';
+                            formatter: function(val, { seriesIndex, dataPointIndex, w }) {
+                                const categoryData = data[seriesIndex];
+                                const revenueDelta = categoryData.monthlyRevenueDeltas[dataPointIndex];
+                                
+                                let text = (val >= 0 ? '市佔擴張 ' : '市佔萎縮 ') + Math.abs(val).toFixed(2) + '%';
+                                text += ' | ' + (revenueDelta >= 0 ? '營收增加 ' : '營收減少 ') + '$' + Math.abs(revenueDelta).toLocaleString();
+                                return text;
                             }
                         }
                     }

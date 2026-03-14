@@ -223,6 +223,7 @@ namespace ISpanShop.Services.Orders
 					if (year1 == DateTime.Now.Year && m > DateTime.Now.Month)
 					{
 						dto.MonthlyGrowthRates.Add(0);
+						dto.MonthlyRevenueDeltas.Add(0);
 						continue;
 					}
 
@@ -236,6 +237,9 @@ namespace ISpanShop.Services.Orders
 					// 例如從 10% 變成 12%，變動為 +2
 					double deltaPoint = share1 - share2;
 					dto.MonthlyGrowthRates.Add(Math.Round(deltaPoint, 2));
+					
+					// 新增：紀錄該類別在該月份的營收變動絕對值 (Year1 - Year2)
+					dto.MonthlyRevenueDeltas.Add(v1 - v2);
 				}
 				result.Add(dto);
 			}

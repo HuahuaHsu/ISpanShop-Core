@@ -37,6 +37,7 @@ namespace ISpanShop.Services.Orders
 	{
 		public string CategoryName { get; set; }
 		public List<double> MonthlyGrowthRates { get; set; } = new List<double>(); // 12個月的增長率 (百分比數值，如 50.5 代表 50.5%)
+		public List<decimal> MonthlyRevenueDeltas { get; set; } = new List<decimal>(); // 12個月的營收變動額
 	}
 }
 
