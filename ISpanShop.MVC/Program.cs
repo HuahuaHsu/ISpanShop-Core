@@ -55,6 +55,7 @@ namespace ISpanShop.MVC
 			builder.Services.AddAuthentication("AdminCookieAuth")
 				.AddCookie("AdminCookieAuth", options =>
 				{
+					options.Cookie.Name = "ISpanShop.Admin"; //替後台的登入憑證(Cookie)取名防止跟前台的登入狀態「撞名」而互相覆蓋
 					options.LoginPath = "/Admin/Auth/Login";
 					options.AccessDeniedPath = "/Admin/Auth/AccessDenied";
 					options.ExpireTimeSpan = TimeSpan.FromDays(7);
@@ -129,7 +130,6 @@ namespace ISpanShop.MVC
 			if (!app.Environment.IsDevelopment())
 			{
 				app.UseExceptionHandler("/Home/Error");
-				// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 				app.UseHsts();
 			}
 

@@ -304,7 +304,7 @@ public class AdminService : IAdminService
 				? (true, "身分刪除成功")
 				: (false, "刪除身分失敗");
 		}
-		catch (Exception ex)
+		catch (Exception ex) 
 		{
 			return (false, $"發生錯誤: {ex.Message}");
 		}

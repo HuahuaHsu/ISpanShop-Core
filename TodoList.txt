@@ -668,22 +668,22 @@ STEP 5：更新展示層 (ISpanShop.MVC)
 [V] 更新 AdminsController
     - 位置：ISpanShop.MVC/Areas/Admin/Controllers/Identities/AdminController.cs
 
-[ ] 大幅重寫 Index.cshtml
+[V] 重寫 Index.cshtml
     - 位置：ISpanShop.MVC/Areas/Admin/Views/Admin/Index.cshtml
 
     ★ 頁面標題：「後台權限與帳號管理」
     ★ 右上角：「+ 新增管理員」按鈕
 
-   [ ] 移除底部「權限等級說明」區塊
+   [V] 移除底部「權限等級說明」區塊
     - 原本顯示：讀取 / 寫入 / 刪除 / 完整 的 CRUD 圖例
     - 原因：與實際 DB 的功能模組權限不符，具誤導性
     - 動作：直接刪除該 <div> 區塊
-   [ ] 移除列表中「角色標識」欄位
+   [V] 移除列表中「角色標識」欄位
     - 原本顯示：ADMIN / MEMBER 的 Badge
     - 原因：在管理員專屬頁面中無實質意義且佔用空間
     - 動作：刪除該欄位的 <th> 與對應的 <td>
 
-    [ ] 移除列表中 Member 資料列
+    [V] 移除列表中 Member 資料列
         - 原本：Roles 資料表的 Admin + Member 都顯示
         - 修改後：Tab1 只顯示 Users（RoleId=1 的管理員帳號）
                   Tab2 只顯示 AdminLevels（不含 Roles 資料）
@@ -774,7 +774,6 @@ STEP 5：更新展示層 (ISpanShop.MVC)
 
 ============================================================
 
-============================================================
    【歷史登入紀錄管理】
 [V] 1. 建立 DTO
     位置：ISpanShop.Models 專案 -> DTOs 資料夾
@@ -826,3 +825,101 @@ STEP 5：更新展示層 (ISpanShop.MVC)
     - [V] (View) 擴充下拉式分頁：在表格外側左上角，加入每頁筆數 <select> 切換。
     - [V] (View) 擴充表頭點擊排序：將表格 <th> 改為可點擊連結，支援升降冪切換與箭頭圖示顯示。
     - [V] (View) 擴充底部導覽分頁：在表格外側右下角，加入 Bootstrap 分頁按鈕元件，點擊時帶上目前的搜尋與排序狀態。
+
+=====================================================================================================================
+
+【後台管理系統 - 管理員權限頁面優化】 
+
+ 
+【STEP 1】DTO 新增
+------------------------------------------------------------
+[ ] 新增 AdminResetPasswordDto
+    - 位置：ISpanShop.Models/DTOs/Admins/AdminDtos.cs
+    - 欄位：
+        int    UserId
+        string NewPassword   // 管理員設定的臨時密碼
+ 
+----------------------------------------------------------------
+ 
+【STEP 2】Repository 新增
+------------------------------------------------------------
+[ ] IAdminRepository 新增介面方法
+    - 位置：ISpanShop.Repositories/Admins/IAdminRepository.cs
+    - 新增：
+        bool ResetPassword(int userId, string passwordHash)
+        // 更新密碼 + 將 IsFirstLogin = 1（讓員工下次登入強制改密碼）
+ 
+[ ] AdminRepository 實作
+    - 位置：ISpanShop.Repositories/Admins/AdminRepository.cs
+    - SQL：
+        UPDATE Users
+        SET Password = @PasswordHash,
+            IsFirstLogin = 1,
+            UpdatedAt = GETDATE()
+        WHERE Id = @UserId
+ 
+----------------------------------------------------------------
+ 
+【STEP 3】Service 新增
+------------------------------------------------------------
+[ ] IAdminService 新增介面方法
+    - 位置：ISpanShop.Services/Admins/IAdminService.cs
+    - 新增：
+        (bool IsSuccess, string Message) ResetAdminPassword(AdminResetPasswordDto dto)
+ 
+[ ] AdminService 實作
+    - 邏輯：
+        1. 密碼不可為空
+        2. 長度至少 8 碼
+        3. BCrypt Hash 新密碼
+        4. 呼叫 Repository.ResetPassword()
+ 
+----------------------------------------------------------------
+ 
+【STEP 4】Controller 更新
+------------------------------------------------------------
+[ ] AdminController 新增 Action
+    - 位置：Areas/Admin/Controllers/Admin/AdminController.cs
+    - 新增：
+        POST ResetPassword(AdminResetPasswordDto dto)
+            → AdminService.ResetAdminPassword()
+            → TempData["Message"] = 結果訊息
+            → TempData["ActiveTab"] = "tab1"
+            → RedirectToAction("Index")
+ 
+[ ] AdminController 加上權限檢查
+    - 在 Index() 開頭加：
+        var levelId = User.FindFirst("AdminLevelId")?.Value;
+        if (levelId != "1")
+            return RedirectToAction("Dashboard", "Orders", new { area = "Admin" });
+    - 所有 POST Action 也加相同檢查
+ 
+----------------------------------------------------------------
+ 
+【STEP 5】View 更新
+------------------------------------------------------------
+[ ] Index.cshtml 新增編輯側拉 Panel
+    - 位置：Areas/Admin/Views/Admin/Index.cshtml
+    - Tab1 表格每列操作欄加上「編輯」按鈕
+    - 側拉 Panel 顯示欄位：
+        帳號（唯讀）
+        電子信箱（唯讀）
+        身分等級（下拉選單，可修改）
+        狀態（啟用/停用 Toggle）
+        重設臨時密碼（輸入欄 + 送出按鈕）
+    - 規則：
+        超級管理員（AdminLevelId = 1）的身分等級和狀態不可修改
+        不可修改自己的狀態
+        重設密碼送出後 IsFirstLogin = 1，員工下次登入強制改密碼
+ 
+----------------------------------------------------------------
+ 
+【STEP 6】選單權限控制
+------------------------------------------------------------
+[ ] _Layout.cshtml 隱藏「管理員管理」選單
+    - 只有 AdminLevelId = 1 才顯示「管理員管理」選單項目
+    - 修改方式：
+        @if (User.FindFirst("AdminLevelId")?.Value == "1")
+        {
+            // 管理員管理選單 li
+        }

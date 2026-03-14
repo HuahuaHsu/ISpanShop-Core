@@ -111,14 +111,19 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers
 
             if (result.IsSuccess)
             {
-                // 修改成功後，為了取得完整 Claims，通常建議重新登入
-                // 但照指示直接跳轉到 Index，我們可能需要重新簽發完整 Claims 或者讓 User 重新登入
-                // 這裡我們重新導向到 Login 頁面並提示成功，或者嘗試自動重新登入
-                
-                // 為了嚴格遵守「成功：RedirectToAction("Index", "Admins")」
-                // 我們假設 Index 會處理權限問題。
-                return RedirectToAction("Dashboard", "Orders", new { area = "Admin" });
-            }
+				// 修改成功後，為了取得完整 Claims，通常建議重新登入
+				// 重新查詢完整資料
+				var admin = _adminService.VerifyLogin(
+					User.FindFirst(ClaimTypes.Name)?.Value ?? "", "");
+				// ↑ 無法重新驗證密碼，改用 userId 直接查
+
+				// 簽出舊的暫時 Cookie
+				await HttpContext.SignOutAsync("AdminCookieAuth");
+
+				// 提示重新登入
+				TempData["Message"] = "密碼修改成功，請重新登入";
+				return RedirectToAction("Login", "Auth", new { area = "Admin" });
+			}
 
             form.Message = result.Message;
             ModelState.AddModelError(string.Empty, result.Message);
@@ -131,5 +136,9 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers
             await HttpContext.SignOutAsync("AdminCookieAuth");
             return RedirectToAction("Login", "Auth", new { area = "Admin" }); //給予絕對位置
         }
-    }
+		public IActionResult AccessDenied()
+		{
+			return View();
+		}
+	}
 }
