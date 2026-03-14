@@ -75,16 +75,21 @@
         }
 
     .blacklist-box {
-        background: #fff5f5;
+        background: #ffffff;
         border: 1px solid #feb2b2;
         border-radius: 0.5rem;
         padding: 1rem 1.25rem;
+        transition: background-color 0.2s;
     }
 
-        .blacklist-box .form-check-input:checked {
-            background-color: #ea5455;
-            border-color: #ea5455;
-        }
+    .blacklist-box.active {
+        background: #fff5f5;
+    }
+
+    .blacklist-box .form-check-input:checked {
+        background-color: #ea5455;
+        border-color: #ea5455;
+    }
 
     .readonly-field {
         background-color: #f8f9fa !important;
@@ -174,44 +179,41 @@
             </div>
         </div>
 
-        @* 通訊地址 (改為 disabled 與唯讀) *@
-        <div class="drawer-form-section">
-            <h6 class="fw-bold mb-3" style="color:#1e2d3d;">
-                <i class="bx bx-map me-2" style="color:#3182ce;"></i>通訊地址 (僅供檢視)
-            </h6>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold small">縣市</label>
-                    <select id="drawerCitySelect" class="form-select form-select-sm readonly-field" disabled>
-                        @foreach (var opt in Model.CityOptions)
-                        {
-                            <option value="@opt.Value" selected="@(opt.Value == Model.City ? "selected" : null)">@opt.Text</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold small">區域</label>
-                    <select id="drawerRegionSelect" class="form-select form-select-sm readonly-field" disabled>
-                        @foreach (var opt in Model.RegionOptions)
-                        {
-                            <option value="@opt.Value" selected="@(opt.Value == Model.Region ? "selected" : null)">@opt.Text</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold small">街道地址</label>
-                    <input type="text" name="Street" value="@Model.Street"
-                           class="form-control form-control-sm readonly-field" readonly />
-                </div>
-            </div>
-        </div>
-
-        @* 黑名單設定 (唯一可編輯) *@
+        @* 帳號設定 (包含黑名單與賣家資格) *@
         <div class="drawer-form-section">
             <h6 class="fw-bold mb-3" style="color:#1e2d3d;">
                 <i class="bx bx-cog me-2" style="color:#3182ce;"></i>帳號設定
             </h6>
-            <div class="blacklist-box">
+
+            @if (Model.IsSeller)
+            {
+                <div class="mb-3 p-3 rounded d-flex align-items-center justify-content-between" 
+                     style="background: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32;">
+                    <div>
+                        <div class="fw-bold mb-0">
+                            <i class="bx bx-check-double me-2 fs-5"></i>具備賣家資格
+                        </div>
+                        <small style="color: #4caf50;">該會員已開通賣家功能，可進行商品上架與銷售</small>
+                    </div>
+                    <div class="text-success fs-3">
+                        <i class="bx bxs-check-shield"></i>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="mb-3 p-3 rounded d-flex align-items-center justify-content-between" 
+                     style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #64748b;">
+                    <div>
+                        <div class="fw-bold mb-0">
+                            <i class="bx bx-user me-2 fs-5"></i>一般買家身分
+                        </div>
+                        <small class="text-muted">該會員目前尚未開通賣家功能</small>
+                    </div>
+                </div>
+            }
+
+            <div class="blacklist-box @(Model.IsBlacklisted ? "active" : "")" id="blacklistBox">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <div class="fw-bold mb-1" style="color:#ea5455;">
@@ -226,19 +228,9 @@
                                class="form-check-input"
                                role="switch"
                                value="true"
+                               onchange="document.getElementById('blacklistBox').classList.toggle('active', this.checked)"
                                @(Model.IsBlacklisted ? "checked" : "") />
                     </div>
-                </div>
-            </div>
-
-            @* 賣家資格（僅供檢視）*@
-            <div class="mt-3 p-3 rounded" style="background:#f8f9fa; border:1px solid #e2e8f0;">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input readonly-field" id="drawerSellerCheck"
-                           @(Model.IsSeller ? "checked" : "") disabled />
-                    <label class="form-check-label fw-semibold" for="drawerSellerCheck">
-                        <i class="bx bx-store-alt me-1"></i>賣家資格（僅供檢視）
-                    </label>
                 </div>
             </div>
         </div>

@@ -9,40 +9,95 @@
     var activeTab = !string.IsNullOrEmpty(queryTab) ? queryTab : (Model.ActiveTab ?? "tab1");
 }
 
+<style>
+    /* ── 捲動時固定標題與 Tab ── */
+    .sticky-top-section {
+        position: sticky;
+        top: 54px; /* 配合 Sneat 導覽列高度 */
+        z-index: 1020;
+        background: #f5f5f9; /* 配合背景色 */
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+    }
+
+    /* 確保固定區塊在容器內水平撐滿 */
+    .sticky-top-section {
+        margin-left: -1.5rem;
+        margin-right: -1.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+
+    .sticky-search-section {
+        position: sticky;
+        top: 175px; /* 標題 + Tabs 的高度 */
+        z-index: 1010;
+        background: #f5f5f9;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        margin-left: -1.5rem;
+        margin-right: -1.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+
+    .sticky-search-section .card {
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* ── 表格標題列固定 ── */
+    .table thead th {
+        position: sticky;
+        top: 250px; /* 標題 + Tabs + 搜尋列高度 */
+        z-index: 1005;
+        background-color: #f8fafc !important;
+        box-shadow: inset 0 -2px 0 #e2e8f0;
+    }
+
+    .table-responsive {
+        overflow: visible !important;
+    }
+</style>
+
 <div class="container-xxl flex-grow-1 container-p-y">
-    <h4 class="fw-bold py-3 mb-4">
-        <span class="text-muted fw-light">帳號管理 /</span> 管理員管理
-    </h4>
+    
+    <div class="sticky-top-section">
+        <h4 class="fw-bold py-3 mb-4">
+            <span class="text-muted fw-light">帳號管理 /</span> 管理員管理
+        </h4>
+
+        <!-- ── 小標籤區塊 (nav-align-top) ── -->
+        <div class="nav-align-top mb-0">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(activeTab == "tab1" ? "active" : "")" role="tab" data-bs-toggle="tab" data-bs-target="#tab1" aria-controls="tab1" aria-selected="@(activeTab == "tab1" ? "true" : "false")">
+                        管理員帳號
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(activeTab == "tab2" ? "active" : "")" role="tab" data-bs-toggle="tab" data-bs-target="#tab2" aria-controls="tab2" aria-selected="@(activeTab == "tab2" ? "true" : "false")">
+                        身分與權限
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
 
     @* 操作結果提示訊息 *@
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        <div class="alert @(Model.Message.Contains("成功") ? "alert-success" : "alert-danger") alert-dismissible" role="alert">
+        <div class="alert @(Model.Message.Contains("成功") ? "alert-success" : "alert-danger") alert-dismissible mt-3" role="alert">
             @Model.Message
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <!-- ── 小標籤區塊 (nav-align-top) ── -->
-    <div class="nav-align-top mb-4">
-        <ul class="nav nav-tabs" role="tablist">
-            <li class="nav-item">
-                <button type="button" class="nav-link @(activeTab == "tab1" ? "active" : "")" role="tab" data-bs-toggle="tab" data-bs-target="#tab1" aria-controls="tab1" aria-selected="@(activeTab == "tab1" ? "true" : "false")">
-                    管理員帳號
-                </button>
-            </li>
-            <li class="nav-item">
-                <button type="button" class="nav-link @(activeTab == "tab2" ? "active" : "")" role="tab" data-bs-toggle="tab" data-bs-target="#tab2" aria-controls="tab2" aria-selected="@(activeTab == "tab2" ? "true" : "false")">
-                    身分與權限
-                </button>
-            </li>
-        </ul>
+    <div class="tab-content bg-transparent shadow-none border-0 p-0">
 
-        <div class="tab-content bg-transparent shadow-none border-0 p-0">
-
-            @* ── Tab1：管理員帳號列表 ── *@
-            <div class="tab-pane fade @(activeTab == "tab1" ? "show active" : "")" id="tab1" role="tabpanel">
-                
+        @* ── Tab1：管理員帳號列表 ── *@
+        <div class="tab-pane fade @(activeTab == "tab1" ? "show active" : "")" id="tab1" role="tabpanel">
+            
+            <div class="sticky-search-section">
                 <div class="card mb-4 mt-3">
                     <div class="card-body">
                         <form method="get" asp-action="Index" class="row g-3">
@@ -83,8 +138,9 @@
                         </form>
                     </div>
                 </div>
+            </div>
 
-                <div class="d-flex justify-content-end mb-3">
+            <div class="d-flex justify-content-end mb-3">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
                         <i class="bx bx-plus me-1"></i> 新增管理員
                     </button>

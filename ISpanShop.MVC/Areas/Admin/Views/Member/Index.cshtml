@@ -220,6 +220,39 @@
             background-color: transparent !important;
         }
 
+    /* ── 捲動時固定標題與搜尋列 ── */
+    .sticky-top-section {
+        position: sticky;
+        top: 54px; /* 配合 Sneat 導覽列高度 */
+        z-index: 1020;
+        background: #f5f5f9; /* 配合背景色 */
+        padding-top: 1rem;
+        padding-bottom: 0.5rem;
+    }
+
+    /* 確保固定區塊在容器內水平撐滿且不會因父容器 padding 而縮進 */
+    .sticky-top-section {
+        margin-left: -1.5rem;
+        margin-right: -1.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+
+    /* ── 表格標題列固定 ── */
+    .table thead th {
+        position: sticky;
+        top: 200px; /* 概估高度，需根據實際顯示調整 */
+        z-index: 1015;
+        background-color: #f8fafc !important;
+        box-shadow: inset 0 -2px 0 #e2e8f0;
+    }
+
+    /* 強化 table-responsive 與 sticky 的相容性 */
+    .table-responsive {
+        overflow: visible !important;
+    }
+
+
     /* Toast 通知 */
     .member-toast-container {
         position: fixed;
@@ -271,56 +304,59 @@
     <div class="squeeze-layout" id="pageLayoutWrapper">
 
         <div class="squeeze-main">
-            <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
-                <div>
-                    <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">
-                        <i class="bx bx-user me-2" style="color:#3182ce;"></i>會員列表
-                    </h2>
-                    <p class="mb-0 fs-7 text-muted">管理所有會員資料，查看會員狀態與基本資訊</p>
+            
+            <div class="sticky-top-section">
+                <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                        <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">
+                            <i class="bx bx-user me-2" style="color:#3182ce;"></i>會員列表
+                        </h2>
+                        <p class="mb-0 fs-7 text-muted">管理所有會員資料，查看會員狀態與基本資訊</p>
+                    </div>
                 </div>
-            </div>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <form method="get" asp-action="Index" class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label small text-muted">關鍵字</label>
-                            <input type="text" name="keyword" value="@Model.Keyword"
-                                   class="form-control" placeholder="姓名、電話或帳號..." />
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small text-muted">狀態</label>
-                            <select name="status" class="form-select">
-                                <option value="all" selected="@(Model.Status == "all" || string.IsNullOrEmpty(Model.Status))">所有狀態</option>
-                                <option value="normal" selected="@(Model.Status == "normal")">正常</option>
-                                <option value="blocked" selected="@(Model.Status == "blocked")">停權</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small text-muted">身分</label>
-                            <select name="roleId" class="form-select">
-                                <option value="">所有身分</option>
-                                <option value="1" selected="@(Model.RoleId == 1)">買家</option>
-                                <option value="2" selected="@(Model.RoleId == 2)">賣家</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small text-muted">等級</label>
-                            <select name="levelId" class="form-select" asp-items="Model.MembershipLevels">
-                                <option value="">所有等級</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end gap-2">
-                            <button type="submit" class="btn btn-primary flex-fill">
-                                <i class="bx bx-search me-1"></i>搜尋
-                            </button>
-                            <a href="@Url.Action("Index")" class="btn btn-label-secondary">
-                                <i class="bx bx-reset me-1"></i>重置
-                            </a>
-                        </div>
-                        <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
-                        <input type="hidden" name="sortDirection" value="@Model.SortDirection" />
-                    </form>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <form method="get" asp-action="Index" class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">關鍵字</label>
+                                <input type="text" name="keyword" value="@Model.Keyword"
+                                       class="form-control" placeholder="姓名、電話或帳號..." />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">狀態</label>
+                                <select name="status" class="form-select">
+                                    <option value="all" selected="@(Model.Status == "all" || string.IsNullOrEmpty(Model.Status))">所有狀態</option>
+                                    <option value="normal" selected="@(Model.Status == "normal")">正常</option>
+                                    <option value="blocked" selected="@(Model.Status == "blocked")">停權</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">身分</label>
+                                <select name="roleId" class="form-select">
+                                    <option value="">所有身分</option>
+                                    <option value="1" selected="@(Model.RoleId == 1)">買家</option>
+                                    <option value="2" selected="@(Model.RoleId == 2)">賣家</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">等級</label>
+                                <select name="levelId" class="form-select" asp-items="Model.MembershipLevels">
+                                    <option value="">所有等級</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end gap-2">
+                                <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="bx bx-search me-1"></i>搜尋
+                                </button>
+                                <a href="@Url.Action("Index")" class="btn btn-label-secondary">
+                                    <i class="bx bx-reset me-1"></i>重置
+                                </a>
+                            </div>
+                            <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
+                            <input type="hidden" name="sortDirection" value="@Model.SortDirection" />
+                        </form>
+                    </div>
                 </div>
             </div>
 
@@ -434,18 +470,23 @@
                                             }
                                         </td>
                                         <td>
-                                            <span style="color:#64748b;font-weight:500;">
-                                                @{
-                                                    var levelIcon = member.LevelName switch
-                                                    {
-                                                        "金牌會員" => "bx-medal",
-                                                        "銀牌會員" => "bx-award",
-                                                        "銅牌會員" => "bx-trophy",
-                                                        _ => "bx-star"
-                                                    };
-                                                }
-                                                <i class="bx @levelIcon me-1"></i>@member.LevelName
-                                            </span>
+                                            <div class="d-flex flex-column">
+                                                <span style="color:#64748b;font-weight:500;">
+                                                    @{
+                                                        var levelIcon = member.LevelName switch
+                                                        {
+                                                            "金牌會員" => "bx-medal",
+                                                            "銀牌會員" => "bx-award",
+                                                            "銅牌會員" => "bx-trophy",
+                                                            _ => "bx-star"
+                                                        };
+                                                    }
+                                                    <i class="bx @levelIcon me-1"></i>@member.LevelName
+                                                </span>
+                                                <small class="text-muted mt-1" style="font-size: 0.75rem;">
+                                                    <i class="bx bx-wallet me-1"></i>消費 $ @member.TotalSpending.ToString("N0")
+                                                </small>
+                                            </div>
                                         </td>
                                         <td>
                                             <span class="point-balance">
