@@ -1188,7 +1188,7 @@
                     colors: data.map(item => getCategoryColor(item.categoryName)),
                     stroke: {
                         width: 4,
-                        curve: 'smooth',
+                        curve: 'straight',
                         lineCap: 'round'
                     },
                     legend: {
@@ -1198,8 +1198,8 @@
                         onItemHover: { highlightDataSeries: true }
                     },
                     markers: {
-                        size: 2,
-                        hover: { size: 7 }
+                        size: 6,
+                        hover: { size: 9 }
                     },
                     annotations: {
                         yaxis: [{
