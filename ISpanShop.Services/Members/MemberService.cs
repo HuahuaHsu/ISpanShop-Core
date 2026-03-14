@@ -1,4 +1,5 @@
 using ISpanShop.Models.DTOs.Members;
+using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Members;
 using System.Collections.Generic;
@@ -22,8 +23,28 @@ namespace ISpanShop.Services.Members
 		public IEnumerable<MemberDto> Search(string keyword, string status)
 		{
 			var users = _repo.Search(keyword, status);
+			var levels = _repo.GetAllLevels().ToList();
 
-			return users.Select(u => MapToDto(u));
+			return users.Select(u => MapToDto(u, levels));
+		}
+
+		public PagedResult<MemberDto> SearchPaged(MemberCriteria criteria)
+		{
+			var users = _repo.SearchPaged(criteria, out int totalCount);
+			var levels = _repo.GetAllLevels().ToList();
+
+			return new PagedResult<MemberDto>
+			{
+				Data = users.Select(u => MapToDto(u, levels)).ToList(),
+				TotalCount = totalCount,
+				CurrentPage = criteria.PageNumber,
+				PageSize = criteria.PageSize
+			};
+		}
+
+		public IEnumerable<MembershipLevel> GetAllMembershipLevels()
+		{
+			return _repo.GetAllLevels();
 		}
 
 		public MemberDto GetMemberById(int id)
@@ -31,7 +52,8 @@ namespace ISpanShop.Services.Members
 			var user = _repo.GetById(id);
 			if (user == null) return null;
 
-			return MapToDto(user);
+			var levels = _repo.GetAllLevels().ToList();
+			return MapToDto(user, levels);
 		}
 
 		public void UpdateMemberStatus(MemberDto dto)
@@ -72,7 +94,7 @@ namespace ISpanShop.Services.Members
 			_repo.Update(userInDb);
 		}
 
-		private MemberDto MapToDto(User u)
+		private MemberDto MapToDto(User u, List<MembershipLevel> levels)
 		{
 			var profile = u.MemberProfile;
 			var address = u.Addresses.FirstOrDefault(a => a.IsDefault == true)
@@ -84,15 +106,16 @@ namespace ISpanShop.Services.Members
 				Account = u.Account,
 				Email = u.Email,
 				IsBlacklisted = u.IsBlacklisted ?? false,
-				//IsSeller = u.IsSeller ?? false,
+				IsSeller = profile?.IsSeller ?? false,
 				RoleName = u.Role?.RoleName,
 
 				FullName = profile?.FullName ?? "未設定",
 				PhoneNumber = profile?.PhoneNumber ?? "未設定",
 				PointBalance = profile?.PointBalance ?? 0,
+				TotalSpending = profile?.TotalSpending ?? 0,
 
-				// 這裡改成單數 LevelName
-				LevelName = profile?.Level?.LevelName ?? "一般會員",
+				// 根據累計消費金額動態計算等級名稱
+				LevelName = GetLevelNameBySpending(profile?.TotalSpending, levels),
 
 				// 如果有預設頭像 URL 生成邏輯
 				//AvatarUrl = $"https://ui-avatars.com/api/?name={profile?.FullName ?? u.Account}&background=random&color=fff",
@@ -101,6 +124,22 @@ namespace ISpanShop.Services.Members
 				Region = address?.Region ?? "",
 				Address = address?.Street ?? ""
 			};
+		}
+
+		private string GetLevelNameBySpending(decimal? spending, List<MembershipLevel> levels)
+		{
+			if (levels == null || !levels.Any()) return "一般會員";
+
+			// 確保 spending 有值，若無則視為 0
+			decimal currentSpending = spending ?? 0;
+
+			// 找符合條件且 MinSpending 最高的等級
+			var matchedLevel = levels
+				.Where(l => currentSpending >= l.MinSpending)
+				.OrderByDescending(l => l.MinSpending)
+				.FirstOrDefault();
+
+			return matchedLevel?.LevelName ?? "一般會員";
 		}
 	}
 }

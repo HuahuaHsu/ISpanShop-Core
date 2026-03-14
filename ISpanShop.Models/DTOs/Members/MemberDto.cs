@@ -29,6 +29,9 @@ namespace ISpanShop.Models.DTOs.Members
 		[Display(Name = "點數")]
 		public int PointBalance { get; set; }
 
+		[Display(Name = "累計消費")]
+		public decimal TotalSpending { get; set; }
+
 		[Display(Name = "頭像")]
 		public string AvatarUrl { get; set; } // 資料庫無此欄位，需靠程式生成
 

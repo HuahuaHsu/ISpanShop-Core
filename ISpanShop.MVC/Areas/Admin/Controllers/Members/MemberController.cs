@@ -4,6 +4,10 @@ using ISpanShop.MVC.Areas.Admin.Models.Members;
 using ISpanShop.Services.Members;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Collections.Generic;
+using System.Linq;
+using System;
+using ISpanShop.Models.EfModels;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 {
@@ -22,45 +26,62 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 		// Index — 會員列表
 		// ===================================================================
 		[HttpGet]
-		public IActionResult Index(string keyword = "", string status = "all", int page = 1, int pageSize = 10)
+		public IActionResult Index(string keyword = "", string status = "all", int? roleId = null, int? levelId = null, string sortColumn = "Id", string sortDirection = "asc", int page = 1, int pageSize = 10)
 		{
 			try
 			{
-				var allMembers = _memberService.Search(keyword, status == "all" ? "" : status);
+				var criteria = new MemberCriteria
+				{
+					Keyword = keyword,
+					Status = status == "all" ? "" : status,
+					RoleId = roleId,
+					LevelId = levelId,
+					SortColumn = sortColumn,
+					IsAscending = sortDirection == "asc",
+					PageNumber = page,
+					PageSize = pageSize
+				};
 
-				var totalCount = allMembers.Count();
-				var pagedMembers = allMembers
-					.Skip((page - 1) * pageSize)
-					.Take(pageSize)
-					.Select(m => new MemberItemVm
-					{
-						UserId = m.Id,
-						Account = m.Account,
-						FullName = m.FullName,
-						Email = m.Email,
-						PhoneNumber = m.PhoneNumber,
-						AvatarUrl = m.AvatarUrl,
-						IsSeller = m.IsSeller,
-						LevelName = m.LevelName,
-						PointBalance = m.PointBalance,
-						IsBlacklisted = m.IsBlacklisted,
-						City = m.City,
-						Region = m.Region,
-						Street = m.Address
-					})
-					.ToList();
+				var pagedResult = _memberService.SearchPaged(criteria);
+				var levels = _memberService.GetAllMembershipLevels();
 
 				var viewModel = new MemberIndexVm
 				{
 					PagedResult = new PagedResult<MemberItemVm>
 					{
-						Data = pagedMembers,
-						TotalCount = totalCount,
-						CurrentPage = page,
-						PageSize = pageSize
+						Data = pagedResult.Data.Select(m => new MemberItemVm
+						{
+							UserId = m.Id,
+							Account = m.Account,
+							FullName = m.FullName,
+							Email = m.Email,
+							PhoneNumber = m.PhoneNumber,
+							AvatarUrl = m.AvatarUrl,
+							IsSeller = m.IsSeller,
+							LevelName = m.LevelName,
+							TotalSpending = m.TotalSpending,
+							PointBalance = m.PointBalance,
+							IsBlacklisted = m.IsBlacklisted,
+							City = m.City,
+							Region = m.Region,
+							Street = m.Address
+						}).ToList(),
+						TotalCount = pagedResult.TotalCount,
+						CurrentPage = pagedResult.CurrentPage,
+						PageSize = pagedResult.PageSize
 					},
 					Keyword = keyword,
-					Status = status
+					Status = status,
+					RoleId = roleId,
+					LevelId = levelId,
+					SortColumn = sortColumn,
+					SortDirection = sortDirection,
+					MembershipLevels = levels.Select(l => new SelectListItem 
+					{ 
+						Value = l.Id.ToString(), 
+						Text = l.LevelName,
+						Selected = l.Id == levelId
+					}).ToList()
 				};
 
 				return View("~/Areas/Admin/Views/Member/Index.cshtml", viewModel);
@@ -111,6 +132,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 			// 移除不在畫面上的欄位，避免不必要的驗證失敗
 			ModelState.Remove("Account");
 			ModelState.Remove("LevelName");
+			ModelState.Remove("TotalSpending");
 			ModelState.Remove("PointBalance");
 			ModelState.Remove("AvatarFile");
 			ModelState.Remove("AvatarUrl");
@@ -228,6 +250,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 				PhoneNumber   = member.PhoneNumber,
 				AvatarUrl     = member.AvatarUrl,
 				LevelName     = member.LevelName,
+				TotalSpending = member.TotalSpending,
 				PointBalance  = member.PointBalance,
 				City          = member.City,
 				Region        = member.Region,

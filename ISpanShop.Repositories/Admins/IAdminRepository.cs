@@ -8,7 +8,7 @@ namespace ISpanShop.Repositories.Admins
 	{
 		
 		/// <summary>取得所有管理員資訊</summary>
-		IEnumerable<AdminDto> GetAllAdmins();
+		IEnumerable<AdminDto> GetAllAdmins(AdminCriteria criteria = null);
 
 		/// <summary>由 ID 取得一個管理員</summary>
 		AdminDto? GetAdminById(int adminId);

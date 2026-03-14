@@ -1,9 +1,6 @@
 using ISpanShop.Models.EfModels;
-using System;
+using ISpanShop.Models.DTOs.Members;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ISpanShop.Repositories.Members
 {
@@ -11,6 +8,12 @@ namespace ISpanShop.Repositories.Members
 	{
 		// 搜尋功能 (包含關鍵字與狀態篩選)
 		IEnumerable<User> Search(string keyword, string status);
+
+		// 分頁與進階搜尋
+		IEnumerable<User> SearchPaged(MemberCriteria criteria, out int totalCount);
+
+		// 取得所有會員等級
+		IEnumerable<MembershipLevel> GetAllLevels();
 
 		// 取得單一會員
 		User GetById(int id);

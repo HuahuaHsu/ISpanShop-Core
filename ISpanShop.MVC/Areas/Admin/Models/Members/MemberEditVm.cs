@@ -9,6 +9,7 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Members
         // ✅ 唯讀欄位：僅供顯示，不參與驗證
         public string? Account { get; set; }
         public string? LevelName { get; set; }
+        public decimal TotalSpending { get; set; }
         public int PointBalance { get; set; }
         
         // ✅ 可編輯欄位

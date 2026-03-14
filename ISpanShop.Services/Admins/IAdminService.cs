@@ -5,7 +5,7 @@ namespace ISpanShop.Services.Admins
 	public interface IAdminService
 	{
 		// 查詢
-		IEnumerable<AdminDto> GetAllAdmins();
+		IEnumerable<AdminDto> GetAllAdmins(AdminCriteria criteria = null);
 		IEnumerable<AdminLevelDto> GetAllAdminLevels();
 		IEnumerable<PermissionDto> GetAllPermissions();
 		IEnumerable<AdminLevelDto> GetSelectableAdminLevels();

@@ -87,7 +87,7 @@ namespace ISpanShop.Repositories.Admins
 		/// <summary>
 		/// 取得所有管理員資訊（僅限 Admin 和 SuperAdmin 角色）
 		/// </summary>
-		public IEnumerable<AdminDto> GetAllAdmins()
+		public IEnumerable<AdminDto> GetAllAdmins(AdminCriteria criteria = null)
 		{
 			var admins = new List<AdminDto>();
 			try
@@ -111,11 +111,64 @@ namespace ISpanShop.Repositories.Admins
 						FROM Users A
 						JOIN Roles R ON A.RoleId = R.Id
 						LEFT JOIN AdminLevels AL ON A.AdminLevelId = AL.Id
-						WHERE R.RoleName IN ('Admin', 'SuperAdmin')
-						ORDER BY A.CreatedAt DESC";
+						WHERE R.RoleName IN ('Admin', 'SuperAdmin')";
+
+					// 篩選條件
+					if (criteria != null)
+					{
+						if (!string.IsNullOrEmpty(criteria.Keyword))
+						{
+							query += " AND (A.Account LIKE @keyword OR A.Email LIKE @keyword)";
+						}
+
+						if (criteria.AdminLevelId.HasValue)
+						{
+							query += " AND A.AdminLevelId = @adminLevelId";
+						}
+
+						if (!string.IsNullOrEmpty(criteria.Status))
+						{
+							switch (criteria.Status)
+							{
+								case "active":
+									query += " AND A.IsBlacklisted = 0";
+									break;
+								case "blocked":
+									query += " AND A.IsBlacklisted = 1";
+									break;
+								case "firstLogin":
+									query += " AND A.IsFirstLogin = 1";
+									break;
+							}
+						}
+
+						// 排序
+						string sortCol = criteria.SortColumn switch
+						{
+							"Account" => "A.Account",
+							"Email" => "A.Email",
+							"AdminLevelName" => "AL.LevelName",
+							"IsBlacklisted" => "A.IsBlacklisted",
+							"CreatedAt" => "A.CreatedAt",
+							_ => "A.Id"
+						};
+						query += $" ORDER BY {sortCol} {(criteria.IsAscending ? "ASC" : "DESC")}";
+					}
+					else
+					{
+						query += " ORDER BY A.CreatedAt DESC";
+					}
 
 					using (SqlCommand cmd = new SqlCommand(query, conn))
 					{
+						if (criteria != null)
+						{
+							if (!string.IsNullOrEmpty(criteria.Keyword))
+								cmd.Parameters.AddWithValue("@keyword", $"%{criteria.Keyword}%");
+							if (criteria.AdminLevelId.HasValue)
+								cmd.Parameters.AddWithValue("@adminLevelId", criteria.AdminLevelId.Value);
+						}
+
 						using (SqlDataReader reader = cmd.ExecuteReader())
 						{
 							while (reader.Read())

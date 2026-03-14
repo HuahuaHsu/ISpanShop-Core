@@ -1,6 +1,8 @@
 using ISpanShop.Models.EfModels;
+using ISpanShop.Models.DTOs.Members;
 using ISpanShop.Repositories.Members;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,9 +24,7 @@ namespace ISpanShop.Repositories.Members.Implementations
 				.Include(u => u.Role)
 				.Include(u => u.Addresses)
 				.Include(u => u.MemberProfile)
-					// [修正] 根據你的檔案，屬性名稱是 Level
 					.ThenInclude(mp => mp.Level)
-				// 防止透過 URL ID 存取管理員
 				.FirstOrDefault(u => u.Id == id && u.Role.RoleName != "SuperAdmin" && u.Role.RoleName != "Admin");
 		}
 
@@ -34,7 +34,6 @@ namespace ISpanShop.Repositories.Members.Implementations
 				.AsNoTracking()
 				.Include(u => u.Role)
 				.Include(u => u.MemberProfile)
-					// [修正] 根據你的檔案，屬性名稱是 Level
 					.ThenInclude(mp => mp.Level)
 				.Where(u => u.Role.RoleName != "SuperAdmin" && u.Role.RoleName != "Admin");
 
@@ -43,7 +42,6 @@ namespace ISpanShop.Repositories.Members.Implementations
 				query = query.Where(u =>
 					u.Account.Contains(keyword) ||
 					u.Email.Contains(keyword) ||
-					// [修正] 直接檢查 MemberProfile 屬性 (EF Core 會自動處理 null 檢查)
 					(u.MemberProfile != null &&
 					 (u.MemberProfile.FullName.Contains(keyword) || u.MemberProfile.PhoneNumber.Contains(keyword)))
 				);
@@ -62,6 +60,101 @@ namespace ISpanShop.Repositories.Members.Implementations
 			}
 
 			return query.ToList();
+		}
+
+		public IEnumerable<MembershipLevel> GetAllLevels()
+		{
+			return _context.MembershipLevels.AsNoTracking().ToList();
+		}
+
+		public IEnumerable<User> SearchPaged(MemberCriteria criteria, out int totalCount)
+		{
+			var query = _context.Users
+				.AsNoTracking()
+				.Include(u => u.Role)
+				.Include(u => u.MemberProfile)
+					.ThenInclude(mp => mp.Level)
+				.Where(u => u.Role.RoleName != "SuperAdmin" && u.Role.RoleName != "Admin");
+
+			// 關鍵字搜尋 (姓名、帳號、Email、電話)
+			if (!string.IsNullOrEmpty(criteria.Keyword))
+			{
+				query = query.Where(u =>
+					u.Account.Contains(criteria.Keyword) ||
+					u.Email.Contains(criteria.Keyword) ||
+					(u.MemberProfile != null &&
+					 (u.MemberProfile.FullName.Contains(criteria.Keyword) || u.MemberProfile.PhoneNumber.Contains(criteria.Keyword)))
+				);
+			}
+
+			// 狀態篩選
+			if (!string.IsNullOrEmpty(criteria.Status))
+			{
+				if (criteria.Status == "normal")
+				{
+					query = query.Where(u => u.IsBlacklisted != true);
+				}
+				else if (criteria.Status == "blocked")
+				{
+					query = query.Where(u => u.IsBlacklisted == true);
+				}
+			}
+
+			// 身分篩選 (買家/賣家)
+			if (criteria.RoleId.HasValue)
+			{
+				if (criteria.RoleId == 1) // 買家
+				{
+					query = query.Where(u => u.MemberProfile != null && u.MemberProfile.IsSeller == false);
+				}
+				else if (criteria.RoleId == 2) // 賣家
+				{
+					query = query.Where(u => u.MemberProfile != null && u.MemberProfile.IsSeller == true);
+				}
+			}
+
+			// 等級篩選
+			if (criteria.LevelId.HasValue)
+			{
+				query = query.Where(u => u.MemberProfile != null && u.MemberProfile.LevelId == criteria.LevelId.Value);
+			}
+
+			totalCount = query.Count();
+
+			// 排序
+			query = ApplySorting(query, criteria.SortColumn, criteria.IsAscending);
+
+			return query
+				.Skip((criteria.PageNumber - 1) * criteria.PageSize)
+				.Take(criteria.PageSize)
+				.ToList();
+		}
+
+		private IQueryable<User> ApplySorting(IQueryable<User> query, string sortColumn, bool isAscending)
+		{
+			switch (sortColumn?.ToLower())
+			{
+				case "account":
+					return isAscending ? query.OrderBy(u => u.Account) : query.OrderByDescending(u => u.Account);
+				case "fullname":
+				case "name":
+					return isAscending ? query.OrderBy(u => u.MemberProfile.FullName) : query.OrderByDescending(u => u.MemberProfile.FullName);
+				case "email":
+					return isAscending ? query.OrderBy(u => u.Email) : query.OrderByDescending(u => u.Email);
+				case "levelname":
+				case "level":
+					return isAscending ? query.OrderBy(u => u.MemberProfile.TotalSpending) : query.OrderByDescending(u => u.MemberProfile.TotalSpending);
+				case "pointbalance":
+				case "points":
+					return isAscending ? query.OrderBy(u => u.MemberProfile.PointBalance) : query.OrderByDescending(u => u.MemberProfile.PointBalance);
+				case "isblacklisted":
+				case "status":
+					return isAscending ? query.OrderBy(u => u.IsBlacklisted) : query.OrderByDescending(u => u.IsBlacklisted);
+				case "createdat":
+					return isAscending ? query.OrderBy(u => u.CreatedAt) : query.OrderByDescending(u => u.CreatedAt);
+				default:
+					return isAscending ? query.OrderBy(u => u.Id) : query.OrderByDescending(u => u.Id);
+			}
 		}
 
 		public void Update(User user)

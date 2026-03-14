@@ -106,21 +106,6 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="text-center" style="width: 8%;">
-                                <a asp-action="Index"
-                                   asp-route-sortColumn="Id"
-                                   asp-route-sortDirection="@(criteria.SortColumn == "Id" && criteria.SortDirection == "asc" ? "desc" : "asc")"
-                                   asp-route-keyword="@criteria.Keyword"
-                                   asp-route-isSuccessful="@criteria.IsSuccessfulFilter"
-                                   asp-route-pageSize="@criteria.PageSize"
-                                   class="text-decoration-none text-dark d-flex align-items-center justify-content-center">
-                                    ID
-                                    @if (criteria.SortColumn == "Id")
-                                    {
-                                        <i class="bx bx-sort-@(criteria.SortDirection == "asc" ? "up" : "down") ms-1 text-primary"></i>
-                                    }
-                                </a>
-                            </th>
                             <th style="width: 25%;">
                                 <a asp-action="Index"
                                    asp-route-sortColumn="UserAccount"
@@ -189,11 +174,6 @@
                             foreach (var item in Model.LoginHistories)
                             {
                                 <tr>
-                                    <!-- ID -->
-                                    <td class="text-center">
-                                        <span class="text-muted fw-semibold">#@item.Id</span>
-                                    </td>
-
                                     <!-- 使用者帳號 -->
                                     <td>
                                         <div class="d-flex align-items-center">

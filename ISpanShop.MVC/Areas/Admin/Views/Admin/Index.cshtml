@@ -42,7 +42,49 @@
 
             @* ── Tab1：管理員帳號列表 ── *@
             <div class="tab-pane fade @(activeTab == "tab1" ? "show active" : "")" id="tab1" role="tabpanel">
-                <div class="d-flex justify-content-end mb-3 mt-3">
+                
+                <div class="card mb-4 mt-3">
+                    <div class="card-body">
+                        <form method="get" asp-action="Index" class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">帳號或電子信箱</label>
+                                <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="搜尋..." />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">狀態</label>
+                                <select name="status" class="form-select">
+                                    <option value="all" selected="@(Model.Status == "all")">所有狀態</option>
+                                    <option value="active" selected="@(Model.Status == "active")">啟用中</option>
+                                    <option value="blocked" selected="@(Model.Status == "blocked")">已停用</option>
+                                    <option value="firstLogin" selected="@(Model.Status == "firstLogin")">待首次登入修改</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">身分等級</label>
+                                <select name="adminLevelId" class="form-select">
+                                    <option value="">所有等級</option>
+                                    @foreach (var level in Model.AdminLevels)
+                                    {
+                                        <option value="@level.AdminLevelId" selected="@(Model.SelectedAdminLevelId == level.AdminLevelId)">@level.LevelName</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end gap-2">
+                                <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="bx bx-search me-1"></i>搜尋
+                                </button>
+                                <a href="@Url.Action("Index")" class="btn btn-label-secondary">
+                                    <i class="bx bx-reset me-1"></i>重置
+                                </a>
+                            </div>
+                            <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
+                            <input type="hidden" name="sortDirection" value="@Model.SortDirection" />
+                            <input type="hidden" name="activeTab" value="tab1" />
+                        </form>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mb-3">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
                         <i class="bx bx-plus me-1"></i> 新增管理員
                     </button>
@@ -53,12 +95,37 @@
                         <table class="table table-hover mb-0">
                             <thead>
                                 <tr>
-                                    <th>帳號</th>
-                                    <th>電子信箱</th>
-                                    <th>身分等級</th>
+                                    <th>
+                                        <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.Status, adminLevelId = Model.SelectedAdminLevelId, sortColumn = "Account", sortDirection = (Model.SortColumn == "Account" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-dark">
+                                            帳號
+                                            @if (Model.SortColumn == "Account") { <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i> }
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.Status, adminLevelId = Model.SelectedAdminLevelId, sortColumn = "Email", sortDirection = (Model.SortColumn == "Email" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-dark">
+                                            電子信箱
+                                            @if (Model.SortColumn == "Email") { <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i> }
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.Status, adminLevelId = Model.SelectedAdminLevelId, sortColumn = "AdminLevelName", sortDirection = (Model.SortColumn == "AdminLevelName" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-dark">
+                                            身分等級
+                                            @if (Model.SortColumn == "AdminLevelName") { <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i> }
+                                        </a>
+                                    </th>
                                     <th>實際權限</th>
-                                    <th>狀態</th>
-                                    <th>建立時間</th>
+                                    <th>
+                                        <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.Status, adminLevelId = Model.SelectedAdminLevelId, sortColumn = "IsBlacklisted", sortDirection = (Model.SortColumn == "IsBlacklisted" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-dark">
+                                            狀態
+                                            @if (Model.SortColumn == "IsBlacklisted") { <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i> }
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.Status, adminLevelId = Model.SelectedAdminLevelId, sortColumn = "CreatedAt", sortDirection = (Model.SortColumn == "CreatedAt" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-dark">
+                                            建立時間
+                                            @if (Model.SortColumn == "CreatedAt") { <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i> }
+                                        </a>
+                                    </th>
                                     <th class="text-end">操作</th>
                                 </tr>
                             </thead>

@@ -21,9 +21,9 @@ public class AdminService : IAdminService
 		_loginHistoryRepository = loginHistoryRepository ?? throw new ArgumentNullException(nameof(loginHistoryRepository));
 	}
 
-	public IEnumerable<AdminDto> GetAllAdmins() //新增取得所有管理員（含實際權限)
+	public IEnumerable<AdminDto> GetAllAdmins(AdminCriteria criteria = null) //新增取得所有管理員（含實際權限)
 	{
-		var admins = _adminRepository.GetAllAdmins().ToList();
+		var admins = _adminRepository.GetAllAdmins(criteria).ToList();
 		foreach (var admin in admins)
 		{
 			if (admin.AdminLevelId.HasValue)

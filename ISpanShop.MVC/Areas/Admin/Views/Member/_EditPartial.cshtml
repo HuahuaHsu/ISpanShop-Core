@@ -125,8 +125,11 @@
                 <i class="bx @levelIcon me-1"></i>@Model.LevelName
             </span>
         </div>
-        <div class="ms-auto text-center">
-            <div class="text-muted small">點數</div>
+        <div class="ms-auto text-end">
+            <div class="text-muted small">累計消費 / 點數</div>
+            <div class="fw-bold" style="color:#2c3e50; font-size:0.95rem;">
+                <i class="bx bx-wallet"></i> NT$ @Model.TotalSpending.ToString("N0")
+            </div>
             <div class="fw-bold" style="color:#ff9f43; font-size:1.1rem;">
                 <i class="bx bx-coin"></i> P @Model.PointBalance.ToString("N0")
             </div>

@@ -28,5 +28,11 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Admins
 
         /// <summary>當前選中的 Tab（"tab1" 管理員列表，"tab2" 身分與權限）</summary>
         public string ActiveTab { get; set; } = "tab1";
+
+        public string Keyword { get; set; }
+        public string Status { get; set; }
+        public int? SelectedAdminLevelId { get; set; }
+        public string SortColumn { get; set; }
+        public string SortDirection { get; set; }
     }
 }

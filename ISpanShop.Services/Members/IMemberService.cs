@@ -1,4 +1,6 @@
 using ISpanShop.Models.DTOs.Members;
+using ISpanShop.Models.DTOs.Common;
+using ISpanShop.Models.EfModels;
 using System.Collections.Generic;
 
 namespace ISpanShop.Services.Members
@@ -15,6 +17,16 @@ namespace ISpanShop.Services.Members
 		/// <param name="status">狀態（normal, blocked）</param>
 		/// <returns>會員 DTO 列表</returns>
 		IEnumerable<MemberDto> Search(string keyword, string status);
+
+		/// <summary>
+		/// 分頁進階搜尋
+		/// </summary>
+		PagedResult<MemberDto> SearchPaged(MemberCriteria criteria);
+
+		/// <summary>
+		/// 取得所有會員等級
+		/// </summary>
+		IEnumerable<MembershipLevel> GetAllMembershipLevels();
 
 		/// <summary>
 		/// 根據 ID 取得會員詳細資料

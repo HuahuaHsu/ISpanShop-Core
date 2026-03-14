@@ -18,22 +18,36 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Admin
 			_adminService = adminService ?? throw new ArgumentNullException(nameof(adminService));
 		}
 
-		public IActionResult Index()
+		public IActionResult Index(string keyword = "", string status = "all", int? adminLevelId = null, string sortColumn = "UserId", string sortDirection = "desc", string activeTab = "tab1")
 		{
-			var levelId = User.FindFirst("AdminLevelId")?.Value;
-			if (levelId != "1")
+			var levelIdStr = User.FindFirst("AdminLevelId")?.Value;
+			if (levelIdStr != "1")
 				return RedirectToAction("Dashboard", "Orders", new { area = "Admin" });
 
 			try
 			{
+				var criteria = new AdminCriteria
+				{
+					Keyword = keyword,
+					Status = status,
+					AdminLevelId = adminLevelId,
+					SortColumn = sortColumn,
+					IsAscending = sortDirection == "asc"
+				};
+
 				var viewModel = new AdminIndexVm
 				{
-					Admins = _adminService.GetAllAdmins().ToList(),
+					Admins = _adminService.GetAllAdmins(criteria).ToList(),
 					AdminLevels = _adminService.GetAllAdminLevels().ToList(),
 					AllPermissions = _adminService.GetAllPermissions().ToList(),
 					NextAccount = _adminService.GetNextAccount(),
 					Message = TempData["Message"]?.ToString(),
-					ActiveTab = TempData["ActiveTab"]?.ToString() ?? "tab1",
+					ActiveTab = activeTab,
+					Keyword = keyword,
+					Status = status,
+					SelectedAdminLevelId = adminLevelId,
+					SortColumn = sortColumn,
+					SortDirection = sortDirection,
 					CreateForm = new AdminCreateVm
 					{
 						AdminLevelOptions = _adminService.GetSelectableAdminLevels().ToList()
