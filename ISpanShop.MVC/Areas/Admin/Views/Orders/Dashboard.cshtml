@@ -1217,19 +1217,16 @@
                         categories: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
                     },
                     yaxis: {
-                        min: -100,
-                        max: 100,
                         labels: {
-                            formatter: (val) => (val > 0 ? '+' : '') + val.toFixed(0) + ' pt'
-                        },
-                        tickAmount: 8
+                            formatter: (val) => (val > 0 ? '+' : '') + val.toFixed(0) + '%'
+                        }
                     },
                     tooltip: {
                         shared: false,
                         intersect: true,
                         y: {
                             formatter: function(val) {
-                                return (val >= 0 ? '市佔擴張 ' : '市佔萎縮 ') + Math.abs(val).toFixed(2) + ' 個百分點';
+                                return (val >= 0 ? '市佔擴張 ' : '市佔萎縮 ') + Math.abs(val).toFixed(2) + '%';
                             }
                         }
                     }
