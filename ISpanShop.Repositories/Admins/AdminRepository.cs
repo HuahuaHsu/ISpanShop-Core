@@ -199,6 +199,140 @@ namespace ISpanShop.Repositories.Admins
 			return admins;
 		}
 
+		public IEnumerable<AdminDto> SearchPaged(AdminCriteria criteria, out int totalCount)
+		{
+			var admins = new List<AdminDto>();
+			totalCount = 0;
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+
+					// 1. 取得總筆數
+					string countQuery = @"
+						SELECT COUNT(1)
+						FROM Users A
+						JOIN Roles R ON A.RoleId = R.Id
+						LEFT JOIN AdminLevels AL ON A.AdminLevelId = AL.Id
+						WHERE R.RoleName IN ('Admin', 'SuperAdmin')";
+
+					if (!string.IsNullOrEmpty(criteria.Keyword))
+						countQuery += " AND (A.Account LIKE @keyword OR A.Email LIKE @keyword)";
+
+					if (criteria.AdminLevelId.HasValue)
+						countQuery += " AND A.AdminLevelId = @adminLevelId";
+
+					if (!string.IsNullOrEmpty(criteria.Status))
+					{
+						switch (criteria.Status)
+						{
+							case "active": countQuery += " AND A.IsBlacklisted = 0"; break;
+							case "blocked": countQuery += " AND A.IsBlacklisted = 1"; break;
+							case "firstLogin": countQuery += " AND A.IsFirstLogin = 1"; break;
+						}
+					}
+
+					using (SqlCommand countCmd = new SqlCommand(countQuery, conn))
+					{
+						if (!string.IsNullOrEmpty(criteria.Keyword))
+							countCmd.Parameters.AddWithValue("@keyword", $"%{criteria.Keyword}%");
+						if (criteria.AdminLevelId.HasValue)
+							countCmd.Parameters.AddWithValue("@adminLevelId", criteria.AdminLevelId.Value);
+
+						totalCount = (int)countCmd.ExecuteScalar();
+					}
+
+					// 2. 取得分頁資料
+					string query = @"
+						SELECT 
+							A.Id AS UserId,
+							A.Account,
+							A.Email,
+							A.RoleId,
+							R.RoleName,
+							A.AdminLevelId,
+							AL.LevelName AS AdminLevelName,
+							A.IsBlacklisted,
+							A.IsFirstLogin,
+							A.CreatedAt,
+							A.UpdatedAt
+						FROM Users A
+						JOIN Roles R ON A.RoleId = R.Id
+						LEFT JOIN AdminLevels AL ON A.AdminLevelId = AL.Id
+						WHERE R.RoleName IN ('Admin', 'SuperAdmin')";
+
+					if (!string.IsNullOrEmpty(criteria.Keyword))
+						query += " AND (A.Account LIKE @keyword OR A.Email LIKE @keyword)";
+
+					if (criteria.AdminLevelId.HasValue)
+						query += " AND A.AdminLevelId = @adminLevelId";
+
+					if (!string.IsNullOrEmpty(criteria.Status))
+					{
+						switch (criteria.Status)
+						{
+							case "active": query += " AND A.IsBlacklisted = 0"; break;
+							case "blocked": query += " AND A.IsBlacklisted = 1"; break;
+							case "firstLogin": query += " AND A.IsFirstLogin = 1"; break;
+						}
+					}
+
+					// 排序
+					string sortCol = criteria.SortColumn switch
+					{
+						"Account" => "A.Account",
+						"Email" => "A.Email",
+						"AdminLevelName" => "AL.LevelName",
+						"IsBlacklisted" => "A.IsBlacklisted",
+						"CreatedAt" => "A.CreatedAt",
+						_ => "A.Id"
+					};
+					query += $" ORDER BY {sortCol} {(criteria.IsAscending ? "ASC" : "DESC")}";
+
+					// 分頁
+					query += " OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+					using (SqlCommand cmd = new SqlCommand(query, conn))
+					{
+						if (!string.IsNullOrEmpty(criteria.Keyword))
+							cmd.Parameters.AddWithValue("@keyword", $"%{criteria.Keyword}%");
+						if (criteria.AdminLevelId.HasValue)
+							cmd.Parameters.AddWithValue("@adminLevelId", criteria.AdminLevelId.Value);
+
+						cmd.Parameters.AddWithValue("@Offset", (criteria.PageNumber - 1) * criteria.PageSize);
+						cmd.Parameters.AddWithValue("@PageSize", criteria.PageSize);
+
+						using (SqlDataReader reader = cmd.ExecuteReader())
+						{
+							while (reader.Read())
+							{
+								admins.Add(new AdminDto
+								{
+									UserId = (int)reader["UserId"],
+									Account = reader["Account"]?.ToString() ?? "",
+									Email = reader["Email"]?.ToString() ?? "",
+									RoleId = (int)reader["RoleId"],
+									RoleName = reader["RoleName"]?.ToString() ?? "",
+									AdminLevelId = reader["AdminLevelId"] != DBNull.Value ? (int?)reader["AdminLevelId"] : null,
+									AdminLevelName = reader["AdminLevelName"]?.ToString() ?? "",
+									IsBlacklisted = reader["IsBlacklisted"] != DBNull.Value && (bool)reader["IsBlacklisted"],
+									IsFirstLogin = reader["IsFirstLogin"] != DBNull.Value && (bool)reader["IsFirstLogin"],
+									CreatedAt = reader["CreatedAt"] != DBNull.Value ? (DateTime)reader["CreatedAt"] : DateTime.MinValue,
+									UpdatedAt = reader["UpdatedAt"] != DBNull.Value ? (DateTime?)reader["UpdatedAt"] : null
+								});
+							}
+						}
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("資料庫分頁查詢失敗", ex);
+			}
+			return admins;
+		}
+
 		/// <summary>
 		/// 更新管理員的角色
 		/// </summary>

@@ -10,6 +10,9 @@ namespace ISpanShop.Repositories.Admins
 		/// <summary>取得所有管理員資訊</summary>
 		IEnumerable<AdminDto> GetAllAdmins(AdminCriteria criteria = null);
 
+		/// <summary>分頁搜尋管理員</summary>
+		IEnumerable<AdminDto> SearchPaged(AdminCriteria criteria, out int totalCount);
+
 		/// <summary>由 ID 取得一個管理員</summary>
 		AdminDto? GetAdminById(int adminId);
 

@@ -1,5 +1,6 @@
 using ISpanShop.Models.DTOs.Admins;
 using ISpanShop.Models.DTOs.Members;
+using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Repositories.Admins;
 using ISpanShop.Repositories.Members;
 using System.Text.RegularExpressions;
@@ -38,6 +39,26 @@ public class AdminService : IAdminService
 			}
 		}
 		return admins;
+	}
+
+	public PagedResult<AdminDto> SearchPaged(AdminCriteria criteria)
+	{
+		var admins = _adminRepository.SearchPaged(criteria, out int totalCount).ToList();
+		foreach (var admin in admins)
+		{
+			if (admin.AdminLevelId.HasValue)
+			{
+				admin.ActualPermissions = _adminRepository
+					.GetPermissionsByAdminLevel(admin.AdminLevelId.Value)
+					.ToList();
+			}
+			else
+			{
+				admin.ActualPermissions = new List<PermissionDto>();
+			}
+		}
+
+		return PagedResult<AdminDto>.Create(admins, totalCount, criteria.PageNumber, criteria.PageSize);
 	}
 
 	

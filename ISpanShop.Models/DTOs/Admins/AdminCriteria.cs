@@ -7,5 +7,8 @@ namespace ISpanShop.Models.DTOs.Admins
 		public int? AdminLevelId { get; set; }
 		public string SortColumn { get; set; } = "UserId";
 		public bool IsAscending { get; set; } = true;
+
+		public int PageNumber { get; set; } = 1;
+		public int PageSize { get; set; } = 10;
 	}
 }

@@ -1,12 +1,13 @@
 using ISpanShop.Models.DTOs.Admins;
+using ISpanShop.Models.DTOs.Common;
 using System.Collections.Generic;
 
 namespace ISpanShop.MVC.Areas.Admin.Models.Admins
 {
     public class AdminIndexVm
     {
-        /// <summary>管理員列表</summary>
-        public List<AdminDto> Admins { get; set; } = new List<AdminDto>();
+        /// <summary>管理員分頁結果</summary>
+        public PagedResult<AdminDto> PagedResult { get; set; } = new PagedResult<AdminDto>();
 
         /// <summary>身分等級列表（含預設權限）</summary>
         public List<AdminLevelDto> AdminLevels { get; set; } = new List<AdminLevelDto>();

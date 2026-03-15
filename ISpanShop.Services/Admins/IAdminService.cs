@@ -1,4 +1,5 @@
 using ISpanShop.Models.DTOs.Admins;
+using ISpanShop.Models.DTOs.Common;
 
 namespace ISpanShop.Services.Admins
 {
@@ -6,6 +7,7 @@ namespace ISpanShop.Services.Admins
 	{
 		// 查詢
 		IEnumerable<AdminDto> GetAllAdmins(AdminCriteria criteria = null);
+		PagedResult<AdminDto> SearchPaged(AdminCriteria criteria);
 		IEnumerable<AdminLevelDto> GetAllAdminLevels();
 		IEnumerable<PermissionDto> GetAllPermissions();
 		IEnumerable<AdminLevelDto> GetSelectableAdminLevels();

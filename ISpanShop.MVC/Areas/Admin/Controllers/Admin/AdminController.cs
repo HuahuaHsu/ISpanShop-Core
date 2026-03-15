@@ -18,7 +18,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Admin
 			_adminService = adminService ?? throw new ArgumentNullException(nameof(adminService));
 		}
 
-		public IActionResult Index(string keyword = "", string status = "all", int? adminLevelId = null, string sortColumn = "UserId", string sortDirection = "desc", string activeTab = "tab1")
+		public IActionResult Index(string keyword = "", string status = "all", int? adminLevelId = null, string sortColumn = "UserId", string sortDirection = "desc", string activeTab = "tab1", int page = 1, int pageSize = 10)
 		{
 			var levelIdStr = User.FindFirst("AdminLevelId")?.Value;
 			if (levelIdStr != "1")
@@ -32,12 +32,16 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Admin
 					Status = status,
 					AdminLevelId = adminLevelId,
 					SortColumn = sortColumn,
-					IsAscending = sortDirection == "asc"
+					IsAscending = sortDirection == "asc",
+					PageNumber = page,
+					PageSize = pageSize
 				};
+
+				var pagedResult = _adminService.SearchPaged(criteria);
 
 				var viewModel = new AdminIndexVm
 				{
-					Admins = _adminService.GetAllAdmins(criteria).ToList(),
+					PagedResult = pagedResult,
 					AdminLevels = _adminService.GetAllAdminLevels().ToList(),
 					AllPermissions = _adminService.GetAllPermissions().ToList(),
 					NextAccount = _adminService.GetNextAccount(),

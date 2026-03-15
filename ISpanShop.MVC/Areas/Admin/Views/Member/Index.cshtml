@@ -384,7 +384,7 @@
                             <tr>
                                 <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">
                                     <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.Status, roleId = Model.RoleId, levelId = Model.LevelId, sortColumn = "FullName", sortDirection = (Model.SortColumn == "FullName" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-decoration-none text-muted">
-                                        MEMBER PROFILE
+                                        會員資訊
                                         @if (Model.SortColumn == "FullName")
                                         {
                                             <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i>
@@ -392,11 +392,11 @@
                                     </a>
                                 </th>
                                 <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">
-                                    身分 ROLE
+                                    買家/賣家
                                 </th>
                                 <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">
                                     <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.Status, roleId = Model.RoleId, levelId = Model.LevelId, sortColumn = "LevelName", sortDirection = (Model.SortColumn == "LevelName" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-decoration-none text-muted">
-                                        等級 LEVEL
+                                        等級
                                         @if (Model.SortColumn == "LevelName")
                                         {
                                             <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i>
@@ -405,7 +405,7 @@
                                 </th>
                                 <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">
                                     <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.Status, roleId = Model.RoleId, levelId = Model.LevelId, sortColumn = "PointBalance", sortDirection = (Model.SortColumn == "PointBalance" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-decoration-none text-muted">
-                                        點數 BALANCE
+                                        點數
                                         @if (Model.SortColumn == "PointBalance")
                                         {
                                             <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i>
@@ -414,14 +414,14 @@
                                 </th>
                                 <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">
                                     <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.Status, roleId = Model.RoleId, levelId = Model.LevelId, sortColumn = "Status", sortDirection = (Model.SortColumn == "Status" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-decoration-none text-muted">
-                                        狀態 STATUS
+                                        狀態
                                         @if (Model.SortColumn == "Status")
                                         {
                                             <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i>
                                         }
                                     </a>
                                 </th>
-                                <th class="text-end" style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">設定</th>
+                                <th class="text-end" style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;letter-spacing:0.05em;">更多/編輯</th>
                             </tr>
                         </thead>
                         <tbody id="memberTableBody">

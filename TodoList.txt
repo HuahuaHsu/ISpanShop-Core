@@ -858,7 +858,7 @@ STEP 5：更新展示層 (ISpanShop.MVC)
  
 【STEP 1】DTO 新增
 ------------------------------------------------------------
-[ ] 新增 AdminResetPasswordDto
+[V] 新增 AdminResetPasswordDto
     - 位置：ISpanShop.Models/DTOs/Admins/AdminDtos.cs
     - 欄位：
         int    UserId
