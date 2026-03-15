@@ -939,18 +939,6 @@ STEP 5：更新展示層 (ISpanShop.MVC)
   資料來源：Stores + Products + Users
   架構：Areas/Admin
 ============================================================
-
-------------------------------------------------------------
-STEP 0：建立資料夾
-------------------------------------------------------------
-
-[ ] ISpanShop.Models/DTOs/Stores/
-[ ] ISpanShop.Repositories/Stores/
-[ ] ISpanShop.Services/Stores/
-[ ] ISpanShop.MVC/Areas/Admin/Controllers/Stores/
-[ ] ISpanShop.MVC/Areas/Admin/Models/Stores/
-[ ] ISpanShop.MVC/Areas/Admin/Views/Stores/
-
 ------------------------------------------------------------
 STEP 1：定義資料傳輸物件 (ISpanShop.Models)
 ------------------------------------------------------------
@@ -1184,7 +1172,7 @@ STEP 5：展示層 (ISpanShop.MVC)
           }
           </script>
 
-[ ] 建立 _EditPartial.cshtml
+[V] 建立 _EditPartial.cshtml
     - 位置：ISpanShop.MVC/Areas/Admin/Views/Stores/_EditPartial.cshtml
     - @model StoreDetailVm
 
@@ -1273,3 +1261,390 @@ STEP 5：展示層 (ISpanShop.MVC)
     實作前請確認：SELECT DISTINCT Status FROM Products
 
 ============================================================
+
+============================================================
+  管理員權限切版 (Admin Permission-Based UI) - 實作 Todolist
+  功能：依登入身分動態顯示選單與保護路由
+  資料來源：AdminLevels + Permissions + AdminLevelPermissions
+  架構：Areas/Admin + ISpanShop.Common
+============================================================
+ 
+------------------------------------------------------------
+STEP 1：建立 Permission Helper (ISpanShop.Common)
+------------------------------------------------------------
+ 
+[ ] 新增 ClaimsPrincipalExtensions
+    - 位置：ISpanShop.Common/Helpers/ClaimsPrincipalExtensions.cs
+    - 用途：讓 View 與 Controller 可呼叫 User.HasPermission(key)
+    - 內容：
+ 
+        using System.Security.Claims;
+ 
+        public static class ClaimsPrincipalExtensions
+        {
+            public static bool HasPermission(
+                this ClaimsPrincipal user, string permissionKey)
+            {
+                return user.Claims.Any(c =>
+                    c.Type == "Permission" &&
+                    c.Value == permissionKey);
+            }
+ 
+            public static bool IsSuperAdmin(this ClaimsPrincipal user)
+            {
+                return user.Claims.Any(c =>
+                    c.Type == "AdminLevelId" &&
+                    c.Value == "1");
+            }
+        }
+ 
+------------------------------------------------------------
+STEP 2：定義資料傳輸物件 (ISpanShop.Models)
+------------------------------------------------------------
+ 
+[ ] 確認 / 新增 AdminPermissionDto
+    - 位置：ISpanShop.Models/DTOs/Admins/AdminPermissionDto.cs
+    - 用途：登入後從 DB 查詢該管理員所有權限
+    - 內容：
+        int     AdminId
+        int     LevelId
+        string  LevelName
+        List<string> PermissionKeys   // 所有擁有的 PermissionKey 清單
+ 
+------------------------------------------------------------
+STEP 3：資料存取層 (ISpanShop.Repositories)
+------------------------------------------------------------
+ 
+[ ] 確認 / 新增 IAdminRepository（新增方法）
+    - 位置：ISpanShop.Repositories/Admins/IAdminRepository.cs
+    - 新增方法：
+        AdminPermissionDto? GetAdminWithPermissions(int adminId)
+ 
+[ ] 實作 GetAdminWithPermissions（ADO.NET）
+    - 位置：ISpanShop.Repositories/Admins/AdminRepository.cs
+ 
+    - SQL：
+        SELECT A.Id          AS AdminId,
+               A.LevelId,
+               AL.LevelName,
+               P.PermissionKey
+        FROM   Admins A
+        JOIN   AdminLevels AL
+                   ON A.LevelId = AL.Id
+        JOIN   AdminLevelPermissions ALP
+                   ON AL.Id = ALP.AdminLevelId
+        JOIN   Permissions P
+                   ON ALP.PermissionId = P.Id
+        WHERE  A.Id = @AdminId
+ 
+    - 組裝邏輯：
+        1. 讀取第一筆取得 AdminId / LevelId / LevelName
+        2. 迴圈累加所有 PermissionKey 至 List<string>
+        3. 回傳 AdminPermissionDto
+ 
+------------------------------------------------------------
+STEP 4：登入時寫入 Claims (ISpanShop.MVC)
+------------------------------------------------------------
+ 
+[ ] 修改登入 Action（AuthController 或 AccountController）
+    - 位置：ISpanShop.MVC/Areas/Admin/Controllers/Auth/...
+    - 登入成功後執行：
+ 
+        // 1. 查詢該管理員的所有權限
+        var adminPerm = _adminRepository
+                            .GetAdminWithPermissions(admin.Id);
+ 
+        // 2. 組裝 Claims
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name,   admin.Account),
+            new Claim(ClaimTypes.NameIdentifier,
+                                         admin.Id.ToString()),
+            new Claim("AdminLevelId",    admin.LevelId.ToString()),
+            new Claim("LevelName",       adminPerm.LevelName),
+        };
+ 
+        // 3. 將每個 PermissionKey 加入 Claims
+        foreach (var key in adminPerm.PermissionKeys)
+        {
+            claims.Add(new Claim("Permission", key));
+        }
+ 
+        // 4. 建立 Cookie（原有邏輯維持，替換 claims 來源）
+        var identity  = new ClaimsIdentity(claims,
+                            CookieAuthenticationDefaults
+                                .AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        await HttpContext.SignInAsync(principal);
+ 
+    - 注意事項：
+        * 若原本已有登入邏輯，只需在 SignInAsync 前
+          替換 claims 組裝段落即可
+        * LevelId == 1 為超級管理員，
+          IsSuperAdmin() helper 會使用此值
+ 
+------------------------------------------------------------
+STEP 5：建立 RequirePermission Attribute (ISpanShop.MVC)
+------------------------------------------------------------
+ 
+[ ] 新增 RequirePermissionAttribute
+    - 位置：ISpanShop.MVC/Middleware/RequirePermissionAttribute.cs
+    - 內容：
+ 
+        using ISpanShop.Common.Helpers;
+ 
+        public class RequirePermissionAttribute
+            : Attribute, IAuthorizationFilter
+        {
+            private readonly string _permissionKey;
+ 
+            public RequirePermissionAttribute(string permissionKey)
+            {
+                _permissionKey = permissionKey;
+            }
+ 
+            public void OnAuthorization(
+                AuthorizationFilterContext context)
+            {
+                var user = context.HttpContext.User;
+ 
+                // 未登入 -> 導向登入頁
+                if (!user.Identity.IsAuthenticated)
+                {
+                    context.Result = new RedirectToActionResult(
+                        "Login", "Auth", new { area = "Admin" });
+                    return;
+                }
+ 
+                // 無此權限 -> 導向 AccessDenied 頁
+                if (!user.HasPermission(_permissionKey))
+                {
+                    context.Result = new RedirectToActionResult(
+                        "AccessDenied", "Auth",
+                        new { area = "Admin" });
+                }
+            }
+        }
+ 
+[ ] 新增 RequireSuperAdmin Attribute（超級管理員專用）
+    - 位置：ISpanShop.MVC/Middleware/RequireSuperAdminAttribute.cs
+    - 用途：管理員權限設定、登入紀錄等頁面
+    - 內容（同上，改用 IsSuperAdmin() 判斷）
+ 
+[ ] 新增 AccessDenied Action
+    - 位置：Auth Controller
+    - 回傳：403 提示頁面或 View
+ 
+------------------------------------------------------------
+STEP 6：各 Controller 套用 Attribute
+------------------------------------------------------------
+ 
+[ ] ProductsController（商品監管）
+    [RequirePermission("product_manage")]
+ 
+[ ] CategoriesController（分類管理）
+    [RequirePermission("product_manage")]
+ 
+[ ] InventoryController（庫存監控）
+    [RequirePermission("store_manage")]
+ 
+[ ] OrderManagementController（訂單管理）
+    [RequirePermission("cashflow_manage")]
+ 
+[ ] PaymentManagementController（金流管理）
+    [RequirePermission("cashflow_manage")]
+ 
+[ ] ContentModerationController（內容與客服）
+    - 工單相關 Action：[RequirePermission("ticket_manage")]
+    - 敏感詞相關 Action：[RequirePermission("sensitive_manage")]
+    - 注意：同一 Controller 可在 Action 層個別套用
+ 
+[ ] MemberController（會員管理）
+    [RequirePermission("member_manage")]
+ 
+[ ] SellerController（店家管理）
+    [RequirePermission("store_manage")]
+ 
+[ ] LoginHistoryController（登入紀錄）
+    [RequireSuperAdmin]  ← 超級管理員限定
+ 
+[ ] AdminPermissionController（管理員權限設定）
+    [RequireSuperAdmin]  ← 超級管理員限定
+ 
+[ ] HomeController / DashboardController（首頁儀錶板）
+    [RequirePermission("report_view")]
+    ※ 或改為：只要登入就能看（[Authorize] 即可）
+       視業務需求決定
+ 
+------------------------------------------------------------
+STEP 7：選單切版 (Sidebar Layout)
+------------------------------------------------------------
+ 
+[ ] 修改 _AdminLayout.cshtml 或 Sidebar Partial
+    - 位置：ISpanShop.MVC/Areas/Admin/Views/Shared/
+    - 在最上方加入：
+        @using ISpanShop.Common.Helpers
+ 
+    - 選單結構（條件顯示）：
+ 
+      ── 首頁 ──────────────────────────────────────
+        首頁（儀錶板）：永遠顯示（登入即可）
+ 
+      ── 營運管理 區塊 ────────────────────────────
+        @{
+            bool showOperations =
+                User.HasPermission("product_manage")  ||
+                User.HasPermission("store_manage")    ||
+                User.HasPermission("cashflow_manage") ||
+                User.HasPermission("ticket_manage")   ||
+                User.HasPermission("sensitive_manage");
+        }
+        @if (showOperations)
+        {
+            <p class="menu-label">營運管理</p>
+ 
+            @if (User.HasPermission("product_manage"))
+            {
+                商品監管 連結
+                分類管理 連結
+            }
+ 
+            @if (User.HasPermission("store_manage"))
+            {
+                庫存監控 連結
+            }
+ 
+            @if (User.HasPermission("cashflow_manage"))
+            {
+                訂單管理 連結
+                金流管理 連結
+            }
+ 
+            @if (User.HasPermission("ticket_manage") ||
+                 User.HasPermission("sensitive_manage"))
+            {
+                內容與客服 連結
+            }
+        }
+ 
+      ── 帳號管理 區塊 ────────────────────────────
+        @{
+            bool showAccount =
+                User.HasPermission("member_manage") ||
+                User.HasPermission("store_manage")  ||
+                User.IsSuperAdmin();
+        }
+        @if (showAccount)
+        {
+            <p class="menu-label">帳號管理</p>
+ 
+            @if (User.HasPermission("member_manage"))
+            {
+                會員管理 連結
+            }
+ 
+            @if (User.HasPermission("store_manage"))
+            {
+                店家管理 連結
+            }
+ 
+            @if (User.IsSuperAdmin())
+            {
+                登入紀錄 連結
+                管理員權限 連結
+            }
+        }
+ 
+------------------------------------------------------------
+STEP 8：ContentModeration 頁面內部細分（選做）
+------------------------------------------------------------
+ 
+[ ] 修改 ContentModeration Index.cshtml
+    - 工單 Tab / 功能區塊：
+        @if (User.HasPermission("ticket_manage"))
+        {
+            顯示客服工單區塊
+        }
+    - 敏感詞 Tab / 功能區塊：
+        @if (User.HasPermission("sensitive_manage"))
+        {
+            顯示敏感詞管理區塊
+        }
+ 
+------------------------------------------------------------
+STEP 9：Program.cs 確認設定
+------------------------------------------------------------
+ 
+[ ] 確認 Cookie 驗證已正確設定
+    - 位置：ISpanShop.MVC/Program.cs
+    - 檢查：
+ 
+        builder.Services.AddAuthentication(
+            CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.LoginPath       = "/Admin/Auth/Login";
+                options.AccessDeniedPath= "/Admin/Auth/AccessDenied";
+                options.ExpireTimeSpan  = TimeSpan.FromHours(8);
+            });
+ 
+        // Middleware 順序（必須在 UseAuthorization 之前）
+        app.UseAuthentication();
+        app.UseAuthorization();
+ 
+------------------------------------------------------------
+STEP 10：測試驗證
+------------------------------------------------------------
+ 
+[ ] 測試情境 1：超級管理員（LevelId = 1）
+    -> 所有選單項目都顯示
+    -> 所有頁面均可存取
+ 
+[ ] 測試情境 2：客服工單管理員
+    -> 選單只顯示「內容與客服」
+    -> 直接輸入 /Admin/Products 網址 -> 導向 AccessDenied
+ 
+[ ] 測試情境 3：財務管理員
+    -> 選單只顯示「訂單管理」、「金流管理」
+    -> 直接輸入 /Admin/Members 網址 -> 導向 AccessDenied
+ 
+[ ] 測試情境 4：經營分析（report_view only）
+    -> 選單只顯示「首頁」
+    -> 其他所有頁面均被擋下
+ 
+[ ] 測試情境 5：未登入
+    -> 直接輸入任意後台網址 -> 導向 Login
+ 
+------------------------------------------------------------
+PermissionKey 對應選單 速查表
+------------------------------------------------------------
+ 
+  PermissionKey      | 可見選單項目
+  -------------------|------------------------------------
+  product_manage     | 商品監管、分類管理
+  store_manage       | 庫存監控、店家管理
+  cashflow_manage    | 訂單管理、金流管理
+  ticket_manage      | 內容與客服（工單功能）
+  sensitive_manage   | 內容與客服（敏感詞功能）
+  member_manage      | 會員管理
+  report_view        | 首頁儀錶板
+  超級管理員專用      | 登入紀錄、管理員權限設定
+ 
+------------------------------------------------------------
+注意事項
+------------------------------------------------------------
+ 
+  * STEP 1~5 為基礎建設，必須先完成才能進行後續步驟
+  * STEP 6（Controller Attribute）是安全核心，
+    選單隱藏只是 UX，Controller 保護才是真正防線
+  * ContentModerationController 若工單與敏感詞在
+    同一個 Controller，建議在 Action 層個別套用 Attribute
+    而非整個 Controller 套用
+  * IsSuperAdmin() 判斷依賴 Claim "AdminLevelId" == "1"，
+    登入時務必確認此 Claim 有正確寫入
+  * 若未來新增管理員身分，只需在資料庫
+    AdminLevelPermissions 新增對應紀錄即可，
+    程式碼不需修改
+ 
+============================================================
+ 
