@@ -24,6 +24,7 @@ namespace ISpanShop.Repositories.Stores
 
             using (var conn = new SqlConnection(connectionString))
             {
+                // 優化：採用子查詢分別計算，提升對大表的查詢效能
                 string sql = @"
                     SELECT S.Id            AS StoreId,
                            S.UserId,
@@ -33,14 +34,9 @@ namespace ISpanShop.Repositories.Stores
                            S.IsVerified,
                            U.IsBlacklisted,
                            S.CreatedAt,
-                           COUNT(P.Id)     AS ProductCount
+                           (SELECT COUNT(*) FROM Products P WHERE P.StoreId = S.Id AND P.IsDeleted = 0) AS ProductCount
                     FROM   Stores S
                     JOIN   Users U   ON S.UserId = U.Id
-                    LEFT JOIN Products P ON P.StoreId = S.Id
-                                         AND P.IsDeleted = 0
-                    GROUP BY S.Id, S.UserId, U.Account, S.StoreName,
-                             S.Description, S.IsVerified,
-                             U.IsBlacklisted, S.CreatedAt
                     ORDER BY S.CreatedAt DESC";
 
                 using (var cmd = new SqlCommand(sql, conn))
@@ -84,18 +80,12 @@ namespace ISpanShop.Repositories.Stores
                            S.IsVerified,
                            U.IsBlacklisted,
                            S.CreatedAt,
-                           COUNT(P.Id)       AS ProductCount,
-                           SUM(CASE WHEN P.Status = 1
-                                    THEN 1 ELSE 0 END)   AS ActiveProductCount,
-                           ISNULL(SUM(P.TotalSales), 0)  AS TotalSales
+                           (SELECT COUNT(*) FROM Products P WHERE P.StoreId = S.Id AND P.IsDeleted = 0) AS ProductCount,
+                           (SELECT COUNT(*) FROM Products P WHERE P.StoreId = S.Id AND P.IsDeleted = 0 AND P.Status = 1) AS ActiveProductCount,
+                           ISNULL((SELECT SUM(TotalSales) FROM Products P WHERE P.StoreId = S.Id AND P.IsDeleted = 0), 0) AS TotalSales
                     FROM   Stores S
                     JOIN   Users U   ON S.UserId = U.Id
-                    LEFT JOIN Products P ON P.StoreId = S.Id
-                                         AND P.IsDeleted = 0
-                    WHERE  S.Id = @StoreId
-                    GROUP BY S.Id, S.UserId, U.Account, S.StoreName,
-                             S.Description, S.IsVerified,
-                             U.IsBlacklisted, S.CreatedAt";
+                    WHERE  S.Id = @StoreId";
 
                 using (var cmd = new SqlCommand(sql, conn))
                 {
@@ -116,8 +106,8 @@ namespace ISpanShop.Repositories.Stores
                                 IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
                                 CreatedAt = reader.IsDBNull("CreatedAt") ? (DateTime?)null : reader.GetDateTime("CreatedAt"),
                                 ProductCount = reader.GetInt32("ProductCount"),
-                                ActiveProductCount = reader.IsDBNull("ActiveProductCount") ? 0 : reader.GetInt32("ActiveProductCount"),
-                                TotalSales = reader.IsDBNull("TotalSales") ? 0 : reader.GetInt32("TotalSales")
+                                ActiveProductCount = reader.GetInt32("ActiveProductCount"),
+                                TotalSales = reader.GetInt32("TotalSales")
                             };
                         }
                     }
