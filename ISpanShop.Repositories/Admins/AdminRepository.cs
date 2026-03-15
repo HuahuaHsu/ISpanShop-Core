@@ -1044,5 +1044,64 @@ namespace ISpanShop.Repositories.Admins
 				throw new InvalidOperationException("重設管理員密碼失敗", ex);
 			}
 		}
+
+		public AdminPermissionDto GetAdminWithPermissions(int adminId)
+		{
+			AdminPermissionDto adminPermission = null;
+
+			try
+			{
+				using (SqlConnection conn = new SqlConnection(_connectionString))
+				{
+					conn.Open();
+					string query = @"
+						SELECT A.Id          AS AdminId,
+							   A.AdminLevelId AS LevelId,
+							   AL.LevelName,
+							   P.PermissionKey
+						FROM   Users A
+						JOIN   AdminLevels AL
+								   ON A.AdminLevelId = AL.Id
+						JOIN   AdminLevelPermissions ALP
+								   ON AL.Id = ALP.AdminLevelId
+						JOIN   Permissions P
+								   ON ALP.PermissionId = P.Id
+						WHERE  A.Id = @AdminId";
+
+					using (SqlCommand cmd = new SqlCommand(query, conn))
+					{
+						cmd.Parameters.AddWithValue("@AdminId", adminId);
+						using (SqlDataReader reader = cmd.ExecuteReader())
+						{
+							while (reader.Read())
+							{
+								if (adminPermission == null)
+								{
+									adminPermission = new AdminPermissionDto
+									{
+										AdminId = (int)reader["AdminId"],
+										LevelId = (int)reader["LevelId"],
+										LevelName = reader["LevelName"].ToString(),
+										PermissionKeys = new List<string>()
+									};
+								}
+
+								string permissionKey = reader["PermissionKey"]?.ToString();
+								if (!string.IsNullOrEmpty(permissionKey))
+								{
+									adminPermission.PermissionKeys.Add(permissionKey);
+								}
+							}
+						}
+					}
+				}
+			}
+			catch (SqlException ex)
+			{
+				throw new InvalidOperationException("取得管理員權限清單失敗", ex);
+			}
+
+			return adminPermission;
+		}
 	}
 }

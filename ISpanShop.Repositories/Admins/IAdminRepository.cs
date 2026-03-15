@@ -58,5 +58,7 @@ namespace ISpanShop.Repositories.Admins
 		/// <summary>重設密碼並強制下次登入修改</summary>
 		bool ResetPassword(int userId, string passwordHash);
 
+        /// <summary>取得管理員及其擁有的所有權限清單</summary>
+        AdminPermissionDto GetAdminWithPermissions(int adminId);
 	}
 }
