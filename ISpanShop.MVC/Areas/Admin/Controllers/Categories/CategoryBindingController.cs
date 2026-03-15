@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ISpanShop.MVC.Areas.Admin.Controllers;
+using ISpanShop.MVC.Middleware;
 using ISpanShop.Services.Products;
 using ISpanShop.Services.Categories;
 using ISpanShop.Services.Inventories;
@@ -7,6 +8,7 @@ using ISpanShop.Models.DTOs.Categories;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
 {
+    [RequirePermission("product_manage")]
     public class CategoryBindingController : AdminBaseController
     {
         private readonly CategorySpecService _specService;

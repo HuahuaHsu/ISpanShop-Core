@@ -1,6 +1,7 @@
 ﻿using ISpanShop.Common.Enums;
 using ISpanShop.Models.DTOs.Orders;
 using ISpanShop.MVC.Areas.Admin.Controllers;
+using ISpanShop.MVC.Middleware;
 using ISpanShop.MVC.Areas.Admin.Models.Orders;
 using ISpanShop.Services.Orders;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 {
+	[RequirePermission("cashflow_manage")]
 	public class OrdersController : AdminBaseController
 	{
 		private readonly IOrderService _orderService;

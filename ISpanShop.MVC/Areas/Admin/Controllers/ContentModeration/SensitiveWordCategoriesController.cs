@@ -6,11 +6,12 @@ using ISpanShop.Services.ContentModeration;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using ISpanShop.MVC.Middleware;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.ContentModeration
 {
     [Area("Admin")]
-
+    [RequirePermission("sensitive_manage")]
     public class SensitiveWordCategoriesController : Controller
     {
         private readonly ISpanShopDBContext _context;

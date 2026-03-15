@@ -1302,7 +1302,7 @@ STEP 1：建立 Permission Helper (ISpanShop.Common)
 STEP 2：定義資料傳輸物件 (ISpanShop.Models)
 ------------------------------------------------------------
  
-[ ] 確認 / 新增 AdminPermissionDto
+[V] 確認 / 新增 AdminPermissionDto
     - 位置：ISpanShop.Models/DTOs/Admins/AdminPermissionDto.cs
     - 用途：登入後從 DB 查詢該管理員所有權限
     - 內容：
@@ -1315,12 +1315,12 @@ STEP 2：定義資料傳輸物件 (ISpanShop.Models)
 STEP 3：資料存取層 (ISpanShop.Repositories)
 ------------------------------------------------------------
  
-[ ] 確認 / 新增 IAdminRepository（新增方法）
+[V] 確認 / 新增 IAdminRepository（新增方法）
     - 位置：ISpanShop.Repositories/Admins/IAdminRepository.cs
     - 新增方法：
         AdminPermissionDto? GetAdminWithPermissions(int adminId)
  
-[ ] 實作 GetAdminWithPermissions（ADO.NET）
+[V] 實作 GetAdminWithPermissions（ADO.NET）
     - 位置：ISpanShop.Repositories/Admins/AdminRepository.cs
  
     - SQL：
@@ -1346,7 +1346,7 @@ STEP 3：資料存取層 (ISpanShop.Repositories)
 STEP 4：登入時寫入 Claims (ISpanShop.MVC)
 ------------------------------------------------------------
  
-[ ] 修改登入 Action（AuthController 或 AccountController）
+[V] 修改登入 Action（AuthController 或 AccountController）
     - 位置：ISpanShop.MVC/Areas/Admin/Controllers/Auth/...
     - 登入成功後執行：
  
@@ -1387,7 +1387,7 @@ STEP 4：登入時寫入 Claims (ISpanShop.MVC)
 STEP 5：建立 RequirePermission Attribute (ISpanShop.MVC)
 ------------------------------------------------------------
  
-[ ] 新增 RequirePermissionAttribute
+[V] 新增 RequirePermissionAttribute
     - 位置：ISpanShop.MVC/Middleware/RequirePermissionAttribute.cs
     - 內容：
  
@@ -1426,12 +1426,12 @@ STEP 5：建立 RequirePermission Attribute (ISpanShop.MVC)
             }
         }
  
-[ ] 新增 RequireSuperAdmin Attribute（超級管理員專用）
+[V] 新增 RequireSuperAdmin Attribute（超級管理員專用）
     - 位置：ISpanShop.MVC/Middleware/RequireSuperAdminAttribute.cs
     - 用途：管理員權限設定、登入紀錄等頁面
     - 內容（同上，改用 IsSuperAdmin() 判斷）
  
-[ ] 新增 AccessDenied Action
+[V] 新增 AccessDenied Action
     - 位置：Auth Controller
     - 回傳：403 提示頁面或 View
  

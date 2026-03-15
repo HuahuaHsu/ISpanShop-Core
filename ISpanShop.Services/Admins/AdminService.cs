@@ -384,7 +384,10 @@ public class AdminService : IAdminService
 		{
 			return (false, $"發生錯誤: {ex.Message}");
 		}
-	}
+		}
 
-
-}
+		public AdminPermissionDto GetAdminWithPermissions(int adminId)
+		{
+		return _adminRepository.GetAdminWithPermissions(adminId);
+		}
+		}

@@ -8,11 +8,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using ISpanShop.Models.EfModels;
+using ISpanShop.MVC.Middleware;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 {
 	[Area("Admin")]
 	[Route("Admin/Members")]
+	[RequirePermission("member_manage")]
 	public class MemberController : Controller
 	{
 		private readonly IMemberService _memberService;

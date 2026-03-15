@@ -2,11 +2,13 @@ using ISpanShop.Models.EfModels;
 using ISpanShop.MVC.Areas.Admin.Models.Members;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ISpanShop.MVC.Middleware;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 {
     [Area("Admin")]
     [Route("Admin/Admins")]
+    [RequireSuperAdmin]
     public class AdminsController : Controller
     {
         private readonly ISpanShopDBContext _context;

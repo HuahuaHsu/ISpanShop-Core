@@ -9,13 +9,16 @@ using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Services.Products;
 using ISpanShop.MVC.Areas.Admin.Models.Products;
 using Microsoft.AspNetCore.Http;
+using ISpanShop.MVC.Middleware;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
 {
+    [RequirePermission("product_manage")]
     /// <summary>
-    /// 商品管理控制器 - 提供 MVC 後台商品管理功能
+    /// 商品監管控制器 - 處理後台商品審核、下架等管理功能
     /// </summary>
     public class ProductsController : AdminBaseController
+
     {
         private readonly IProductService _productService;
         private readonly IWebHostEnvironment _env;

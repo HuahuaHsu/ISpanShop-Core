@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ISpanShop.MVC.Areas.Admin.Controllers;
+using ISpanShop.MVC.Middleware;
 using ISpanShop.Models.DTOs.Inventories;
 using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Services.Products;
@@ -7,6 +8,7 @@ using ISpanShop.Services.Inventories;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Inventories
 {
+    [RequirePermission("store_manage")]
     public class InventoryController : AdminBaseController
     {
         private readonly IInventoryService _inventoryService;

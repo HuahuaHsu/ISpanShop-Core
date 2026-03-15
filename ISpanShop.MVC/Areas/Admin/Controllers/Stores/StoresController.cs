@@ -1,10 +1,13 @@
 using ISpanShop.MVC.Areas.Admin.Models.Stores;
 using ISpanShop.Services.Stores;
 using Microsoft.AspNetCore.Mvc;
+using ISpanShop.MVC.Areas.Admin.Controllers;
+using ISpanShop.MVC.Middleware;
 using System.Linq;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Stores
 {
+    [RequirePermission("store_manage")]
     public class StoresController : AdminBaseController
     {
         private readonly IStoreService _storeService;

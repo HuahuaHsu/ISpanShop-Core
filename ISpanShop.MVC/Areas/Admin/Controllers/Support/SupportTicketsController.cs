@@ -4,11 +4,12 @@ using ISpanShop.Services.Support;
 using ISpanShop.MVC.Areas.Admin.Models.Support;
 using System.Threading.Tasks;
 using System.Linq;
+using ISpanShop.MVC.Middleware;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Support
 {
 	[Area("Admin")]
-
+	[RequirePermission("ticket_manage")]
 	public class SupportTicketsController : Controller
 	{
 		private readonly ISupportTicketService _service;

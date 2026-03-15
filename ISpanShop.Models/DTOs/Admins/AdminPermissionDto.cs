@@ -2,8 +2,8 @@ using System.Collections.Generic;
 
 namespace ISpanShop.Models.DTOs.Admins
 {
-    public class AdminPermissionDto
-    {
+    public class AdminLoginClaimsDto
+	{
         public int AdminId { get; set; }
         public int LevelId { get; set; }
         public string LevelName { get; set; }

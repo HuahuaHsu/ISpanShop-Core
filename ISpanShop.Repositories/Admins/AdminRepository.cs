@@ -1045,9 +1045,9 @@ namespace ISpanShop.Repositories.Admins
 			}
 		}
 
-		public AdminPermissionDto GetAdminWithPermissions(int adminId)
+		public AdminLoginClaimsDto GetAdminWithPermissions(int adminId)
 		{
-			AdminPermissionDto adminPermission = null;
+			AdminLoginClaimsDto adminPermission = null;
 
 			try
 			{
@@ -1055,18 +1055,18 @@ namespace ISpanShop.Repositories.Admins
 				{
 					conn.Open();
 					string query = @"
-						SELECT A.Id          AS AdminId,
-							   A.AdminLevelId AS LevelId,
-							   AL.LevelName,
-							   P.PermissionKey
-						FROM   Users A
-						JOIN   AdminLevels AL
-								   ON A.AdminLevelId = AL.Id
-						JOIN   AdminLevelPermissions ALP
-								   ON AL.Id = ALP.AdminLevelId
-						JOIN   Permissions P
-								   ON ALP.PermissionId = P.Id
-						WHERE  A.Id = @AdminId";
+                SELECT A.Id          AS AdminId,
+                       A.AdminLevelId AS LevelId,
+                       AL.LevelName,
+                       P.PermissionKey
+                FROM   Users A
+                JOIN   AdminLevels AL
+                           ON A.AdminLevelId = AL.Id
+                JOIN   AdminLevelPermissions ALP
+                           ON AL.Id = ALP.AdminLevelId
+                JOIN   Permissions P
+                           ON ALP.PermissionId = P.Id
+                WHERE  A.Id = @AdminId";
 
 					using (SqlCommand cmd = new SqlCommand(query, conn))
 					{
@@ -1077,7 +1077,7 @@ namespace ISpanShop.Repositories.Admins
 							{
 								if (adminPermission == null)
 								{
-									adminPermission = new AdminPermissionDto
+									adminPermission = new AdminLoginClaimsDto  // ← 這行
 									{
 										AdminId = (int)reader["AdminId"],
 										LevelId = (int)reader["LevelId"],
@@ -1102,6 +1102,11 @@ namespace ISpanShop.Repositories.Admins
 			}
 
 			return adminPermission;
+		}
+
+		AdminPermissionDto IAdminRepository.GetAdminWithPermissions(int adminId)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

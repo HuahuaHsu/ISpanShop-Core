@@ -6,14 +6,14 @@ using ISpanShop.Services.Orders;
 using Microsoft.AspNetCore.Mvc;
 using ISpanShop.Repositories.Orders;
 using Microsoft.EntityFrameworkCore;
+using ISpanShop.MVC.Middleware;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Payments
 {
-	[Area("Admin")]
-
-	public class PaymentManagementController : Controller
-	{
-		private readonly CheckoutService _checkoutService;
+        [Area("Admin")]
+        [RequirePermission("cashflow_manage")]
+        public class PaymentManagementController : Controller
+        {		private readonly CheckoutService _checkoutService;
 		// 1. 新增這行：宣告資料庫上下文
 		private readonly ISpanShopDBContext _context;
 

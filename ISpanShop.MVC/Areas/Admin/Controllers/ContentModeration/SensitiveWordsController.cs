@@ -6,11 +6,12 @@ using ISpanShop.Repositories.ContentModeration;
 using ISpanShop.Services.ContentModeration;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using ISpanShop.MVC.Middleware;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.ContentModeration
 {
 	[Area("Admin")]
-
+	[RequirePermission("sensitive_manage")]
 	public class SensitiveWordsController : Controller
 	{
 		private readonly ISensitiveWordService _service;

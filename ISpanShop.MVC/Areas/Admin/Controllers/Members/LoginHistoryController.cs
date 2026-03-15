@@ -3,13 +3,15 @@ using ISpanShop.Models.DTOs.Common;
 using ISpanShop.MVC.Areas.Admin.Models.Admins;
 using ISpanShop.Services.Members;
 using Microsoft.AspNetCore.Mvc;
+using ISpanShop.MVC.Middleware;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 {
 	/// <summary>
-	/// 登入紀錄管理 Controller - 處理登入紀錄的後台管理
+	/// ?擗???Controller - ???擗??綽潸?
 	/// </summary>
 	[Area("Admin")]
+	[RequireSuperAdmin]
 	public class LoginHistoryController : Controller
 	{
 		private readonly ILoginHistoryService _loginHistoryService;

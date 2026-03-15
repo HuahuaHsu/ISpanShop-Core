@@ -29,5 +29,8 @@ namespace ISpanShop.Services.Admins
 		(bool IsSuccess, string Message) ChangePassword(AdminChangePasswordDto dto);
 		bool UpdateAdminRole(int adminId, int roleId, int currentAdminId);
 		string GetNextAccount();
+
+        /// <summary>取得管理員及其擁有的所有權限清單</summary>
+        AdminPermissionDto GetAdminWithPermissions(int adminId);
 	}
 }

@@ -73,15 +73,29 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers
             }
             else
             {
-                // 完整 Claims
+                // 1. 查詢該管理員的所有權限
+                var adminPerm = _adminService.GetAdminWithPermissions(admin.UserId);
+
+                // 2. 組裝完整 Claims
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.NameIdentifier, admin.UserId.ToString()),
                     new Claim(ClaimTypes.Name, admin.Account),
                     new Claim(ClaimTypes.Role, admin.RoleName),
                     new Claim("AdminLevelId", admin.AdminLevelId?.ToString() ?? ""),
+                    new Claim("LevelName", adminPerm?.LevelName ?? ""),
                     new Claim("userid", admin.UserId.ToString()) // 為了與現有程式碼相容
                 };
+
+                // 3. 將每個 PermissionKey 加入 Claims
+                if (adminPerm?.PermissionKeys != null)
+                {
+                    foreach (var key in adminPerm.PermissionKeys)
+                    {
+                        claims.Add(new Claim("Permission", key));
+                    }
+                }
+
                 var claimsIdentity = new ClaimsIdentity(claims, "AdminCookieAuth");
 				// 根據 RememberMe 決定 Cookie 是否持久化
 				var authProperties = new AuthenticationProperties

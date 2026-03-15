@@ -6,10 +6,12 @@ using ISpanShop.Services.Categories;
 using ISpanShop.Services.Inventories;
 using Microsoft.AspNetCore.Mvc;
 using ISpanShop.MVC.Areas.Admin.Controllers;
+using ISpanShop.MVC.Middleware;
 using System.Collections.Generic;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
 {
+    [RequirePermission("product_manage")]
     public class CategorySpecsController : AdminBaseController
     {
         private readonly CategorySpecService _categorySpecService;
