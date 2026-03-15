@@ -1098,7 +1098,7 @@
                                 value: {
                                     offsetY: 10,
                                     fontSize: '32px',
-                                    color: data.growthRate >= 0 ? '#696cff' : '#ff3e1d',
+                                    color: data.growthRate >= 0 ? '#ff3e1d' : '#71dd37',
                                     fontWeight: 'bold',
                                     formatter: () => (data.growthRate > 0 ? '+' : '') + data.growthRate + '%'
                                 }
@@ -1111,7 +1111,7 @@
                             shade: 'dark',
                             type: 'horizontal',
                             shadeIntensity: 0.5,
-                            gradientToColors: [data.growthRate >= 0 ? '#71dd37' : '#ffab00'],
+                            gradientToColors: [data.growthRate >= 0 ? '#ffab00' : '#03c3ec'], // 成長用紅橘漸層，衰退用綠藍漸層
                             inverseColors: true,
                             opacityFrom: 1,
                             opacityTo: 1,
@@ -1121,7 +1121,7 @@
                     stroke: { 
                         lineCap: 'round'
                     },
-                    colors: [data.growthRate >= 0 ? '#696cff' : '#ff3e1d'],
+                    colors: [data.growthRate >= 0 ? '#ff3e1d' : '#71dd37'], // 成長紅 / 衰退綠
                     labels: ['Growth']
                 };
 
@@ -1144,41 +1144,39 @@
             $.get(`/Orders/GetGrowthBridgeData?year1=${y1}&year2=${y2}&storeId=${storeId}`, function(data) {
                 if (!data || data.length === 0) return;
 
-                // 1. 數據排序：從增長最多到衰退最多
+                // 1. 計算總量與排序
+                const totalYear2Revenue = data.reduce((sum, item) => sum + (item.v2 || 0), 0) || 1;
+                const totalDelta = data.reduce((sum, item) => sum + item.y, 0);
+                
+                // 數據排序：從增長最多到衰退最多
                 data.sort((a, b) => b.y - a.y);
 
-                // 2. 計算總體變動百分比
-                const totalYear2Revenue = data.reduce((sum, item) => sum + (item.v2 || 0), 0) || 1;
-                
+                // 2. 準備數據 (僅保留各類別變動)
                 const seriesData = data.map(item => {
                     const contributionPercent = (item.y / totalYear2Revenue) * 100;
                     return {
                         x: item.x,
-                        y: contributionPercent,
-                        rawAmount: item.y,
-                        color: item.y >= 0 ? '#71dd37' : '#ff3e1d'
+                        y: item.y,
+                        percent: contributionPercent,
+                        color: item.y >= 0 ? '#ff3e1d' : '#71dd37' // 台灣股市：成長紅 / 衰退綠
                     };
                 });
 
-                // 3. 計算 X 軸範圍，確保置中 (對稱)
-                const maxPercent = Math.max(...seriesData.map(d => Math.abs(d.y)));
-                const limit = Math.ceil(maxPercent / 5) * 5 + 5;
-
                 const options = {
                     series: [{
-                        name: '成長貢獻度',
+                        name: '營收變動',
                         data: seriesData
                     }],
                     chart: {
                         type: 'bar',
-                        height: Math.max(450, data.length * 45),
+                        height: 450,
                         toolbar: { show: false },
                         fontFamily: 'Public Sans, -apple-system, sans-serif'
                     },
                     plotOptions: {
                         bar: {
-                            horizontal: true,
-                            barHeight: '75%',
+                            horizontal: false,
+                            columnWidth: '60%',
                             distributed: true,
                             borderRadius: 4,
                             dataLabels: { position: 'top' }
@@ -1187,48 +1185,34 @@
                     colors: seriesData.map(d => d.color),
                     dataLabels: {
                         enabled: true,
-                        textAnchor: 'start',
+                        formatter: function(val) {
+                            return (val > 0 ? '+' : '') + '$' + Math.abs(Math.round(val)).toLocaleString();
+                        },
                         style: {
-                            fontSize: '12px',
-                            fontWeight: '700',
+                            fontSize: '11px',
+                            fontWeight: '600',
                             colors: ['#566a7f']
                         },
-                        formatter: function(val) {
-                            return (val > 0 ? '+' : '') + val.toFixed(1) + '%';
-                        },
-                        offsetX: 10
+                        offsetY: -20
                     },
                     xaxis: {
-                        type: 'numeric',
-                        min: -limit,
-                        max: limit,
-                        tickAmount: 10,
+                        type: 'category',
                         labels: {
-                            formatter: function(val) {
-                                return (val > 0 ? '+' : '') + Math.round(val) + '%';
-                            }
+                            rotate: -45,
+                            style: { fontSize: '12px' }
                         }
                     },
                     yaxis: {
                         labels: {
-                            style: {
-                                fontSize: '13px',
-                                fontWeight: '600'
-                            }
+                            formatter: function(val) {
+                                return (val > 0 ? '+' : '') + '$' + Math.round(val).toLocaleString();
+                            },
+                            style: { fontSize: '11px' }
                         }
                     },
                     grid: {
-                        xaxis: { lines: { show: true } },
-                        yaxis: { lines: { show: false } },
-                        padding: { right: 80 }
-                    },
-                    annotations: {
-                        xaxis: [{
-                            x: 0,
-                            borderColor: '#8592a3',
-                            strokeDashArray: 0,
-                            borderWidth: 2
-                        }]
+                        xaxis: { lines: { show: false } },
+                        yaxis: { lines: { show: true } }
                     },
                     legend: { show: false },
                     tooltip: {
@@ -1236,21 +1220,29 @@
                         intersect: false,
                         y: {
                             formatter: function(val, { dataPointIndex, w }) {
-                                const raw = w.config.series[0].data[dataPointIndex].rawAmount;
+                                // 由於 shared: true，val 會是當前點的數值
+                                const item = w.config.series[0].data[dataPointIndex];
+                                if (!item) return '';
                                 const label = val >= 0 ? '營收增加 ' : '營收減少 ';
-                                return `貢獻度 ${val.toFixed(2)}% | ${label} $${Math.abs(raw).toLocaleString()}`;
+                                return `${label} $${Math.abs(val).toLocaleString()} (${item.percent.toFixed(2)}%)`;
                             }
                         }
+                    },
+                    annotations: {
+                        yaxis: [{
+                            y: 0,
+                            borderColor: '#8592a3',
+                            strokeDashArray: 0,
+                            borderWidth: 1
+                        }]
                     }
                 };
 
-                // 更新標題旁的總淨額
-                const totalDelta = data.reduce((sum, item) => sum + item.y, 0);
+                // 更新標題旁的總淨額標籤 (保留邏輯)
                 const totalGrowthPercent = (totalDelta / totalYear2Revenue) * 100;
                 const totalText = (totalDelta >= 0 ? '總體成長 ' : '總體衰退 ') + totalGrowthPercent.toFixed(1) + '% ($' + Math.abs(totalDelta).toLocaleString() + ')';
-                const totalBadgeClass = totalDelta >= 0 ? 'bg-label-success' : 'bg-label-danger';
+                const totalBadgeClass = totalDelta >= 0 ? 'bg-label-danger' : 'bg-label-success';
                 
-                // 先移除舊的，再插入新的到正確的 ID 後面
                 $('#bridgeTotalBadge').remove();
                 $('#growthBridgeYearLabel').after(`<span class="badge ${totalBadgeClass} ms-2 fw-bold" id="bridgeTotalBadge">${totalText}</span>`);
 

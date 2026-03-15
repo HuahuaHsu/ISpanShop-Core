@@ -20,9 +20,14 @@ namespace ISpanShop.Models.Seeding
             var role = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Member") 
                        ?? await context.Roles.FirstOrDefaultAsync();
             
+            // 排除特定分類：男士腕錶(15), 汽車(27), 女士腕錶(32), 3C電子(假設常見 ID 為 17, 18, 或參考 SQL 排除邏輯)
+            // 根據 SQL 邏輯，排除 15, 17, 18, 27, 32
+            var excludedCategoryIds = new List<int> { 15, 17, 18, 27, 32 };
+
             // 抓取更多商品以增加類別多樣性 (隨機取 200 個變體)
             var products = await context.ProductVariants
                 .Include(pv => pv.Product)
+                .Where(pv => !excludedCategoryIds.Contains(pv.Product.CategoryId))
                 .OrderBy(x => Guid.NewGuid()) 
                 .Take(200)
                 .ToListAsync();
@@ -38,7 +43,7 @@ namespace ISpanShop.Models.Seeding
                 {
                     RoleId = role.Id,
                     Account = "mock_user_" + Guid.NewGuid().ToString("N").Substring(0, 8),
-                    Password = "password_hash",
+                    Password = "password123", // 使用與 SQL 一致的預設密碼
                     Email = $"mock_{i}_{Guid.NewGuid().ToString("N").Substring(0, 4)}@example.com",
                     IsConfirmed = true,
                     IsBlacklisted = false,
@@ -68,9 +73,12 @@ namespace ISpanShop.Models.Seeding
                     // 如果已完成，設定完成時間 (1-5 天後)
                     DateTime? completedAt = status == 3 ? paymentDate.AddDays(_random.Next(1, 6)).AddHours(_random.Next(0, 24)) : null;
 
+                    // 訂單號格式：yyyyMMddHHmmss + 4位 UserId
+                    var orderNumber = createdAt.ToString("yyyyMMddHHmmss") + user.Id.ToString().PadLeft(4, '0');
+
                     var order = new Order
                     {
-                        OrderNumber = "MOCK" + DateTime.Now.Ticks.ToString().Substring(10) + _random.Next(100, 999),
+                        OrderNumber = orderNumber,
                         UserId = user.Id,
                         StoreId = store.Id,
                         Status = status,
@@ -78,7 +86,7 @@ namespace ISpanShop.Models.Seeding
                         PaymentDate = paymentDate,
                         CompletedAt = completedAt,
                         RecipientName = user.Account,
-                        RecipientPhone = "0912345678",
+                        RecipientPhone = "09" + _random.Next(10000000, 99999999),
                         RecipientAddress = "台北市模擬路123號",
                         FinalAmount = 0 // 待會計算
                     };
