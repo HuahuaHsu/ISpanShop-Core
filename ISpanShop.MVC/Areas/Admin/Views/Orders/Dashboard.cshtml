@@ -237,7 +237,7 @@
     <div class="col-12 col-xl-8 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 fw-bold">月營收額趨勢圖 (最近12個月)</h5>
+                <h5 class="card-title mb-0 fw-bold">月營收額趨勢圖 (最近12個月) <span id="trendTotalBadge"></span></h5>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="btn btn-label-secondary" onclick="toggleTrendChartType('line')"><i class="bx bx-line-chart"></i></button>
                     <button type="button" class="btn btn-label-secondary" onclick="toggleTrendChartType('bar')"><i class="bx bx-bar-chart-alt-2"></i></button>
@@ -531,6 +531,13 @@
             $.get(`/Orders/GetMonthlyTrend?storeId=${storeId}`, function(data) {
                 if (!data || !data.series || !data.labels) return;
                 
+                // 計算 12 個月總營收
+                const trendRawData = data.series[0].data;
+                const total12MonthRevenue = trendRawData.reduce((a, b) => a + b, 0);
+                
+                // 更新標題旁的總額標籤
+                $('#trendTotalBadge').html(`<span class="badge bg-label-primary ms-2">12個月總計: $${total12MonthRevenue.toLocaleString()}</span>`);
+
                 const options = {
                     series: data.series,
                     chart: { 
@@ -540,10 +547,41 @@
                         fontFamily: 'Public Sans, -apple-system, sans-serif'
                     },
                     stroke: { curve: 'straight', width: 4 },
+                    plotOptions: {
+                        bar: {
+                            borderRadius: 4,
+                            columnWidth: '60%',
+                            dataLabels: { position: 'top' } // 確保長條圖標籤在頂部
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function(val) {
+                            if (total12MonthRevenue === 0) return '0%';
+                            const percent = ((val / total12MonthRevenue) * 100).toFixed(1);
+                            return percent + '%';
+                        },
+                        offsetY: -20, // 增加偏移量，從 -10 改為 -20，推高標籤
+                        style: {
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            colors: ['#696cff']
+                        },
+                        background: {
+                            enabled: true,
+                            foreColor: '#696cff',
+                            padding: 4,
+                            borderRadius: 2,
+                            borderWidth: 1,
+                            borderColor: '#696cff',
+                            opacity: 0.1,
+                            dropShadow: { enabled: false }
+                        }
+                    },
                     colors: [palette[0]],
                     grid: { 
                         borderColor: '#f1f1f1',
-                        padding: { bottom: 15 }
+                        padding: { bottom: 15, top: 10 }
                     },
                     xaxis: {
                         categories: data.labels,
