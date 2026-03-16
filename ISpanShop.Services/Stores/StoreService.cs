@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using ISpanShop.Models.DTOs.Stores;
 using ISpanShop.Repositories.Stores;
+using ISpanShop.Common.Helpers;
 
 namespace ISpanShop.Services.Stores
 {
-    public class StoreService : IStoreService
+
+     public class StoreService : IStoreService
     {
         private readonly IStoreRepository _storeRepository;
 
@@ -17,6 +19,7 @@ namespace ISpanShop.Services.Stores
             string? keyword,
             string verifyStatus,
             string blockStatus,
+            int? storeStatusFilter,
             string sortColumn,
             string sortDirection,
             int page,
@@ -24,8 +27,16 @@ namespace ISpanShop.Services.Stores
             out int totalCount
         )
         {
-            return _storeRepository.GetAllStores(
-                keyword, verifyStatus, blockStatus, sortColumn, sortDirection, page, pageSize, out totalCount);
+            var stores = _storeRepository.GetAllStores(
+                keyword, verifyStatus, blockStatus, storeStatusFilter, sortColumn, sortDirection, page, pageSize, out totalCount);
+
+            foreach (var store in stores)
+            {
+                store.StoreStatusName = StoreStatusHelper.GetDisplayName(store.StoreStatus);
+                store.StoreStatusBadge = StoreStatusHelper.GetBadgeClass(store.StoreStatus);
+            }
+
+            return stores;
         }
 
         public (int Total, int Verified, int Blocked) GetStoreStats()
@@ -35,7 +46,13 @@ namespace ISpanShop.Services.Stores
 
         public StoreDetailDto? GetStoreById(int storeId)
         {
-            return _storeRepository.GetStoreById(storeId);
+            var store = _storeRepository.GetStoreById(storeId);
+            if (store != null)
+            {
+                store.StoreStatusName = StoreStatusHelper.GetDisplayName(store.StoreStatus);
+                store.StoreStatusBadge = StoreStatusHelper.GetBadgeClass(store.StoreStatus);
+            }
+            return store;
         }
 
         public (bool IsSuccess, string Message) ToggleVerified(int storeId, bool isVerified)
@@ -47,18 +64,20 @@ namespace ISpanShop.Services.Stores
             return (true, msg);
         }
 
-        public (bool IsSuccess, string Message) ToggleBlacklist(int storeId, bool isBlacklisted)
+        public (bool IsSuccess, string Message) UpdateStoreStatus(int storeId, int status)
         {
-            // 1. 取得店家詳細資訊以獲得 UserId
-            var store = _storeRepository.GetStoreById(storeId);
-            if (store == null) return (false, "找不到該店家");
+            // 1. 確認 storeStatus 在 1~3 之間
+            if (status < 1 || status > 3) return (false, "無效的狀態值");
 
-            // 2. 呼叫 Repository 更新 User 表
-            var result = _storeRepository.ToggleBlacklist(store.UserId, isBlacklisted);
-            if (!result) return (false, "操作失敗");
+            var result = _storeRepository.UpdateStoreStatus(storeId, status);
+            if (!result) return (false, "更新失敗");
 
-            string msg = isBlacklisted ? "已封鎖店家" : "已解除封鎖";
-            return (true, msg);
+            return (true, $"狀態已更新為{StoreStatusHelper.GetDisplayName(status)}");
         }
-    }
+
+		public (bool IsSuccess, string Message) ToggleBlacklist(int storeId, bool isBlacklisted)
+		{
+			throw new NotImplementedException();
+		}
+	}
 }

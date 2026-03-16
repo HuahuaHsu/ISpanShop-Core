@@ -12,6 +12,7 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Stores
         public string? Keyword { get; set; }         // 店家名稱 / 店主帳號
         public string? VerifyStatus { get; set; }    // "all" / "verified" / "unverified"
         public string? BlockStatus { get; set; }     // "all" / "normal" / "blocked"
+        public int? StoreStatusFilter { get; set; }  // null = 全部, 1 / 2 / 3
 
         // ── 排序 ──
         public string SortColumn { get; set; } = "CreatedAt";

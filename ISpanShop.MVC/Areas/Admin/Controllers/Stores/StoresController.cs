@@ -20,11 +20,12 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Stores
 
         // GET: Admin/Stores
         public IActionResult Index(string? keyword, string verifyStatus = "all", string blockStatus = "all",
+                                 int? storeStatusFilter = null,
                                  string sortColumn = "CreatedAt", string sortDirection = "desc",
                                  int page = 1, int pageSize = 20)
         {
             var stores = _storeService.GetAllStores(
-                keyword, verifyStatus, blockStatus, sortColumn, sortDirection, page, pageSize, out int totalCount).ToList();
+                keyword, verifyStatus, blockStatus, storeStatusFilter, sortColumn, sortDirection, page, pageSize, out int totalCount).ToList();
 
             var stats = _storeService.GetStoreStats();
 
@@ -34,6 +35,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Stores
                 Keyword = keyword,
                 VerifyStatus = verifyStatus,
                 BlockStatus = blockStatus,
+                StoreStatusFilter = storeStatusFilter,
                 SortColumn = sortColumn,
                 SortDirection = sortDirection,
                 TotalCount = totalCount,
@@ -80,6 +82,15 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Stores
         public IActionResult ToggleBlacklist(int storeId, bool isBlacklisted)
         {
             var result = _storeService.ToggleBlacklist(storeId, isBlacklisted);
+            TempData["Message"] = result.Message;
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UpdateStoreStatus(int storeId, int status)
+        {
+            var result = _storeService.UpdateStoreStatus(storeId, status);
             TempData["Message"] = result.Message;
             return RedirectToAction(nameof(Index));
         }

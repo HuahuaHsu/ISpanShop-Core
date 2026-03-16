@@ -2007,14 +2007,14 @@ STEP 1：Common 層新增狀態列舉
 STEP 2：更新 DTO (ISpanShop.Models)
 ------------------------------------------------------------
 
-[ ] 更新 StoreDto
+[V] 更新 StoreDto
     - 位置：ISpanShop.Models/DTOs/Stores/StoreDtos.cs
     - 新增欄位：
         int     StoreStatus          // 原始數值（1/2/3）
         string  StoreStatusName      // 顯示名稱（由 Service 層轉換）
         string  StoreStatusBadge     // Badge CSS class（由 Service 層轉換）
 
-[ ] 更新 StoreDetailDto
+[V] 更新 StoreDetailDto
     - 位置：ISpanShop.Models/DTOs/Stores/StoreDtos.cs
     - 新增相同三個欄位：
         int     StoreStatus
@@ -2025,7 +2025,7 @@ STEP 2：更新 DTO (ISpanShop.Models)
 STEP 3：更新資料存取層 (ISpanShop.Repositories)
 ------------------------------------------------------------
 
-[ ] 更新 SQL GetAllStores
+[V] 更新 SQL GetAllStores
     - 位置：ISpanShop.Repositories/Stores/StoreRepository.cs
     - 在 SELECT 新增欄位：
         S.StoreStatus
@@ -2044,10 +2044,10 @@ STEP 3：更新資料存取層 (ISpanShop.Repositories)
         FROM   Stores S
         ...
 
-[ ] 更新 SQL GetStoreById
+[V] 更新 SQL GetStoreById
     - 同樣在 SELECT 新增 S.StoreStatus
 
-[ ] 更新 DataReader 對應
+[V] 更新 DataReader 對應
     - 在讀取 StoreDto 時新增：
         StoreStatus = reader.GetInt32("StoreStatus")
         （StoreStatusName / StoreStatusBadge 由 Service 層填入）
@@ -2056,7 +2056,7 @@ STEP 3：更新資料存取層 (ISpanShop.Repositories)
 STEP 4：更新商務邏輯層 (ISpanShop.Services)
 ------------------------------------------------------------
 
-[ ] 更新 StoreService
+[V] 更新 StoreService
     - 位置：ISpanShop.Services/Stores/StoreService.cs
     - 在 GetAllStores 與 GetStoreById 取得資料後
       統一補入顯示欄位：
@@ -2071,13 +2071,13 @@ STEP 4：更新商務邏輯層 (ISpanShop.Services)
 STEP 5：更新展示層 (ISpanShop.MVC)
 ------------------------------------------------------------
 
-[ ] 更新 StoreIndexVm 搜尋條件（新增狀態篩選）
+[V] 更新 StoreIndexVm 搜尋條件（新增狀態篩選）
     - 位置：ISpanShop.MVC/Areas/Admin/Models/Stores/StoreIndexVm.cs
     - 原本：VerifyStatus / BlockStatus
     - 新增：
         int?  StoreStatusFilter    // null = 全部, 1 / 2 / 3
 
-[ ] 更新 Index.cshtml 搜尋表單
+[V] 更新 Index.cshtml 搜尋表單
     - 新增狀態篩選下拉選單：
 
         <select name="storeStatusFilter" class="form-select">
@@ -2093,7 +2093,7 @@ STEP 5：更新展示層 (ISpanShop.MVC)
             </option>
         </select>
 
-[ ] 更新 Index.cshtml 表格欄位
+[V] 更新 Index.cshtml 表格欄位
     - 原本的「封鎖狀態」欄位旁邊新增「營業狀態」欄位：
 
         表頭：
@@ -2106,7 +2106,7 @@ STEP 5：更新展示層 (ISpanShop.MVC)
             </span>
         </td>
 
-[ ] 更新 _EditPartial.cshtml
+[V] 更新 _EditPartial.cshtml
     - 位置：ISpanShop.MVC/Areas/Admin/Views/Stores/_EditPartial.cshtml
     - 唯讀資訊區塊新增營業狀態顯示：
 

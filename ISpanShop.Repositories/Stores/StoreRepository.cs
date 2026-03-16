@@ -21,6 +21,7 @@ namespace ISpanShop.Repositories.Stores
             string? keyword,
             string verifyStatus,
             string blockStatus,
+            int? storeStatusFilter,
             string sortColumn,
             string sortDirection,
             int page,
@@ -47,7 +48,8 @@ namespace ISpanShop.Repositories.Stores
                            OR (@VerifyStatus = 'unverified' AND S.IsVerified = 0))
                       AND (@BlockStatus = 'all'
                            OR (@BlockStatus = 'normal'  AND U.IsBlacklisted = 0)
-                           OR (@BlockStatus = 'blocked' AND U.IsBlacklisted = 1))";
+                           OR (@BlockStatus = 'blocked' AND U.IsBlacklisted = 1))
+                      AND (@StoreStatusFilter IS NULL OR S.StoreStatus = @StoreStatusFilter)";
 
                 string countSql = $@"
                     SELECT COUNT(DISTINCT S.Id)
@@ -60,6 +62,7 @@ namespace ISpanShop.Repositories.Stores
                     cmdCount.Parameters.AddWithValue("@Keyword", (object)keyword ?? DBNull.Value);
                     cmdCount.Parameters.AddWithValue("@VerifyStatus", verifyStatus);
                     cmdCount.Parameters.AddWithValue("@BlockStatus", blockStatus);
+                    cmdCount.Parameters.AddWithValue("@StoreStatusFilter", (object)storeStatusFilter ?? DBNull.Value);
                     totalCount = (int)cmdCount.ExecuteScalar();
                 }
 
@@ -92,6 +95,7 @@ namespace ISpanShop.Repositories.Stores
                     cmd.Parameters.AddWithValue("@Keyword", (object)keyword ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@VerifyStatus", verifyStatus);
                     cmd.Parameters.AddWithValue("@BlockStatus", blockStatus);
+                    cmd.Parameters.AddWithValue("@StoreStatusFilter", (object)storeStatusFilter ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@SortColumn", sortColumn);
                     cmd.Parameters.AddWithValue("@SortDirection", sortDirection);
                     cmd.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
@@ -103,17 +107,19 @@ namespace ISpanShop.Repositories.Stores
                         {
                             result.Add(new StoreDto
                             {
-                                StoreId = reader.GetInt32("StoreId"),
-                                UserId = reader.GetInt32("UserId"),
-                                OwnerAccount = reader.GetString("OwnerAccount"),
-                                StoreName = reader.GetString("StoreName"),
-                                Description = reader.IsDBNull("Description") ? null : reader.GetString("Description"),
-                                IsVerified = reader.GetBoolean("IsVerified"),
-                                IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
-                                StoreStatus = reader.GetInt32("StoreStatus"),
-                                CreatedAt = reader.IsDBNull("CreatedAt") ? (DateTime?)null : reader.GetDateTime("CreatedAt"),
-                                ProductCount = reader.GetInt32("ProductCount")
-                            });
+								StoreId = reader.GetInt32("StoreId"),
+								UserId = reader.GetInt32("UserId"),
+								OwnerAccount = reader.GetString("OwnerAccount"),
+								StoreName = reader.GetString("StoreName"),
+								Description = reader.IsDBNull("Description")
+					? null : reader.GetString("Description"),
+								IsVerified = reader.GetBoolean("IsVerified"),
+								IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
+								StoreStatus = Convert.ToInt32(reader["StoreStatus"]), 
+								CreatedAt = reader.IsDBNull("CreatedAt")
+					? (DateTime?)null : reader.GetDateTime("CreatedAt"),
+								ProductCount = Convert.ToInt32(reader["ProductCount"])
+							});
                         }
                     }
                 }
@@ -184,19 +190,21 @@ namespace ISpanShop.Repositories.Stores
                         {
                             return new StoreDetailDto
                             {
-                                StoreId = reader.GetInt32("StoreId"),
-                                UserId = reader.GetInt32("UserId"),
-                                OwnerAccount = reader.GetString("OwnerAccount"),
-                                StoreName = reader.GetString("StoreName"),
-                                Description = reader.IsDBNull("Description") ? null : reader.GetString("Description"),
-                                IsVerified = reader.GetBoolean("IsVerified"),
-                                IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
-                                StoreStatus = reader.GetInt32("StoreStatus"),
-                                CreatedAt = reader.IsDBNull("CreatedAt") ? (DateTime?)null : reader.GetDateTime("CreatedAt"),
-                                ProductCount = reader.GetInt32("ProductCount"),
-                                ActiveProductCount = reader.GetInt32("ActiveProductCount"),
-                                TotalSales = reader.GetInt32("TotalSales")
-                            };
+								StoreId = reader.GetInt32("StoreId"),
+								UserId = reader.GetInt32("UserId"),
+								OwnerAccount = reader.GetString("OwnerAccount"),
+								StoreName = reader.GetString("StoreName"),
+								Description = reader.IsDBNull("Description")
+						 ? null : reader.GetString("Description"),
+								IsVerified = reader.GetBoolean("IsVerified"),
+								IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
+								StoreStatus = Convert.ToInt32(reader["StoreStatus"]),        
+								CreatedAt = reader.IsDBNull("CreatedAt")
+						 ? (DateTime?)null : reader.GetDateTime("CreatedAt"),
+								ProductCount = Convert.ToInt32(reader["ProductCount"]),       
+								ActiveProductCount = Convert.ToInt32(reader["ActiveProductCount"]), 
+								TotalSales = Convert.ToInt32(reader["TotalSales"])          
+							};
                         }
                     }
                 }
@@ -225,26 +233,30 @@ namespace ISpanShop.Repositories.Stores
             }
         }
 
-        public bool ToggleBlacklist(int userId, bool isBlacklisted)
+        public bool UpdateStoreStatus(int storeId, int status)
         {
             var connectionString = _context.Database.GetDbConnection().ConnectionString;
 
             using (var conn = new SqlConnection(connectionString))
             {
                 string sql = @"
-                    UPDATE Users
-                    SET    IsBlacklisted = @IsBlacklisted,
-                           UpdatedAt = GETDATE()
-                    WHERE  Id = @UserId";
+                    UPDATE Stores
+                    SET    StoreStatus = @StoreStatus
+                    WHERE  Id = @StoreId";
 
                 using (var cmd = new SqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@IsBlacklisted", isBlacklisted);
-                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@StoreStatus", status);
+                    cmd.Parameters.AddWithValue("@StoreId", storeId);
                     conn.Open();
                     return cmd.ExecuteNonQuery() > 0;
                 }
             }
         }
-    }
+
+		public bool ToggleBlacklist(int userId, bool isBlacklisted)
+		{
+			throw new NotImplementedException();
+		}
+	}
 }

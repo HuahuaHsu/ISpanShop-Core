@@ -9,6 +9,7 @@ namespace ISpanShop.Services.Stores
             string? keyword,
             string verifyStatus,
             string blockStatus,
+            int? storeStatusFilter,
             string sortColumn,
             string sortDirection,
             int page,
@@ -19,5 +20,6 @@ namespace ISpanShop.Services.Stores
         StoreDetailDto? GetStoreById(int storeId);
         (bool IsSuccess, string Message) ToggleVerified(int storeId, bool isVerified);
         (bool IsSuccess, string Message) ToggleBlacklist(int storeId, bool isBlacklisted);
+        (bool IsSuccess, string Message) UpdateStoreStatus(int storeId, int status);
     }
 }

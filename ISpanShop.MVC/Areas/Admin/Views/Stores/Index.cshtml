@@ -226,6 +226,15 @@
                                     <option value="blocked" selected="@(Model.BlockStatus == "blocked")">已封鎖</option>
                                 </select>
                             </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">營業狀態</label>
+                                <select name="storeStatusFilter" class="form-select">
+                                    <option value="">所有狀態</option>
+                                    <option value="1" selected="@(Model.StoreStatusFilter == 1)">營業中</option>
+                                    <option value="2" selected="@(Model.StoreStatusFilter == 2)">休假中</option>
+                                    <option value="3" selected="@(Model.StoreStatusFilter == 3)">停權</option>
+                                </select>
+                            </div>
                             <div class="col-md-2 d-flex align-items-end gap-2">
                                 <button type="submit" class="btn btn-primary flex-fill">
                                     <i class="bx bx-search me-1"></i>搜尋
@@ -294,9 +303,10 @@
                                         @if (Model.SortColumn == "ProductCount") { <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i> }
                                     </a>
                                 </th>
-                                <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;">狀態</th>
+                                <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;">審核/封鎖</th>
+                                <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;">營業狀態</th>
                                 <th style="color:#64748b;font-weight:600;font-size:0.813rem;text-transform:uppercase;">
-                                    <a href="@Url.Action("Index", new { keyword = Model.Keyword, verifyStatus = Model.VerifyStatus, blockStatus = Model.BlockStatus, sortColumn = "CreatedAt", sortDirection = (Model.SortColumn == "CreatedAt" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-decoration-none text-muted">
+                                    <a href="@Url.Action("Index", new { keyword = Model.Keyword, verifyStatus = Model.VerifyStatus, blockStatus = Model.BlockStatus, storeStatusFilter = Model.StoreStatusFilter, sortColumn = "CreatedAt", sortDirection = (Model.SortColumn == "CreatedAt" && Model.SortDirection == "asc" ? "desc" : "asc") })" class="text-decoration-none text-muted">
                                         建立時間
                                         @if (Model.SortColumn == "CreatedAt") { <i class="bx bx-sort-@(Model.SortDirection == "asc" ? "up" : "down")"></i> }
                                     </a>
@@ -320,6 +330,11 @@
                                             @if (store.IsBlacklisted) { <span class="badge badge-soft bg-label-danger" style="width:fit-content">已封鎖</span> }
                                             else { <span class="badge badge-soft bg-label-secondary" style="width:fit-content">正常</span> }
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge @store.StoreStatusBadge">
+                                            @store.StoreStatusName
+                                        </span>
                                     </td>
                                     <td class="small text-muted">@store.CreatedAt?.ToString("yyyy/MM/dd HH:mm")</td>
                                     <td class="text-end">
