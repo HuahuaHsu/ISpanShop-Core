@@ -72,6 +72,7 @@ namespace ISpanShop.Repositories.Stores
                            S.Description,
                            S.IsVerified,
                            U.IsBlacklisted,
+                           S.StoreStatus,
                            S.CreatedAt,
                            (SELECT COUNT(*) FROM Products P WHERE P.StoreId = S.Id AND P.IsDeleted = 0) AS ProductCount
                     FROM   Stores S
@@ -109,6 +110,7 @@ namespace ISpanShop.Repositories.Stores
                                 Description = reader.IsDBNull("Description") ? null : reader.GetString("Description"),
                                 IsVerified = reader.GetBoolean("IsVerified"),
                                 IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
+                                StoreStatus = reader.GetInt32("StoreStatus"),
                                 CreatedAt = reader.IsDBNull("CreatedAt") ? (DateTime?)null : reader.GetDateTime("CreatedAt"),
                                 ProductCount = reader.GetInt32("ProductCount")
                             });
@@ -163,6 +165,7 @@ namespace ISpanShop.Repositories.Stores
                            S.Description,
                            S.IsVerified,
                            U.IsBlacklisted,
+                           S.StoreStatus,
                            S.CreatedAt,
                            (SELECT COUNT(*) FROM Products P WHERE P.StoreId = S.Id AND P.IsDeleted = 0) AS ProductCount,
                            (SELECT COUNT(*) FROM Products P WHERE P.StoreId = S.Id AND P.IsDeleted = 0 AND P.Status = 1) AS ActiveProductCount,
@@ -188,6 +191,7 @@ namespace ISpanShop.Repositories.Stores
                                 Description = reader.IsDBNull("Description") ? null : reader.GetString("Description"),
                                 IsVerified = reader.GetBoolean("IsVerified"),
                                 IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
+                                StoreStatus = reader.GetInt32("StoreStatus"),
                                 CreatedAt = reader.IsDBNull("CreatedAt") ? (DateTime?)null : reader.GetDateTime("CreatedAt"),
                                 ProductCount = reader.GetInt32("ProductCount"),
                                 ActiveProductCount = reader.GetInt32("ActiveProductCount"),
