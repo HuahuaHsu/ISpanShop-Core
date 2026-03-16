@@ -134,10 +134,11 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
 
             // 統計摘要卡片（全站，不受篩選影響）
             var counts = await _productService.GetProductStatusCountsAsync();
-            ViewBag.CountTotal      = counts.Total;
-            ViewBag.CountPublished  = counts.Published;
-            ViewBag.CountUnpublished= counts.Unpublished;
-            ViewBag.CountPending    = counts.Pending;
+            ViewBag.CountTotal          = counts.Total;
+            ViewBag.CountPublished      = counts.Published;
+            ViewBag.CountUnpublished    = counts.Unpublished;
+            ViewBag.CountPending        = counts.Pending;
+            ViewBag.CountForcedOffShelf = counts.ForcedOffShelf;
 
             return View(pagedVm);
         }
@@ -145,7 +146,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// <summary>
         /// 待審核商品列表
         /// </summary>
-        public async Task<IActionResult> PendingReview(int pendingPage = 1, int rejectedPage = 1, int approvedPage = 1)
+        public async Task<IActionResult> PendingReview(int pendingPage = 1, int reApplyPage = 1, int rejectedPage = 1, int approvedPage = 1)
         {
             const int pageSize = 10;
 
@@ -192,6 +193,34 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                 rejectedPaged.TotalCount, rejectedPage, pageSize);
 
             ViewBag.RejectedPage = rejectedPage;
+
+            // 重新申請審核 (ReviewStatus == 3)
+            var reApplyPaged = await _productService.GetReApplyProductsPagedAsync(reApplyPage, pageSize);
+            ViewBag.ReApplyRecords = PagedResult<ProductReviewListVm>.Create(
+                reApplyPaged.Data.Select(dto => new ProductReviewListVm
+                {
+                    Id                  = dto.Id,
+                    StoreId             = dto.StoreId,
+                    StoreName           = dto.StoreName,
+                    CategoryName        = dto.CategoryName,
+                    BrandName           = dto.BrandName ?? string.Empty,
+                    Name                = dto.Name,
+                    Description         = dto.Description,
+                    Status              = dto.Status,
+                    ReviewStatus        = dto.ReviewStatus,
+                    ReviewedBy          = dto.ReviewedBy,
+                    ReviewDate          = dto.ReviewDate,
+                    RejectReason        = dto.RejectReason,
+                    ForceOffShelfReason = dto.ForceOffShelfReason,
+                    ForceOffShelfDate   = dto.ForceOffShelfDate,
+                    ForceOffShelfBy     = dto.ForceOffShelfBy,
+                    ReApplyDate         = dto.ReApplyDate,
+                    CreatedAt           = dto.CreatedAt,
+                    UpdatedAt           = dto.UpdatedAt,
+                    MainImageUrl        = dto.MainImageUrl
+                }).ToList(),
+                reApplyPaged.TotalCount, reApplyPage, pageSize);
+            ViewBag.ReApplyPage = reApplyPage;
 
             // 近期審核通過（24 小時內 ReviewStatus == 1）分頁
             var approvedPaged = await _productService.GetRecentlyApprovedPagedAsync(approvedPage, pageSize, 24);
@@ -428,7 +457,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         }
 
         /// <summary>
-        /// [AJAX] 管理員強制下架商品（違規處理）
+        /// [AJAX] 管理員強制下架商品（違規處理，Status→4）
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> ForceUnpublish([FromBody] RejectDto dto)
@@ -437,8 +466,92 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                 return Json(new { success = false, message = "無效的請求資料。" });
             try
             {
-                await _productService.ForceUnpublishAsync(dto.Id, dto.Reason);
+                var adminBy = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : (int?)null;
+                await _productService.ForceUnpublishAsync(dto.Id, dto.Reason, adminBy);
                 return Json(new { success = true, message = "商品已強制下架。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 批次強制下架
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> BatchForceOffShelf([FromBody] BatchRejectDto dto)
+        {
+            if (dto == null || dto.Ids == null || dto.Ids.Count == 0)
+                return Json(new { success = false, message = "請至少選擇一筆商品。" });
+            if (string.IsNullOrWhiteSpace(dto.Reason))
+                return Json(new { success = false, message = "下架原因不可為空。" });
+            try
+            {
+                var adminBy = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid2) ? uid2 : (int?)null;
+                int count = await _productService.BatchForceOffShelfAsync(dto.Ids, dto.Reason, adminBy);
+                return Json(new { success = true, message = $"成功強制下架 {count} 筆商品。", count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 賣家申請重新上架（ReviewStatus→3）
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> ReApply([FromBody] RejectDto dto)
+        {
+            if (dto == null || dto.Id <= 0)
+                return Json(new { success = false, message = "無效的請求資料。" });
+            try
+            {
+                await _productService.ReApplyAsync(dto.Id);
+                return Json(new { success = true, message = "已申請重新上架，等待管理員審核。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 管理員核准強制下架商品重新上架
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> ApproveForcedProduct([FromBody] RejectDto dto)
+        {
+            if (dto == null || dto.Id <= 0)
+                return Json(new { success = false, message = "無效的請求資料。" });
+            try
+            {
+                var adminId = User.Identity?.Name ?? "Admin";
+                await _productService.ApproveForcedProductAsync(dto.Id, adminId);
+                return Json(new { success = true, message = "商品已核准重新上架。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 管理員駁回重新申請
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> RejectForcedProduct([FromBody] RejectDto dto)
+        {
+            if (dto == null || dto.Id <= 0)
+                return Json(new { success = false, message = "無效的請求資料。" });
+            if (string.IsNullOrWhiteSpace(dto.Reason))
+                return Json(new { success = false, message = "駁回原因不可為空。" });
+            try
+            {
+                var adminId = User.Identity?.Name ?? "Admin";
+                await _productService.RejectForcedProductAsync(dto.Id, adminId, dto.Reason);
+                return Json(new { success = true, message = "重新申請已駁回。" });
             }
             catch (Exception ex)
             {
@@ -537,25 +650,29 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
 
             var vm = new ProductDetailVm
             {
-                Id                 = productDto.Id,
-                Name               = productDto.Name,
-                StoreName          = productDto.StoreName,
-                CategoryName       = productDto.CategoryName,
-                BrandName          = productDto.BrandName,
-                Description        = productDto.Description,
-                Status             = productDto.Status,
-                MinPrice           = productDto.MinPrice,
-                MaxPrice           = productDto.MaxPrice,
-                TotalSales         = productDto.TotalSales,
-                ViewCount          = productDto.ViewCount,
-                RejectReason       = productDto.RejectReason,
-                SpecDefinitionJson = productDto.SpecDefinitionJson,
-                CreatedAt          = productDto.CreatedAt,
-                UpdatedAt          = productDto.UpdatedAt,
-                ReviewStatus       = productDto.ReviewStatus,
-                ReviewedBy         = productDto.ReviewedBy,
-                ReviewDate         = productDto.ReviewDate,
-                Images             = productDto.Images,
+                Id                  = productDto.Id,
+                Name                = productDto.Name,
+                StoreName           = productDto.StoreName,
+                CategoryName        = productDto.CategoryName,
+                BrandName           = productDto.BrandName,
+                Description         = productDto.Description,
+                Status              = productDto.Status,
+                MinPrice            = productDto.MinPrice,
+                MaxPrice            = productDto.MaxPrice,
+                TotalSales          = productDto.TotalSales,
+                ViewCount           = productDto.ViewCount,
+                RejectReason        = productDto.RejectReason,
+                SpecDefinitionJson  = productDto.SpecDefinitionJson,
+                CreatedAt           = productDto.CreatedAt,
+                UpdatedAt           = productDto.UpdatedAt,
+                ReviewStatus        = productDto.ReviewStatus,
+                ReviewedBy          = productDto.ReviewedBy,
+                ReviewDate          = productDto.ReviewDate,
+                ForceOffShelfReason = productDto.ForceOffShelfReason,
+                ForceOffShelfDate   = productDto.ForceOffShelfDate,
+                ForceOffShelfBy     = productDto.ForceOffShelfBy,
+                ReApplyDate         = productDto.ReApplyDate,
+                Images              = productDto.Images,
                 Variants = productDto.Variants.Select(v => new ProductVariantDetailVm
                 {
                     Id            = v.Id,

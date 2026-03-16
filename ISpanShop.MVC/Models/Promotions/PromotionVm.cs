@@ -183,6 +183,10 @@ namespace ISpanShop.MVC.Models.Promotions
         public bool CanEdit   => Status == 0 || (Status == 1 && DateTime.Now < StartTime);
         public bool IsActiveOnly => Status == 1 && DateTime.Now >= StartTime && DateTime.Now <= EndTime;
 
+        // 銷售成效（進行中或已結束才填入，其他狀態為 null）
+        public PromotionSalesStatsVm? SalesStats { get; set; }
+        public bool ShowSalesStats => SalesStats != null;
+
         public double ProgressPercent
         {
             get
@@ -245,6 +249,17 @@ namespace ISpanShop.MVC.Models.Promotions
         public string  ImageUrl     { get; set; } = "";
     }
 
+    // ────────────────────────────────
+    // 銷售成效統計（進行中 / 已結束才有值）
+    // ────────────────────────────────
+    public class PromotionSalesStatsVm
+    {
+        public int     OrderCount       { get; set; }   // 參與訂單數
+        public int?    TotalSoldQty     { get; set; }   // 總銷售數量（滿額折扣類型不適用 → null）
+        public decimal TotalSalesAmount { get; set; }   // 活動商品總銷售金額
+        public decimal TotalDiscount    { get; set; }   // 優惠總折抵金額
+    }
+
     // ── 內部靜態 store 結構（模擬資料庫）──
     public class PromotionStoredVm
     {
@@ -263,5 +278,11 @@ namespace ISpanShop.MVC.Models.Promotions
         public bool     IsDeleted     { get; set; }
         public List<PromotionItemDetailVm> Items { get; set; } = new();
         public List<PromotionRuleDetailVm> Rules { get; set; } = new();
+
+        // Mock 銷售資料：訂單數（所有類型通用）
+        public int     MockOrderCount { get; set; }
+        // Mock 銷售資料：滿額折扣（Type 2）專用，無法從商品維度算
+        public decimal MockTotalSalesAmount { get; set; }
+        public decimal MockTotalDiscount    { get; set; }
     }
 }

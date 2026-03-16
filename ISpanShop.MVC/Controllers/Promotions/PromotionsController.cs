@@ -9,7 +9,7 @@ namespace ISpanShop.MVC.Controllers.Promotions
         // ===================================================================
         // Mock 資料（靜態，跨 request 持久）
         // ===================================================================
-        private static int _nextId = 9;
+        private static int _nextId = 16;
 
         private static readonly List<MockSellerVm> _sellers = new()
         {
@@ -22,16 +22,26 @@ namespace ISpanShop.MVC.Controllers.Promotions
 
         private static readonly List<MockProductVm> _products = new()
         {
-            new() { Id = 1,  Name = "iPhone 15 Pro 128GB",       Price = 38900, CategoryName = "手機",     ImageUrl = "https://via.placeholder.com/60" },
-            new() { Id = 2,  Name = "Samsung Galaxy S24",         Price = 32900, CategoryName = "手機",     ImageUrl = "https://via.placeholder.com/60" },
-            new() { Id = 3,  Name = "AirPods Pro 第二代",          Price = 7490,  CategoryName = "耳機",     ImageUrl = "https://via.placeholder.com/60" },
-            new() { Id = 4,  Name = "MacBook Air M2",             Price = 37900, CategoryName = "筆電",     ImageUrl = "https://via.placeholder.com/60" },
-            new() { Id = 5,  Name = "Sony WH-1000XM5",           Price = 10900, CategoryName = "耳機",     ImageUrl = "https://via.placeholder.com/60" },
-            new() { Id = 6,  Name = "Apple Watch Series 9",      Price = 12900, CategoryName = "智慧手錶", ImageUrl = "https://via.placeholder.com/60" },
-            new() { Id = 7,  Name = "Nintendo Switch OLED",      Price = 10980, CategoryName = "遊戲主機", ImageUrl = "https://via.placeholder.com/60" },
-            new() { Id = 8,  Name = "Dyson V15 吸塵器",            Price = 23900, CategoryName = "家電",     ImageUrl = "https://via.placeholder.com/60" },
-            new() { Id = 9,  Name = "LEGO 星際大戰套組",            Price = 4990,  CategoryName = "玩具",     ImageUrl = "https://via.placeholder.com/60" },
-            new() { Id = 10, Name = "Bose QuietComfort 45",      Price = 9990,  CategoryName = "耳機",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 1,  Name = "iPhone 15 Pro 128GB",         Price = 38900, CategoryName = "手機",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 2,  Name = "Samsung Galaxy S24",           Price = 32900, CategoryName = "手機",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 3,  Name = "AirPods Pro 第二代",            Price = 7490,  CategoryName = "耳機",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 4,  Name = "MacBook Air M2",               Price = 37900, CategoryName = "筆電",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 5,  Name = "Sony WH-1000XM5",             Price = 10900, CategoryName = "耳機",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 6,  Name = "Apple Watch Series 9",        Price = 12900, CategoryName = "智慧手錶", ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 7,  Name = "Nintendo Switch OLED",        Price = 10980, CategoryName = "遊戲主機", ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 8,  Name = "Dyson V15 吸塵器",              Price = 23900, CategoryName = "家電",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 9,  Name = "LEGO 星際大戰套組",              Price = 4990,  CategoryName = "玩具",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 10, Name = "Bose QuietComfort 45",        Price = 9990,  CategoryName = "耳機",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 11, Name = "Sony A7 IV 全片幅相機",          Price = 74900, CategoryName = "相機",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 12, Name = "iPad Pro 12.9\" M2",           Price = 39900, CategoryName = "平板",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 13, Name = "Dell 27\" 4K 顯示器",           Price = 18900, CategoryName = "顯示器",   ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 14, Name = "羅技 MX Keys 無線鍵盤",           Price = 4290,  CategoryName = "鍵盤",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 15, Name = "羅技 MX Master 3S 滑鼠",         Price = 3290,  CategoryName = "滑鼠",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 16, Name = "ASUS RT-AX88U 路由器",           Price = 8990,  CategoryName = "網路設備", ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 17, Name = "Anker 20000mAh 行動電源",        Price = 1990,  CategoryName = "行動電源", ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 18, Name = "Sony BRAVIA 65\" 4K 智慧電視",    Price = 49900, CategoryName = "家電",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 19, Name = "Ecovacs DEEBOT X2 掃地機器人",    Price = 29900, CategoryName = "家電",     ImageUrl = "https://via.placeholder.com/60" },
+            new() { Id = 20, Name = "JBL Charge 5 藍牙喇叭",          Price = 5490,  CategoryName = "音響",     ImageUrl = "https://via.placeholder.com/60" },
         };
 
         private static readonly List<PromotionStoredVm> _store = new()
@@ -48,6 +58,7 @@ namespace ISpanShop.MVC.Controllers.Promotions
                 StartTime = DateTime.Now.AddDays(-2), EndTime = DateTime.Now.AddDays(5),
                 Status = 1, SellerId = 3, SellerName = "數位精品館",
                 CreatedAt = DateTime.Now.AddDays(-5),
+                MockOrderCount = 38,
                 Items = new()
                 {
                     new() { ProductId = 3, ProductName = "AirPods Pro 第二代", OriginalPrice = 7490, DiscountPrice = 6490, SoldCount = 25 },
@@ -59,6 +70,7 @@ namespace ISpanShop.MVC.Controllers.Promotions
                 StartTime = DateTime.Now.AddDays(-3), EndTime = DateTime.Now.AddDays(4),
                 Status = 1, SellerId = 4, SellerName = "家電特賣城",
                 CreatedAt = DateTime.Now.AddDays(-7),
+                MockOrderCount = 62, MockTotalSalesAmount = 186400m, MockTotalDiscount = 25400m,
                 Rules = new()
                 {
                     new() { RuleType = 1, Threshold = 1000, DiscountType = 1, DiscountValue = 100 },
@@ -93,6 +105,7 @@ namespace ISpanShop.MVC.Controllers.Promotions
                 StartTime = DateTime.Now.AddDays(-20), EndTime = DateTime.Now.AddDays(-10),
                 Status = 3, SellerId = 1, SellerName = "Apple 台灣授權店",
                 CreatedAt = DateTime.Now.AddDays(-25),
+                MockOrderCount = 15,
                 Items = new() { new() { ProductId = 4, ProductName = "MacBook Air M2", OriginalPrice = 37900, DiscountPrice = 34900, SoldCount = 15 } }
             },
             new() {
@@ -101,6 +114,62 @@ namespace ISpanShop.MVC.Controllers.Promotions
                 Status = 1, SellerId = 1, SellerName = "Apple 台灣授權店",
                 CreatedAt = DateTime.Now.AddDays(-1),
                 Items = new() { new() { ProductId = 6, ProductName = "Apple Watch Series 9", OriginalPrice = 12900, DiscountPrice = 11900, QuantityLimit = 3, StockLimit = 100 } }
+            },
+            new() {
+                Id = 9, Name = "Samsung 旗艦機新春特賣", PromotionType = 1,
+                StartTime = DateTime.Now.AddDays(-1), EndTime = DateTime.Now.AddDays(6),
+                Status = 0, SellerId = 2, SellerName = "Samsung 官方旗艦店",
+                CreatedAt = DateTime.Now.AddHours(-3),
+                Items = new() { new() { ProductId = 2, ProductName = "Samsung Galaxy S24", OriginalPrice = 32900, DiscountPrice = 29900 } }
+            },
+            new() {
+                Id = 10, Name = "遊戲主機週年慶限量搶購", PromotionType = 3,
+                StartTime = DateTime.Now.AddDays(4), EndTime = DateTime.Now.AddDays(7),
+                Status = 0, SellerId = 5, SellerName = "遊戲天堂",
+                CreatedAt = DateTime.Now.AddHours(-12),
+                Items = new() { new() { ProductId = 7, ProductName = "Nintendo Switch OLED", OriginalPrice = 10980, DiscountPrice = 9480, QuantityLimit = 1, StockLimit = 30 } }
+            },
+            new() {
+                Id = 11, Name = "家電換季清倉滿額折", PromotionType = 2,
+                StartTime = DateTime.Now.AddDays(-5), EndTime = DateTime.Now.AddDays(2),
+                Status = 1, SellerId = 4, SellerName = "家電特賣城",
+                CreatedAt = DateTime.Now.AddDays(-8),
+                MockOrderCount = 41, MockTotalSalesAmount = 124300m, MockTotalDiscount = 16200m,
+                Rules = new()
+                {
+                    new() { RuleType = 1, Threshold = 2000, DiscountType = 1, DiscountValue = 200 },
+                    new() { RuleType = 1, Threshold = 5000, DiscountType = 1, DiscountValue = 600 },
+                }
+            },
+            new() {
+                Id = 12, Name = "MacBook 教育專案特惠", PromotionType = 1,
+                StartTime = DateTime.Now.AddDays(-30), EndTime = DateTime.Now.AddDays(-15),
+                Status = 3, SellerId = 1, SellerName = "Apple 台灣授權店",
+                CreatedAt = DateTime.Now.AddDays(-35),
+                MockOrderCount = 22,
+                Items = new() { new() { ProductId = 4, ProductName = "MacBook Air M2", OriginalPrice = 37900, DiscountPrice = 35400, SoldCount = 22 } }
+            },
+            new() {
+                Id = 13, Name = "索尼耳機品牌節", PromotionType = 1,
+                StartTime = DateTime.Now.AddDays(7), EndTime = DateTime.Now.AddDays(14),
+                Status = 1, SellerId = 3, SellerName = "數位精品館",
+                CreatedAt = DateTime.Now.AddDays(-2),
+                Items = new() { new() { ProductId = 5, ProductName = "Sony WH-1000XM5", OriginalPrice = 10900, DiscountPrice = 9800 } }
+            },
+            new() {
+                Id = 14, Name = "超值周邊配件節（已拒絕）", PromotionType = 2,
+                StartTime = DateTime.Now.AddDays(2), EndTime = DateTime.Now.AddDays(9),
+                Status = 2, SellerId = 4, SellerName = "家電特賣城",
+                CreatedAt = DateTime.Now.AddDays(-4), ReviewedAt = DateTime.Now.AddDays(-2),
+                RejectReason = "折扣門檻設定不合理，滿 100 元折 200 元不符規範",
+                Rules = new() { new() { RuleType = 1, Threshold = 100, DiscountType = 1, DiscountValue = 200 } }
+            },
+            new() {
+                Id = 15, Name = "電競設備大促（待審）", PromotionType = 1,
+                StartTime = DateTime.Now.AddDays(3), EndTime = DateTime.Now.AddDays(10),
+                Status = 0, SellerId = 5, SellerName = "遊戲天堂",
+                CreatedAt = DateTime.Now.AddMinutes(-30),
+                Items = new() { new() { ProductId = 7, ProductName = "Nintendo Switch OLED", OriginalPrice = 10980, DiscountPrice = 10480 } }
             },
         };
 
@@ -369,7 +438,8 @@ namespace ISpanShop.MVC.Controllers.Promotions
                 SellerViolations    = seller?.ViolationCount  ?? 0,
                 SellerTotalPromos   = seller?.TotalPromotions ?? 0,
                 Items               = promo.Items,
-                Rules               = promo.Rules
+                Rules               = promo.Rules,
+                SalesStats          = BuildSalesStats(promo)
             };
 
             return View(vm);
@@ -403,7 +473,8 @@ namespace ISpanShop.MVC.Controllers.Promotions
                 SellerViolations    = seller?.ViolationCount  ?? 0,
                 SellerTotalPromos   = seller?.TotalPromotions ?? 0,
                 Items               = promo.Items,
-                Rules               = promo.Rules
+                Rules               = promo.Rules,
+                SalesStats          = BuildSalesStats(promo)
             };
 
             return PartialView("_PromotionDetailsPartial", vm);
@@ -465,10 +536,10 @@ namespace ISpanShop.MVC.Controllers.Promotions
         }
 
         // ===================================================================
-        // SearchProducts GET (AJAX — 商品選擇 Modal 用)
+        // SearchProducts GET (AJAX — 商品選擇 Modal 用，支援分頁)
         // ===================================================================
         [HttpGet("SearchProducts")]
-        public IActionResult SearchProducts(string? keyword)
+        public IActionResult SearchProducts(string? keyword, int page = 1, int pageSize = 5)
         {
             var query = _products.AsQueryable();
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -476,12 +547,56 @@ namespace ISpanShop.MVC.Controllers.Promotions
                     p.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
                     p.CategoryName.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 
-            return Json(query.Select(p => new { p.Id, p.Name, p.Price, p.CategoryName, p.ImageUrl }));
+            int totalCount = query.Count();
+            int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var items = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new { p.Id, p.Name, p.Price, p.CategoryName, p.ImageUrl })
+                .ToList();
+
+            return Json(new { items, totalCount, totalPages, currentPage = page });
         }
 
         // ===================================================================
         // 輔助
         // ===================================================================
+
+        /// <summary>
+        /// 計算銷售成效統計，僅「進行中」和「已結束」才回傳，其他狀態回傳 null。
+        /// </summary>
+        private static PromotionSalesStatsVm? BuildSalesStats(PromotionStoredVm promo)
+        {
+            var now       = DateTime.Now;
+            bool isActive = promo.Status == 1 && promo.StartTime <= now && promo.EndTime >= now;
+            bool isEnded  = promo.Status == 3 || (promo.Status == 1 && promo.EndTime < now);
+            if (!isActive && !isEnded) return null;
+
+            if (promo.PromotionType == 2)
+            {
+                // 滿額折扣：商品維度無法加總，使用 Mock 整體資料
+                return new PromotionSalesStatsVm
+                {
+                    OrderCount       = promo.MockOrderCount,
+                    TotalSoldQty     = null,   // 不適用
+                    TotalSalesAmount = promo.MockTotalSalesAmount,
+                    TotalDiscount    = promo.MockTotalDiscount
+                };
+            }
+
+            // 限時特賣 / 限量搶購：從商品 SoldCount 加總
+            int     totalQty  = promo.Items.Sum(i => i.SoldCount);
+            decimal totalAmt  = promo.Items.Sum(i => i.SoldCount * (i.DiscountPrice ?? i.OriginalPrice));
+            decimal totalDisc = promo.Items.Sum(i => i.SoldCount * (i.OriginalPrice - (i.DiscountPrice ?? i.OriginalPrice)));
+            return new PromotionSalesStatsVm
+            {
+                OrderCount       = promo.MockOrderCount,
+                TotalSoldQty     = totalQty,
+                TotalSalesAmount = totalAmt,
+                TotalDiscount    = totalDisc
+            };
+        }
+
         private IActionResult AjaxOrRedirect(bool isAjax, bool success, string message, string? redirectUrl)
         {
             if (isAjax) return Json(new { success, message });

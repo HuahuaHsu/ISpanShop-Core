@@ -240,9 +240,13 @@ namespace ISpanShop.Services.Products
                 SpecDefinitionJson = product.SpecDefinitionJson,
                 CreatedAt          = product.CreatedAt,
                 UpdatedAt          = product.UpdatedAt,
-                ReviewStatus       = product.ReviewStatus,
-                ReviewedBy         = product.ReviewedBy,
-                ReviewDate         = product.ReviewDate,
+                ReviewStatus        = product.ReviewStatus,
+                ReviewedBy          = product.ReviewedBy,
+                ReviewDate          = product.ReviewDate,
+                ForceOffShelfReason = product.ForceOffShelfReason,
+                ForceOffShelfDate   = product.ForceOffShelfDate,
+                ForceOffShelfBy     = product.ForceOffShelfBy,
+                ReApplyDate         = product.ReApplyDate,
                 Images = product.ProductImages?
                     .OrderBy(img => img.SortOrder)
                     .Select(img => img.ImageUrl)
@@ -365,12 +369,38 @@ namespace ISpanShop.Services.Products
             => await _productRepository.ResetToPendingAsync(productId);
 
         /// <inheritdoc/>
-        public async Task<(int Total, int Published, int Unpublished, int Pending)> GetProductStatusCountsAsync()
+        public async Task<(int Total, int Published, int Unpublished, int Pending, int ForcedOffShelf)> GetProductStatusCountsAsync()
             => await _productRepository.GetStatusCountsAsync();
 
         /// <inheritdoc/>
-        public async Task ForceUnpublishAsync(int id, string? reason)
-            => await _productRepository.ForceUnpublishAsync(id, reason);
+        public async Task ForceUnpublishAsync(int id, string? reason, int? adminBy)
+            => await _productRepository.ForceUnpublishAsync(id, reason, adminBy);
+
+        /// <inheritdoc/>
+        public async Task<int> BatchForceOffShelfAsync(List<int> ids, string? reason, int? adminBy)
+        {
+            if (ids == null || ids.Count == 0) return 0;
+            return await _productRepository.BatchForceOffShelfAsync(ids, reason, adminBy);
+        }
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductReviewDto>> GetReApplyProductsPagedAsync(int page, int pageSize)
+        {
+            var (items, total) = await _productRepository.GetReApplyProductsPagedAsync(page, pageSize);
+            return PagedResult<ProductReviewDto>.Create(items.ToList(), total, page, pageSize);
+        }
+
+        /// <inheritdoc/>
+        public async Task ReApplyAsync(int id)
+            => await _productRepository.ReApplyAsync(id);
+
+        /// <inheritdoc/>
+        public async Task ApproveForcedProductAsync(int id, string adminId)
+            => await _productRepository.ApproveForcedProductAsync(id, adminId);
+
+        /// <inheritdoc/>
+        public async Task RejectForcedProductAsync(int id, string adminId, string reason)
+            => await _productRepository.RejectForcedProductAsync(id, adminId, reason);
 
         /// <inheritdoc/>
         /// <summary>

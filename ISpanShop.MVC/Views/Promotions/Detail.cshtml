@@ -296,8 +296,8 @@
     }
 
     async function approvePromotion() {
-        const confirm = await showConfirm('確認核准', `確定要核准活動「@Html.Raw(Model.Name.Replace("'", "\\'"))」嗎？`);
-        if (!confirm) return;
+        const ok = await showConfirm('確認核准', `確定要核准活動「@Html.Raw(Model.Name.Replace("'", "\\'"))」嗎？`);
+        if (!ok) return;
         const token = document.querySelector('[name="__RequestVerificationToken"]').value;
         const fd = new FormData();
         fd.append('__RequestVerificationToken', token);
@@ -328,18 +328,6 @@
         }
     }
 
-    async function showConfirm(title, text) {
-        if (typeof Swal !== 'undefined') {
-            const r = await Swal.fire({ icon: 'question', title, text, showCancelButton: true, confirmButtonText: '確認', cancelButtonText: '取消' });
-            return r.isConfirmed;
-        }
-        return confirm(text);
-    }
-
-    function showMsg(type, msg) {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({ icon: type, text: msg, timer: type === 'success' ? 2000 : undefined, showConfirmButton: type !== 'success' });
-        } else { alert(msg); }
-    }
+    // showConfirm / showMsg 使用全域版本（由 _SneatLayout 提供）
 </script>
 }

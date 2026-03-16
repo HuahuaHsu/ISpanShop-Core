@@ -8,13 +8,16 @@
     var rejectedPaged    = ViewBag.RejectedRecords as ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>;
     var rejectedList     = rejectedPaged?.Data;
     int rejectedPage     = ViewBag.RejectedPage ?? 1;
+    var reApplyPaged     = ViewBag.ReApplyRecords as ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>;
+    var reApplyList      = reApplyPaged?.Data ?? new List<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>();
+    int reApplyPage      = ViewBag.ReApplyPage ?? 1;
     var approvedPaged    = ViewBag.ApprovedRecords as ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>;
     var approvedList     = approvedPaged?.Data ?? new List<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>();
     int approvedPage     = ViewBag.ApprovedPage ?? 1;
 }
 
-<div class="container-fluid py-4 font-noto">
-
+<div class="page-fluid-root container-fluid font-noto">
+<div class="page-above-content">
     <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
             <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">商品審核中心</h2>
@@ -70,6 +73,16 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link px-4 py-2 fw-semibold" id="reapply-tab"
+                    data-bs-toggle="tab" data-bs-target="#reApplyPanel"
+                    type="button" role="tab">
+                <i class="bx bx-revision me-1" style="color:#dc2626;"></i>
+                重新申請審核
+                <span class="badge rounded-pill ms-1"
+                      style="background:#fde8e8;color:#dc2626;font-size:0.78rem;">@(reApplyPaged?.TotalCount ?? 0)</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link px-4 py-2 fw-semibold" id="rejected-tab"
                     data-bs-toggle="tab" data-bs-target="#rejectedPanel"
                     type="button" role="tab">
@@ -91,36 +104,49 @@
         </li>
     </ul>
 
+</div><!-- /page-above-content -->
+
+    <div id="reviewLayout" class="split-layout">
+    <div id="reviewListCol" class="split-list-col">
+
+    @* ── 返回完整列表（精簡模式按鈕）── *@
+    <div class="back-to-list-btn">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                onclick="closeProductDetailPanel()" title="返回完整列表">
+            <i class="bx bx-arrow-back me-1"></i>返回完整列表
+        </button>
+    </div>
+
     <div class="tab-content" id="reviewTabsContent">
 
         <div class="tab-pane fade show active" id="pendingPanel" role="tabpanel">
             <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
                 @if (Model != null && Model.Data != null && Model.Data.Any())
                 {
-                    <div class="table-responsive">
+                    <div>
                         <table class="table table-custom align-middle">
                             <thead>
                                 <tr>
-                                    <th style="width:44px;" class="text-center">
+                                    <th style="width:44px;" class="text-center col-cb">
                                         <input class="form-check-input" type="checkbox" id="selectAll" title="全選 / 取消全選">
                                     </th>
-                                    <th style="width:60px;">圖片</th>
+                                    <th style="width:60px;" class="col-img">圖片</th>
                                     <th style="max-width:280px;">商品名稱</th>
                                     <th>審核狀態</th>
-                                    <th>商店</th>
-                                    <th>分類 / 品牌</th>
-                                    <th>建檔日期</th>
-                                    <th class="text-end" style="min-width:200px;">審核操作</th>
+                                    <th class="col-store">商店</th>
+                                    <th class="col-catbrand">分類 / 品牌</th>
+                                    <th class="col-date">建檔日期</th>
+                                    <th class="text-end col-rowact" style="min-width:200px;">審核操作</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var product in Model.Data)
                                 {
-                                    <tr data-id="@product.Id">
-                                        <td class="text-center cb-cell" style="width:44px;">
+                                    <tr data-id="@product.Id" data-name="@product.Name.Replace("'","\\'")">
+                                        <td class="text-center cb-cell col-cb" style="width:44px;">
                                             <input class="form-check-input row-check" type="checkbox" value="@product.Id">
                                         </td>
-                                        <td>
+                                        <td class="col-img">
                                             @if (!string.IsNullOrEmpty(product.MainImageUrl))
                                             {
                                                 <img src="@product.MainImageUrl" alt="@product.Name" loading="lazy"
@@ -132,7 +158,7 @@
                                             }
                                         </td>
                                         <td>
-                                            <div class="fw-bold" style="color:#1e2d3d;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                                            <div class="fw-bold product-name-cell" style="color:#1e2d3d;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
                                                  title="@product.Description"
                                                  data-bs-toggle="tooltip" data-bs-placement="top">
                                                 @product.Name
@@ -149,19 +175,13 @@
                                             }
                                             <span class="badge @badgeClass">@badgeText</span>
                                         </td>
-                                        <td class="fs-7" style="color:#5a6a7a;">@(product.StoreName ?? $"Store #{product.StoreId}")</td>
-                                        <td>
+                                        <td class="col-store fs-7" style="color:#5a6a7a;">@(product.StoreName ?? $"Store #{product.StoreId}")</td>
+                                        <td class="col-catbrand">
                                             <span class="badge-soft bg-primary-soft text-primary me-1">@product.CategoryName</span>
                                             <span class="badge-soft bg-info-soft text-info">@product.BrandName</span>
                                         </td>
-                                        <td class="fs-7" style="color:#4a5a6a;">@(product.CreatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
-                                        <td class="text-end">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-secondary rounded-pill px-2 me-1"
-                                                    title="查看商品詳情"
-                                                    onclick="openProductOffcanvas(@product.Id, '@product.Name.Replace("'", "\\'")') ">
-                                                <i class="bx bx-show"></i>
-                                            </button>
+                                        <td class="col-date fs-7" style="color:#4a5a6a;">@(product.CreatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                        <td class="text-end col-rowact">
                                             <button class="btn btn-sm btn-approve rounded-pill px-3 me-1"
                                                     data-id="@product.Id" data-name="@product.Name">
                                                 <i class="bx bx-check-circle me-1"></i>核准上架
@@ -199,6 +219,103 @@
             </div>
         </div>
 
+        @* ── 重新申請審核 Tab Panel ── *@
+        <div class="tab-pane fade" id="reApplyPanel" role="tabpanel">
+            <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
+                @if (reApplyList.Any())
+                {
+                    <div>
+                        <table class="table table-custom align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width:60px;">圖片</th>
+                                    <th>商品名稱</th>
+                                    <th>商店</th>
+                                    <th>原始下架原因</th>
+                                    <th>下架時間</th>
+                                    <th>申請時間</th>
+                                    <th class="text-end">審核操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in reApplyList)
+                                {
+                                    <tr data-id="@item.Id" data-name="@item.Name.Replace("'","\\'")">
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(item.MainImageUrl))
+                                            {
+                                                <img src="@item.MainImageUrl" alt="@item.Name" loading="lazy"
+                                                     style="width:54px;height:54px;object-fit:cover;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);" />
+                                            }
+                                            else
+                                            {
+                                                <div style="width:54px;height:54px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🖼️</div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold" style="color:#1e2d3d;">@item.Name</div>
+                                        </td>
+                                        <td class="fs-7" style="color:#5a6a7a;">@(item.StoreName ?? $"Store #{item.StoreId}")</td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(item.ForceOffShelfReason))
+                                            {
+                                                <span style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:0.82rem;padding:0.3em 0.7em;display:inline-block;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                                                      title="@item.ForceOffShelfReason">@item.ForceOffShelfReason</span>
+                                                @if (item.ForceOffShelfBy.HasValue)
+                                                {
+                                                    <div class="fs-7 mt-1" style="color:#9ca3af;">操作人 ID：@item.ForceOffShelfBy</div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="fs-7" style="color:#a0aec0;">—</span>
+                                            }
+                                        </td>
+                                        <td class="fs-7" style="color:#4a5a6a;">
+                                            @(item.ForceOffShelfDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
+                                        </td>
+                                        <td class="fs-7" style="color:#4a5a6a;">
+                                            @(item.ReApplyDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-success rounded-pill px-3 me-1 btn-approve-forced"
+                                                    data-id="@item.Id" data-name="@item.Name">
+                                                <i class="bx bx-check-circle me-1"></i>核准上架
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-danger rounded-pill px-3 btn-reject-forced"
+                                                    data-id="@item.Id" data-name="@item.Name">
+                                                <i class="bx bx-x-circle me-1"></i>駁回
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @* ── 重新申請分頁 ── *@
+                    @if (reApplyPaged != null)
+                    {
+                        @await Html.PartialAsync("_Pagination", new ISpanShop.MVC.Areas.Admin.Models.Common.PaginationVm
+                        {
+                            CurrentPage = reApplyPaged.CurrentPage,
+                            TotalPages  = reApplyPaged.TotalPages,
+                            UrlForPage  = p => Url.Action("PendingReview", new { pendingPage = Model?.CurrentPage ?? 1, reApplyPage = p, rejectedPage })!
+                        })
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <div class="mb-2" style="font-size:2rem;color:#fca5a5;"><i class="bx bx-revision" style="font-size:2.5rem;"></i></div>
+                        <p class="mb-0" style="color:#a0aec0;">目前沒有待重新審核的商品</p>
+                    </div>
+                }
+            </div>
+        </div>
+
         <div class="tab-pane fade" id="rejectedPanel" role="tabpanel">
             <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
                 @if (rejectedList != null && rejectedList.Any())
@@ -213,7 +330,7 @@
                             <i class="bx bx-revision me-1"></i> 批次重新審核
                         </button>
                     </div>
-                    <div class="table-responsive">
+                    <div>
                         <table class="table table-custom align-middle">
                             <thead>
                                 <tr>
@@ -233,7 +350,7 @@
                             <tbody>
                                 @foreach (var item in rejectedList)
                                 {
-                                    <tr>
+                                    <tr data-id="@item.Id" data-name="@item.Name.Replace("'","\\'")">
                                         <td class="text-center" style="width:40px;">
                                             <input type="checkbox" class="form-check-input rejected-row-check" value="@item.Id">
                                         </td>
@@ -280,12 +397,6 @@
                                         <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewDate?.ToString("yyyy-MM-dd HH:mm") ?? item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
                                         <td class="text-end">
                                             <button type="button"
-                                                    class="btn btn-sm btn-outline-secondary rounded-pill px-2 me-1"
-                                                    title="查看商品詳情"
-                                                    onclick="openProductOffcanvas(@item.Id, '@item.Name.Replace("'", "\\'")') ">
-                                                <i class="bx bx-show"></i>
-                                            </button>
-                                            <button type="button"
                                                     class="btn btn-sm btn-outline-primary rounded-pill px-3"
                                                     onclick="undoReject(@item.Id, '@item.Name.Replace("'", "\\'")') ">
                                                 <i class="bx bx-revision me-1"></i>重新審核
@@ -327,7 +438,7 @@
                         顯示過去 <strong>24 小時</strong>內系統或管理員審核通過的商品，共
                         <span class="fw-bold text-success">@(approvedPaged?.TotalCount ?? 0)</span> 筆。
                     </p>
-                    <div class="table-responsive">
+                    <div>
                         <table class="table table-custom align-middle">
                             <thead>
                                 <tr>
@@ -337,13 +448,12 @@
                                     <th>分類 / 品牌</th>
                                     <th>審核人</th>
                                     <th>通過時間</th>
-                                    <th class="text-end">操作</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var item in approvedList)
                                 {
-                                    <tr>
+                                    <tr data-id="@item.Id" data-name="@item.Name.Replace("'","\\'")">
                                         <td>
                                             @if (!string.IsNullOrEmpty(item.MainImageUrl))
                                             {
@@ -365,14 +475,6 @@
                                         </td>
                                         <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewedBy ?? "—")</td>
                                         <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
-                                        <td class="text-end">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-secondary rounded-pill px-2"
-                                                    title="查看商品詳情"
-                                                    onclick="openProductOffcanvas(@item.Id, '@item.Name.Replace("'", "\\'")') ">
-                                                <i class="bx bx-show"></i>
-                                            </button>
-                                        </td>
                                     </tr>
                                 }
                             </tbody>
@@ -402,22 +504,25 @@
         </div>
 
     </div>
+    </div><!-- /reviewListCol -->
 
-</div>
-
-@* ── 商品詳情 Offcanvas ── *@
-<div class="offcanvas offcanvas-end" tabindex="-1" id="productDetailOffcanvas" style="width:50vw;min-width:420px;"
-     aria-labelledby="productDetailOffcanvasLabel">
-    <div class="offcanvas-header border-bottom">
-        <h6 class="offcanvas-title fw-bold" id="productDetailOffcanvasLabel" style="color:#1e2d3d;">商品詳情</h6>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body" id="productDetailOffcanvasBody">
-        <div class="text-center py-5 text-muted">
-            <i class="bx bx-loader-alt bx-spin fs-1 d-block mb-2"></i>
-            載入中…
+    <div id="productDetailPanel" class="split-detail-panel">
+        <div class="split-detail-panel-inner">
+            <div class="side-panel-header">
+                <div class="side-panel-title" id="productDetailPanelLabel" title="商品詳情">商品詳情</div>
+                <button type="button" class="side-panel-close" onclick="closeProductDetailPanel()" aria-label="Close" title="關閉">
+                    <i class="bx bx-x"></i>
+                </button>
+            </div>
+            <div class="panel-body" id="productDetailPanelBody">
+                <div class="text-center py-5 text-muted">
+                    <i class="bx bx-loader-alt bx-spin fs-1 d-block mb-2"></i>載入中…
+                </div>
+            </div>
         </div>
     </div>
+
+    </div><!-- /reviewLayout -->
 </div>
 
 <style>
@@ -500,8 +605,11 @@
             letter-spacing: 1px;
             font-size: 0.85rem;
             padding: 0.4rem 1.2rem;
-            background: transparent;
+            background: #f4f6f8;
             text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
 
         .table-custom td {
@@ -619,6 +727,22 @@
         border-top-left-radius: 12px !important;
         border-bottom-left-radius: 12px !important;
     }
+
+    /* ── PendingReview 頁面專屬 ── */
+    /* 選中列高亮 */
+    .table-custom tbody tr.row-active td { background: #ebf8ff !important; }
+    .table-custom tbody tr.row-active td:first-child { box-shadow: inset 3px 0 0 #3182ce; }
+    /* 表格淡入淡出 */
+    #reviewTabsContent { transition: opacity 0.18s ease; }
+    /* 精簡模式 */
+    #reviewLayout.panel-open .col-img,
+    #reviewLayout.panel-open .col-store,
+    #reviewLayout.panel-open .col-catbrand,
+    #reviewLayout.panel-open .col-date,
+    #reviewLayout.panel-open .col-rowact { display: none; }
+    #reviewLayout.panel-open .table-custom td { padding: 0.55rem 1.2rem; }
+    #reviewLayout.panel-open .product-name-cell { max-width: 180px; }
+    .table-custom tbody tr { cursor: pointer; }
 </style>
 
 @section Scripts {
@@ -628,13 +752,15 @@
         //  批次審核：checkbox 全選與按鈕連動
         // ══════════════════════════════════════════════════════
         (function () {
-            var urlApprove           = '@Url.Action("ApproveProduct", "Products")';
-            var urlReject            = '@Url.Action("RejectProduct", "Products")';
-            var urlBatchApprove      = '@Url.Action("BatchApprove", "Products")';
-            var urlBatchReject       = '@Url.Action("BatchReject", "Products")';
-            var urlSimulateAutoReview = '@Url.Action("SimulateAutoReview", "Products")';
-            var urlProductIndex      = '@Url.Action("Index", "Products")';
-            var urlUndoReject        = '@Url.Action("UndoReject", "Products")';
+            var urlApprove              = '@Url.Action("ApproveProduct", "Products")';
+            var urlReject               = '@Url.Action("RejectProduct", "Products")';
+            var urlBatchApprove         = '@Url.Action("BatchApprove", "Products")';
+            var urlBatchReject          = '@Url.Action("BatchReject", "Products")';
+            var urlSimulateAutoReview   = '@Url.Action("SimulateAutoReview", "Products")';
+            var urlProductIndex         = '@Url.Action("Index", "Products")';
+            var urlUndoReject           = '@Url.Action("UndoReject", "Products")';
+            var urlApproveForcedProduct = '@Url.Action("ApproveForcedProduct", "Products")';
+            var urlRejectForcedProduct  = '@Url.Action("RejectForcedProduct", "Products")';
 
             // ── 批次按鈕 disabled 切換 ──
             function updateBatchButtons() {
@@ -1020,13 +1146,39 @@
             });
 
             function removeRow(id) {
-                var row = document.querySelector('tr[data-id="' + id + '"]');
+                var row = document.querySelector('#pendingPanel tr[data-id="' + id + '"]');
+                // 先找到下一筆或上一筆（移除前找，避免 DOM 消失）
+                var nextRow = null;
+                if (row) {
+                    var ns = row.nextElementSibling;
+                    while (ns && !ns.dataset.id) ns = ns.nextElementSibling;
+                    if (ns) {
+                        nextRow = ns;
+                    } else {
+                        var ps = row.previousElementSibling;
+                        while (ps && !ps.dataset.id) ps = ps.previousElementSibling;
+                        if (ps) nextRow = ps;
+                    }
+                }
                 if (row) row.remove();
-                var remaining = document.querySelectorAll('#pendingPanel tbody tr').length;
+                // 只計算 data-id 列（排除 accordion sub-rows）
+                var remaining = document.querySelectorAll('#pendingPanel tbody tr[data-id]').length;
                 document.querySelectorAll('#pendingCount, .text-warning.fw-bold').forEach(function(el) { el.textContent = remaining; });
                 var badge = document.querySelector('#pending-tab .badge');
                 if (badge) badge.textContent = remaining;
-                if (remaining === 0) location.reload();
+                // 面板開啟時：自動選中下一筆或顯示空狀態
+                var panel = document.getElementById('productDetailPanel');
+                if (panel && panel.classList.contains('open')) {
+                    if (remaining === 0) {
+                        var body = document.getElementById('productDetailPanelBody');
+                        if (body) body.innerHTML = '<div class="text-center py-5 text-muted"><i class="bx bx-inbox" style="font-size:2.5rem;"></i><div class="mt-2 fw-semibold">待審核列表已清空</div></div>';
+                        _activeProductRowId = null;
+                    } else if (nextRow) {
+                        openProductOffcanvas(parseInt(nextRow.dataset.id), nextRow.dataset.name || '商品詳情');
+                    }
+                } else if (remaining === 0) {
+                    location.reload();
+                }
             }
 
             document.querySelectorAll('.btn-approve').forEach(function (btn) {
@@ -1091,6 +1243,203 @@
                     });
                 });
             });
+
+            // ── 重新申請審核：核准 ──
+            document.querySelectorAll('.btn-approve-forced').forEach(function (btn) {
+                btn.addEventListener('click', async function (e) {
+                    e.stopPropagation();
+                    var id   = parseInt(btn.dataset.id);
+                    var name = btn.dataset.name;
+                    var result = await Swal.fire({
+                        title: '核准重新上架',
+                        html: '確定要核准商品「<strong>' + name + '</strong>」重新上架？',
+                        icon: 'question', showCancelButton: true,
+                        confirmButtonColor: '#38a169', cancelButtonColor: '#a0aec0',
+                        confirmButtonText: '確認核准', cancelButtonText: '取消'
+                    });
+                    if (!result.isConfirmed) return;
+                    try {
+                        const res = await apiPost(urlApproveForcedProduct, { id: id });
+                        if (res.success) {
+                            Swal.fire({ title: '已核准！', text: res.message, icon: 'success', timer: 1800, timerProgressBar: true, confirmButtonColor: '#1abb9c' })
+                                .then(() => location.reload());
+                        } else {
+                            Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
+                        }
+                    } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
+                });
+            });
+
+            // ── 重新申請審核：駁回 ──
+            document.querySelectorAll('.btn-reject-forced').forEach(function (btn) {
+                btn.addEventListener('click', async function (e) {
+                    e.stopPropagation();
+                    var id   = parseInt(btn.dataset.id);
+                    var name = btn.dataset.name;
+                    var result = await Swal.fire({
+                        title: '駁回重新申請',
+                        html: '請填寫駁回原因（賣家將看到此說明）：',
+                        input: 'textarea', inputPlaceholder: '請填寫駁回原因...',
+                        inputValidator: function(v) { if (!v || v.trim().length < 5) return '請填寫至少 5 字的駁回原因'; },
+                        icon: 'warning', showCancelButton: true,
+                        confirmButtonColor: '#dc2626', cancelButtonColor: '#a0aec0',
+                        confirmButtonText: '確認駁回', cancelButtonText: '取消'
+                    });
+                    if (!result.isConfirmed) return;
+                    try {
+                        const res = await apiPost(urlRejectForcedProduct, { id: id, reason: result.value.trim() });
+                        if (res.success) {
+                            Swal.fire({ title: '已駁回', text: res.message, icon: 'success', timer: 1800, timerProgressBar: true, confirmButtonColor: '#1abb9c' })
+                                .then(() => location.reload());
+                        } else {
+                            Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
+                        }
+                    } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
+                });
+            });
+
+            // ══════════════════════════════════════════════════════
+            //  面板底部操作按鈕（事件委派）
+            // ══════════════════════════════════════════════════════
+
+            // 彈出退回 Modal（含快捷原因 chips）
+            function showPanelRejectModal(name, onConfirm) {
+                var chips = ['商品描述不實', '圖片不清晰', '價格異常', '分類錯誤', '其他'];
+                Swal.fire({
+                    title: '退回商品審核',
+                    html: '<p style="font-size:0.9rem;text-align:left;margin-bottom:10px;">商品：<strong>「' + name + '」</strong></p>' +
+                          '<p style="font-size:0.82rem;font-weight:600;color:#6b7280;text-align:left;margin-bottom:6px;">快捷原因</p>' +
+                          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">' +
+                          chips.map(function(c) {
+                              return '<button type="button" class="swal-panel-chip" data-val="' + c + '" ' +
+                                     'style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:16px;padding:4px 12px;font-size:0.82rem;cursor:pointer;transition:all 0.15s;">' + c + '</button>';
+                          }).join('') +
+                          '</div>' +
+                          '<label style="font-size:0.85rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">退回原因（必填）</label>' +
+                          '<textarea id="swalPanelRejectTa" class="swal2-textarea" placeholder="請填寫退回原因..." style="height:90px;width:100%;box-sizing:border-box;margin:0;"></textarea>',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e53e3e', cancelButtonColor: '#a0aec0',
+                    confirmButtonText: '確認退回', cancelButtonText: '取消',
+                    didOpen: function() {
+                        document.querySelectorAll('.swal-panel-chip').forEach(function(chip) {
+                            chip.addEventListener('click', function() {
+                                document.querySelectorAll('.swal-panel-chip').forEach(function(c) {
+                                    c.style.background = '#f3f4f6';
+                                    c.style.borderColor = '#d1d5db';
+                                    c.style.color = '#374151';
+                                });
+                                this.style.background = '#dc2626';
+                                this.style.borderColor = '#dc2626';
+                                this.style.color = '#fff';
+                                var ta = document.getElementById('swalPanelRejectTa');
+                                if (ta) ta.value = this.dataset.val;
+                            });
+                        });
+                    },
+                    preConfirm: function() {
+                        var ta = document.getElementById('swalPanelRejectTa');
+                        var val = ta ? ta.value.trim() : '';
+                        if (!val) { Swal.showValidationMessage('退回原因為必填欄位'); return false; }
+                        return val;
+                    }
+                }).then(function(result) {
+                    if (result.isConfirmed && onConfirm) onConfirm(result.value);
+                });
+            }
+
+            // 事件委派：監聽面板底部按鈕（非同步箭頭函式）
+            var panelEl = document.getElementById('productDetailPanel');
+            if (panelEl) {
+                panelEl.addEventListener('click', async function(e) {
+                    var btn = e.target.closest('.btn-panel-approve, .btn-panel-reject, .btn-panel-approve-forced, .btn-panel-reject-forced');
+                    if (!btn) return;
+                    var id   = parseInt(btn.dataset.id);
+                    var name = btn.dataset.name;
+
+                    // ── 核准上架（待審核）──
+                    if (btn.classList.contains('btn-panel-approve')) {
+                        var r = await Swal.fire({
+                            title: '確認核准上架',
+                            html: '確定要核准商品<br><strong>「' + name + '」</strong>上架嗎？',
+                            icon: 'question', showCancelButton: true,
+                            confirmButtonColor: '#1abb9c', cancelButtonColor: '#a0aec0',
+                            confirmButtonText: '確認核准', cancelButtonText: '取消'
+                        });
+                        if (!r.isConfirmed) return;
+                        try {
+                            const res = await apiPost(urlApprove, { id: id });
+                            if (res.success) {
+                                removeRow(id);
+                                Swal.fire({ title: '核准成功！', text: res.message, icon: 'success',
+                                            confirmButtonColor: '#1abb9c', timer: 3000, timerProgressBar: true });
+                            } else {
+                                Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
+                            }
+                        } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
+
+                    // ── 退回（待審核）──
+                    } else if (btn.classList.contains('btn-panel-reject')) {
+                        showPanelRejectModal(name, async function(reason) {
+                            try {
+                                const res = await apiPost(urlReject, { id: id, reason: reason });
+                                if (res.success) {
+                                    removeRow(id);
+                                    Swal.fire({ title: '已退回！', text: res.message, icon: 'success',
+                                                confirmButtonColor: '#1abb9c', timer: 3000, timerProgressBar: true })
+                                        .then(function() { window.location.hash = '#rejectedTab'; window.location.reload(); });
+                                } else {
+                                    Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
+                                }
+                            } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
+                        });
+
+                    // ── 核准重新上架（重新申請審核）──
+                    } else if (btn.classList.contains('btn-panel-approve-forced')) {
+                        var r2 = await Swal.fire({
+                            title: '核准重新上架',
+                            html: '確定要核准商品「<strong>' + name + '</strong>」重新上架？',
+                            icon: 'question', showCancelButton: true,
+                            confirmButtonColor: '#38a169', cancelButtonColor: '#a0aec0',
+                            confirmButtonText: '確認核准', cancelButtonText: '取消'
+                        });
+                        if (!r2.isConfirmed) return;
+                        try {
+                            const res = await apiPost(urlApproveForcedProduct, { id: id });
+                            if (res.success) {
+                                Swal.fire({ title: '已核准！', text: res.message, icon: 'success',
+                                            timer: 1800, timerProgressBar: true, confirmButtonColor: '#1abb9c' })
+                                    .then(function() { location.reload(); });
+                            } else {
+                                Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
+                            }
+                        } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
+
+                    // ── 再次駁回（重新申請審核）──
+                    } else if (btn.classList.contains('btn-panel-reject-forced')) {
+                        var r3 = await Swal.fire({
+                            title: '駁回重新申請',
+                            html: '請填寫駁回原因（賣家將看到此說明）：',
+                            input: 'textarea', inputPlaceholder: '請填寫駁回原因...',
+                            inputValidator: function(v) { if (!v || v.trim().length < 5) return '請填寫至少 5 字的駁回原因'; },
+                            icon: 'warning', showCancelButton: true,
+                            confirmButtonColor: '#dc2626', cancelButtonColor: '#a0aec0',
+                            confirmButtonText: '確認駁回', cancelButtonText: '取消'
+                        });
+                        if (!r3.isConfirmed) return;
+                        try {
+                            const res = await apiPost(urlRejectForcedProduct, { id: id, reason: r3.value.trim() });
+                            if (res.success) {
+                                Swal.fire({ title: '已駁回', text: res.message, icon: 'success',
+                                            timer: 1800, timerProgressBar: true, confirmButtonColor: '#1abb9c' })
+                                    .then(function() { location.reload(); });
+                            } else {
+                                Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
+                            }
+                        } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
+                    }
+                });
+            }
+
         })();
     </script>
 
@@ -1151,33 +1500,186 @@
     </script>
 
     <script>
-        // ── 商品詳情 Offcanvas ──
+        // ── 商品詳情 Push-Pull 側邊面板 ──
         var urlGetProductDetailsPartial = '@Url.Action("GetProductDetailsPartial", "Products")';
+        var _activeProductRowId = null;
+
+        function _reviewSwitchMode(toOpen, callback) {
+            var tbl    = document.getElementById('reviewTabsContent');
+            var panel  = document.getElementById('productDetailPanel');
+            var layout = document.getElementById('reviewLayout');
+            if (tbl) tbl.style.opacity = '0';
+            setTimeout(function () {
+                if (toOpen) {
+                    if (panel  && !panel.classList.contains('open'))        panel.classList.add('open');
+                    if (layout && !layout.classList.contains('panel-open')) layout.classList.add('panel-open');
+                } else {
+                    if (panel)  panel.classList.remove('open');
+                    if (layout) layout.classList.remove('panel-open');
+                }
+                if (tbl) tbl.style.opacity = '1';
+                if (callback) callback();
+            }, 180);
+        }
 
         window.openProductOffcanvas = function (id, name) {
-            var body    = document.getElementById('productDetailOffcanvasBody');
-            var titleEl = document.getElementById('productDetailOffcanvasLabel');
-            if (titleEl) titleEl.textContent = name || '商品詳情';
-            if (body) {
-                body.innerHTML = '<div class="text-center py-5 text-muted"><i class="bx bx-loader-alt bx-spin fs-1 d-block mb-2"></i>載入中…</div>';
-            }
+            var body    = document.getElementById('productDetailPanelBody');
+            var titleEl = document.getElementById('productDetailPanelLabel');
 
-            var offcanvasEl = document.getElementById('productDetailOffcanvas');
-            var offcanvas   = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
-            offcanvas.show();
+            // 高亮選中列
+            if (_activeProductRowId !== null) {
+                var prevRow = document.querySelector('tr[data-id="' + _activeProductRowId + '"]');
+                if (prevRow) prevRow.classList.remove('row-active');
+            }
+            _activeProductRowId = id;
+            var activeRow = document.querySelector('tr[data-id="' + id + '"]');
+            if (activeRow) activeRow.classList.add('row-active');
+
+            if (titleEl) { titleEl.textContent = name || '商品詳情'; titleEl.title = name || '商品詳情'; }
+            if (body) body.innerHTML = '<div class="text-center py-5 text-muted"><i class="bx bx-loader-alt bx-spin fs-1 d-block mb-2"></i>載入中…</div>';
+
+            var alreadyOpen = document.getElementById('productDetailPanel').classList.contains('open');
+            if (!alreadyOpen) _reviewSwitchMode(true, null);
 
             fetch(urlGetProductDetailsPartial + '?id=' + id)
                 .then(function (res) {
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     return res.text();
                 })
-                .then(function (html) {
-                    if (body) body.innerHTML = html;
-                })
+                .then(function (html) { if (body) body.innerHTML = html; })
                 .catch(function () {
                     if (body) body.innerHTML = '<div class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1 d-block mb-2"></i>載入失敗，請稍後再試。</div>';
                 });
         };
+
+        window.closeProductDetailPanel = function () {
+            if (_activeProductRowId !== null) {
+                var row = document.querySelector('tr[data-id="' + _activeProductRowId + '"]');
+                if (row) row.classList.remove('row-active');
+                _activeProductRowId = null;
+            }
+            _reviewSwitchMode(false, null);
+        };
+
+        // Way 1：ESC 鍵關閉面板
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                var panel = document.getElementById('productDetailPanel');
+                if (panel && panel.classList.contains('open')) {
+                    console.log('[PanelClose] ESC key');
+                    closeProductDetailPanel();
+                }
+            }
+        });
+        console.log('[Panel] ESC listener bound ✓');
+
+        // Way 3a：點擊兩卡片間的 gap 區域關閉面板
+        document.getElementById('reviewLayout').addEventListener('click', function (e) {
+            if (e.target === this) {
+                var panel = document.getElementById('productDetailPanel');
+                if (panel && panel.classList.contains('open')) {
+                    console.log('[PanelClose] gap click');
+                    closeProductDetailPanel();
+                }
+            }
+        });
+
+        // Way 3b：點擊列表內空白區域（非列、非互動元素）關閉面板
+        document.getElementById('reviewListCol').addEventListener('click', function (e) {
+            var panel = document.getElementById('productDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            if (e.target.closest('tr, button, a, input, select, label, .filter-card, .back-to-list-btn')) return;
+            console.log('[PanelClose] list col empty area click');
+            closeProductDetailPanel();
+        });
+
+        // ── 點擊整行開啟面板（封裝為可重呼叫函式，供 AJAX 分頁後重綁）──
+        function _reviewBindPendingRows() {
+            document.querySelectorAll('#pendingPanel tbody tr[data-id]').forEach(function (tr) {
+                tr.addEventListener('click', function (e) {
+                    if (e.target.closest('a, button, input')) return;
+                    openProductOffcanvas(parseInt(this.dataset.id), this.dataset.name);
+                });
+            });
+        }
+        _reviewBindPendingRows();
+        document.querySelectorAll('#rejectedPanel tbody tr[data-id], #approvedPanel tbody tr[data-id], #reApplyPanel tbody tr[data-id]').forEach(function (tr) {
+            tr.addEventListener('click', function (e) {
+                if (e.target.closest('a, button, input')) return;
+                openProductOffcanvas(parseInt(this.dataset.id), this.dataset.name);
+            });
+        });
+    </script>
+    <script>
+    // ── AJAX 分頁：面板展開時換頁不重整（待審核 Tab）──
+    (function () {
+        function ajaxLoadReviewPage(href) {
+            var tabContent = document.getElementById('reviewTabsContent');
+            var listCol    = document.getElementById('reviewListCol');
+            if (tabContent) tabContent.style.opacity = '0.4';
+            fetch(href)
+                .then(function (res) { if (!res.ok) throw new Error(); return res.text(); })
+                .then(function (html) {
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+                    // 更新待審核表格 tbody
+                    var newTbody = doc.querySelector('#pendingPanel .table-custom tbody');
+                    var tbody    = document.querySelector('#pendingPanel .table-custom tbody');
+                    if (tbody && newTbody) tbody.innerHTML = newTbody.innerHTML;
+                    // 更新待審核分頁導航
+                    var newNav = doc.querySelector('#pendingPanel nav');
+                    var curNav = document.querySelector('#pendingPanel nav');
+                    if (curNav && newNav) curNav.outerHTML = newNav.outerHTML;
+                    // 重綁行點擊
+                    _reviewBindPendingRows();
+                    // 滾回頂部
+                    if (listCol) listCol.scrollTop = 0;
+                    // 恢復透明度
+                    if (tabContent) tabContent.style.opacity = '1';
+                    // 自動開啟第一筆
+                    _activeProductRowId = null;
+                    var firstRow = document.querySelector('#pendingPanel tbody tr[data-id]');
+                    if (firstRow) {
+                        openProductOffcanvas(parseInt(firstRow.dataset.id), firstRow.dataset.name || '商品詳情');
+                    }
+                    // 同步網址列
+                    history.pushState(null, '', href);
+                })
+                .catch(function () { window.location.href = href; });
+        }
+
+        // 事件委派：攔截 #reviewListCol 內待審核 Tab 的分頁點擊（面板已開啟時）
+        document.getElementById('reviewListCol').addEventListener('click', function (e) {
+            var panel = document.getElementById('productDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            if (!e.target.closest('#pendingPanel')) return;
+            var link = e.target.closest('.page-link');
+            if (!link) return;
+            var pageItem = link.closest('.page-item');
+            if (!pageItem || pageItem.classList.contains('disabled') || pageItem.classList.contains('active')) return;
+            var href = link.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadReviewPage(href);
+        });
+    })();
+    </script>
+    <script>
+    // ── Tab 切換時自動選中新 Tab 第一筆（面板開啟中）──
+    document.getElementById('reviewTabs').addEventListener('shown.bs.tab', function (e) {
+        var panel = document.getElementById('productDetailPanel');
+        if (!panel || !panel.classList.contains('open')) return;
+        var target = e.target.getAttribute('data-bs-target');
+        var pane = target ? document.querySelector(target) : null;
+        if (!pane) return;
+        var firstRow = pane.querySelector('tbody tr[data-id]');
+        if (firstRow) {
+            openProductOffcanvas(parseInt(firstRow.dataset.id), firstRow.dataset.name || '商品詳情');
+        } else {
+            // 無資料時清空面板內容但保持面板開啟
+            var body = document.getElementById('productDetailPanelBody');
+            if (body) body.innerHTML = '<div class="text-center py-5 text-muted"><i class="bx bx-inbox" style="font-size:2.5rem;"></i><div class="mt-2">此分頁無資料</div></div>';
+        }
+    });
     </script>
 }
 

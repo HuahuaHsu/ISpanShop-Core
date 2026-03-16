@@ -8,6 +8,7 @@
         1 => ("#e6f4ea", "#1b5e20", "bx-check-circle"),
         2 => ("#fff8e1", "#e65100", "bx-time-five"),
         3 => ("#fde8e8", "#b71c1c", "bx-x-circle"),
+        4 => ("#fde8e8", "#7f1d1d", "bx-block"),
         0 => ("#f5f5f5", "#424242", "bx-minus-circle"),
         _ => ("#f5f5f5", "#424242", "bx-minus-circle")
     };
@@ -16,6 +17,7 @@
         1 => "#c8e6c9",
         2 => "#ffe082",
         3 => "#ffcdd2",
+        4 => "#fca5a5",
         _ => "#e0e0e0"
     };
 
@@ -105,6 +107,33 @@ else
    主內容區（帶 padding）
    ════════════════════════════════════════════════ *@
 <div class="p-4">
+
+    @* ── 強制下架橫幅（置頂提示，紅色醒目）── *@
+    @if (Model.Status == 4 && !string.IsNullOrWhiteSpace(Model.ForceOffShelfReason))
+    {
+        <div class="d-flex gap-3 p-3 mb-4 rounded-3"
+             style="background:#fef2f2;border:2px solid #fca5a5;">
+            <i class="bx bx-block mt-1" style="font-size:1.5rem;flex-shrink:0;color:#dc2626;"></i>
+            <div style="flex:1;">
+                <div class="fw-bold mb-1" style="font-size:.95rem;color:#991b1b;">平台強制下架原因</div>
+                <div style="font-size:.95rem;color:#374151;line-height:1.7;">@Model.ForceOffShelfReason</div>
+                <div class="mt-2 d-flex flex-wrap gap-3" style="font-size:.83rem;color:#6b7280;">
+                    @if (Model.ForceOffShelfDate.HasValue)
+                    {
+                        <span><i class="bx bx-calendar me-1"></i>下架時間：@Model.ForceOffShelfDate.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                    }
+                    @if (Model.ForceOffShelfBy.HasValue)
+                    {
+                        <span><i class="bx bx-user me-1"></i>操作人員 ID：@Model.ForceOffShelfBy</span>
+                    }
+                    @if (Model.ReApplyDate.HasValue)
+                    {
+                        <span><i class="bx bx-revision me-1"></i>賣家重新申請：@Model.ReApplyDate.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 
     @* ── 退回原因橫幅（置頂提示） ── *@
     @if (Model.Status == 3 && !string.IsNullOrWhiteSpace(Model.RejectReason))
@@ -374,6 +403,82 @@ else
 
 </div>@* /p-4 *@
 
+@* ── 面板底部操作按鈕區（根據審核狀態動態顯示，sticky 固定在底部）── *@
+@{
+    var _isPending      = Model.ReviewStatus == 0;
+    var _isReApply      = Model.ReviewStatus == 3;
+    var _isApproved     = Model.ReviewStatus == 1;
+    var _isRejectedView = Model.ReviewStatus == 2 && Model.Status != 4;
+    var _isForcedFinal  = Model.Status == 4 && Model.ReviewStatus != 3;
+}
+<div class="panel-action-footer">
+    @if (_isPending)
+    {
+        <button type="button" class="btn btn-panel-approve"
+                data-id="@Model.Id" data-name="@Model.Name">
+            <i class="bx bx-check-circle me-2"></i>核准上架
+        </button>
+        <button type="button" class="btn btn-panel-reject"
+                data-id="@Model.Id" data-name="@Model.Name">
+            <i class="bx bx-x-circle me-2"></i>退回
+        </button>
+    }
+    else if (_isReApply)
+    {
+        @if (!string.IsNullOrWhiteSpace(Model.ForceOffShelfReason))
+        {
+            <div style="width:100%;font-size:0.83rem;color:#dc2626;padding:0 0 6px 0;line-height:1.5;word-break:break-all;">
+                <i class="bx bx-info-circle me-1"></i>原始下架原因：@Model.ForceOffShelfReason
+            </div>
+        }
+        <button type="button" class="btn btn-panel-approve-forced"
+                data-id="@Model.Id" data-name="@Model.Name">
+            <i class="bx bx-check-circle me-2"></i>核准上架
+        </button>
+        <button type="button" class="btn btn-panel-reject-forced"
+                data-id="@Model.Id" data-name="@Model.Name">
+            <i class="bx bx-x-circle me-2"></i>再次駁回
+        </button>
+    }
+    else if (_isApproved)
+    {
+        <div class="panel-footer-info-box success">
+            <i class="bx bx-check-circle me-2 mt-1" style="flex-shrink:0;"></i>
+            <div>
+                <div>已核准上架</div>
+                @if (!string.IsNullOrEmpty(Model.ReviewedBy))
+                {
+                    <div style="font-size:0.83rem;color:#6b7280;margin-top:2px;">by @Model.ReviewedBy</div>
+                }
+                @if (Model.ReviewDate.HasValue)
+                {
+                    <div style="font-size:0.82rem;color:#9ca3af;margin-top:1px;">@Model.ReviewDate.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                }
+            </div>
+        </div>
+    }
+    else if (_isRejectedView)
+    {
+        <div class="panel-footer-info-box danger">
+            <i class="bx bx-x-circle me-2 mt-1" style="flex-shrink:0;"></i>
+            <div>
+                <div>已退回</div>
+                @if (!string.IsNullOrEmpty(Model.RejectReason))
+                {
+                    <div style="font-size:0.83rem;color:#9ca3af;margin-top:2px;">原因：@Model.RejectReason</div>
+                }
+            </div>
+        </div>
+    }
+    else if (_isForcedFinal)
+    {
+        <div class="panel-footer-info-box forced">
+            <i class="bx bx-block me-2 mt-1" style="flex-shrink:0;"></i>
+            <span>已強制下架，等待賣家申請重新上架</span>
+        </div>
+    }
+</div>
+
 <style>
     /* ── 縮圖 ── */
     .oc-thumb {
@@ -442,4 +547,49 @@ else
 
     /* ── 庫存 badge ── */
     .oc-stock { padding: 3px 10px; border-radius: 8px; font-size: .85rem; font-weight: 600; }
+
+    /* ── 面板底部操作按鈕區 ── */
+    .panel-action-footer {
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+        padding: 14px 16px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        z-index: 10;
+    }
+    .btn-panel-approve, .btn-panel-approve-forced {
+        flex: 1; min-width: 120px;
+        background: #d1fae5; color: #065f46;
+        border: 1px solid #6ee7b7; font-weight: 600;
+        padding: 0.6rem 1rem; border-radius: 10px; font-size: .95rem;
+        transition: all .2s;
+    }
+    .btn-panel-approve:hover, .btn-panel-approve-forced:hover {
+        background: #059669; color: #fff; border-color: #059669;
+        box-shadow: 0 4px 12px rgba(5,150,105,.3);
+    }
+    .btn-panel-reject, .btn-panel-reject-forced {
+        flex: 1; min-width: 120px;
+        background: #fee2e2; color: #991b1b;
+        border: 1px solid #fca5a5; font-weight: 600;
+        padding: 0.6rem 1rem; border-radius: 10px; font-size: .95rem;
+        transition: all .2s;
+    }
+    .btn-panel-reject:hover, .btn-panel-reject-forced:hover {
+        background: #dc2626; color: #fff; border-color: #dc2626;
+        box-shadow: 0 4px 12px rgba(220,38,38,.3);
+    }
+    .panel-footer-info-box {
+        width: 100%; display: flex; align-items: flex-start; gap: 8px;
+        font-weight: 600; font-size: .95rem;
+        padding: 10px 14px; border-radius: 10px;
+    }
+    .panel-footer-info-box.success { background: #f0fdf4; color: #15803d; }
+    .panel-footer-info-box.danger  { background: #fff1f2; color: #991b1b; }
+    .panel-footer-info-box.forced  { background: #fef2f2; color: #991b1b; }
 </style>

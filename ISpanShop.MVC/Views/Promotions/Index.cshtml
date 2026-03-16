@@ -28,10 +28,26 @@
     a.stat-card.stat-active { border: 2px solid #3182ce !important; background: #eff6ff; }
     /* Badge 放大 */
     .badge { font-size: .813rem !important; padding: 5px 10px !important; white-space: nowrap; }
+    /* ── Promotions/Index 頁面專屬 ── */
+    /* 促銷表格 sticky 標題 */
+    #promoListCol .table thead th { position: sticky; top: 0; z-index: 2; background: #f8fafc; }
+    /* 選中列高亮 */
+    .table tbody tr.row-active td { background: #eff6ff !important; }
+    .table tbody tr.row-active td:first-child { box-shadow: inset 3px 0 0 #3182ce; }
+    /* 表格淡入淡出 */
+    #promoListCol .promo-table-wrap { transition: opacity 0.18s ease; }
+    /* 精簡模式 */
+    #promoLayout.panel-open .col-type,
+    #promoLayout.panel-open .col-time,
+    #promoLayout.panel-open .col-seller { display: none; }
+    #promoLayout.panel-open .table > :not(caption) > * > * { padding: .55rem .75rem; }
+    #promoLayout.panel-open .promo-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+    #promoLayout.panel-open .promo-desc { display: none; }
+    .table tbody tr { cursor: pointer; }
 </style>
 
-<div class="container-fluid py-4 font-noto">
-
+<div class="page-fluid-root container-fluid font-noto">
+<div class="page-above-content">
     @* 頁首 *@
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div>
@@ -118,6 +134,19 @@
         </div>
     </div>
 
+</div><!-- /page-above-content -->
+
+    <div id="promoLayout" class="split-layout">
+    <div id="promoListCol" class="split-list-col">
+
+    @* ── 返回完整列表（精簡模式按鈕）── *@
+    <div class="back-to-list-btn">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                onclick="closePromoDetailPanel()" title="返回完整列表">
+            <i class="bx bx-arrow-back me-1"></i>返回完整列表
+        </button>
+    </div>
+
     @* 篩選列 *@
     <div class="card shadow-sm mb-0" style="border-radius:12px 12px 0 0; border-bottom:none;">
         <div class="card-body py-3">
@@ -146,7 +175,7 @@
                 @* 右側：類型 + 搜尋 *@
                 <form method="get" asp-action="Index" asp-controller="Promotions" class="d-flex gap-2 align-items-center">
                     <input type="hidden" name="status" value="@Model.StatusFilter" />
-                    <select name="type" class="form-select form-select-sm" style="width:140px;" onchange="this.form.submit()">
+                    <select name="type" class="form-select form-select-sm" style="width:140px;">
                         <option value="" @@(Model.TypeFilter == null ? "selected=\"selected\"" : "")>所有類型</option>
                         <option value="1" @@(Model.TypeFilter == 1 ? "selected=\"selected\"" : "")>限時特賣</option>
                         <option value="2" @@(Model.TypeFilter == 2 ? "selected=\"selected\"" : "")>滿額折扣</option>
@@ -167,16 +196,15 @@
 
     @* 主表格 *@
     <div class="card shadow-sm" style="border-radius:0 0 12px 12px;">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+        <div class="promo-table-wrap">
+            <table class="table table-hover align-middle mb-0" style="width:100%;">
                 <thead style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
                     <tr>
                         <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">活動名稱</th>
-                        <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">類型</th>
-                        <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">時間區間</th>
+                        <th class="col-type" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">類型</th>
+                        <th class="col-time" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">時間區間</th>
                         <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">狀態</th>
-                        <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">賣家</th>
-                        <th class="text-end" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">操作</th>
+                        <th class="col-seller" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">賣家</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -185,32 +213,22 @@
                         int _ni = 0;
                         @foreach (var item in Model.Items)
                         {
-                            <tr class="@(item.IsPending ? "pending-row" : "")">
+                            <tr class="@(item.IsPending ? "pending-row" : "")" data-id="@item.Id">
                                 <td>
                                     <div class="promo-name">@item.Name</div>
                                     <div class="promo-desc">@item.ItemCount 個項目</div>
                                 </td>
-                                <td>
+                                <td class="col-type">
                                     <span class="badge @item.TypeBadgeClass">@item.TypeName</span>
                                 </td>
-                                <td style="font-size:.85rem; color:#64748b; white-space:nowrap;">
+                                <td class="col-time" style="font-size:.85rem; color:#64748b; white-space:nowrap;">
                                     <div><i class="bx bx-calendar me-1"></i>@item.StartTime.ToString("yyyy/MM/dd HH:mm")</div>
                                     <div class="text-muted">→ @item.EndTime.ToString("yyyy/MM/dd HH:mm")</div>
                                 </td>
                                 <td>
                                     <span class="badge @item.StatusBadgeClass">@item.DisplayStatus</span>
                                 </td>
-                                <td style="font-size:.875rem; color:#4a5568;">@item.SellerName</td>
-                                <td>
-                                    <div class="d-flex gap-1 justify-content-end">
-                                        <button type="button"
-                                                class="act-icon"
-                                                title="檢視"
-                                                onclick="openPromotionOffcanvas(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', @_ni)">
-                                            <i class="bx bx-show"></i>
-                                        </button>
-                                    </div>
-                                </td>
+                                <td class="col-seller" style="font-size:.875rem; color:#4a5568;">@item.SellerName</td>
                             </tr>
                             _ni++;
                         }
@@ -265,38 +283,41 @@
             </div>
         }
     </div>
-</div>
+    </div><!-- /promoListCol -->
 
-@* ── Offcanvas：促銷活動詳情側邊欄 ── *@
-<div class="offcanvas offcanvas-end" tabindex="-1" id="promotionDetailOffcanvas"
-     style="width:50vw; min-width:440px; max-width:720px;">
-    <div class="offcanvas-header border-bottom py-3">
-        <h5 class="offcanvas-title fw-semibold" id="promotionDetailOffcanvasLabel" style="min-width:0; flex:1;">
-            <i class="bx bx-purchase-tag-alt me-2" style="color:#3182ce;"></i>
-            <span id="promotionOffcanvasTitle">促銷活動詳情</span>
-        </h5>
-        @* 快速導覽 ← → *@
-        <div class="d-flex align-items-center gap-1 mx-2 flex-shrink-0">
-            <span id="promoNavCounter" style="font-size:.78rem; color:#94a3b8; min-width:42px; text-align:center;"></span>
-            <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" id="promoNavPrev"
-                    onclick="navigatePromotion(-1)" title="上一筆" disabled>
-                <i class="bx bx-chevron-left" style="font-size:1rem;"></i>
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" id="promoNavNext"
-                    onclick="navigatePromotion(1)" title="下一筆" disabled>
-                <i class="bx bx-chevron-right" style="font-size:1rem;"></i>
-            </button>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="關閉"></button>
-    </div>
-    <div class="offcanvas-body p-0 overflow-auto" id="promotionDetailOffcanvasBody">
-        <div class="d-flex align-items-center justify-content-center" style="height:200px;">
-            <div class="text-center text-muted">
-                <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
-                <div>載入中…</div>
+    <div id="promotionDetailPanel" class="split-detail-panel">
+        <div class="split-detail-panel-inner">
+            <div class="side-panel-header" style="flex-wrap:wrap;">
+                <div class="side-panel-title" id="promotionOffcanvasTitle" title="促銷活動詳情">
+                    <i class="bx bx-purchase-tag-alt me-1" style="color:#3182ce; font-size:1rem; vertical-align:middle;"></i>促銷活動詳情
+                </div>
+                <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                    <span id="promoNavCounter" style="font-size:.78rem; color:#64748b; min-width:42px; text-align:center;"></span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" id="promoNavPrev"
+                            onclick="navigatePromotion(-1)" title="上一筆" disabled>
+                        <i class="bx bx-chevron-left" style="font-size:1rem;"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" id="promoNavNext"
+                            onclick="navigatePromotion(1)" title="下一筆" disabled>
+                        <i class="bx bx-chevron-right" style="font-size:1rem;"></i>
+                    </button>
+                    <button type="button" class="side-panel-close ms-1" onclick="closePromoDetailPanel()" aria-label="關閉" title="關閉">
+                        <i class="bx bx-x"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="panel-body p-0 overflow-auto" id="promotionDetailOffcanvasBody">
+                <div class="d-flex align-items-center justify-content-center" style="height:200px;">
+                    <div class="text-center text-muted">
+                        <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
+                        <div>載入中…</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    </div><!-- /promoLayout -->
 </div>
 
 @* 拒絕原因 Modal *@
@@ -356,25 +377,67 @@
     ];
     var _currentNavIdx = -1;
 
-    // ── 開啟 Offcanvas 並 AJAX 載入詳情 ──
+    // ── 開啟 Push-Pull 側邊詳情面板 ──
     var _promoDetailUrl = '@Url.Action("GetPromotionDetailsPartial", "Promotions")';
+    var _activePromoRowId = null;
+
+    function _promoSwitchMode(toOpen, callback) {
+        var tbl = document.querySelector('#promoListCol .promo-table-wrap');
+        var panel  = document.getElementById('promotionDetailPanel');
+        var layout = document.getElementById('promoLayout');
+        if (tbl) tbl.style.opacity = '0';
+        setTimeout(function () {
+            if (toOpen) {
+                if (panel  && !panel.classList.contains('open'))        panel.classList.add('open');
+                if (layout && !layout.classList.contains('panel-open')) layout.classList.add('panel-open');
+            } else {
+                if (panel)  panel.classList.remove('open');
+                if (layout) layout.classList.remove('panel-open');
+            }
+            if (tbl) tbl.style.opacity = '1';
+            if (callback) callback();
+        }, 180);
+    }
 
     function openPromotionOffcanvas(id, name, idx) {
         _currentNavIdx = (idx !== undefined) ? idx : -1;
         _updateNavButtons();
+
+        // 高亮選中列
+        if (_activePromoRowId !== null) {
+            var prevRow = document.querySelector('tr[data-id="' + _activePromoRowId + '"]');
+            if (prevRow) prevRow.classList.remove('row-active');
+        }
+        _activePromoRowId = id;
+        var activeRow = document.querySelector('tr[data-id="' + id + '"]');
+        if (activeRow) activeRow.classList.add('row-active');
+
         var body    = document.getElementById('promotionDetailOffcanvasBody');
         var titleEl = document.getElementById('promotionOffcanvasTitle');
-        if (titleEl) titleEl.textContent = name || '促銷活動詳情';
+        if (titleEl) { titleEl.textContent = name || '促銷活動詳情'; titleEl.title = name || '促銷活動詳情'; }
         body.innerHTML =
             '<div class="d-flex align-items-center justify-content-center" style="height:200px;">' +
             '<div class="text-center text-muted">' +
             '<div class="spinner-border spinner-border-sm mb-2" role="status"></div>' +
             '<div>載入中…</div></div></div>';
-        bootstrap.Offcanvas.getOrCreateInstance(
-            document.getElementById('promotionDetailOffcanvas')).show();
+
+        var alreadyOpen = document.getElementById('promotionDetailPanel').classList.contains('open');
+        if (alreadyOpen) {
+            // 已是精簡模式，直接切換內容，不需重新 fade
+        } else {
+            _promoSwitchMode(true, null);
+        }
+
         fetch(_promoDetailUrl + '?id=' + id)
             .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
-            .then(function (html) { body.innerHTML = html; })
+            .then(function (html) {
+                body.innerHTML = html;
+                body.querySelectorAll('script').forEach(function (oldScript) {
+                    var newScript = document.createElement('script');
+                    newScript.textContent = oldScript.textContent;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+            })
             .catch(function () {
                 body.innerHTML =
                     '<div class="text-center py-5 text-danger">' +
@@ -382,6 +445,72 @@
                     '<div class="mt-2">載入失敗，請稍後再試</div></div>';
             });
     }
+
+    function closePromoDetailPanel() {
+        if (_activePromoRowId !== null) {
+            var row = document.querySelector('tr[data-id="' + _activePromoRowId + '"]');
+            if (row) row.classList.remove('row-active');
+            _activePromoRowId = null;
+        }
+        _promoSwitchMode(false, null);
+    }
+
+    // Way 1：ESC 鍵關閉面板
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            var panel = document.getElementById('promotionDetailPanel');
+            if (panel && panel.classList.contains('open')) {
+                console.log('[PanelClose] ESC key');
+                closePromoDetailPanel();
+            }
+        }
+    });
+    console.log('[Panel] ESC listener bound ✓');
+
+    // Way 3a：點擊兩卡片間的 gap 區域關閉面板
+    document.getElementById('promoLayout').addEventListener('click', function (e) {
+        if (e.target === this) {
+            var panel = document.getElementById('promotionDetailPanel');
+            if (panel && panel.classList.contains('open')) {
+                console.log('[PanelClose] gap click');
+                closePromoDetailPanel();
+            }
+        }
+    });
+
+    // Way 3b：點擊列表內空白區域（非列、非互動元素）關閉面板
+    document.getElementById('promoListCol').addEventListener('click', function (e) {
+        var panel = document.getElementById('promotionDetailPanel');
+        if (!panel || !panel.classList.contains('open')) return;
+        if (e.target.closest('tr, button, a, input, select, label, .card, .back-to-list-btn')) return;
+        console.log('[PanelClose] list col empty area click');
+        closePromoDetailPanel();
+    });
+
+    // ── 從 DOM 重建 _promoList（AJAX 換頁後呼叫）──
+    function _rebuildPromoList() {
+        _promoList = [];
+        document.querySelectorAll('#promoListCol .table tbody tr[data-id]').forEach(function (tr) {
+            _promoList.push({
+                id:   parseInt(tr.dataset.id),
+                name: tr.querySelector('.promo-name') ? tr.querySelector('.promo-name').textContent.trim() : ''
+            });
+        });
+    }
+
+    // ── 點擊整行開啟面板（封裝為可重呼叫函式，供 AJAX 分頁後重綁）──
+    function _promoBindRows() {
+        document.querySelectorAll('#promoListCol .table tbody tr[data-id]').forEach(function (tr) {
+            tr.addEventListener('click', function (e) {
+                if (e.target.closest('a, button, input')) return;
+                var id   = parseInt(this.dataset.id);
+                var item = _promoList.find(function (p) { return p.id === id; });
+                var idx  = _promoList.findIndex(function (p) { return p.id === id; });
+                if (item) openPromotionOffcanvas(item.id, item.name, idx);
+            });
+        });
+    }
+    _promoBindRows();
 
     // ── 導覽上/下一筆 ──
     function navigatePromotion(delta) {
@@ -404,33 +533,17 @@
 
     // ── 核准 ──
     async function approvePromotion(id, name) {
-        const doApprove = async () => {
-            const token = document.querySelector('#actionForm [name="__RequestVerificationToken"]').value;
-            const fd = new FormData();
-            fd.append('__RequestVerificationToken', token);
-            const res = await fetch(`/Promotions/Approve/${id}`, {
-                method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd
-            });
-            const result = await res.json();
-            if (result.success) {
-                showMsg('success', result.message);
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showMsg('error', result.message);
-            }
-        };
-
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'question', title: '確認核准',
-                text: `確定要核准活動「${name}」嗎？`,
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                confirmButtonText: '核准', cancelButtonText: '取消'
-            }).then(r => { if (r.isConfirmed) doApprove(); });
-        } else {
-            if (confirm(`確定要核准活動「${name}」嗎？`)) doApprove();
-        }
+        const ok = await showConfirm('確認核准', `確定要核准活動「${name}」嗎？`);
+        if (!ok) return;
+        const token = document.querySelector('#actionForm [name="__RequestVerificationToken"]').value;
+        const fd = new FormData();
+        fd.append('__RequestVerificationToken', token);
+        const res = await fetch(`/Promotions/Approve/${id}`, {
+            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+        });
+        const result = await res.json();
+        showMsg(result.success ? 'success' : 'error', result.message);
+        if (result.success) setTimeout(() => location.reload(), 1500);
     }
 
     // ── 拒絕 Modal ──
@@ -478,11 +591,7 @@
         }
     }
 
-    function showMsg(type, msg) {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({ icon: type, text: msg, timer: type === 'success' ? 1800 : undefined, showConfirmButton: type !== 'success' });
-        } else { alert(msg); }
-    }
+    // showMsg 使用全域 window.showMsg（由 _SneatLayout 提供）
 
     // ── 拒絕 Modal 快速原因填入 ──
     function setRejectReason(text) {
@@ -490,5 +599,127 @@
         document.getElementById('rejectReasonError').style.display = 'none';
         document.getElementById('rejectReasonInput').focus();
     }
+</script>
+<script>
+// ── AJAX 分頁：面板展開時換頁不重整、自動載入第一筆 ──
+(function () {
+    function ajaxLoadPromoPage(href) {
+        var wrap    = document.querySelector('#promoListCol .promo-table-wrap');
+        var listCol = document.getElementById('promoListCol');
+        if (wrap) wrap.style.opacity = '0.4';
+        fetch(href)
+            .then(function (res) { if (!res.ok) throw new Error(); return res.text(); })
+            .then(function (html) {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                // 更新表格 tbody
+                var newTbody = doc.querySelector('#promoListCol .table tbody');
+                var tbody    = document.querySelector('#promoListCol .table tbody');
+                if (tbody && newTbody) tbody.innerHTML = newTbody.innerHTML;
+                // 更新分頁（card-footer）
+                var newFooter = doc.querySelector('#promoListCol .card-footer');
+                var curFooter = document.querySelector('#promoListCol .card-footer');
+                if (newFooter && curFooter)        curFooter.outerHTML = newFooter.outerHTML;
+                else if (newFooter && !curFooter)  { var card = document.querySelector('#promoListCol .card:last-child'); if (card) card.insertAdjacentHTML('beforeend', newFooter.outerHTML); }
+                else if (!newFooter && curFooter)  curFooter.remove();
+                // 更新狀態 Tabs 活躍狀態
+                var newTabs = doc.querySelector('#promoListCol .status-tabs');
+                var curTabs = document.querySelector('#promoListCol .status-tabs');
+                if (newTabs && curTabs) curTabs.innerHTML = newTabs.innerHTML;
+                // 更新 filter form 的 hidden status input
+                var newStatusInput = doc.querySelector('#promoListCol form input[name="status"]');
+                var curStatusInput = document.querySelector('#promoListCol form input[name="status"]');
+                if (newStatusInput && curStatusInput) curStatusInput.value = newStatusInput.value;
+                // 更新統計卡片選中狀態
+                var newStatCards = doc.querySelectorAll('.page-above-content a.stat-card');
+                var curStatCards = document.querySelectorAll('.page-above-content a.stat-card');
+                newStatCards.forEach(function(nc, i) {
+                    if (curStatCards[i]) curStatCards[i].classList.toggle('stat-active', nc.classList.contains('stat-active'));
+                });
+                // 重建列表並重綁
+                _rebuildPromoList();
+                _promoBindRows();
+                _updateNavButtons();
+                // 滾回頂部
+                if (listCol) listCol.scrollTop = 0;
+                // 恢復透明度
+                wrap = document.querySelector('#promoListCol .promo-table-wrap');
+                if (wrap) wrap.style.opacity = '1';
+                // 自動開啟第一筆
+                _activePromoRowId = null;
+                _currentNavIdx = -1;
+                var first = _promoList[0];
+                if (first) openPromotionOffcanvas(first.id, first.name, 0);
+                // 同步網址列
+                history.pushState(null, '', href);
+            })
+            .catch(function () { window.location.href = href; });
+    }
+
+    // ── 面板開啟時：統計卡片 / 狀態 Tab / 篩選表單 / 分頁 → AJAX，不跳頁 ──
+
+    // 統計卡片連結（在 page-above-content 內）
+    var above = document.querySelector('.page-above-content');
+    if (above) {
+        above.addEventListener('click', function (e) {
+            var panel = document.getElementById('promotionDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            var link = e.target.closest('a.stat-card');
+            if (!link) return;
+            var href = link.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadPromoPage(href);
+        });
+    }
+
+    // 狀態 Tab 連結 + 分頁（在 promoListCol 內）
+    document.getElementById('promoListCol').addEventListener('click', function (e) {
+        var panel = document.getElementById('promotionDetailPanel');
+        if (!panel || !panel.classList.contains('open')) return;
+        // 狀態 Tab
+        var tabLink = e.target.closest('.status-tabs a.nav-link');
+        if (tabLink) {
+            var href = tabLink.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadPromoPage(href);
+            return;
+        }
+        // 分頁
+        var pageLink = e.target.closest('.page-link');
+        if (pageLink) {
+            var pageItem = pageLink.closest('.page-item');
+            if (!pageItem || pageItem.classList.contains('disabled') || pageItem.classList.contains('active')) return;
+            var href = pageLink.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadPromoPage(href);
+        }
+    });
+
+    // 篩選表單（keyword 搜尋 submit + type 下拉 change）
+    var filterForm = document.querySelector('#promoListCol form[method="get"]');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function (e) {
+            var panel = document.getElementById('promotionDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            e.preventDefault();
+            var params = new URLSearchParams(new FormData(filterForm)).toString();
+            ajaxLoadPromoPage(filterForm.action + '?' + params);
+        });
+        var typeSelect = filterForm.querySelector('select[name="type"]');
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function () {
+                var panel = document.getElementById('promotionDetailPanel');
+                if (panel && panel.classList.contains('open')) {
+                    var params = new URLSearchParams(new FormData(filterForm)).toString();
+                    ajaxLoadPromoPage(filterForm.action + '?' + params);
+                } else {
+                    filterForm.submit();
+                }
+            });
+        }
+    }
+})();
 </script>
 }

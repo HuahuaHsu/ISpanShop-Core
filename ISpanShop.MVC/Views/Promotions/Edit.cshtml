@@ -359,7 +359,7 @@
                 <div class="p-3 border-bottom">
                     <div class="input-group">
                         <input type="text" id="productSearch" class="form-control" placeholder="搜尋商品名稱或分類..." />
-                        <button class="btn btn-primary" onclick="searchProducts()"><i class="bx bx-search"></i></button>
+                        <button class="btn btn-primary" onclick="searchProducts(1)"><i class="bx bx-search"></i></button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -374,6 +374,7 @@
                     </table>
                 </div>
             </div>
+            <div id="productPagination" class="px-3 pt-1 pb-0"></div>
             <div class="modal-footer">
                 <span class="text-muted me-auto" style="font-size:.875rem;" id="selectedCount">已選 0 個商品</span>
                 <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">取消</button>
@@ -482,26 +483,56 @@
     function removeRule(i) { selectedRules.splice(i,1); renderRules(); }
 
     function openProductModal() {
-        searchProducts();
+        searchProducts(1);
         new bootstrap.Modal(document.getElementById('productModal')).show();
     }
-    async function searchProducts() {
-        const kw = document.getElementById('productSearch')?.value ?? '';
+    async function searchProducts(page) {
+        page = page || 1;
+        const kw    = document.getElementById('productSearch')?.value ?? '';
         const tbody = document.getElementById('productModalBody');
         tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">搜尋中...</td></tr>';
-        const res  = await fetch(`/Promotions/SearchProducts?keyword=${encodeURIComponent(kw)}`);
-        const list = await res.json();
-        tbody.innerHTML = list.map(p => {
+        const res  = await fetch(`/Promotions/SearchProducts?keyword=${encodeURIComponent(kw)}&page=${page}&pageSize=5`);
+        const data = await res.json();
+        if (!data.items.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">找不到商品</td></tr>';
+            document.getElementById('productPagination').innerHTML = '';
+            return;
+        }
+        tbody.innerHTML = data.items.map(p => {
             const chk = selectedItems.some(x => x.productId === p.id) ? 'checked' : '';
             return `<tr><td><input type="checkbox" class="form-check-input product-cb" value="${p.id}"
                 data-name="${p.name}" data-price="${p.price}" ${chk}/></td>
                 <td style="font-weight:600;font-size:.875rem;">${p.name}</td>
                 <td><span class="badge bg-label-secondary">${p.categoryName}</span></td>
                 <td style="font-weight:600;">NT$ ${p.price.toLocaleString()}</td></tr>`;
-        }).join('') || '<tr><td colspan="4" class="text-center py-3 text-muted">找不到商品</td></tr>';
-        document.querySelectorAll('.product-cb').forEach(cb => cb.addEventListener('change', () => {
-            document.getElementById('selectedCount').textContent = `已選 ${document.querySelectorAll('.product-cb:checked').length} 個商品`;
-        }));
+        }).join('');
+        updateSelectedCount();
+        document.querySelectorAll('.product-cb').forEach(cb => cb.addEventListener('change', updateSelectedCount));
+        _renderProductPagination(data.currentPage, data.totalPages, data.totalCount);
+    }
+
+    function _renderProductPagination(page, totalPages, totalCount) {
+        const container = document.getElementById('productPagination');
+        if (totalPages <= 1) { container.innerHTML = ''; return; }
+        let html = '<nav class="d-flex align-items-center justify-content-between py-1">';
+        html += `<small class="text-muted">共 ${totalCount} 筆商品</small>`;
+        html += '<ul class="pagination pagination-sm mb-0">';
+        html += `<li class="page-item ${page <= 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="searchProducts(${page - 1}); return false;">&laquo;</a></li>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="searchProducts(${i}); return false;">${i}</a></li>`;
+        }
+        html += `<li class="page-item ${page >= totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="searchProducts(${page + 1}); return false;">&raquo;</a></li>`;
+        html += '</ul></nav>';
+        container.innerHTML = html;
+    }
+
+    function updateSelectedCount() {
+        const selectedIds = new Set(selectedItems.map(x => x.productId));
+        document.querySelectorAll('.product-cb').forEach(cb => {
+            if (cb.checked) selectedIds.add(+cb.value);
+            else            selectedIds.delete(+cb.value);
+        });
+        document.getElementById('selectedCount').textContent = `已選 ${selectedIds.size} 個商品`;
     }
     function confirmProducts() {
         const checkedIds = Array.from(document.querySelectorAll('.product-cb:checked')).map(cb => +cb.value);
@@ -575,9 +606,6 @@
         }
     }
 
-    function showMsg(type, msg) {
-        if (typeof Swal !== 'undefined') Swal.fire({ icon: type, text: msg, showConfirmButton: type !== 'success', timer: type === 'success' ? 2000 : undefined });
-        else alert(msg);
-    }
+    // showMsg 使用全域 window.showMsg（由 _SneatLayout 提供）
 </script>
 }

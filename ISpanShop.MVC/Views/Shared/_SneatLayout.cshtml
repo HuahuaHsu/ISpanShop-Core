@@ -859,6 +859,132 @@
         </div>
     </div>
 
+    @* ── 推拉式側邊面板共用標題樣式 ── *@
+    <style>
+        .side-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-bottom: 1px solid #bfdbfe;
+            box-shadow: 0 2px 8px rgba(49,130,206,.07);
+            flex-shrink: 0;
+            min-height: 60px;
+            gap: 8px;
+        }
+        .side-panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e3a5f;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .side-panel-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: rgba(255,255,255,.75);
+            border-radius: 8px;
+            color: #64748b;
+            font-size: 1.3rem;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background .15s, color .15s;
+            padding: 0;
+        }
+        .side-panel-close:hover { background: #fee2e2; color: #dc2626; }
+    </style>
+
+    <style>
+        /* ═══════════════════════════════════════════════════════════════════
+           Shared Split-Layout — 商品總覽 / 商品審核 / 促銷活動 三頁共用
+           ═══════════════════════════════════════════════════════════════════ */
+
+        /* 全頁單一滾動容器 */
+        .page-fluid-root {
+            height: calc(100vh - 56px - 3rem);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding-top: 1.25rem;
+        }
+        .page-above-content { flex-shrink: 0; }
+
+        /* 左右分割 flex 容器 */
+        .split-layout {
+            display: flex;
+            align-items: stretch;
+            flex: 1;
+            min-height: 0;
+            gap: 0;
+            transition: gap .35s cubic-bezier(.4,0,.2,1);
+        }
+        .split-layout.panel-open { gap: 14px; }
+
+        /* 左側列表欄 */
+        .split-list-col {
+            flex: 1;
+            min-width: 0;
+            overflow-y: auto;
+            padding: 1.25rem 1.5rem 2rem;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.10);
+            border: 1px solid rgba(226,232,240,.8);
+        }
+
+        /* 右側詳情面板 */
+        .split-detail-panel {
+            flex: 0 0 0%;
+            width: 0;
+            overflow: hidden;
+            transition: flex .35s cubic-bezier(.4,0,.2,1), width .35s cubic-bezier(.4,0,.2,1);
+        }
+        .split-detail-panel.open { flex: 0 0 65%; width: 65%; }
+
+        .split-detail-panel-inner {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.10);
+            border: 1px solid rgba(226,232,240,.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .split-detail-panel-inner .panel-body { overflow-y: auto; flex: 1; }
+
+        /* 返回完整列表按鈕（精簡模式時顯示） */
+        .back-to-list-btn {
+            display: none;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .split-layout.panel-open .back-to-list-btn { display: flex; }
+    </style>
+
+    @* ── 全域 Toast（成功通知，右上角自動消失）── *@
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:11000;">
+        <div id="globalToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fw-semibold" id="globalToastBody"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
     @* ── 全域確認/提示 Modal ── *@
     <div class="modal fade" id="globalModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
@@ -902,14 +1028,15 @@
     </script>
 
     <script>
-        // ── 全域 Alert / Confirm ──
+        // ── 全域 Alert / Confirm / showMsg ──
         (function () {
             function getModal() {
                 return bootstrap.Modal.getOrCreateInstance(document.getElementById('globalModal'));
             }
 
-            window.showAlert = function (msg, callback) {
-                document.getElementById('globalModalTitle').textContent = '提示';
+            // showAlert(msg, callback?, title?)
+            window.showAlert = function (msg, callback, title) {
+                document.getElementById('globalModalTitle').textContent = title || '提示';
                 document.getElementById('globalModalMessage').textContent = msg;
                 document.getElementById('globalModalFooter').innerHTML =
                     '<button type="button" class="btn btn-primary rounded-pill px-5" id="_gOk">確定</button>';
@@ -920,21 +1047,56 @@
                 getModal().show();
             };
 
-            window.showConfirm = function (msg, onConfirm, onCancel) {
-                document.getElementById('globalModalTitle').textContent = '確認';
-                document.getElementById('globalModalMessage').textContent = msg;
+            // showConfirm — 支援兩種呼叫方式，皆回傳 Promise<bool>：
+            //   新式（Promotions 用）： await showConfirm(title, text)
+            //   舊式（callback 兼容）： showConfirm(msg, onConfirm, onCancel)
+            window.showConfirm = function (titleOrMsg, textOrCallback, onConfirm, onCancel) {
+                var title, text, confirmCb, cancelCb;
+                if (typeof textOrCallback === 'function') {
+                    // 舊式 callback signature
+                    title     = '確認';
+                    text      = titleOrMsg;
+                    confirmCb = textOrCallback;
+                    cancelCb  = onConfirm;
+                } else {
+                    // 新式 Promise signature
+                    title     = titleOrMsg || '確認';
+                    text      = textOrCallback || '';
+                    confirmCb = onConfirm;
+                    cancelCb  = onCancel;
+                }
+                document.getElementById('globalModalTitle').textContent = title;
+                document.getElementById('globalModalMessage').textContent = text;
                 document.getElementById('globalModalFooter').innerHTML =
                     '<button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="_gCancel">取消</button>' +
                     '<button type="button" class="btn btn-primary rounded-pill px-4" id="_gConfirm">確定</button>';
-                document.getElementById('_gConfirm').onclick = function () {
-                    getModal().hide();
-                    if (onConfirm) onConfirm();
-                };
-                document.getElementById('_gCancel').onclick = function () {
-                    getModal().hide();
-                    if (onCancel) onCancel();
-                };
+                var promise = new Promise(function (resolve) {
+                    document.getElementById('_gConfirm').onclick = function () {
+                        getModal().hide();
+                        resolve(true);
+                        if (confirmCb) confirmCb();
+                    };
+                    document.getElementById('_gCancel').onclick = function () {
+                        getModal().hide();
+                        resolve(false);
+                        if (cancelCb) cancelCb();
+                    };
+                });
                 getModal().show();
+                return promise;
+            };
+
+            // showMsg(type, msg) — success 用右上角 Toast，error 用 Modal
+            window.showMsg = function (type, msg) {
+                if (type === 'success') {
+                    var toastEl   = document.getElementById('globalToast');
+                    var toastBody = document.getElementById('globalToastBody');
+                    toastEl.className = 'toast align-items-center border-0 text-bg-success';
+                    toastBody.textContent = msg;
+                    new bootstrap.Toast(toastEl, { delay: 1800 }).show();
+                } else {
+                    showAlert(msg, null, '操作失敗');
+                }
             };
         })();
     </script>

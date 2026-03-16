@@ -20,9 +20,17 @@ namespace ISpanShop.Models.DTOs.Products
         public string? RejectReason { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string? MainImageUrl { get; set; }
-        /// <summary>審核狀態 (0=待審核, 1=通過, 2=退回)</summary>
+        /// <summary>審核狀態 (0=待審核, 1=通過, 2=退回, 3=重新申請審核)</summary>
         public int ReviewStatus { get; set; }
         public string? ReviewedBy { get; set; }
         public DateTime? ReviewDate { get; set; }
+        /// <summary>強制下架原因（Status==4 時）</summary>
+        public string? ForceOffShelfReason { get; set; }
+        /// <summary>強制下架時間</summary>
+        public DateTime? ForceOffShelfDate { get; set; }
+        /// <summary>執行強制下架的管理員</summary>
+        public int? ForceOffShelfBy { get; set; }
+        /// <summary>賣家申請重新上架的時間</summary>
+        public DateTime? ReApplyDate { get; set; }
     }
 }

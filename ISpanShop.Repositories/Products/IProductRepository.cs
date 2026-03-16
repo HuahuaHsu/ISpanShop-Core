@@ -130,11 +130,26 @@ namespace ISpanShop.Repositories.Products
         /// <summary>[Async] 重設為待審核：清空審核結果欄位，商品回到 Status=2 / ReviewStatus=0</summary>
         Task ResetToPendingAsync(int productId);
 
-        /// <summary>[Async] 取得全站商品各狀態筆數</summary>
-        Task<(int Total, int Published, int Unpublished, int Pending)> GetStatusCountsAsync();
+        /// <summary>[Async] 取得全站商品各狀態筆數（Unpublished 不含強制下架）</summary>
+        Task<(int Total, int Published, int Unpublished, int Pending, int ForcedOffShelf)> GetStatusCountsAsync();
 
-        /// <summary>[Async] 管理員強制下架商品，儲存下架原因</summary>
-        Task ForceUnpublishAsync(int id, string? reason);
+        /// <summary>[Async] 管理員強制下架商品（Status→4），儲存下架原因與操作人</summary>
+        Task ForceUnpublishAsync(int id, string? reason, int? adminBy);
+
+        /// <summary>[Async] 批次強制下架</summary>
+        Task<int> BatchForceOffShelfAsync(List<int> ids, string? reason, int? adminBy);
+
+        /// <summary>[Async] 分頁取得重新申請審核商品（ReviewStatus==3）</summary>
+        Task<(IEnumerable<ProductReviewDto> Items, int TotalCount)> GetReApplyProductsPagedAsync(int page, int pageSize);
+
+        /// <summary>[Async] 賣家申請重新上架：設 ReviewStatus=3，記錄申請時間</summary>
+        Task ReApplyAsync(int id);
+
+        /// <summary>[Async] 管理員核准強制下架商品重新上架（Status→1, ReviewStatus→1）</summary>
+        Task ApproveForcedProductAsync(int id, string adminId);
+
+        /// <summary>[Async] 管理員駁回重新申請（保持 Status=4, ReviewStatus→2，記錄原因）</summary>
+        Task RejectForcedProductAsync(int id, string adminId, string reason);
 
         /// <summary>[Async] 取得第一筆未刪除商品作為測試商品的範本（複製 StoreId/CategoryId/BrandId）</summary>
         Task<Product?> GetFirstActiveProductAsync();

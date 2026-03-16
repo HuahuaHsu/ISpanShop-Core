@@ -312,6 +312,83 @@
         </div>
     }
 
+    @* ── 銷售成效（僅「進行中」和「已結束」顯示） ── *@
+    @if (Model.ShowSalesStats)
+    {
+        var s = Model.SalesStats!;
+        var isRuleType = Model.PromotionType == 2;
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-2 d-flex align-items-center gap-2">
+                <h6 class="mb-0 fw-bold" style="color:#1e2d3d; font-size:.9rem;">
+                    <i class="bx bx-bar-chart-alt-2 me-2" style="color:#10b981;"></i>銷售成效
+                </h6>
+                <span class="badge bg-label-success ms-auto" style="font-size:.75rem;">
+                    @(Model.IsActiveOnly ? "進行中" : "已結束")
+                </span>
+            </div>
+            <div class="card-body py-3">
+                <div class="row g-2">
+                    @* 參與訂單數 *@
+                    <div class="col-@(isRuleType ? "6" : "6")">
+                        <div class="text-center p-3" style="background:#f0fdf4; border-radius:10px; border:1px solid #bbf7d0;">
+                            <div class="fw-bold" style="font-size:1.4rem; color:#10b981; line-height:1.2;">
+                                @s.OrderCount.ToString("N0")
+                            </div>
+                            <div style="font-size:.75rem; color:#64748b; margin-top:.3rem;">
+                                <i class="bx bx-receipt me-1"></i>參與訂單數
+                            </div>
+                        </div>
+                    </div>
+                    @* 總銷售數量（滿額折扣不適用） *@
+                    @if (!isRuleType)
+                    {
+                        <div class="col-6">
+                            <div class="text-center p-3" style="background:#eff6ff; border-radius:10px; border:1px solid #bfdbfe;">
+                                <div class="fw-bold" style="font-size:1.4rem; color:#3b82f6; line-height:1.2;">
+                                    @((s.TotalSoldQty ?? 0).ToString("N0"))
+                                </div>
+                                <div style="font-size:.75rem; color:#64748b; margin-top:.3rem;">
+                                    <i class="bx bx-package me-1"></i>商品銷售數量
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @* 總銷售金額 *@
+                    <div class="col-@(isRuleType ? "6" : "6")">
+                        <div class="text-center p-3" style="background:#fdf4ff; border-radius:10px; border:1px solid #e9d5ff;">
+                            <div class="fw-bold" style="font-size:1.25rem; color:#7c3aed; line-height:1.2;">
+                                NT$&nbsp;@s.TotalSalesAmount.ToString("N0")
+                            </div>
+                            <div style="font-size:.75rem; color:#64748b; margin-top:.3rem;">
+                                <i class="bx bx-dollar me-1"></i>@(isRuleType ? "活動期間銷售金額" : "活動商品銷售金額")
+                            </div>
+                        </div>
+                    </div>
+                    @* 優惠總折抵金額 *@
+                    <div class="col-@(isRuleType ? "12" : "6")">
+                        <div class="text-center p-3" style="background:#fff7ed; border-radius:10px; border:1px solid #fed7aa;">
+                            <div class="fw-bold" style="font-size:1.25rem; color:#ea5455; line-height:1.2;">
+                                -NT$&nbsp;@s.TotalDiscount.ToString("N0")
+                            </div>
+                            <div style="font-size:.75rem; color:#64748b; margin-top:.3rem;">
+                                <i class="bx bx-tag-alt me-1"></i>優惠總折抵金額
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @* 折抵率提示 *@
+                @if (s.TotalSalesAmount > 0)
+                {
+                    var discountRate = Math.Round(s.TotalDiscount / (s.TotalSalesAmount + s.TotalDiscount) * 100, 1);
+                    <div class="mt-2 pt-2 border-top" style="font-size:.8rem; color:#64748b;">
+                        <i class="bx bx-info-circle me-1"></i>
+                        平均折抵率 <strong style="color:#ea5455;">@discountRate%</strong>，
+                        實際回收金額 <strong style="color:#10b981;">NT$ @s.TotalSalesAmount.ToString("N0")</strong>
+                    </div>
+                }
+            </div>
+        </div>
+    }
 
 </div>
 
@@ -371,40 +448,29 @@
 
     async function pdApprovePromotion(id) {
         var name = @Html.Raw($"'{Model.Name.Replace("'", "\\'")}'");
-        var ok = await _pdConfirm('確認核准', '確定要核准活動「' + name + '」嗎？');
+        var ok = await showConfirm('確認核准', '確定要核准活動「' + name + '」嗎？');
         if (!ok) return;
         var token = document.querySelector('#pdActionForm [name="__RequestVerificationToken"]').value;
         var fd = new FormData();
         fd.append('__RequestVerificationToken', token);
         var res = await fetch('/Promotions/Approve/' + id, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
         var result = await res.json();
-        _pdMsg(result.success ? 'success' : 'error', result.message);
+        showMsg(result.success ? 'success' : 'error', result.message);
         if (result.success) setTimeout(function () { location.reload(); }, 1500);
     }
 
     async function pdRejectPromotion(id) {
         var reason = document.getElementById('pdRejectReason').value.trim();
-        if (!reason) { _pdMsg('error', '請填寫拒絕理由'); return; }
+        if (!reason) { showMsg('error', '請填寫拒絕理由'); return; }
         var token = document.querySelector('#pdActionForm [name="__RequestVerificationToken"]').value;
         var fd = new FormData();
         fd.append('__RequestVerificationToken', token);
         fd.append('reason', reason);
         var res = await fetch('/Promotions/Reject/' + id, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
         var result = await res.json();
-        _pdMsg(result.success ? 'success' : 'error', result.message);
+        showMsg(result.success ? 'success' : 'error', result.message);
         if (result.success) setTimeout(function () { location.reload(); }, 1500);
     }
 
-    function _pdConfirm(title, text) {
-        if (typeof Swal !== 'undefined') {
-            return Swal.fire({ icon: 'question', title: title, text: text, showCancelButton: true, confirmButtonText: '確認', cancelButtonText: '取消' }).then(function (r) { return r.isConfirmed; });
-        }
-        return Promise.resolve(confirm(text));
-    }
-
-    function _pdMsg(type, msg) {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({ icon: type, text: msg, timer: type === 'success' ? 1800 : undefined, showConfirmButton: type !== 'success' });
-        } else { alert(msg); }
-    }
+    // showConfirm / showMsg 使用全域版本（由 _SneatLayout 提供）
 </script>

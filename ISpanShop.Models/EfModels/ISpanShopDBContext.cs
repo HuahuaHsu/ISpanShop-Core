@@ -498,11 +498,14 @@ public partial class ISpanShopDBContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.ForceOffShelfDate).HasColumnType("datetime");
+            entity.Property(e => e.ForceOffShelfReason).HasMaxLength(500);
             entity.Property(e => e.MaxPrice).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.MinPrice).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Name)
                 .IsRequired()
                 .HasMaxLength(200);
+            entity.Property(e => e.ReApplyDate).HasColumnType("datetime");
             entity.Property(e => e.ReviewDate).HasColumnType("datetime");
             entity.Property(e => e.ReviewedBy).HasMaxLength(100);
             entity.Property(e => e.Status).HasDefaultValue((byte)1);
@@ -519,6 +522,10 @@ public partial class ISpanShopDBContext : DbContext
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Products_Categories");
+
+            entity.HasOne(d => d.ForceOffShelfByNavigation).WithMany(p => p.Products)
+                .HasForeignKey(d => d.ForceOffShelfBy)
+                .HasConstraintName("FK_Products_Users_ForceOffShelf");
 
             entity.HasOne(d => d.Store).WithMany(p => p.Products)
                 .HasForeignKey(d => d.StoreId)

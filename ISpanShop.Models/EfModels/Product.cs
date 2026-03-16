@@ -47,11 +47,21 @@ public partial class Product
 
     public DateTime? ReviewDate { get; set; }
 
+    public string ForceOffShelfReason { get; set; }
+
+    public DateTime? ForceOffShelfDate { get; set; }
+
+    public int? ForceOffShelfBy { get; set; }
+
+    public DateTime? ReApplyDate { get; set; }
+
     public virtual Brand Brand { get; set; }
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
     public virtual Category Category { get; set; }
+
+    public virtual User ForceOffShelfByNavigation { get; set; }
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
