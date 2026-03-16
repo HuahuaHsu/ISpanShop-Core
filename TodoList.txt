@@ -1260,13 +1260,12 @@ STEP 5：展示層 (ISpanShop.MVC)
   * Products.Status = 1 假設為上架中
     實作前請確認：SELECT DISTINCT Status FROM Products
 
-============================================================
+
 
 ============================================================
   管理員權限切版 (Admin Permission-Based UI) - 實作 Todolist
   功能：依登入身分動態顯示選單與保護路由
   資料來源：AdminLevels + Permissions + AdminLevelPermissions
-  架構：Areas/Admin + ISpanShop.Common
 ============================================================
  
 ------------------------------------------------------------
@@ -1439,39 +1438,39 @@ STEP 5：建立 RequirePermission Attribute (ISpanShop.MVC)
 [V]STEP 6：各 Controller 套用 Attribute
 ------------------------------------------------------------
  
-[ ] ProductsController（商品監管）
+    ProductsController（商品監管）
     [RequirePermission("product_manage")]
- 
-[ ] CategoriesController（分類管理）
+    
+    CategoriesController（分類管理）
     [RequirePermission("product_manage")]
- 
-[ ] InventoryController（庫存監控）
+    
+    InventoryController（庫存監控）
     [RequirePermission("store_manage")]
- 
-[ ] OrderManagementController（訂單管理）
+    
+    OrderManagementController（訂單管理）
     [RequirePermission("cashflow_manage")]
- 
-[ ] PaymentManagementController（金流管理）
+    
+    PaymentManagementController（金流管理）
     [RequirePermission("cashflow_manage")]
- 
-[ ] ContentModerationController（內容與客服）
+    
+    ContentModerationController（內容與客服）
     - 工單相關 Action：[RequirePermission("ticket_manage")]
     - 敏感詞相關 Action：[RequirePermission("sensitive_manage")]
     - 注意：同一 Controller 可在 Action 層個別套用
- 
-[ ] MemberController（會員管理）
+    
+    MemberController（會員管理）
     [RequirePermission("member_manage")]
- 
-[ ] SellerController（店家管理）
+    
+    SellerController（店家管理）
     [RequirePermission("store_manage")]
- 
-[ ] LoginHistoryController（登入紀錄）
+    
+    LoginHistoryController（登入紀錄）
     [RequireSuperAdmin]  ← 超級管理員限定
- 
-[ ] AdminPermissionController（管理員權限設定）
+    
+    AdminPermissionController（管理員權限設定）
     [RequireSuperAdmin]  ← 超級管理員限定
- 
-[ ] HomeController / DashboardController（首頁儀錶板）
+    
+    HomeController / DashboardController（首頁儀錶板）
     [RequirePermission("report_view")]
     ※ 或改為：只要登入就能看（[Authorize] 即可）
        視業務需求決定
@@ -1480,7 +1479,7 @@ STEP 5：建立 RequirePermission Attribute (ISpanShop.MVC)
 STEP 7：選單切版 (Sidebar Layout)
 ------------------------------------------------------------
  
-[ ] 修改 _AdminLayout.cshtml 或 Sidebar Partial
+[V] 修改 _AdminLayout.cshtml 或 Sidebar Partial
     - 位置：ISpanShop.MVC/Areas/Admin/Views/Shared/
     - 在最上方加入：
         @using ISpanShop.Common.Helpers
@@ -1559,7 +1558,7 @@ STEP 7：選單切版 (Sidebar Layout)
 STEP 8：ContentModeration 頁面內部細分（選做）
 ------------------------------------------------------------
  
-[ ] 修改 ContentModeration Index.cshtml
+[V] 修改 ContentModeration Index.cshtml
     - 工單 Tab / 功能區塊：
         @if (User.HasPermission("ticket_manage"))
         {
@@ -1593,29 +1592,6 @@ STEP 9：Program.cs 確認設定
         app.UseAuthorization();
  
 ------------------------------------------------------------
-STEP 10：測試驗證
-------------------------------------------------------------
- 
-[ ] 測試情境 1：超級管理員（LevelId = 1）
-    -> 所有選單項目都顯示
-    -> 所有頁面均可存取
- 
-[ ] 測試情境 2：客服工單管理員
-    -> 選單只顯示「內容與客服」
-    -> 直接輸入 /Admin/Products 網址 -> 導向 AccessDenied
- 
-[ ] 測試情境 3：財務管理員
-    -> 選單只顯示「訂單管理」、「金流管理」
-    -> 直接輸入 /Admin/Members 網址 -> 導向 AccessDenied
- 
-[ ] 測試情境 4：經營分析（report_view only）
-    -> 選單只顯示「首頁」
-    -> 其他所有頁面均被擋下
- 
-[ ] 測試情境 5：未登入
-    -> 直接輸入任意後台網址 -> 導向 Login
- 
-------------------------------------------------------------
 PermissionKey 對應選單 速查表
 ------------------------------------------------------------
  
@@ -1628,7 +1604,7 @@ PermissionKey 對應選單 速查表
   sensitive_manage   | 內容與客服（敏感詞功能）
   member_manage      | 會員管理
   report_view        | 首頁儀錶板
-  超級管理員專用      | 登入紀錄、管理員權限設定
+  超級管理員專用       | 登入紀錄、管理員權限設定
  
 ------------------------------------------------------------
 注意事項

@@ -50,7 +50,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers
             }
             catch (InvalidOperationException ex) when (ex.Message == "ACCOUNT_BLACKLISTED")
             {
-                form.Message = "您的帳號已被停權，請聯繫系統管理員。";
+                form.Message = "帳號異常，請聯繫系統管理員。";
                 ModelState.AddModelError(string.Empty, form.Message);
                 return View(form);
             }

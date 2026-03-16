@@ -15,10 +15,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/sneat/assets/vendor/fonts/boxicons.css" />
     <style>
-        *, *::before, *::after { box-sizing: border-box; }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
 
         html, body {
-            margin: 0; padding: 0; height: 100%;
+            margin: 0;
+            padding: 0;
+            height: 100%;
             font-family: 'Public Sans', sans-serif;
         }
 
@@ -31,171 +35,240 @@
         /* ══════════ 左側品牌區 ══════════ */
         .brand-side {
             flex: 0 0 58%;
-            background: linear-gradient(145deg, #0d1b2a 0%, #1a2332 40%, #2a3042 100%);
+            background: linear-gradient(135deg, #151C25 0%, #0D1218 100%);
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            padding: 2.5rem 3rem;
+            padding: clamp(1.25rem, 2.2vh, 2.5rem) clamp(1.5rem, 3.2vw, 3.5rem);
         }
 
-        /* ── 幾何裝飾共用 ── */
-        .geo { position: absolute; }
-
-        /* 實心圓 */
-        .gc { border-radius: 50%; }
-        /* 空心圓環 */
-        .gr { border-radius: 50%; background: transparent !important; }
-        /* 三角形（用 clip-path） */
-        .gt { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border: none !important; }
-        /* 六邊形 */
-        .gh { clip-path: polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); border: none !important; }
-
-        /* ── 大型背景圓（blur 景深） ── */
-        .g1 {
-            width: 380px; height: 380px;
-            top: -110px; right: -90px;
-            background: rgba(16,185,129,0.10);
-            border: 1.5px solid rgba(16,185,129,0.18);
-            filter: blur(1px);
-            animation: gFloat1 32s ease-in-out infinite;
-        }
-        .g2 {
-            width: 280px; height: 280px;
-            bottom: 60px; left: -70px;
-            background: rgba(16,185,129,0.09);
-            border: 1.5px solid rgba(16,185,129,0.15);
-            filter: blur(0.5px);
-            animation: gFloat2 38s ease-in-out infinite reverse;
-        }
-        .g3 {
-            width: 200px; height: 200px;
-            top: 38%; left: 32%;
-            background: rgba(245,158,11,0.08);
-            border: 1px solid rgba(245,158,11,0.14);
-            filter: blur(2px);
-            animation: gFloat3 28s ease-in-out infinite;
-        }
-        /* 空心圓環 */
-        .g4 {
-            width: 150px; height: 150px;
-            top: 12%; left: 8%;
-            border: 2px solid rgba(16,185,129,0.20);
-            animation: gSpin1 40s linear infinite;
-        }
-        .g5 {
-            width: 90px; height: 90px;
-            bottom: 20%; right: 12%;
-            border: 2px solid rgba(255,255,255,0.13);
-            animation: gSpin1 25s linear infinite reverse;
-        }
-        .g6 {
-            width: 55px; height: 55px;
-            top: 55%; right: 8%;
-            border: 1.5px solid rgba(16,185,129,0.22);
-            animation: gSpin1 20s linear infinite;
-        }
-        /* 方塊 */
-        .g7 {
-            width: 80px; height: 80px;
-            top: 20%; right: 22%;
-            background: rgba(16,185,129,0.10);
-            border: 1.5px solid rgba(16,185,129,0.20);
-            animation: gSquare1 30s ease-in-out infinite;
-        }
-        .g8 {
-            width: 50px; height: 50px;
-            bottom: 28%; right: 32%;
-            background: rgba(255,255,255,0.07);
-            border: 1px solid rgba(255,255,255,0.14);
-            animation: gSquare1 22s ease-in-out infinite reverse;
-        }
-        .g9 {
-            width: 110px; height: 110px;
-            top: 62%; left: 6%;
-            background: transparent;
-            border: 1.5px solid rgba(245,158,11,0.14);
-            animation: gSquare2 35s ease-in-out infinite;
-        }
-        /* 三角形 */
-        .g10 {
-            width: 70px; height: 60px;
-            top: 30%; left: 24%;
-            background: rgba(16,185,129,0.12);
-            animation: gFloat3 24s ease-in-out infinite 3s;
-        }
-        .g11 {
-            width: 45px; height: 39px;
-            bottom: 38%; left: 42%;
-            background: rgba(255,255,255,0.09);
-            animation: gFloat1 28s ease-in-out infinite 6s;
-        }
-        /* 六邊形 */
-        .g12 {
-            width: 65px; height: 65px;
-            top: 75%; right: 25%;
-            background: rgba(16,185,129,0.11);
-            animation: gFloat2 26s ease-in-out infinite 2s;
+        /* ── 背景網格線 ── */
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
+            mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
+            z-index: 0;
         }
 
-        /* ── 粒子（小光點） ── */
-        .dot { position: absolute; border-radius: 50%; }
-        .d1  { width:5px;  height:5px;  top:18%; left:18%;  background:rgba(16,185,129,0.65);  animation: dFloat 11s ease-in-out infinite; }
-        .d2  { width:3px;  height:3px;  top:65%; left:52%;  background:rgba(16,185,129,0.55);  animation: dFloat 14s ease-in-out infinite 2s; }
-        .d3  { width:6px;  height:6px;  top:42%; right:22%; background:rgba(255,255,255,0.45);  animation: dFloat  9s ease-in-out infinite 1s; }
-        .d4  { width:4px;  height:4px;  bottom:32%; left:33%; background:rgba(245,158,11,0.60); animation: dFloat 13s ease-in-out infinite 3s; }
-        .d5  { width:3px;  height:3px;  top:78%; right:18%; background:rgba(16,185,129,0.50);  animation: dFloat 12s ease-in-out infinite 0.5s; }
-        .d6  { width:2px;  height:2px;  top:14%; right:38%; background:rgba(255,255,255,0.55);  animation: dFloat 16s ease-in-out infinite 4s; }
-        .d7  { width:5px;  height:5px;  top:50%; left:14%;  background:rgba(16,185,129,0.45);  animation: dFloat 10s ease-in-out infinite 5s; }
-        .d8  { width:4px;  height:4px;  bottom:15%; left:58%; background:rgba(255,255,255,0.40); animation: dFloat 18s ease-in-out infinite 1.5s; }
-        .d9  { width:3px;  height:3px;  top:88%; right:42%; background:rgba(245,158,11,0.55);  animation: dFloat  8s ease-in-out infinite 7s; }
-        .d10 { width:6px;  height:6px;  top:6%;  left:48%;  background:rgba(16,185,129,0.35);  animation: dFloat 20s ease-in-out infinite 2.5s; }
+        /* ── 背景光暈 ── */
+        .bg-glow {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,176,116,0.15) 0%, rgba(0,176,116,0) 60%);
+            filter: blur(50px);
+            z-index: 0;
+        }
 
-        /* 圓形漂浮 */
-        @@keyframes gFloat1 {
-            0%,100% { transform: translate(0,0) scale(1); }
-            30%      { transform: translate(18px,-22px) scale(1.04); }
-            70%      { transform: translate(-12px,14px) scale(0.97); }
+        .bg-glow-1 {
+            width: 700px;
+            height: 700px;
+            top: -250px;
+            left: -250px;
         }
-        @@keyframes gFloat2 {
-            0%,100% { transform: translate(0,0) scale(1); }
-            40%      { transform: translate(-20px,18px) scale(1.05); }
-            80%      { transform: translate(14px,-10px) scale(0.96); }
+
+        .bg-glow-2 {
+            width: 500px;
+            height: 500px;
+            top: 20%;
+            right: -100px;
+            opacity: 0.4;
         }
-        @@keyframes gFloat3 {
-            0%,100% { transform: translate(0,0) rotate(0deg); }
-            50%      { transform: translate(10px,-18px) rotate(8deg); }
+
+        /* ── 響應式方塊尺寸變數 ── */
+        :root {
+            --cs: clamp(180px, 22vw, 440px);
+            --cf: calc(var(--cs) * 0.5);
+            --cfo: calc(var(--cs) * 0.25);
+            --ctz: calc(var(--cs) * 0.25);
+            --cc: calc(var(--cs) * 0.15);
+            --cco: calc((var(--cs) - var(--cc)) / 2);
         }
-        /* 方塊旋轉浮動 */
-        @@keyframes gSquare1 {
-            0%,100% { transform: rotate(25deg) scale(1); }
-            50%      { transform: rotate(65deg) scale(1.06) translateY(-14px); }
+
+        /* ── 3D 旋轉方塊場景 ── */
+        .scene {
+            position: absolute;
+            right: clamp(1%, 3vw, 5%);
+            top: 50%;
+            transform: translateY(-50%);
+            width: var(--cs);
+            height: var(--cs);
+            perspective: calc(var(--cs) * 3.75);
+            z-index: 5;
+            pointer-events: none;
         }
-        @@keyframes gSquare2 {
-            0%,100% { transform: rotate(12deg) translateY(0); }
-            50%      { transform: rotate(32deg) translateY(-18px); }
+
+        .cube-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotateCube 20s linear infinite;
         }
-        /* 圓環自轉 */
-        @@keyframes gSpin1 {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
+
+        @@keyframes rotateCube {
+            0% {
+                transform: rotateX(-20deg) rotateY(0deg);
+            }
+
+            100% {
+                transform: rotateX(-20deg) rotateY(360deg);
+            }
         }
-        /* 粒子漂浮 */
-        @@keyframes dFloat {
-            0%,100% { transform: translate(0,0) scale(1);   opacity: 0.6; }
-            25%      { transform: translate(10px,-14px) scale(1.4); opacity: 1; }
-            60%      { transform: translate(-8px,10px) scale(0.7);  opacity: 0.5; }
+
+        .cube-face {
+            position: absolute;
+            width: var(--cf);
+            height: var(--cf);
+            top: var(--cfo);
+            left: var(--cfo);
+            background: rgba(0,176,116,0.03);
+            border: 1px solid rgba(0,176,116,0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            box-shadow: inset 0 0 30px rgba(0,176,116,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
+        .face-front {
+            transform: rotateY(0deg) translateZ(var(--ctz));
+        }
+
+        .face-back {
+            transform: rotateY(180deg) translateZ(var(--ctz));
+        }
+
+        .face-right {
+            transform: rotateY(90deg) translateZ(var(--ctz));
+        }
+
+        .face-left {
+            transform: rotateY(-90deg) translateZ(var(--ctz));
+        }
+
+        .face-top {
+            transform: rotateX(90deg) translateZ(var(--ctz));
+            border-bottom: none;
+            background: rgba(0,176,116,0.08);
+        }
+
+        .face-bottom {
+            transform: rotateX(-90deg) translateZ(var(--ctz));
+        }
+
+        .cube-core {
+            position: absolute;
+            width: var(--cc);
+            height: var(--cc);
+            top: var(--cco);
+            left: var(--cco);
+            background: rgba(0,176,116,0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 calc(var(--cc) * 0.85) calc(var(--cc) * 0.33) rgba(0,176,116,0.4);
+            animation: pulseCore 3s ease-in-out infinite alternate;
+            z-index: 1;
+        }
+
+        @@keyframes pulseCore {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* ── 懸浮裝飾 Icon ── */
+        .floating-element {
+            position: absolute;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00B074;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 10;
+            font-size: 1.3rem;
+        }
+
+        .float-1 {
+            width: clamp(38px, 3.2vw, 56px);
+            height: clamp(38px, 3.2vw, 56px);
+            top: 10%;
+            right: 14%;
+            animation: floatAlt 5s ease-in-out infinite;
+        }
+
+        .float-2 {
+            width: clamp(42px, 3.6vw, 62px);
+            height: clamp(42px, 3.6vw, 62px);
+            bottom: 20%;
+            left: 52%;
+            animation: floatAlt 7s ease-in-out infinite 1s;
+        }
+
+        .float-3 {
+            width: clamp(34px, 2.8vw, 50px);
+            height: clamp(34px, 2.8vw, 50px);
+            top: 40%;
+            right: -1%;
+            animation: floatAlt 6s ease-in-out infinite 2s;
+        }
+
+        @@keyframes floatAlt {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-15px) rotate(5deg);
+            }
+
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+        }
+
         @@keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         @@keyframes slideInRight {
-            from { opacity: 0; transform: translateX(40px); }
-            to   { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
+
         @@keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Logo */
@@ -203,27 +276,43 @@
             display: flex;
             align-items: center;
             gap: .75rem;
-            position: relative; z-index: 2;
+            position: relative;
+            z-index: 2;
             animation: fadeInUp .6s ease both;
         }
+
         .brand-logo-icon {
-            width: 42px; height: 42px;
+            width: clamp(32px, 2.8vw, 44px);
+            height: clamp(32px, 2.8vw, 44px);
             border-radius: 10px;
             background: linear-gradient(135deg, #F59E0B, #FBBF24);
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             flex-shrink: 0;
             box-shadow: 0 4px 14px rgba(245,158,11,.35);
         }
-        .brand-logo-icon i { font-size: 1.5rem; color: #fff; }
+
+            .brand-logo-icon i {
+                font-size: clamp(1.1rem, 1.4vw, 1.5rem);
+                color: #fff;
+            }
+
         .brand-logo-text {
-            font-size: 1.35rem; font-weight: 700; color: #fff;
+            font-size: clamp(1rem, 1.2vw, 1.35rem);
+            font-weight: 700;
+            color: #fff;
             letter-spacing: -.5px;
         }
+
         .brand-logo-badge {
-            font-size: .65rem; font-weight: 600; color: #10b981;
-            background: rgba(16,185,129,.15);
-            border: 1px solid rgba(16,185,129,.3);
-            border-radius: 4px; padding: 1px 6px;
+            font-size: clamp(.58rem, .55vw, .65rem);
+            font-weight: 600;
+            color: #00B074;
+            background: rgba(0,176,116,.15);
+            border: 1px solid rgba(0,176,116,.3);
+            border-radius: 4px;
+            padding: 1px 6px;
             margin-left: .25rem;
         }
 
@@ -233,70 +322,150 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            position: relative; z-index: 2;
-            padding: 2rem 0;
+            position: relative;
+            z-index: 2;
+            padding: clamp(.75rem, 1.5vh, 2rem) 0;
+            max-width: 52%;
         }
+
         .brand-tagline {
-            font-size: .85rem;
+            font-size: clamp(.7rem, .75vw, .9rem);
             font-weight: 600;
             letter-spacing: 3px;
             text-transform: uppercase;
-            color: #10b981;
-            margin-bottom: 1.25rem;
+            color: #00B074;
+            margin-bottom: clamp(.6rem, 1.1vh, 1.25rem);
             animation: fadeInUp .6s ease .2s both;
         }
+
         .brand-title {
-            font-size: 2.8rem;
+            font-size: clamp(1.6rem, 2.8vw, 3rem);
             font-weight: 700;
             color: #fff;
             line-height: 1.2;
-            margin-bottom: 1rem;
+            margin-bottom: clamp(.5rem, .9vh, 1rem);
             animation: fadeInUp .6s ease .35s both;
+            white-space: nowrap;
         }
-        .brand-title span {
-            background: linear-gradient(90deg, #10b981, #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+
+            .brand-title span {
+                background: linear-gradient(90deg, #00B074, #34d399);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
         .brand-subtitle {
             color: #8da8c0;
-            font-size: 1rem;
+            font-size: clamp(.78rem, .82vw, 1rem);
             line-height: 1.7;
-            max-width: 380px;
-            margin-bottom: 2.5rem;
+            max-width: 100%;
+            margin-bottom: clamp(1rem, 2.2vh, 2.5rem);
             animation: fadeInUp .6s ease .5s both;
         }
+
+        /* 日期時間顯示 */
+        .datetime-wrap {
+            display: flex;
+            align-items: center;
+            gap: clamp(.7rem, 1vw, 1.25rem);
+            margin-bottom: clamp(.8rem, 1.8vh, 2rem);
+            animation: fadeInUp .6s ease .58s both;
+            white-space: nowrap;
+            flex-wrap: nowrap;
+        }
+
+        .datetime-time {
+            font-size: clamp(1.2rem, 1.9vw, 2.2rem);
+            font-weight: 600;
+            color: rgba(255,255,255,0.45);
+            letter-spacing: clamp(1px, .25vw, 3px);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            flex-shrink: 0;
+        }
+
+            .datetime-time .colon {
+                display: inline-block;
+                opacity: 0.4;
+            }
+
+        .datetime-divider {
+            width: 1px;
+            height: clamp(24px, 3vh, 40px);
+            background: rgba(255,255,255,0.15);
+            flex-shrink: 0;
+        }
+
+        .datetime-date {
+            display: flex;
+            flex-direction: column;
+            gap: .25rem;
+            flex-shrink: 0;
+        }
+
+            .datetime-date .date-row {
+                font-size: clamp(.72rem, .75vw, .9rem);
+                color: #a9c1d8;
+                font-weight: 500;
+                letter-spacing: .5px;
+            }
+
+            .datetime-date .week-row {
+                font-size: clamp(.65rem, .68vw, .8rem);
+                color: #00B074;
+                font-weight: 600;
+                letter-spacing: 1px;
+            }
 
         /* 功能特色列表 */
         .feature-list {
             display: flex;
             flex-direction: column;
-            gap: .9rem;
+            gap: clamp(.5rem, 1vh, .9rem);
             animation: fadeInUp .6s ease .65s both;
         }
+
         .feature-item {
             display: flex;
             align-items: center;
-            gap: .9rem;
+            gap: clamp(.6rem, .8vw, .9rem);
         }
+
         .feature-icon {
-            width: 38px; height: 38px;
+            width: clamp(28px, 2.5vw, 38px);
+            height: clamp(28px, 2.5vw, 38px);
             border-radius: 9px;
-            background: rgba(16,185,129,.12);
-            border: 1px solid rgba(16,185,129,.2);
-            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,176,116,.12);
+            border: 1px solid rgba(0,176,116,.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             flex-shrink: 0;
         }
-        .feature-icon i { color: #10b981; font-size: 1.1rem; }
-        .feature-text { font-size: .88rem; color: #a9c1d8; line-height: 1.5; }
-        .feature-text strong { color: #d1e8f5; font-weight: 600; }
+
+            .feature-icon i {
+                color: #00B074;
+                font-size: clamp(.85rem, .9vw, 1.1rem);
+            }
+
+        .feature-text {
+            font-size: clamp(.74rem, .78vw, .88rem);
+            color: #a9c1d8;
+            line-height: 1.5;
+        }
+
+            .feature-text strong {
+                color: #d1e8f5;
+                font-weight: 600;
+            }
 
         /* 底部版權 */
         .brand-footer {
-            position: relative; z-index: 2;
+            position: relative;
+            z-index: 2;
             color: #4a6a85;
-            font-size: .78rem;
+            font-size: clamp(.68rem, .7vw, .78rem);
             animation: fadeInUp .6s ease .8s both;
         }
 
@@ -319,17 +488,19 @@
         .form-header {
             margin-bottom: 2.25rem;
         }
-        .form-header h2 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin: 0 0 .4rem;
-        }
-        .form-header p {
-            color: #64748b;
-            font-size: .93rem;
-            margin: 0;
-        }
+
+            .form-header h2 {
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: #1e293b;
+                margin: 0 0 .4rem;
+            }
+
+            .form-header p {
+                color: #64748b;
+                font-size: .93rem;
+                margin: 0;
+            }
 
         /* 錯誤訊息框 */
         .login-error-box {
@@ -346,56 +517,69 @@
             line-height: 1.5;
             animation: fadeInUp .3s ease both;
         }
-        .login-error-box i { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+            .login-error-box i {
+                font-size: 1.1rem;
+                flex-shrink: 0;
+                margin-top: 1px;
+            }
 
         /* 輸入框組 */
         .input-group-wrap {
             margin-bottom: 1.25rem;
         }
-        .input-group-wrap label {
-            display: block;
-            font-size: .85rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: .45rem;
-        }
+
+            .input-group-wrap label {
+                display: block;
+                font-size: .85rem;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: .45rem;
+            }
+
         .input-field-wrap {
             position: relative;
         }
-        .input-field-wrap .input-icon {
-            position: absolute;
-            left: 14px; top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-            font-size: 1.1rem;
-            pointer-events: none;
-            transition: color .25s;
-        }
-        .input-field-wrap input {
-            width: 100%;
-            padding: .72rem 1rem .72rem 2.8rem;
-            border: 1.5px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: .93rem;
-            font-family: inherit;
-            color: #1e293b;
-            background: #f9fafb;
-            transition: border-color .25s, box-shadow .25s, background .25s;
-            outline: none;
-        }
-        .input-field-wrap input:focus {
-            border-color: #10b981;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(16,185,129,.12);
-        }
-        .input-field-wrap input:focus + .focus-line { opacity: 1; }
-        .input-field-wrap input:focus ~ .input-icon { color: #10b981; }
-        .input-field-wrap:focus-within .input-icon { color: #10b981; }
+
+            .input-field-wrap .input-icon {
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #9ca3af;
+                font-size: 1.1rem;
+                pointer-events: none;
+                transition: color .25s;
+            }
+
+            .input-field-wrap input {
+                width: 100%;
+                padding: .72rem 1rem .72rem 2.8rem;
+                border: 1.5px solid #e5e7eb;
+                border-radius: 10px;
+                font-size: .93rem;
+                font-family: inherit;
+                color: #1e293b;
+                background: #f9fafb;
+                transition: border-color .25s, box-shadow .25s, background .25s;
+                outline: none;
+            }
+
+                .input-field-wrap input:focus {
+                    border-color: #00B074;
+                    background: #fff;
+                    box-shadow: 0 0 0 3px rgba(0,176,116,.12);
+                }
+
+            .input-field-wrap:focus-within .input-icon {
+                color: #00B074;
+            }
 
         /* 密碼顯示/隱藏按鈕 */
         .pwd-toggle {
             position: absolute;
-            right: 12px; top: 50%;
+            right: 12px;
+            top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
@@ -406,7 +590,10 @@
             display: flex;
             transition: color .2s;
         }
-        .pwd-toggle:hover { color: #10b981; }
+
+            .pwd-toggle:hover {
+                color: #00B074;
+            }
 
         /* 記住我 + 忘記密碼 */
         .form-options {
@@ -415,36 +602,45 @@
             justify-content: space-between;
             margin-bottom: 1.75rem;
         }
+
         .checkbox-wrap {
             display: flex;
             align-items: center;
             gap: .5rem;
             cursor: pointer;
         }
-        .checkbox-wrap input[type="checkbox"] {
-            width: 16px; height: 16px;
-            accent-color: #10b981;
-            cursor: pointer;
-        }
-        .checkbox-wrap span {
-            font-size: .875rem;
-            color: #4b5563;
-            user-select: none;
-        }
+
+            .checkbox-wrap input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+                accent-color: #00B074;
+                cursor: pointer;
+            }
+
+            .checkbox-wrap span {
+                font-size: .875rem;
+                color: #4b5563;
+                user-select: none;
+            }
+
         .forgot-link {
             font-size: .875rem;
-            color: #10b981;
+            color: #00B074;
             text-decoration: none;
             font-weight: 500;
             transition: color .2s;
         }
-        .forgot-link:hover { color: #059669; text-decoration: underline; }
+
+            .forgot-link:hover {
+                color: #059669;
+                text-decoration: underline;
+            }
 
         /* 登入按鈕 */
         .btn-login {
             width: 100%;
             padding: .82rem 1.5rem;
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: linear-gradient(135deg, #00B074, #059669);
             color: #fff;
             border: none;
             border-radius: 10px;
@@ -453,7 +649,7 @@
             font-family: inherit;
             cursor: pointer;
             transition: transform .2s ease, box-shadow .2s ease;
-            box-shadow: 0 4px 14px rgba(16,185,129,.35);
+            box-shadow: 0 4px 14px rgba(0,176,116,.35);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -461,30 +657,40 @@
             position: relative;
             overflow: hidden;
         }
-        .btn-login:hover {
-            transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(16,185,129,.45);
-        }
-        .btn-login:active {
-            transform: scale(0.99);
-        }
-        .btn-login:disabled {
-            opacity: .75;
-            cursor: not-allowed;
-            transform: none;
-        }
+
+            .btn-login:hover {
+                transform: scale(1.02);
+                box-shadow: 0 6px 20px rgba(0,176,116,.45);
+            }
+
+            .btn-login:active {
+                transform: scale(0.99);
+            }
+
+            .btn-login:disabled {
+                opacity: .75;
+                cursor: not-allowed;
+                transform: none;
+            }
 
         /* Loading Spinner */
         .btn-spinner {
             display: none;
-            width: 18px; height: 18px;
+            width: 18px;
+            height: 18px;
             border: 2.5px solid rgba(255,255,255,.35);
             border-top-color: #fff;
             border-radius: 50%;
             animation: spin .7s linear infinite;
         }
-        .btn-login.loading .btn-text { display: none; }
-        .btn-login.loading .btn-spinner { display: block; }
+
+        .btn-login.loading .btn-text {
+            display: none;
+        }
+
+        .btn-login.loading .btn-spinner {
+            display: block;
+        }
 
         /* 快速填入測試帳號按鈕 */
         .btn-quick-fill {
@@ -504,12 +710,16 @@
             gap: .4rem;
             transition: border-color .2s, color .2s, background .2s;
         }
-        .btn-quick-fill:hover {
-            border-color: #10b981;
-            color: #10b981;
-            background: rgba(16,185,129,.04);
-        }
-        .btn-quick-fill i { font-size: .9rem; }
+
+            .btn-quick-fill:hover {
+                border-color: #00B074;
+                color: #00B074;
+                background: rgba(0,176,116,.04);
+            }
+
+            .btn-quick-fill i {
+                font-size: .9rem;
+            }
 
         /* 底部小字 */
         .form-footer {
@@ -521,266 +731,295 @@
 
         /* ══════════ RWD ══════════ */
         @@media (max-width: 900px) {
-            .brand-side { display: none; }
+            .brand-side {
+                display: none;
+            }
+
             .form-side {
                 background: linear-gradient(160deg, #f0fdf8 0%, #ecfdf5 100%);
                 animation: fadeInUp .5s ease both;
             }
+
             .login-form-wrap {
                 max-width: 420px;
             }
         }
 
         @@media (max-width: 480px) {
-            .form-side { padding: 2rem 1.25rem; }
-            .form-header h2 { font-size: 1.5rem; }
-            .brand-title { font-size: 2.2rem; }
+            .form-side {
+                padding: 2rem 1.25rem;
+            }
+
+            .form-header h2 {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
-<div class="login-wrapper">
-    <!-- ══ 左側品牌區 ══ -->
-    <div class="brand-side">
-        <!-- 幾何裝飾：圓形 -->
-        <div class="geo gc g1"></div>
-        <div class="geo gc g2"></div>
-        <div class="geo gc g3"></div>
-        <!-- 圓環 -->
-        <div class="geo gc gr g4"></div>
-        <div class="geo gc gr g5"></div>
-        <div class="geo gc gr g6"></div>
-        <!-- 方塊 -->
-        <div class="geo g7"></div>
-        <div class="geo g8"></div>
-        <div class="geo g9"></div>
-        <!-- 三角形 -->
-        <div class="geo gt g10"></div>
-        <div class="geo gt g11"></div>
-        <!-- 六邊形 -->
-        <div class="geo gh g12"></div>
-        <!-- 粒子光點 -->
-        <div class="dot d1"></div>
-        <div class="dot d2"></div>
-        <div class="dot d3"></div>
-        <div class="dot d4"></div>
-        <div class="dot d5"></div>
-        <div class="dot d6"></div>
-        <div class="dot d7"></div>
-        <div class="dot d8"></div>
-        <div class="dot d9"></div>
-        <div class="dot d10"></div>
+    <div class="login-wrapper">
 
-        <!-- Logo -->
-        <div class="brand-logo">
-            <div class="brand-logo-icon">
-                <i class="bx bx-store-alt"></i>
-            </div>
-            <span class="brand-logo-text">ISpanShop</span>
-            <span class="brand-logo-badge">Admin</span>
-        </div>
+        <!-- ══ 左側品牌區 ══ -->
+        <div class="brand-side">
 
-        <!-- 主要內容 -->
-        <div class="brand-content">
-            <div class="brand-tagline">Management System</div>
-            <h1 class="brand-title">
-                歡迎回來<br />
-                <span>後台管理中心</span>
-            </h1>
-            <p class="brand-subtitle">
-                高效率的電商後台管理平台，整合商品審核、庫存監控、訂單追蹤等核心功能，讓您隨時掌握店鋪動態。
-            </p>
+            <!-- 背景層：網格 + 光暈 -->
+            <div class="bg-grid"></div>
+            <div class="bg-glow bg-glow-1"></div>
+            <div class="bg-glow bg-glow-2"></div>
 
-            <div class="feature-list">
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="bx bx-store"></i>
+            <!-- 3D 旋轉方塊場景 -->
+            <div class="scene">
+                <!-- 懸浮裝飾 Icon -->
+                <div class="floating-element float-1"><i class="bx bxs-shield-alt-2"></i></div>
+                <div class="floating-element float-2"><i class="bx bx-group"></i></div>
+                <div class="floating-element float-3"><i class="bx bx-server"></i></div>
+
+                <!-- 旋轉的 3D 透視方塊 -->
+                <div class="cube-wrapper">
+                    <div class="cube-core"></div>
+                    <div class="cube-face face-front">
+                        <i class="bx bx-package" style="color:rgba(0,176,116,0.30);font-size:3.5rem;"></i>
                     </div>
-                    <div class="feature-text">
-                        <strong>商品管理</strong><br />全站商品審核與上下架管理
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="bx bx-package"></i>
-                    </div>
-                    <div class="feature-text">
-                        <strong>庫存監控</strong><br />即時追蹤庫存數量與低庫存警示
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="bx bx-receipt"></i>
-                    </div>
-                    <div class="feature-text">
-                        <strong>訂單追蹤</strong><br />訂單狀態管理與出貨排程
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="bx bx-category"></i>
-                    </div>
-                    <div class="feature-text">
-                        <strong>分類管理</strong><br />商品分類與屬性規格配置
-                    </div>
+                    <div class="cube-face face-back"></div>
+                    <div class="cube-face face-right"></div>
+                    <div class="cube-face face-left"></div>
+                    <div class="cube-face face-top"></div>
+                    <div class="cube-face face-bottom"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- 版權 -->
-        <div class="brand-footer">
-            &copy; 2026 ISpanShop. All rights reserved.
-        </div>
-    </div>
-
-    <!-- ══ 右側登入表單區 ══ -->
-    <div class="form-side">
-        <div class="login-form-wrap">
-            <!-- 表頭 -->
-            <div class="form-header">
-                <h2>登入後台</h2>
-                <p>請輸入您的帳號及密碼以繼續</p>
+            <!-- Logo -->
+            <div class="brand-logo">
+                <div class="brand-logo-icon">
+                    <i class="bx bx-store-alt"></i>
+                </div>
+                <span class="brand-logo-text">ISpanShop</span>
+                <span class="brand-logo-badge">Admin</span>
             </div>
 
-            <!-- 錯誤訊息 -->
-            @if (!ViewData.ModelState.IsValid)
-            {
-                var errors = ViewData.ModelState.Values
+            <!-- 主要內容 -->
+            <div class="brand-content">
+                <div class="brand-tagline">Management System</div>
+                <h1 class="brand-title">
+                    歡迎回來<br />
+                    <span>後台管理中心</span>
+                </h1>
+                <p class="brand-subtitle">
+                    安全、穩定的電商協作環境。請登入以存取您的工作區域，我們將依據您的角色權限提供對應的功能服務。
+                </p>
+
+                <!-- 日期時間 -->
+                <div class="datetime-wrap">
+                    <div class="datetime-time" id="dtTime">
+                        <span id="dtH">00</span><span class="colon">:</span><span id="dtM">00</span><span class="colon">:</span><span id="dtS">00</span>
+                    </div>
+                    <div class="datetime-divider"></div>
+                    <div class="datetime-date">
+                        <div class="date-row" id="dtDate">2026 / 01 / 01</div>
+                        <div class="week-row" id="dtWeek">星期一</div>
+                    </div>
+                </div>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="bx bx-shield-quarter"></i></div>
+                        <div class="feature-text">
+                            <strong>安全存取</strong><br />嚴密的身份驗證與權限管控機制
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="bx bx-server"></i></div>
+                        <div class="feature-text">
+                            <strong>穩定可靠</strong><br />高可用性架構，確保服務持續運行
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="bx bx-tachometer"></i></div>
+                        <div class="feature-text">
+                            <strong>高效協作</strong><br />依角色授權，讓每位成員聚焦本職
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="bx bx-lock-open-alt"></i></div>
+                        <div class="feature-text">
+                            <strong>隱私合規</strong><br />操作記錄全程留存，行為可追溯
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 版權 -->
+            <div class="brand-footer">
+                &copy; 2026 ISpanShop. All rights reserved.
+            </div>
+        </div>
+
+        <!-- ══ 右側登入表單區（完全不動）══ -->
+        <div class="form-side">
+            <div class="login-form-wrap">
+                <!-- 表頭 -->
+                <div class="form-header">
+                    <h2>登入後台</h2>
+                    <p>請輸入您的帳號及密碼以繼續</p>
+                </div>
+
+                <!-- 錯誤訊息 -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    var errors = ViewData.ModelState.Values
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage)
                     .ToList();
-                if (errors.Any())
-                {
-                    <div class="login-error-box">
-                        <i class="bx bx-error-circle"></i>
-                        <div>@string.Join(" ", errors)</div>
-                    </div>
+                    if (errors.Any())
+                    {
+                        <div class="login-error-box">
+                            <i class="bx bx-error-circle"></i>
+                            <div>@string.Join(" ", errors)</div>
+                        </div>
+                    }
                 }
-            }
 
-            <!-- 表單 -->
+                <!-- 表單 -->
                 <form asp-area="Admin" asp-controller="Auth" asp-action="Login" method="post" id="loginForm">
-                @Html.AntiForgeryToken()
-                @if (ViewData["ReturnUrl"] != null)
-                {
-                    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
-                }
+                    @Html.AntiForgeryToken()
+                    @if (ViewData["ReturnUrl"] != null)
+                    {
+                        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                    }
 
-                <!-- 帳號 -->
-                <div class="input-group-wrap">
-                    <label asp-for="Account">帳號</label>
-                    <div class="input-field-wrap">
-                        <i class="bx bx-user input-icon"></i>
-                        <input asp-for="Account"
-                               type="text"
-                               placeholder="請輸入管理員帳號"
-                               autocomplete="username" />
+                    <!-- 帳號 -->
+                    <div class="input-group-wrap">
+                        <label asp-for="Account">帳號</label>
+                        <div class="input-field-wrap">
+                            <i class="bx bx-user input-icon"></i>
+                            <input asp-for="Account"
+                                   type="text"
+                                   placeholder="請輸入管理員帳號"
+                                   autocomplete="username" />
+                        </div>
                     </div>
-                </div>
 
-                <!-- 密碼 -->
-                <div class="input-group-wrap">
-                    <label asp-for="Password">密碼</label>
-                    <div class="input-field-wrap">
-                        <i class="bx bx-lock-alt input-icon"></i>
-                        <input asp-for="Password"
-                               id="passwordInput"
-                               type="password"
-                               placeholder="請輸入密碼"
-                               autocomplete="current-password" />
-                        <button type="button" class="pwd-toggle" id="pwdToggleBtn" tabindex="-1" title="顯示/隱藏密碼">
-                            <i class="bx bx-hide" id="pwdToggleIcon"></i>
-                        </button>
+                    <!-- 密碼 -->
+                    <div class="input-group-wrap">
+                        <label asp-for="Password">密碼</label>
+                        <div class="input-field-wrap">
+                            <i class="bx bx-lock-alt input-icon"></i>
+                            <input asp-for="Password"
+                                   id="passwordInput"
+                                   type="password"
+                                   placeholder="請輸入密碼"
+                                   autocomplete="current-password" />
+                            <button type="button" class="pwd-toggle" id="pwdToggleBtn" tabindex="-1" title="顯示/隱藏密碼">
+                                <i class="bx bx-hide" id="pwdToggleIcon"></i>
+                            </button>
+                        </div>
                     </div>
+
+                    <!-- 記住我 + 忘記密碼 -->
+                    <div class="form-options">
+                        <label class="checkbox-wrap">
+                            <input asp-for="RememberMe" type="checkbox" />
+                            <span>記住我</span>
+                        </label>
+                        <a href="#" class="forgot-link">忘記密碼？</a>
+                    </div>
+
+                    <!-- 登入按鈕 -->
+                    <button type="submit" class="btn-login" id="loginBtn">
+                        <span class="btn-text">
+                            <i class="bx bx-log-in-circle"></i>
+                            登入後台
+                        </span>
+                        <span class="btn-spinner"></span>
+                    </button>
+
+                    <!-- 快速填入測試帳號 -->
+                    <button type="button" class="btn-quick-fill" id="quickFillBtn">
+                        <i class="bx bx-fill"></i>
+                        快速填入測試帳號
+                    </button>
+                </form>
+
+                <div class="form-footer">
+                    © 2026 ISpanShop 後台管理系統
                 </div>
-
-                <!-- 記住我 + 忘記密碼 -->
-                <div class="form-options">
-                    <label class="checkbox-wrap">
-                        <input asp-for="RememberMe" type="checkbox" />
-                        <span>記住我</span>
-                    </label>
-                    <a href="#" class="forgot-link">忘記密碼？</a>
-                </div>
-
-                <!-- 登入按鈕 -->
-                <button type="submit" class="btn-login" id="loginBtn">
-                    <span class="btn-text">
-                        <i class="bx bx-log-in-circle"></i>
-                        登入後台
-                    </span>
-                    <span class="btn-spinner"></span>
-                </button>
-
-                <!-- 快速填入測試帳號 -->
-                <button type="button" class="btn-quick-fill" id="quickFillBtn">
-                    <i class="bx bx-fill"></i>
-                    快速填入測試帳號
-                </button>
-            </form>
-
-            <div class="form-footer">
-                © 2026 ISpanShop 後台管理系統
             </div>
         </div>
     </div>
-</div>
 
-<script>
-    // 密碼顯示 / 隱藏
-    (function () {
-        var input = document.getElementById('passwordInput');
-        var btn   = document.getElementById('pwdToggleBtn');
-        var icon  = document.getElementById('pwdToggleIcon');
-        if (!btn) return;
-        btn.addEventListener('click', function () {
-            var isHidden = input.type === 'password';
-            input.type = isHidden ? 'text' : 'password';
-            icon.className = isHidden ? 'bx bx-show' : 'bx bx-hide';
-        });
-    })();
-
-    // 快速填入測試帳號
-    (function () {
-        var btn = document.getElementById('quickFillBtn');
-        if (!btn) return;
-        btn.addEventListener('click', function () {
-            document.querySelector('input[name="Account"]').value = 'admin';
-            document.getElementById('passwordInput').value = 'Admin@1234';
-        });
-    })();
-
-    // 前端驗證 + Loading 狀態
-    (function () {
-        var form      = document.getElementById('loginForm');
-        var loginBtn  = document.getElementById('loginBtn');
-        var accountEl = document.querySelector('input[name="Account"]');
-        var passwordEl = document.getElementById('passwordInput');
-
-        form.addEventListener('submit', function (e) {
-            var account  = (accountEl.value || '').trim();
-            var password = (passwordEl.value || '').trim();
-
-            // 移除舊錯誤
-            var existingErr = document.querySelector('.login-error-box.js-err');
-            if (existingErr) existingErr.remove();
-
-            if (!account || !password) {
-                e.preventDefault();
-                var errBox = document.createElement('div');
-                errBox.className = 'login-error-box js-err';
-                errBox.innerHTML =
-                    '<i class="bx bx-error-circle"></i>' +
-                    '<div>' + (!account ? '請輸入帳號' : '請輸入密碼') + '</div>';
-                form.insertBefore(errBox, form.firstChild);
-                (!account ? accountEl : passwordEl).focus();
-                return;
+    <script>
+        // 即時時鐘
+        (function () {
+            var weeks = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+            function pad(n) { return String(n).padStart(2, '0'); }
+            function tick() {
+                var now  = new Date();
+                var y    = now.getFullYear();
+                var mo   = pad(now.getMonth() + 1);
+                var d    = pad(now.getDate());
+                document.getElementById('dtH').textContent    = pad(now.getHours());
+                document.getElementById('dtM').textContent    = pad(now.getMinutes());
+                document.getElementById('dtS').textContent    = pad(now.getSeconds());
+                document.getElementById('dtDate').textContent = y + ' / ' + mo + ' / ' + d;
+                document.getElementById('dtWeek').textContent = weeks[now.getDay()];
             }
+            tick();
+            setInterval(tick, 1000);
+        })();
 
-            loginBtn.classList.add('loading');
-            loginBtn.disabled = true;
-        });
-    })();
-</script>
+
+        (function () {
+            var input = document.getElementById('passwordInput');
+            var btn   = document.getElementById('pwdToggleBtn');
+            var icon  = document.getElementById('pwdToggleIcon');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var isHidden = input.type === 'password';
+                input.type = isHidden ? 'text' : 'password';
+                icon.className = isHidden ? 'bx bx-show' : 'bx bx-hide';
+            });
+        })();
+
+        // 快速填入測試帳號
+        (function () {
+            var btn = document.getElementById('quickFillBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                document.querySelector('input[name="Account"]').value = 'admin';
+                document.getElementById('passwordInput').value = 'Admin@1234';
+            });
+        })();
+
+        // 前端驗證 + Loading 狀態
+        (function () {
+            var form       = document.getElementById('loginForm');
+            var loginBtn   = document.getElementById('loginBtn');
+            var accountEl  = document.querySelector('input[name="Account"]');
+            var passwordEl = document.getElementById('passwordInput');
+
+            form.addEventListener('submit', function (e) {
+                var account  = (accountEl.value  || '').trim();
+                var password = (passwordEl.value || '').trim();
+
+                var existingErr = document.querySelector('.login-error-box.js-err');
+                if (existingErr) existingErr.remove();
+
+                if (!account || !password) {
+                    e.preventDefault();
+                    var errBox = document.createElement('div');
+                    errBox.className = 'login-error-box js-err';
+                    errBox.innerHTML =
+                        '<i class="bx bx-error-circle"></i>' +
+                        '<div>' + (!account ? '請輸入帳號' : '請輸入密碼') + '</div>';
+                    form.insertBefore(errBox, form.firstChild);
+                    (!account ? accountEl : passwordEl).focus();
+                    return;
+                }
+
+                loginBtn.classList.add('loading');
+                loginBtn.disabled = true;
+            });
+        })();
+    </script>
 </body>
 </html>
