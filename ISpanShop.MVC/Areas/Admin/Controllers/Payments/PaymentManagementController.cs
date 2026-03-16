@@ -26,14 +26,81 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Payments
 
 		public async Task<IActionResult> Index()
 		{
-			// 1. 去資料庫抓資料，並包含 PaymentLogs 關聯資料
-			var orders = await _context.Orders
-				.Include(o => o.PaymentLogs) // 包含金流紀錄
-				.OrderByDescending(o => o.CreatedAt) // 讓新訂單排在上面
+			// 改為抓取 PaymentLogs，並包含 Order 資料
+			var logs = await _context.PaymentLogs
+				.Include(pl => pl.Order)
+				.ThenInclude(o => o.User)
+				.OrderByDescending(pl => pl.CreatedAt)
 				.ToListAsync();
 
-			// 2. 傳給 View (如果 orders 是 null 就給新列表)
-			return View(orders ?? new List<Order>());
+			return View(logs);
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> SyncPaymentLogs()
+		{
+			// 1. 找出所有目前「沒有」任何 PaymentLog 的訂單
+			var ordersWithoutLog = await _context.Orders
+				.Include(o => o.PaymentLogs)
+				.Where(o => !o.PaymentLogs.Any())
+				.ToListAsync();
+
+			int createdCount = 0;
+			var now = DateTime.Now;
+
+			foreach (var order in ordersWithoutLog)
+			{
+				// 確保 MerchantTradeNo 不超過 20 字
+				// 如果 OrderNumber 太長，就直接用 OrderNumber，不再加後綴
+				string mTradeNo = order.OrderNumber;
+				if (mTradeNo.Length > 20) mTradeNo = mTradeNo.Substring(0, 20);
+
+				// 根據訂單狀態生成合理的金流紀錄
+				var newLog = new PaymentLog
+				{
+					OrderId = order.Id,
+					MerchantTradeNo = mTradeNo, 
+					TradeAmt = order.FinalAmount,
+					CreatedAt = order.CreatedAt ?? now
+				};
+
+				if (order.Status == 1) // 已付款
+				{
+					newLog.RtnCode = 1;
+					newLog.RtnMsg = "付款成功";
+					newLog.PaymentDate = order.PaymentDate ?? now;
+					// 生成模擬的綠界交易序號
+					newLog.TradeNo = "EC" + now.ToString("yyyyMMdd") + order.Id.ToString().PadLeft(8, '0');
+					newLog.PaymentType = "Credit"; // 預設為信用卡
+				}
+				else if (order.Status == 4) // 已取消
+				{
+					newLog.RtnCode = 1022; // 模擬取消代碼
+					newLog.RtnMsg = "訂單已取消";
+					newLog.PaymentType = "None";
+				}
+				else // 待付款 (0)
+				{
+					newLog.RtnCode = 0;
+					newLog.RtnMsg = "等待付款中";
+					newLog.PaymentType = "None";
+				}
+
+				_context.PaymentLogs.Add(newLog);
+				createdCount++;
+			}
+
+			if (createdCount > 0)
+			{
+				await _context.SaveChangesAsync();
+				TempData["Success"] = $"已成功為 {createdCount} 筆訂單生成金流紀錄資料！";
+			}
+			else
+			{
+				TempData["Info"] = "目前所有訂單皆已有金流紀錄。";
+			}
+
+			return RedirectToAction(nameof(Index));
 		}
 
 		// --- 以下是你原本的 Create 方法，保持不變 ---
