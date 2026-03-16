@@ -18,5 +18,11 @@ namespace ISpanShop.Models.DTOs.Orders
 
 		// 退貨相關資訊
 		public List<string> ReturnRequestImages { get; set; } = new List<string>();
+
+		// 具體退貨內容 (選填)
+		public string ReturnReason { get; set; }
+		public string ReturnDescription { get; set; }
+		public DateTime? ReturnRequestCreatedAt { get; set; }
+		public DateTime? RefundDate { get; set; }
 	}
 }

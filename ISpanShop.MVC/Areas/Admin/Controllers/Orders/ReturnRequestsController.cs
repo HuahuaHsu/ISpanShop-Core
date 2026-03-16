@@ -30,6 +30,12 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
                 {
                     new SelectListItem { Value = "5", Text = "退貨/款中" },
                     new SelectListItem { Value = "6", Text = "已退款" }
+                },
+                DateDimensionOptions = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "1", Text = "下單日期" },
+                    new SelectListItem { Value = "2", Text = "付款日期" },
+                    new SelectListItem { Value = "3", Text = "完成日期" }
                 }
             };
             return View(vm);
