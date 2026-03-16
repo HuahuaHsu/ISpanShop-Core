@@ -48,7 +48,7 @@ namespace ISpanShop.Repositories.Admins
 
 		IEnumerable<PermissionDto> GetPermissionsByAdminLevel(int adminLevelId);
 		IEnumerable<AdminLevelDto> GetAllAdminLevels();
-		bool UpdateAdminLevel(int userId, int adminLevelId);
+		bool UpdateAdminLevel(int userId, int adminLevelId, bool isBlacklisted);
 		bool CreateAdminLevel(AdminLevelCreateDto dto);
 		bool UpdateAdminLevelConfig(AdminLevelUpdateDto dto);
 		bool DeleteAdminLevel(int adminLevelId);

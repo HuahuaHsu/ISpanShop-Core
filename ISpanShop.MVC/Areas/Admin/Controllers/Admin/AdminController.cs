@@ -76,7 +76,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Admin
 
 			var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
 				?? User.FindFirst("userid")?.Value;
-			
+
 			var viewModel = new AdminEditVm
 			{
 				UserId = admin.UserId,
@@ -121,6 +121,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Admin
 		{
 			if (User.FindFirst("AdminLevelId")?.Value != "1")
 				return RedirectToAction("Dashboard", "Orders", new { area = "Admin" });
+
+			if (!ModelState.IsValid)
+			{
+				TempData["Message"] = "資料格式錯誤";
+				TempData["ActiveTab"] = "tab1";
+				return RedirectToAction("Index");
+			}
 
 			var result = _adminService.UpdateAdmin(dto);
 			TempData["Message"] = result.Message;

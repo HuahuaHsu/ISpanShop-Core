@@ -140,7 +140,7 @@ namespace ISpanShop.Models.DTOs.Admins
 		[Required(ErrorMessage = "{0}為必填")]
 		[Display(Name = "管理員等級")]
 		public int AdminLevelId { get; set; }
-		[Required]
+
 		[Display(Name = "狀態")]
 		public bool IsBlacklisted { get; set; }
 	}

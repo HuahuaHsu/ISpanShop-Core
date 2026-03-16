@@ -435,8 +435,7 @@ namespace ISpanShop.Repositories.Admins
 						FROM Users U
 						JOIN Roles R ON U.RoleId = R.Id
 						LEFT JOIN AdminLevels AL ON U.AdminLevelId = AL.Id
-						WHERE U.Account = @Account
-						  AND U.IsBlacklisted = 0";
+						WHERE U.Account = @Account";
 
 					using (SqlCommand cmd = new SqlCommand(query, conn))
 					{
@@ -737,8 +736,8 @@ namespace ISpanShop.Repositories.Admins
 			return levels;
 		}
 
-		/// <summary>更新管理員的身分等級</summary>
-		public bool UpdateAdminLevel(int userId, int adminLevelId)
+		/// <summary>更新管理員的身分等級與黑名單狀態</summary>
+		public bool UpdateAdminLevel(int userId, int adminLevelId, bool isBlacklisted)
 		{
 			try
 			{
@@ -748,6 +747,7 @@ namespace ISpanShop.Repositories.Admins
 					string query = @"
                 UPDATE Users
                 SET    AdminLevelId = @AdminLevelId,
+                       IsBlacklisted = @IsBlacklisted,
                        UpdatedAt    = GETDATE()
                 WHERE  Id = @UserId";
 
@@ -755,13 +755,14 @@ namespace ISpanShop.Repositories.Admins
 					{
 						cmd.Parameters.AddWithValue("@UserId", userId);
 						cmd.Parameters.AddWithValue("@AdminLevelId", adminLevelId);
+						cmd.Parameters.AddWithValue("@IsBlacklisted", isBlacklisted);
 						return cmd.ExecuteNonQuery() > 0;
 					}
 				}
 			}
 			catch (SqlException ex)
 			{
-				throw new InvalidOperationException("更新管理員身分失敗", ex);
+				throw new InvalidOperationException("更新管理員身分與狀態失敗", ex);
 			}
 		}
 

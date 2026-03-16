@@ -43,7 +43,18 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers
                 ipAddress = remoteIp.MapToIPv4().ToString();
             }
 
-            var admin = _adminService.VerifyLogin(form.Account, form.Password, ipAddress);
+            AdminDto? admin;
+            try
+            {
+                admin = _adminService.VerifyLogin(form.Account, form.Password, ipAddress);
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "ACCOUNT_BLACKLISTED")
+            {
+                form.Message = "您的帳號已被停權，請聯繫系統管理員。";
+                ModelState.AddModelError(string.Empty, form.Message);
+                return View(form);
+            }
+
             if (admin == null)
             {
                 form.Message = "帳號或密碼錯誤";

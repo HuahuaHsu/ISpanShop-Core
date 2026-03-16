@@ -160,7 +160,21 @@ public class AdminService : IAdminService
 				return null;
 			}
 
-			// 3. BCrypt.Verify(password, admin.PasswordHash)
+			// 3. 檢查停權狀態
+			if (admin.IsBlacklisted)
+			{
+				_loginHistoryRepository.Add(new LoginHistoryDto
+				{
+					UserId = admin.UserId,
+					AttemptedAccount = account,
+					LoginTime = DateTime.Now,
+					Ipaddress = ipAddress ?? "Unknown",
+					IsSuccess = false
+				});
+				throw new InvalidOperationException("ACCOUNT_BLACKLISTED");
+			}
+
+			// 4. BCrypt.Verify(password, admin.PasswordHash)
 			bool isSuccessful = BCrypt.Net.BCrypt.Verify(password, admin.PasswordHash);
 
 			// 紀錄登入歷史
@@ -181,6 +195,10 @@ public class AdminService : IAdminService
 
 			// 4. 驗證成功 → 回傳 AdminDto（含 IsFirstLogin）
 			return admin;
+		}
+		catch (InvalidOperationException)
+		{
+			throw;
 		}
 		catch (Exception)
 		{
@@ -310,10 +328,10 @@ public class AdminService : IAdminService
 			if (dto.AdminLevelId == 1)
 				return (false, "無法將管理員升級為超級管理員");
 
-			bool success = _adminRepository.UpdateAdminLevel(dto.UserId, dto.AdminLevelId);
+			bool success = _adminRepository.UpdateAdminLevel(dto.UserId, dto.AdminLevelId, dto.IsBlacklisted);
 
 			return success
-				? (true, "管理員身分更新成功")
+				? (true, "管理員資訊更新成功")
 				: (false, "更新失敗，請確認管理員是否存在");
 		}
 		catch (Exception ex)

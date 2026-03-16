@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 {
-	[RequirePermission("cashflow_manage")]
 	public class OrdersController : AdminBaseController
 	{
 		private readonly IOrderService _orderService;
@@ -21,6 +20,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 			_dashboardService = dashboardService;
 		}
 
+		[RequirePermission("cashflow_manage")]
 		public async Task<IActionResult> Details(long id)
 		{
 			var order = await _orderService.GetOrderDetailAsync(id);
@@ -32,12 +32,15 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
+		[RequirePermission("cashflow_manage")]
 		public async Task<IActionResult> UpdateStatus(long id, OrderStatus status)
 		{
 			await _orderService.UpdateStatusAsync(id, status);
 			TempData["SuccessMessage"] = $"訂單狀態已更新為 {status.GetDisplayName()}";
 			return RedirectToAction(nameof(Details), new { id });
 		}
+
+		[RequirePermission("cashflow_manage")]
 		public async Task<IActionResult> Index()
 		{
 			var counts = await _orderService.GetOrderStatusCountsAsync();
@@ -66,6 +69,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 		}
 
 		[HttpPost]
+		[RequirePermission("cashflow_manage")]
 		public async Task<IActionResult> GetOrderListAjax([FromBody] OrderSearchDto searchParams)
 		{
 			try
@@ -82,6 +86,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 		// ============================
 		// 頁面渲染：儀表板 (C & D 需求)
 		// ============================
+		[RequirePermission("report_view")]
 		public IActionResult Dashboard()
 		{
 			var vm = new OrderDashboardVm
@@ -99,6 +104,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 
 		// AJAX API：取得 KPI 卡片數據
 		[HttpGet]
+		[RequirePermission("report_view")]
 		public async Task<IActionResult> GetDashboardKpis(int? storeId, string period = "month")
 		{
 			try
@@ -114,6 +120,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 
 		// AJAX API：取得各商品銷售狀況 (長條圖 / 圓餅圖)
 		[HttpGet]
+		[RequirePermission("report_view")]
 		public async Task<IActionResult> GetProductSalesChart(int? storeId, string period = "month", string type = "Bar")
 		{
 			var chartData = await _dashboardService.GetProductSalesChartAsync(storeId, period, type);
@@ -122,6 +129,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 
 		// AJAX API：取得年度月營收趨勢 (折線圖/長條圖通用資料)
 		[HttpGet]
+		[RequirePermission("report_view")]
 		public async Task<IActionResult> GetMonthlyTrend(int? storeId, int? year)
 		{
 			var data = await _dashboardService.GetMonthlySalesTrendAsync(storeId, year);
@@ -130,6 +138,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 
 		// AJAX API：取得熱銷 Top 10
 		[HttpGet]
+		[RequirePermission("report_view")]
 		public async Task<IActionResult> GetTop10Products(int? storeId, string period = "month", string orderBy = "revenue")
 		{
 			var top10 = await _dashboardService.GetTop10ProductsAsync(storeId, period, orderBy);
@@ -138,6 +147,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
 
 		// AJAX API：分類貢獻度
 		[HttpGet]
+		[RequirePermission("report_view")]
 		public async Task<IActionResult> GetCategoryContribution(int? storeId, string period = "month")
 		{
 			var data = await _dashboardService.GetCategoryContributionAsync(storeId, period);

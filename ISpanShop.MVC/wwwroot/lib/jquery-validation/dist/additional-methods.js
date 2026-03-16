@@ -67,7 +67,9 @@ $.validator.addMethod( "abaRoutingNumber", function( value ) {
 					parseInt( tokens[ i + 2 ], 10 );
 	}
 
-	// If not zero and divisible by 10 then valid
+	// If not zero and divisible 
+
+	10 then valid
 	if ( checksum !== 0 && checksum % 10 === 0 ) {
 		return true;
 	}
