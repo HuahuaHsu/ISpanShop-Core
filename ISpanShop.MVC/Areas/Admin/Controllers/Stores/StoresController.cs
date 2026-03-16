@@ -19,12 +19,29 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Stores
         }
 
         // GET: Admin/Stores
-        public IActionResult Index()
+        public IActionResult Index(string? keyword, string verifyStatus = "all", string blockStatus = "all",
+                                 string sortColumn = "CreatedAt", string sortDirection = "desc",
+                                 int page = 1, int pageSize = 20)
         {
-            var stores = _storeService.GetAllStores().ToList();
+            var stores = _storeService.GetAllStores(
+                keyword, verifyStatus, blockStatus, sortColumn, sortDirection, page, pageSize, out int totalCount).ToList();
+
+            var stats = _storeService.GetStoreStats();
+
             var vm = new StoreIndexVm
             {
                 Stores = stores,
+                Keyword = keyword,
+                VerifyStatus = verifyStatus,
+                BlockStatus = blockStatus,
+                SortColumn = sortColumn,
+                SortDirection = sortDirection,
+                TotalCount = totalCount,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalStores = stats.Total,
+                VerifiedCount = stats.Verified,
+                BlockedCount = stats.Blocked,
                 Message = TempData["Message"]?.ToString()
             };
             return View(vm);

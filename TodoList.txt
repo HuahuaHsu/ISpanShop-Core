@@ -1260,7 +1260,375 @@ STEP 5：展示層 (ISpanShop.MVC)
   * Products.Status = 1 假設為上架中
     實作前請確認：SELECT DISTINCT Status FROM Products
 
+============================================================
+  店家管理 Index.cshtml 升級 - 實作 Todolist
+  參考：會員管理頁面（Squeeze Layout + Drawer + 搜尋 + 排序）
+============================================================
 
+------------------------------------------------------------
+STEP 1：更新 ViewModel (ISpanShop.MVC)
+------------------------------------------------------------
+
+[ ] 更新 StoreIndexVm
+    - 位置：ISpanShop.MVC/Areas/Admin/Models/Stores/StoreIndexVm.cs
+    - 新增欄位：
+
+        // 搜尋條件
+        string?  Keyword        // 店家名稱 / 店主帳號
+        string?  VerifyStatus   // "all" / "verified" / "unverified"
+        string?  BlockStatus    // "all" / "normal" / "blocked"
+
+        // 排序
+        string   SortColumn     // 預設 "CreatedAt"
+        string   SortDirection  // "asc" / "desc"
+
+        // 分頁
+        int      TotalCount
+        int      CurrentPage
+        int      PageSize       // 預設 20
+
+        // 統計
+        int      TotalStores
+        int      VerifiedCount
+        int      BlockedCount
+
+------------------------------------------------------------
+STEP 2：更新資料存取層 (ISpanShop.Repositories)
+------------------------------------------------------------
+
+[ ] 更新 IStoreRepository
+    - 位置：ISpanShop.Repositories/Stores/IStoreRepository.cs
+    - 修改 GetAllStores 簽章：
+
+        IEnumerable<StoreDto> GetAllStores(
+            string?  keyword,
+            string?  verifyStatus,
+            string?  blockStatus,
+            string   sortColumn,
+            string   sortDirection,
+            int      page,
+            int      pageSize,
+            out int  totalCount
+        )
+
+[ ] 更新 StoreRepository
+    - 位置：ISpanShop.Repositories/Stores/StoreRepository.cs
+    - 修改 SQL GetAllStores（動態條件版本）：
+
+        -- 基底查詢加上 WHERE 條件與 ORDER BY
+        SELECT S.Id            AS StoreId,
+               S.UserId,
+               U.Account       AS OwnerAccount,
+               S.StoreName,
+               S.Description,
+               S.IsVerified,
+               S.IsBlacklisted,
+               S.CreatedAt,
+               COUNT(P.Id)     AS ProductCount
+        FROM   Stores S
+        JOIN   Users U   ON S.UserId = U.Id
+        LEFT JOIN Products P ON P.StoreId = S.Id
+                             AND P.IsDeleted = 0
+        WHERE  1 = 1
+          AND  (@Keyword IS NULL
+                OR S.StoreName LIKE '%' + @Keyword + '%'
+                OR U.Account   LIKE '%' + @Keyword + '%')
+          AND  (@VerifyStatus = 'all'
+                OR (@VerifyStatus = 'verified'   AND S.IsVerified = 1)
+                OR (@VerifyStatus = 'unverified' AND S.IsVerified = 0))
+          AND  (@BlockStatus = 'all'
+                OR (@BlockStatus = 'normal'  AND S.IsBlacklisted = 0)
+                OR (@BlockStatus = 'blocked' AND S.IsBlacklisted = 1))
+        GROUP BY S.Id, S.UserId, U.Account, S.StoreName,
+                 S.Description, S.IsVerified,
+                 S.IsBlacklisted, S.CreatedAt
+        ORDER BY
+            CASE WHEN @SortColumn = 'StoreName'  AND @SortDir = 'asc'
+                 THEN S.StoreName END ASC,
+            CASE WHEN @SortColumn = 'StoreName'  AND @SortDir = 'desc'
+                 THEN S.StoreName END DESC,
+            CASE WHEN @SortColumn = 'ProductCount' AND @SortDir = 'asc'
+                 THEN COUNT(P.Id) END ASC,
+            CASE WHEN @SortColumn = 'ProductCount' AND @SortDir = 'desc'
+                 THEN COUNT(P.Id) END DESC,
+            CASE WHEN @SortColumn = 'CreatedAt'  AND @SortDir = 'asc'
+                 THEN S.CreatedAt END ASC,
+            CASE WHEN @SortColumn = 'CreatedAt'  AND @SortDir = 'desc'
+                 THEN S.CreatedAt END DESC
+        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+
+        -- 同條件 COUNT（取得總筆數）
+        SELECT COUNT(DISTINCT S.Id)
+        FROM   Stores S
+        JOIN   Users U ON S.UserId = U.Id
+        WHERE  ... （同上 WHERE 條件）
+
+------------------------------------------------------------
+STEP 3：更新商務邏輯層 (ISpanShop.Services)
+------------------------------------------------------------
+
+[ ] 更新 IStoreService
+    - 修改 GetAllStores 簽章對應 Repository
+
+[ ] 更新 StoreService
+    - GetAllStores 邏輯：
+        1. 呼叫 Repository.GetAllStores() 取得分頁資料與 totalCount
+        2. 同時查詢統計數字：
+           TotalStores  = 不帶篩選的 totalCount
+           VerifiedCount / BlockedCount 可用現有資料計算
+           或另開 SQL 查詢
+        3. 組成資料回傳
+
+------------------------------------------------------------
+STEP 4：更新 StoresController
+------------------------------------------------------------
+
+[ ] 更新 StoresController.Index()
+    - 位置：ISpanShop.MVC/Areas/Admin/Controllers/Stores/StoresController.cs
+
+    GET Index(string? keyword, string? verifyStatus,
+              string? blockStatus, string sortColumn = "CreatedAt",
+              string sortDirection = "desc",
+              int page = 1, int pageSize = 20)
+
+        → StoreService.GetAllStores(所有參數)
+        → 組成 StoreIndexVm：
+            Stores        = 查詢結果
+            Keyword       = keyword
+            VerifyStatus  = verifyStatus ?? "all"
+            BlockStatus   = blockStatus  ?? "all"
+            SortColumn    = sortColumn
+            SortDirection = sortDirection
+            TotalCount    = totalCount
+            CurrentPage   = page
+            PageSize      = pageSize
+            TotalStores   = 統計數
+            VerifiedCount = 統計數
+            BlockedCount  = 統計數
+        → return View(vm)
+
+------------------------------------------------------------
+STEP 5：大幅改寫 Index.cshtml
+------------------------------------------------------------
+
+[ ] 改寫 Index.cshtml
+    - 位置：ISpanShop.MVC/Areas/Admin/Views/Stores/Index.cshtml
+    - 參照：會員管理 Index.cshtml 整體架構
+
+    ★ Layout 與 CSS 區塊
+    ────────────────────────────────────────────
+    複製會員管理的以下 CSS 區塊並調整命名：
+    - .squeeze-layout / .squeeze-main / .squeeze-drawer
+    - .drawer-header / .drawer-body / .drawer-loading
+    - .active-edit-row（高亮選中列）
+    - .sticky-top-section（固定搜尋列）
+    - .store-toast / .store-toast-container（Toast 通知）
+    - .act-icon（操作按鈕）
+
+    ★ 固定區塊（sticky-top-section）
+    ────────────────────────────────────────────
+    頁面標題：
+        <i class="bx bx-store me-2"></i>店家管理
+
+    搜尋表單（form method="get" asp-action="Index"）：
+        關鍵字輸入框  → name="keyword"
+            placeholder="店家名稱、店主帳號..."
+        審核狀態下拉  → name="verifyStatus"
+            選項：所有狀態 / 已審核 / 待審核
+        封鎖狀態下拉  → name="blockStatus"
+            選項：所有狀態 / 正常 / 已封鎖
+        搜尋按鈕 + 重置按鈕
+        Hidden fields：
+            <input type="hidden" name="sortColumn"    value="@Model.SortColumn" />
+            <input type="hidden" name="sortDirection" value="@Model.SortDirection" />
+
+    ★ 統計卡片列
+    ────────────────────────────────────────────
+    顯示三個數字：
+        總店家數   → @Model.TotalStores
+        已審核     → @Model.VerifiedCount
+        已封鎖     → @Model.BlockedCount
+
+    ★ 主表格
+    ────────────────────────────────────────────
+    每列加上：
+        data-store-id="@store.StoreId"
+        class="clickable-row"
+        onclick="openDrawer(@store.StoreId)"
+
+    表頭可排序欄位（仿會員管理排序連結）：
+        店家名稱  → sortColumn = "StoreName"
+        商品數    → sortColumn = "ProductCount"
+        建立時間  → sortColumn = "CreatedAt"
+
+    排序連結範例：
+        <a href="@Url.Action("Index", new {
+            keyword       = Model.Keyword,
+            verifyStatus  = Model.VerifyStatus,
+            blockStatus   = Model.BlockStatus,
+            sortColumn    = "StoreName",
+            sortDirection = (Model.SortColumn == "StoreName"
+                             && Model.SortDirection == "asc"
+                             ? "desc" : "asc")
+        })" class="text-decoration-none text-muted">
+            店家名稱
+            @if (Model.SortColumn == "StoreName")
+            {
+                <i class="bx bx-sort-@(Model.SortDirection == "asc"
+                                       ? "up" : "down")"></i>
+            }
+        </a>
+
+    欄位：
+        店家 ID（不排序）
+        店家名稱（可排序）
+        店主帳號（不排序）
+        商品數（可排序）
+        審核狀態 Badge（不排序）
+        封鎖狀態 Badge（不排序）
+        建立時間（可排序）
+        操作欄（編輯圖示）
+
+    ★ 分頁區塊
+    ────────────────────────────────────────────
+    完全複製會員管理分頁邏輯，替換參數名稱：
+        keyword / verifyStatus / blockStatus /
+        sortColumn / sortDirection / page / pageSize
+
+    ★ Squeeze Drawer
+    ────────────────────────────────────────────
+    <div class="squeeze-drawer" id="storeDrawer">
+        <div class="drawer-header">
+            <h5><i class="bx bx-store me-2"></i>店家設定</h5>
+            <button onclick="closeDrawer()" class="btn-close"></button>
+        </div>
+        <div class="drawer-body" id="drawerBody">
+            <div id="drawerLoading" style="display:none;">
+                （載入動畫）
+            </div>
+            <div id="drawerContent"></div>
+        </div>
+    </div>
+
+    ★ Toast 容器
+    ────────────────────────────────────────────
+    <div class="store-toast-container" id="toastContainer"></div>
+
+------------------------------------------------------------
+STEP 6：JavaScript 區塊（@section Scripts）
+------------------------------------------------------------
+
+[ ] 複製會員管理 JS 架構，調整以下部分：
+
+    openDrawer(storeId)
+    ────────────────────────────────────────────
+    - 收合左側選單
+    - 清除所有列高亮
+    - 高亮選中列（data-store-id）
+    - 開啟 squeeze-drawer
+    - AJAX 呼叫：
+        fetch(`/Admin/Stores/Edit?storeId=${storeId}`)
+    - 成功後將 HTML 注入 #drawerContent
+    - 呼叫 initDrawerForm()
+
+    closeDrawer()
+    ────────────────────────────────────────────
+    - 移除 is-open class
+    - 清除所有列高亮
+
+    initDrawerForm()
+    ────────────────────────────────────────────
+    監聽 _EditPartial 內的表單送出：
+
+    封鎖按鈕確認（與會員管理邏輯相同）：
+        點擊封鎖前彈出 confirm 確認視窗
+
+    表單 POST（AJAX）：
+        fetch(form.action, { method:'POST', body: formData })
+        成功 → closeDrawer()
+               updateStoreRow(result.store)  // 更新列表狀態
+               showToast('success', result.message)
+        失敗 → showToast('error', result.message)
+
+    updateStoreRow(store)
+    ────────────────────────────────────────────
+    找到對應 data-store-id 的 <tr>
+    更新以下兩個 cell：
+        .store-verify-cell  → 更新審核狀態 Badge
+        .store-block-cell   → 更新封鎖狀態 Badge
+
+    全域事件
+    ────────────────────────────────────────────
+    - 點擊 Drawer 和表格以外區域 → closeDrawer()
+    - 按 Escape 鍵 → closeDrawer()
+
+    TempData Toast（頁面載入後顯示）
+    ────────────────────────────────────────────
+    @if (TempData["Success"] != null)
+    {
+        <text>
+        document.addEventListener('DOMContentLoaded', function () {
+            showToast('success', '@TempData["Success"]');
+        });
+        </text>
+    }
+
+------------------------------------------------------------
+STEP 7：更新 _EditPartial.cshtml 配合 AJAX 回傳
+------------------------------------------------------------
+
+[ ] 更新 _EditPartial.cshtml
+    - 位置：ISpanShop.MVC/Areas/Admin/Views/Stores/_EditPartial.cshtml
+
+    ★ 表單改為 AJAX 提交（移除一般 POST 跳轉）：
+        <form id="storeEditForm"
+              method="post"
+              asp-area="Admin"
+              asp-controller="Stores"
+              asp-action="UpdateStore">
+
+    ★ 操作按鈕改為觸發 JS 而非直接 POST：
+        審核切換按鈕 → id="toggleVerifyBtn"
+        封鎖切換按鈕 → id="toggleBlockBtn"
+        （讓 initDrawerForm() 監聽這兩個按鈕）
+
+    ★ 底部加上儲存按鈕：
+        <button type="submit" id="drawerSaveBtn" class="btn btn-primary">
+            <span class="spinner-border spinner-border-sm me-1"
+                  style="display:none;" id="savingSpinner"></span>
+            儲存變更
+        </button>
+
+[ ] 更新 StoresController 新增 AJAX 回傳 Action
+    - 位置：ISpanShop.MVC/Areas/Admin/Controllers/Stores/StoresController.cs
+
+    POST UpdateStore(int storeId, bool isVerified, bool isBlacklisted)
+         → StoreService.ToggleVerified()
+         → StoreService.ToggleBlacklist()
+         → 若 Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+              return Json(new {
+                  success  = true,
+                  message  = "更新成功",
+                  store    = new {
+                      storeId,
+                      isVerified,
+                      isBlacklisted
+                  }
+              })
+         → 否則 TempData["Success"] = "更新成功"
+              RedirectToAction("Index")
+
+------------------------------------------------------------
+注意事項
+------------------------------------------------------------
+  * clickable-row 的 onclick 需避免與操作欄按鈕衝突
+    操作欄按鈕加上 onclick="event.stopPropagation()"
+  * updateStoreRow 更新的是 Badge 顯示，不重新載入整列
+  * 排序連結需保留目前的搜尋條件（keyword / verifyStatus /
+    blockStatus），避免排序後篩選條件消失
+  * AJAX 回傳格式需與 initDrawerForm() 解析邏輯對應
+
+============================================================
 
 ============================================================
   管理員權限切版 (Admin Permission-Based UI) - 實作 Todolist

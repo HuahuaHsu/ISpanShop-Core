@@ -13,9 +13,24 @@ namespace ISpanShop.Services.Stores
             _storeRepository = storeRepository;
         }
 
-        public IEnumerable<StoreDto> GetAllStores()
+        public IEnumerable<StoreDto> GetAllStores(
+            string? keyword,
+            string verifyStatus,
+            string blockStatus,
+            string sortColumn,
+            string sortDirection,
+            int page,
+            int pageSize,
+            out int totalCount
+        )
         {
-            return _storeRepository.GetAllStores();
+            return _storeRepository.GetAllStores(
+                keyword, verifyStatus, blockStatus, sortColumn, sortDirection, page, pageSize, out totalCount);
+        }
+
+        public (int Total, int Verified, int Blocked) GetStoreStats()
+        {
+            return _storeRepository.GetStoreStats();
         }
 
         public StoreDetailDto? GetStoreById(int storeId)

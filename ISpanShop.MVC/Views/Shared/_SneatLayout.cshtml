@@ -876,7 +876,7 @@
                             <span class="fw-semibold d-none d-xl-block" style="color:#2d3748;font-size:.9rem;">
                                 @User.Identity?.Name
                                 <span style="color:#8a9bb0; font-size: 0.8rem; font-weight: normal; margin-left: 4px;">
-                                    (@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "管理員"))
+                                    (@(User.FindFirst("LevelName")?.Value ?? "管理員"))
                                 </span>
                             </span>
 
@@ -889,7 +889,7 @@
                                         <div>
                                             <span class="fw-semibold d-block">@User.Identity?.Name</span>
                                             <small class="text-muted">
-                                                @(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "管理員")
+                                                @(User.FindFirst("LevelName")?.Value ?? "管理員")
                                             </small>
                                         </div>
                                     </div>
