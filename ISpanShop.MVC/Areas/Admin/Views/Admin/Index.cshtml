@@ -122,6 +122,32 @@
             color: #991b1b;
             border-left: 4px solid #ef4444;
         }
+
+    /* ── 操作圖示按鈕（參考 Member/Index） ── */
+    .act-icon {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .act-icon:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #3182ce;
+        }
+
+    /* 點擊列的手指游標 */
+    .clickable-row {
+        cursor: pointer;
+    }
 </style>
 
 <div class="container-xxl flex-grow-1 container-p-y">
@@ -287,7 +313,14 @@
                                         @foreach (var admin in Model.PagedResult.Data)
                                         {
                                             <tr data-admin-id="@admin.UserId"
-                                                class="@(admin.IsBlacklisted ? "bg-lighter text-muted" : "")">
+                                                data-account="@admin.Account"
+                                                data-email="@admin.Email"
+                                                data-level-id="@(admin.AdminLevelId ?? 0)"
+                                                data-is-blacklisted="@(admin.IsBlacklisted ? "true" : "false")"
+                                                data-is-super="@(admin.AdminLevelId == 1 ? "true" : "false")"
+                                                data-is-self="@(admin.UserId.ToString() == currentUserId ? "true" : "false")"
+                                                class="clickable-row @(admin.IsBlacklisted ? "bg-lighter text-muted" : "")"
+                                                onclick="openAdminDrawerFromRow(this)">
                                                 <td>
                                                     <span class="fw-medium">@admin.Account</span>
                                                     @if (admin.IsBlacklisted)
@@ -319,29 +352,24 @@
                                                     }
                                                     else if (admin.IsFirstLogin)
                                                     {
-
                                                         <span class="badge bg-label-warning">首次登入</span>
                                                     }
                                                     else
                                                     {
-
                                                         <span class="badge bg-label-success">啟用</span>
                                                     }
                                                 </td>
                                                 <td>@admin.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                                                 <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary"
-                                                            onclick="openAdminDrawer({
-                                                                                userId: @admin.UserId,
-                                                                                account: '@admin.Account',
-                                                                                email: '@admin.Email',
-                                                                                adminLevelId: @(admin.AdminLevelId ?? 0),
-                                                                                isBlacklisted: @(admin.IsBlacklisted ? "true" : "false"),
-                                                                                isSuperAdmin: @(admin.AdminLevelId == 1 ? "true" : "false"),
-                                                                                isSelf: @(admin.UserId.ToString() == currentUserId ? "true" : "false")
-                                                                            })">
-                                                        <i class="bx bx-edit me-1"></i>編輯
-                                                    </button>
+                                                    <div class="d-flex justify-content-end">
+                                                        <button type="button"
+                                                                class="act-icon"
+                                                                data-bs-toggle="tooltip"
+                                                                title="編輯管理員"
+                                                                onclick="event.stopPropagation(); openAdminDrawerFromRow(this.closest('tr'))">
+                                                            <i class="bx bx-edit"></i>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         }
@@ -486,7 +514,9 @@
                 @* ── Tab2 結束 ── *@
 
             </div>
-        </div> @* 🌟 放在這！與 squeeze-main 平行，右側 Drawer *@
+        </div>
+
+        @* 右側 Drawer（與 squeeze-main 平行） *@
         <div class="squeeze-drawer" id="adminDrawer">
             <div class="drawer-header">
                 <h5><i class="bx bx-cog me-2" style="color:#3182ce;"></i>編輯管理員資料</h5>
@@ -704,6 +734,26 @@
 
 @section Scripts {
     <script>
+        // ── Bootstrap Tooltips 初始化 ──
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+                new bootstrap.Tooltip(el, { trigger: 'hover' });
+            });
+        });
+
+        // ── 從列的 data-* 屬性讀取，再呼叫 openAdminDrawer ──
+        function openAdminDrawerFromRow(row) {
+            openAdminDrawer({
+                userId:       parseInt(row.dataset.adminId),
+                account:      row.dataset.account,
+                email:        row.dataset.email,
+                adminLevelId: parseInt(row.dataset.levelId),
+                isBlacklisted: row.dataset.isBlacklisted === 'true',
+                isSuperAdmin:  row.dataset.isSuper === 'true',
+                isSelf:        row.dataset.isSelf === 'true'
+            });
+        }
+
         // Tab 切換
         document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(tabEl) {
             tabEl.addEventListener('shown.bs.tab', function(event) {
@@ -767,6 +817,25 @@
             document.getElementById('drawerIsBlacklistedHidden').value = this.checked ? 'true' : 'false';
         });
 
+        // 點擊 Drawer 與 Table 以外區域自動關閉
+        document.addEventListener('mousedown', function (e) {
+            var layout = document.getElementById('adminPageLayout');
+            if (!layout.classList.contains('is-open')) return;
+
+            var drawer   = document.getElementById('adminDrawer');
+            var tbody    = document.getElementById('adminTableBody');
+            var modals   = document.querySelector('.modal.show');
+
+            if (modals) return; // 有 Modal 開著就不關 Drawer
+
+            var insideDrawer = drawer.contains(e.target);
+            var insideTable  = tbody  && tbody.contains(e.target);
+
+            if (!insideDrawer && !insideTable) {
+                closeAdminDrawer();
+            }
+        });
+
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeAdminDrawer();
         });
@@ -796,12 +865,12 @@
 
         @if (!string.IsNullOrEmpty(Model.Message))
         {
-                        var jsType = Model.Message.Contains("成功") ? "success" : "error";
-                        <text>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            showAdminToast('@jsType', @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Message)));
-                        });
-                        </text>
+                var jsType = Model.Message.Contains("成功") ? "success" : "error";
+                <text>
+                document.addEventListener('DOMContentLoaded', function() {
+                    showAdminToast('@jsType', @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Message)));
+                });
+                </text>
         }
     </script>
 }
