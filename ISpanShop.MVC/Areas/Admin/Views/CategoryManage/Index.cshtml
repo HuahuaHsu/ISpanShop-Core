@@ -157,11 +157,6 @@
                         選擇上層分類則建立為子分類，不選則為頂層分類
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">排序數字</label>
-                    <input type="number" class="form-control" id="catSort" value="0" min="0" style="width:120px">
-                    <div style="font-size:.78rem;color:#aaa;margin-top:4px">數字越小排越前面</div>
-                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
@@ -442,7 +437,6 @@ function openAdd(parentId, parentName) {
         parentId ? '新增子分類（' + parentName + '）' : '新增頂層分類';
     document.getElementById('catName').value = '';
     document.getElementById('catParent').value = parentId || '';
-    document.getElementById('catSort').value = '0';
     new bootstrap.Modal(document.getElementById('catModal')).show();
 }
 
@@ -454,7 +448,6 @@ async function openEdit(id) {
         document.getElementById('modalTitle').textContent = '編輯分類';
         document.getElementById('catName').value = d.name;
         document.getElementById('catParent').value = d.parentId || '';
-        document.getElementById('catSort').value = d.sortOrder;
         new bootstrap.Modal(document.getElementById('catModal')).show();
     } catch { showToast('❌ 載入失敗，請重試'); }
 }
@@ -465,14 +458,13 @@ async function saveCategory() {
     const name     = document.getElementById('catName').value.trim();
     const parentId = document.getElementById('catParent').value
         ? parseInt(document.getElementById('catParent').value) : null;
-    const sortOrder = parseInt(document.getElementById('catSort').value) || 0;
 
     if (!name) { showToast('❌ 分類名稱不能空白'); return; }
 
     const url  = id === 0 ? '/Admin/CategoryManage/Create' : '/Admin/CategoryManage/Update';
     const body = id === 0
-        ? { name, parentId, sortOrder, imageUrl: null }
-        : { id, name, parentId, sortOrder, imageUrl: null };
+        ? { name, parentId, sortOrder: 0, imageUrl: null }
+        : { id, name, parentId, sortOrder: 0, imageUrl: null };
 
     try {
         const d = await apiPost(url, body);
