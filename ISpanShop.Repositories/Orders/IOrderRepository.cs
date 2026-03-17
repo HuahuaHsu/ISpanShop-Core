@@ -27,10 +27,19 @@ namespace ISpanShop.Repositories.Orders
 
 		// 儀表板數據查詢 (C & D 需求)
 		Task<DashboardKpiRawDataDto> GetDashboardKpisAsync(int? storeId, DateTime startDate, DateTime endDate, DateTime prevStartDate, DateTime prevEndDate);
-		Task<ApexChartDataDto> GetProductSalesBarChartAsync(int? storeId, DateTime startDate, DateTime endDate);
-		Task<ApexChartDataDto> GetProductSalesPieChartAsync(int? storeId, DateTime startDate, DateTime endDate);
+		Task<ApexChartDataDto> GetCategoryCompositionBarChartAsync(int? storeId, DateTime startDate, DateTime endDate);
+		Task<ApexChartDataDto> GetCategoryCompositionPieChartAsync(int? storeId, DateTime startDate, DateTime endDate);
 		Task<ApexChartDataDto> GetMonthlySalesTrendAsync(int? storeId, DateTime startDate, DateTime endDate);
-		Task<List<TopProductSalesDto>> GetTop10ProductsAsync(int? storeId, DateTime startDate, DateTime endDate, string orderBy);
+		Task<List<TopProductSalesDto>> GetTopSellingCategoriesAsync(int? storeId, DateTime startDate, DateTime endDate, string orderBy);
 		Task<ApexChartDataDto> GetCategoryContributionAsync(int? storeId, DateTime startDate, DateTime endDate);
+		Task<ApexChartDataDto> GetCategoryDetailAsync(int? storeId, DateTime startDate, DateTime endDate, string type, string categoryName);
+		Task<List<CategoryMonthlyRevenueDto>> GetCategoryMonthlyRevenueAsync(int? storeId, DateTime startDate, DateTime endDate);
+	}
+
+	public class CategoryMonthlyRevenueDto
+	{
+		public string CategoryName { get; set; }
+		public int Month { get; set; }
+		public decimal Revenue { get; set; }
 	}
 }

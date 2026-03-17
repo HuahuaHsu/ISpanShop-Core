@@ -56,6 +56,10 @@ namespace ISpanShop.Services.Orders
 					.SelectMany(rr => rr.ReturnRequestImages)
 					.Select(rri => rri.ImageUrl)
 					.ToList(),
+				ReturnReason = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.ReasonCategory,
+				ReturnDescription = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.ReasonDescription,
+				ReturnRequestCreatedAt = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.CreatedAt,
+				RefundDate = o.ReturnRequests.Where(r => r.Status == 6).OrderByDescending(r => r.UpdatedAt).FirstOrDefault()?.UpdatedAt,
 				Details = o.OrderDetails.Select(od => new OrderDetailDto
 				{
 					Id = od.Id,

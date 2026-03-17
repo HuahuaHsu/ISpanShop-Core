@@ -98,7 +98,8 @@
     <!-- 篩選卡片 -->
     <div class="filter-card">
         <form id="filterForm" class="row g-3 align-items-end">
-            <div class="col-md-4">
+            <!-- 基礎資訊 -->
+            <div class="col-md-3">
                 <label class="form-label">關鍵字搜尋 (訂單號/姓名/電話)</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bx bx-search"></i></span>
@@ -106,6 +107,7 @@
                 </div>
             </div>
             
+            <!-- 退貨狀態 -->
             <div class="col-md-3">
                 <label class="form-label">退貨進度</label>
                 <select class="form-select" name="Statuses" id="statusSelect">
@@ -117,7 +119,40 @@
                 </select>
             </div>
 
-            <div class="col-md-5 d-flex justify-content-end gap-2">
+            <!-- 日期維度 -->
+            <div class="col-md-2">
+                <label class="form-label">日期篩選維度</label>
+                <select class="form-select" name="DateDimension">
+                    @foreach (var item in Model.DateDimensionOptions)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            </div>
+
+            <!-- 排序方式 -->
+            <div class="col-md-2">
+                <label class="form-label">排序方式</label>
+                <select class="form-select" name="SortBy" id="sortSelect">
+                    <option value="OrderDate_desc">下單時間 (新→舊)</option>
+                    <option value="OrderDate_asc">下單時間 (舊→新)</option>
+                    <option value="TotalAmount_desc">退款金額 (高→低)</option>
+                    <option value="TotalAmount_asc">退款金額 (低→高)</option>
+                </select>
+            </div>
+
+            <!-- 日期區間 -->
+            <div class="col-md-5 mt-3">
+                <label class="form-label">日期範圍</label>
+                <div class="input-group">
+                    <span class="input-group-text">從</span>
+                    <input type="date" name="StartDate" class="form-control">
+                    <span class="input-group-text">至</span>
+                    <input type="date" name="EndDate" class="form-control">
+                </div>
+            </div>
+
+            <div class="col-md-7 d-flex justify-content-end gap-2 mt-3">
                 <button type="button" class="btn btn-danger rounded-pill px-4" onclick="loadReturnData(1)">
                     <i class="bx bx-filter-alt me-1"></i> 執行篩選
                 </button>
@@ -190,6 +225,15 @@
 
         function loadReturnData(page) {
             currentPage = page;
+
+            // 從下拉選單讀取排序設定
+            const sortVal = $('#sortSelect').val();
+            if (sortVal) {
+                const parts = sortVal.split('_');
+                currentSort.SortBy = parts[0];
+                currentSort.IsDescending = parts[1] === 'desc';
+            }
+
             const formData = $('#filterForm').serializeArray();
             let searchParams = { Statuses: [] };
 
@@ -226,6 +270,11 @@
             const statusStyles = { 5: 'bg-label-warning', 6: 'bg-label-success' };
 
             data.forEach(order => {
+                const isPending = order.statusId === 5;
+                const btnClass = isPending ? 'btn-outline-danger' : 'btn-outline-secondary';
+                const btnText = isPending ? '審核退款' : '查看詳情';
+                const btnIcon = isPending ? 'bx-edit-alt' : 'bx-show';
+
                 tbody.append(`
                     <tr>
                         <td><span class="fw-bold text-danger">${order.orderUuid}</span></td>
@@ -234,8 +283,8 @@
                         <td class="small">${new Date(order.orderDate).toLocaleDateString()}</td>
                         <td><span class="badge-soft ${statusStyles[order.statusId] || 'bg-label-secondary'}">${order.statusName}</span></td>
                         <td class="text-center">
-                            <a href="@Url.Action("Review", "ReturnRequests")/${order.orderId}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                <i class="bx bx-edit-alt me-1"></i>審核退款
+                            <a href="@Url.Action("Review", "ReturnRequests")/${order.orderId}" class="btn btn-sm ${btnClass} rounded-pill px-3">
+                                <i class="bx ${btnIcon} me-1"></i>${btnText}
                             </a>
                         </td>
                     </tr>

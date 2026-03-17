@@ -120,17 +120,17 @@
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div id="card-1" class="stat-card stat-processing" onclick="filterByStatus(1)">
-                <div class="stat-icon"><i class="bx bx-package"></i></div>
-                <div class="stat-num">@Model.CountPendingShipment</div>
-                <div class="stat-label">待出貨</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
             <div id="card-3" class="stat-card stat-completed" onclick="filterByStatus(3)">
                 <div class="stat-icon"><i class="bx bx-check-circle"></i></div>
                 <div class="stat-num">@Model.CountCompleted</div>
                 <div class="stat-label">已完成</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div id="card-1" class="stat-card stat-processing" onclick="window.location.href='@Url.Action("Index", "ShipmentWorkstation", new { area = "Admin" })'">
+                <div class="stat-icon"><i class="bx bx-package"></i></div>
+                <div class="stat-num">@Model.CountPendingShipment</div>
+                <div class="stat-label">待出貨</div>
             </div>
         </div>
     </div>
@@ -391,8 +391,8 @@
                         <td class="fw-bold">$${order.totalAmount.toLocaleString()}</td>
                         <td><span class="badge-soft ${statusStyles[order.statusId] || 'bg-label-dark'}">${order.statusName}</span></td>
                         <td class="text-center">
-                            <a href="@Url.Content("~/Admin/Orders/Details/")${order.orderId}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                <i class="bx bx-show me-1"></i>詳情
+                            <a href="@Url.Content("~/Admin/Orders/Details/")${order.orderId}" class="btn btn-sm btn-icon btn-outline-primary" title="詳情">
+                                <i class="bx bx-show"></i>
                             </a>
                         </td>
                     </tr>

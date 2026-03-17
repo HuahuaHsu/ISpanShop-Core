@@ -29,7 +29,7 @@
 <div class="row mb-4">
     <!-- 左側：核心待辦中心 (不隨時間變動) -->
     <div class="col-12 col-lg-4 mb-4 mb-lg-0">
-        <div class="card hero-card h-100 shadow-lg cursor-pointer" onclick="window.location.href='@Url.Action("Index", "ShipmentWorkstation")'">
+        <div class="card hero-card h-100 shadow-lg cursor-pointer" onclick="window.location.href='@Url.Action("Index", "ShipmentWorkstation", new { area = "Admin" })'">
             <div class="card-body d-flex flex-column justify-content-between p-4">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="avatar avatar-lg">
@@ -42,7 +42,7 @@
                     <h4 class="text-white mb-2">待出貨訂單總數</h4>
                     <p class="text-muted mb-4 small">這是當前系統中所有需要處理的訂單，不限時間區間。</p>
                 </div>
-                <a href="@Url.Action("Index", "ShipmentWorkstation")" class="btn btn-white w-100 fw-bold" style="color: #696cff; text-decoration: none;">
+                <a href="@Url.Action("Index", "ShipmentWorkstation", new { area = "Admin" })" class="btn btn-white w-100 fw-bold" style="color: #696cff; text-decoration: none;">
                     <i class="bx bx-right-arrow-alt me-1"></i> 立即前往處理
                 </a>
             </div>
@@ -52,13 +52,14 @@
     <!-- 右側：表現分析區 (隨時間與商店變動) -->
     <div class="col-12 col-lg-8">
         <div class="card h-100 border-0 shadow-sm">
-            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3 pb-0">
                 <div class="d-flex align-items-center gap-3">
                     <h5 class="mb-0 fw-bold">營收表現分析</h5>
                     <select id="periodFilter" class="form-select form-select-sm w-auto border-0 bg-light fw-bold" onchange="refreshAllDashboard()">
                         <option value="7days">近 7 天</option>
                         <option value="month" selected>近一個月 (30天)</option>
                         <option value="3months">近三個月</option>
+                        <option value="6months">近六個月</option>
                         <option value="year">近一年</option>
                     </select>
                 </div>
@@ -71,40 +72,157 @@
                         }
                     </select>
                 </div>
+                <!-- 標籤導覽 -->
+                <div class="nav-align-top w-100 mt-3">
+                    <ul class="nav nav-tabs border-bottom-0" role="tablist">
+                        <li class="nav-item">
+                            <button type="button" class="nav-link active fw-bold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-core" aria-controls="navs-core" aria-selected="true">
+                                <i class="bx bx-home-alt me-1"></i> 核心概覽
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button type="button" class="nav-link fw-bold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-customer" aria-controls="navs-customer" aria-selected="false">
+                                <i class="bx bx-user me-1"></i> 顧客行為
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button type="button" class="nav-link fw-bold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-efficiency" aria-controls="navs-efficiency" aria-selected="false">
+                                <i class="bx bx-bolt-circle me-1"></i> 營運效率
+                            </button>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <!-- 實收營收 -->
-                    <div class="col-md-4">
-                        <div class="p-3 rounded bg-light metric-card">
-                            <div class="d-flex align-items-center mb-1">
-                                <i class="bx bx-money text-primary me-2"></i>
-                                <span class="text-muted small fw-bold">實收營收</span>
+            <div class="card-body pt-4">
+                <div class="tab-content p-0 shadow-none border-0">
+                    <!-- 標籤一：核心概覽 -->
+                    <div class="tab-pane fade show active" id="navs-core" role="tabpanel">
+                        <div class="row g-4">
+                            <!-- 實收營收 -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-light metric-card">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bx bx-money text-primary me-2"></i>
+                                        <span class="text-muted small fw-bold">實收營收</span>
+                                    </div>
+                                    <h3 class="mb-1 fw-bold" id="kpiNetRevenue">$0</h3>
+                                    <div id="kpiRevGrowth" class="small fw-bold">0%</div>
+                                </div>
                             </div>
-                            <h3 class="mb-1 fw-bold" id="kpiNetRevenue">$0</h3>
-                            <div id="kpiRevGrowth" class="small fw-bold">0%</div>
+                            <!-- 連帶率 -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-light metric-card border-info">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bx bx-cart text-info me-2"></i>
+                                        <span class="text-muted small fw-bold">連帶率</span>
+                                        <i class="bx bx-info-circle ms-1 text-muted cursor-pointer" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="平均每筆訂單購買的商品件數 (總銷量 / 總訂單數)"></i>
+                                    </div>
+                                    <h3 class="mb-1 fw-bold" id="kpiItemsPerOrder">0.0</h3>
+                                    <div id="kpiItemsGrowth" class="small fw-bold">0%</div>
+                                </div>
+                            </div>
+                            <!-- 客單價 (AOV) -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-light metric-card border-warning">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bx bx-purchase-tag text-warning me-2"></i>
+                                        <span class="text-muted small fw-bold">客單價 (AOV)</span>
+                                        <i class="bx bx-info-circle ms-1 text-muted cursor-pointer" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="平均每筆訂單的消費金額 (總營收 / 總訂單數)"></i>
+                                    </div>
+                                    <h3 class="mb-1 fw-bold" id="kpiAov">$0</h3>
+                                    <div id="kpiAovGrowth" class="small fw-bold">0%</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <!-- 連帶率 -->
-                    <div class="col-md-4">
-                        <div class="p-3 rounded bg-light metric-card border-info">
-                            <div class="d-flex align-items-center mb-1">
-                                <i class="bx bx-cart text-info me-2"></i>
-                                <span class="text-muted small fw-bold">連帶率</span>
+                    <!-- 標籤二：顧客行為 -->
+                    <div class="tab-pane fade" id="navs-customer" role="tabpanel">
+                        <div class="row g-4">
+                            <!-- 新會員數 -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-light metric-card border-primary">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bx bx-user-plus text-primary me-2"></i>
+                                        <span class="text-muted small fw-bold">新註冊會員</span>
+                                    </div>
+                                    <h3 class="mb-1 fw-bold" id="kpiNewMembers">0</h3>
+                                    <div id="kpiMemberGrowth" class="small fw-bold">0%</div>
+                                </div>
                             </div>
-                            <h3 class="mb-1 fw-bold" id="kpiItemsPerOrder">0.0</h3>
-                            <div id="kpiItemsGrowth" class="small fw-bold">0%</div>
+                            <!-- 回購率 -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-light metric-card border-success">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bx bx-refresh text-success me-2"></i>
+                                        <span class="text-muted small fw-bold">回購率</span>
+                                        <i class="bx bx-info-circle ms-1 text-muted cursor-pointer" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="期間內有二次以上下單行為的顧客佔比"></i>
+                                    </div>
+                                    <h3 class="mb-1 fw-bold" id="kpiRepeatRate">0%</h3>
+                                    <div id="kpiRepeatGrowth" class="small fw-bold">0%</div>
+                                </div>
+                            </div>
+                            <!-- 活躍會員數 -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-light metric-card border-info">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bx bx-face text-info me-2"></i>
+                                        <span class="text-muted small fw-bold">活躍下單會員</span>
+                                    </div>
+                                    <h3 class="mb-1 fw-bold" id="kpiActiveMembers">0</h3>
+                                    <div id="kpiActiveGrowth" class="small fw-bold">0%</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <!-- 退貨率 -->
-                    <div class="col-md-4">
-                        <div class="p-3 rounded bg-light metric-card border-danger">
-                            <div class="d-flex align-items-center mb-1">
-                                <i class="bx bx-refresh text-danger me-2"></i>
-                                <span class="text-muted small fw-bold">退訂/取消率</span>
+                    <!-- 標籤三：營運效率 -->
+                    <div class="tab-pane fade" id="navs-efficiency" role="tabpanel">
+                        <div class="row g-4">
+                            <!-- 退貨率 -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-light metric-card border-danger cursor-pointer" onclick="window.location.href='@Url.Action("Index", "ReturnRequests", new { area = "Admin" })'">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bx bx-undo text-danger me-2"></i>
+                                        <span class="text-muted small fw-bold">退訂/取消率</span>
+                                    </div>
+                                    <h3 class="mb-1 fw-bold" id="kpiReturnRate">0%</h3>
+                                    <div id="kpiReturnGrowth" class="small fw-bold">0%</div>
+                                </div>
                             </div>
-                            <h3 class="mb-1 fw-bold" id="kpiReturnRate">0%</h3>
-                            <div id="kpiReturnGrowth" class="small fw-bold">0%</div>
+                            <!-- 平均出貨時長 -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-light metric-card border-warning cursor-pointer" onclick="window.location.href='@Url.Action("Index", "ShipmentWorkstation", new { area = "Admin" })'">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bx bx-timer text-warning me-2"></i>
+                                        <span class="text-muted small fw-bold">平均出貨時長</span>
+                                        <i class="bx bx-info-circle ms-1 text-muted cursor-pointer" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="訂單從成立到標記為已出貨的平均天數"></i>
+                                    </div>
+                                    <h3 class="mb-1 fw-bold" id="kpiAvgShipTime">0.0 天</h3>
+                                    <div id="kpiShipTimeGrowth" class="small fw-bold">0%</div>
+                                </div>
+                            </div>
+                            <!-- 庫存預警數 -->
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-light metric-card border-secondary cursor-pointer" onclick="window.location.href='@Url.Action("Index", "Inventory", new { area = "Admin" })'">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bx bx-fridge text-secondary me-2"></i>
+                                        <span class="text-muted small fw-bold">庫存預警品項</span>
+                                    </div>
+                                    <h3 class="mb-1 fw-bold" id="kpiStockAlerts">0</h3>
+                                    <p class="mb-0 small text-muted">目前缺貨或低庫存品項</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -119,7 +237,7 @@
     <div class="col-12 col-xl-8 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 fw-bold">月營收額趨勢圖 (最近12個月)</h5>
+                <h5 class="card-title mb-0 fw-bold">月營收額趨勢圖 (最近12個月) <span id="trendTotalBadge"></span></h5>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="btn btn-label-secondary" onclick="toggleTrendChartType('line')"><i class="bx bx-line-chart"></i></button>
                     <button type="button" class="btn btn-label-secondary" onclick="toggleTrendChartType('bar')"><i class="bx bx-bar-chart-alt-2"></i></button>
@@ -131,47 +249,156 @@
         </div>
     </div>
 
-    <!-- 類別銷售比例 -->
+    <!-- 全站類別構成 -->
     <div class="col-12 col-xl-4 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header">
-                <h5 class="card-title mb-0 fw-bold">類別銷量佔比</h5>
+                <h5 class="card-title mb-0 fw-bold">全站類別構成</h5>
             </div>
             <div class="card-body">
-                <div id="productPieChart"></div>
+                <div id="categoryCompositionChart"></div>
             </div>
         </div>
     </div>
 
-    <!-- 熱銷排行 Top 10 -->
+    <!-- 熱銷類別 -->
     <div class="col-12 col-xl-6 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 fw-bold">熱銷商品 Top 10 (依類別著色)</h5>
-                <select id="top10OrderBy" class="form-select form-select-sm w-auto" onchange="loadTop10Chart()">
-                    <option value="volume">依銷量</option>
-                    <option value="revenue">依銷售額</option>
-                </select>
+                <h5 class="card-title mb-0 fw-bold">熱銷類別</h5>
+                <span class="badge bg-label-primary">依銷量</span>
             </div>
             <div class="card-body">
-                <div id="top10Chart"></div>
+                <div id="topSellingCategoriesChart"></div>
             </div>
         </div>
     </div>
 
-    <!-- 類別貢獻度 (需求：切換 Bar/Treemap/Radar) -->
+    <!-- 類別貢獻度 (需求：切換 Bar/Pie) -->
     <div class="col-12 col-xl-6 mb-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0 fw-bold">類別營收貢獻度</h5>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('bar')" title="柱狀圖"><i class="bx bx-bar-chart-square"></i></button>
-                    <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('treemap')" title="矩形圖"><i class="bx bx-grid-alt"></i></button>
-                    <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('radar')" title="雷達圖"><i class="bx bx-radar"></i></button>
+                    <button type="button" class="btn btn-label-secondary" onclick="toggleCategoryChartType('pie')" title="圓餅圖"><i class="bx bx-pie-chart-alt"></i></button>
                 </div>
             </div>
             <div class="card-body">
                 <div id="categoryChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 年度營收對比 (Diverging Bar Chart + Growth Analysis) -->
+    <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold">年度營收雙向對比與增長分析</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <select id="compYear1" class="form-select form-select-sm w-auto" onchange="loadComparisonChart()">
+                        <option value="2026">2026</option>
+                        <option value="2025" selected>2025</option>
+                        <option value="2024">2024</option>
+                    </select>
+                    <span class="text-muted small">vs</span>
+                    <select id="compYear2" class="form-select form-select-sm w-auto" onchange="loadComparisonChart()">
+                        <option value="2026">2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2024" selected>2024</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- 左側：雙向柱狀圖 -->
+                    <div class="col-12 col-lg-8 border-end">
+                        <div id="comparisonChart"></div>
+                    </div>
+                    <!-- 右側：增長分析 -->
+                    <div class="col-12 col-lg-4 d-flex flex-column align-items-center justify-content-center">
+                        <div id="growthGaugeChart"></div>
+                        <div class="text-center mt-3">
+                            <h5 id="growthText" class="fw-bold mb-1">0% Growth</h5>
+                            <p class="text-muted small">年度營收成長率</p>
+                        </div>
+                        <div class="d-flex w-100 mt-4 px-3 gap-3">
+                            <div class="flex-grow-1 p-3 rounded bg-label-primary">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="bx bx-dollar-circle me-1"></i>
+                                    <span class="small fw-bold" id="labelYear1">2025</span>
+                                </div>
+                                <h5 class="mb-0 fw-bold" id="valTotal1">$0</h5>
+                            </div>
+                            <div class="flex-grow-1 p-3 rounded bg-label-info">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="bx bx-calendar me-1"></i>
+                                    <span class="small fw-bold" id="labelYear2">2024</span>
+                                </div>
+                                <h5 class="mb-0 fw-bold" id="valTotal2">$0</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新增：成長動因分析 (Growth Bridge) -->
+                <div class="row mt-4 pt-4 border-top">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3 px-3">
+                            <div>
+                                <h5 class="card-title mb-0 fw-bold">年度成長動能分解 (Growth Bridge) <span class="badge bg-label-info ms-2 small comp-year-label" id="growthBridgeYearLabel"></span></h5>
+                                <p class="text-muted small mb-0 mt-1" id="growthBridgeDesc">展示各類別對營收變動的具體貢獻</p>
+                            </div>
+                            <span class="badge bg-label-primary">Waterfall Analysis</span>
+                        </div>
+                        <div id="growthBridgeChart" class="px-3"></div>
+                    </div>
+                </div>
+
+                <!-- 新增：類別市佔百分點變動趨勢圖 (Category Market Share Delta Trend Chart) -->
+                <div class="row mt-4 pt-4 border-top">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3 px-3">
+                            <div>
+                                <h5 class="card-title mb-0 fw-bold">類別市佔月間變動趨勢圖 (Market Share YoY Delta) <span class="badge bg-label-info ms-2 small comp-year-label" id="categoryDeltaYearLabel"></span></h5>
+                                <p class="text-muted small mb-0 mt-1" id="categoryDeltaDesc">分析各類別市佔率對比去年的增減情況，正值為擴張，負值為萎縮。</p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="btn-group btn-group-sm me-3">
+                                    <button type="button" class="btn btn-label-secondary" id="zoomInDelta" title="放大">
+                                        <i class="bx bx-zoom-in"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-label-secondary" id="zoomOutDelta" title="縮小">
+                                        <i class="bx bx-zoom-out"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-label-secondary" id="resetDeltaZoom" title="重設縮放">
+                                        <i class="bx bx-refresh"></i>
+                                    </button>
+                                </div>
+                                <span class="badge bg-label-primary">Competitive Analysis</span>
+                            </div>
+                        </div>
+                        <div id="categoryDeltaLineChart" class="px-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 「其他」類別細節彈窗 -->
+<div class="modal fade" id="othersDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="othersDetailTitle">「其他」類別細節分解</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="othersDetailChart"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">關閉</button>
             </div>
         </div>
     </div>
@@ -180,7 +407,9 @@
 @section Scripts {
     <script src="~/sneat/assets/vendor/libs/apex-charts/apexcharts.js"></script>
     <script>
-        let trendChart, pieChart, top10Chart, categoryChart;
+        let trendChart, categoryCompositionChart, topSellingCategoriesChart, categoryChart, comparisonChart, growthGaugeChart, deltaTrendChart, growthBridgeChart;
+        let grandTotalSales = 0;    // 全域變數：總銷售量
+        let grandTotalRevenue = 0;  // 全域變數：總營收額
         let currentCategoryChartType = 'bar'; // 預設為柱狀圖
         const palette = ['#696cff', '#71dd37', '#03c3ec', '#ffab00', '#ff3e1d', '#8592a3', '#e3028a', '#00d2d3', '#54a0ff', '#5f27cd'];
         
@@ -196,15 +425,53 @@
         }
 
         $(document).ready(function() {
+            // 初始化 Bootstrap Tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+
             refreshAllDashboard();
+
+            // 新增：縮放按鈕事件 (使用 zoomX 確保在 Toolbar 隱藏時仍有效)
+            let currentZoomLevel = 0;
+            $('#zoomInDelta').on('click', function() {
+                if (deltaTrendChart) {
+                    currentZoomLevel++;
+                    const min = 1 + currentZoomLevel;
+                    const max = 12 - currentZoomLevel;
+                    if (min < max) {
+                        deltaTrendChart.zoomX(min, max);
+                    } else {
+                        currentZoomLevel--; // 達到極限，退回
+                    }
+                }
+            });
+            $('#zoomOutDelta').on('click', function() {
+                if (deltaTrendChart) {
+                    currentZoomLevel = Math.max(0, currentZoomLevel - 1);
+                    if (currentZoomLevel === 0) {
+                        deltaTrendChart.resetSeries();
+                    } else {
+                        deltaTrendChart.zoomX(1 + currentZoomLevel, 12 - currentZoomLevel);
+                    }
+                }
+            });
+            $('#resetDeltaZoom').on('click', function() {
+                if (deltaTrendChart) {
+                    currentZoomLevel = 0;
+                    deltaTrendChart.resetSeries();
+                }
+            });
         });
 
         function refreshAllDashboard() {
             refreshMetrics();
             loadTrendChart();
-            loadPieChart();
-            loadTop10Chart();
+            loadCategoryCompositionChart();
+            loadTopSellingCategoriesChart();
             loadCategoryContribution();
+            loadComparisonChart();
         }
 
         function refreshMetrics() {
@@ -212,12 +479,29 @@
             const storeId = $('#storeFilter').val();
             $.get(`/Orders/GetDashboardKpis?period=${period}&storeId=${storeId}`, function(data) {
                 $('#kpiPendingShip').text(data.pendingShipmentCount);
+                
+                // 核心概覽
                 $('#kpiNetRevenue').text('$' + data.netRevenue.toLocaleString());
                 $('#kpiItemsPerOrder').text(data.itemsPerOrder.toFixed(1));
-                $('#kpiReturnRate').text(data.returnRate.toFixed(1) + '%');
+                $('#kpiAov').text('$' + Math.round(data.averageOrderValue).toLocaleString());
                 updateGrowth('#kpiRevGrowth', data.netRevenueGrowthRate, false);
                 updateGrowth('#kpiItemsGrowth', data.itemsPerOrderGrowthRate, false);
+                updateGrowth('#kpiAovGrowth', data.aovGrowthRate, false);
+
+                // 顧客行為
+                $('#kpiNewMembers').text(data.newMemberCount.toLocaleString());
+                $('#kpiRepeatRate').text(data.repeatPurchaseRate.toFixed(1) + '%');
+                $('#kpiActiveMembers').text(data.activeMemberCount.toLocaleString());
+                updateGrowth('#kpiMemberGrowth', data.memberGrowthRate, false);
+                updateGrowth('#kpiRepeatGrowth', data.repeatGrowthRate, false);
+                updateGrowth('#kpiActiveGrowth', data.activeGrowthRate, false);
+
+                // 營運效率
+                $('#kpiReturnRate').text(data.returnRate.toFixed(1) + '%');
+                $('#kpiAvgShipTime').text(data.avgFulfillmentDays.toFixed(1) + ' 天');
+                $('#kpiStockAlerts').text(data.stockAlertCount);
                 updateGrowth('#kpiReturnGrowth', data.returnRateGrowthRate, true);
+                updateGrowth('#kpiShipTimeGrowth', data.fulfillmentGrowthRate, true);
             });
         }
 
@@ -230,11 +514,15 @@
             el.addClass(colorClass).html(`${rate >= 0 ? '↑' : '↓'} ${Math.abs(rate)}% <span class="text-muted fw-normal">vs 前期</span>`);
         }
 
-        // 通用營收格式化函式 (自動轉 萬)
+        // 通用營收格式化函式 (自動轉 萬，支援正負數)
         function formatRevenue(val) {
             if (val === null || val === undefined) return '$0';
             var num = parseFloat(val);
-            if (num >= 10000) return (num / 10000).toFixed(1) + ' 萬';
+            var absNum = Math.abs(num);
+            if (absNum >= 10000) {
+                var sign = num < 0 ? '-' : '';
+                return sign + (absNum / 10000).toFixed(1) + ' 萬';
+            }
             return num.toLocaleString();
         }
 
@@ -243,6 +531,13 @@
             $.get(`/Orders/GetMonthlyTrend?storeId=${storeId}`, function(data) {
                 if (!data || !data.series || !data.labels) return;
                 
+                // 計算 12 個月總營收
+                const trendRawData = data.series[0].data;
+                const total12MonthRevenue = trendRawData.reduce((a, b) => a + b, 0);
+                
+                // 更新標題旁的總額標籤
+                $('#trendTotalBadge').html(`<span class="badge bg-label-primary ms-2">12個月總計: $${total12MonthRevenue.toLocaleString()}</span>`);
+
                 const options = {
                     series: data.series,
                     chart: { 
@@ -251,11 +546,42 @@
                         toolbar: { show: false },
                         fontFamily: 'Public Sans, -apple-system, sans-serif'
                     },
-                    stroke: { curve: 'smooth', width: 4 },
+                    stroke: { curve: 'straight', width: 4 },
+                    plotOptions: {
+                        bar: {
+                            borderRadius: 4,
+                            columnWidth: '60%',
+                            dataLabels: { position: 'top' } // 確保長條圖標籤在頂部
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function(val) {
+                            if (total12MonthRevenue === 0) return '0%';
+                            const percent = ((val / total12MonthRevenue) * 100).toFixed(1);
+                            return percent + '%';
+                        },
+                        offsetY: -20, // 增加偏移量，從 -10 改為 -20，推高標籤
+                        style: {
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            colors: ['#696cff']
+                        },
+                        background: {
+                            enabled: true,
+                            foreColor: '#696cff',
+                            padding: 4,
+                            borderRadius: 2,
+                            borderWidth: 1,
+                            borderColor: '#696cff',
+                            opacity: 0.1,
+                            dropShadow: { enabled: false }
+                        }
+                    },
                     colors: [palette[0]],
                     grid: { 
                         borderColor: '#f1f1f1',
-                        padding: { bottom: 15 }
+                        padding: { bottom: 15, top: 10 }
                     },
                     xaxis: {
                         categories: data.labels,
@@ -322,42 +648,108 @@
             if(trendChart) trendChart.updateOptions({ chart: { type: type } });
         }
 
-        function loadPieChart() {
+        function loadCategoryCompositionChart() {
             const period = $('#periodFilter').val();
             const storeId = $('#storeFilter').val();
-            $.get(`/Orders/GetProductSalesChart?type=Pie&period=${period}&storeId=${storeId}`, function(data) {
+            $.get(`/Orders/GetCategoryCompositionChart?type=Pie&period=${period}&storeId=${storeId}`, function(data) {
                 if(!data.series || data.series.length === 0) return;
+                
+                const realSeries = data.series[0].data;
+                grandTotalSales = realSeries.reduce((a, b) => a + b, 0);
+
+                // 視覺優化：設定「最小視覺佔比」為 2%，避免區塊太小點不到
+                const minVisualPercent = 0.02; 
+                const visualFloor = grandTotalSales * minVisualPercent;
+                const visualSeries = realSeries.map(v => Math.max(v, visualFloor));
+
                 const chartColors = data.labels.map(name => getCategoryColor(name));
                 const options = {
-                    series: data.series[0].data,
+                    series: visualSeries, // 使用「視覺地板」序列繪圖
                     labels: data.labels,
-                    chart: { type: 'donut', height: 350 },
+                    chart: { 
+                        type: 'donut', 
+                        height: 350,
+                        events: {
+                            dataPointSelection: function(event, chartContext, config) {
+                                const label = config.w.config.labels[config.dataPointIndex];
+                                showCategoryDetail('Composition', label);
+                            }
+                        }
+                    },
                     colors: chartColors,
-                    legend: { position: 'bottom' },
-                    plotOptions: { pie: { donut: { size: '70%' } } }
+                    legend: { 
+                        position: 'bottom',
+                        onItemClick: { toggleDataSeries: true } 
+                    },
+                    plotOptions: { 
+                        pie: { 
+                            donut: { size: '70%' },
+                            expandOnClick: true,
+                            dataLabels: {
+                                offset: -5,
+                                minAngleToShowLabel: 10 
+                            }
+                        } 
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function(val, { seriesIndex, dataPointIndex, w }) {
+                                const actualValue = realSeries[dataPointIndex];
+                                const percent = grandTotalSales > 0 ? ((actualValue / grandTotalSales) * 100).toFixed(1) : 0;
+                                return `${actualValue.toLocaleString()} 品項 (${percent}%)`;
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function (val, opts) {
+                            return val >= 4 ? val.toFixed(1) + "%" : ""; 
+                        },
+                        style: {
+                            fontSize: '13px',
+                            fontWeight: 'bold',
+                            colors: ['#fff']
+                        },
+                        dropShadow: {
+                            enabled: true,
+                            opacity: 0.5
+                        }
+                    }
                 };
-                if(pieChart) pieChart.destroy();
-                pieChart = new ApexCharts(document.querySelector("#productPieChart"), options);
-                pieChart.render();
+                if(categoryCompositionChart) categoryCompositionChart.destroy();
+                categoryCompositionChart = new ApexCharts(document.querySelector("#categoryCompositionChart"), options);
+                categoryCompositionChart.render();
             });
         }
 
-        function loadTop10Chart() {
+        function loadTopSellingCategoriesChart() {
             const period = $('#periodFilter').val();
             const storeId = $('#storeFilter').val();
-            const orderBy = $('#top10OrderBy').val();
-            $.get(`/Orders/GetTop10Products?period=${period}&storeId=${storeId}&orderBy=${orderBy}`, function(data) {
+            const orderBy = 'volume'; // 固定為銷量
+            $.get(`/Orders/GetTopSellingCategories?period=${period}&storeId=${storeId}&orderBy=${orderBy}`, function(data) {
                 const barColors = data.map(item => getCategoryColor(item.categoryName));
+                
+                const rawMax = data.length > 0 ? Math.max(...data.map(x => x.salesVolume)) : 0;
+                // 預留約 30% 空間，搭配 forceNiceScale 通常會剛好空出一個刻度
+                const targetMax = rawMax > 0 ? Math.ceil(rawMax * 1.3) : undefined;
+
                 const options = {
                     series: [{ 
-                        name: orderBy === 'revenue' ? '銷售額' : '銷量', 
-                        data: data.map(x => orderBy === 'revenue' ? x.salesRevenue : x.salesVolume) 
+                        name: '銷量', 
+                        data: data.map(x => x.salesVolume) 
                     }],
                     chart: { 
                         type: 'bar', 
                         height: 350, 
                         toolbar: { show: false },
-                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                        fontFamily: 'Public Sans, -apple-system, sans-serif',
+                        events: {
+                            dataPointSelection: function(event, chartContext, config) {
+                                const label = config.w.config.xaxis.categories[config.dataPointIndex];
+                                const type = 'Sales';
+                                showCategoryDetail(type, label);
+                            }
+                        }
                     },
                     plotOptions: { 
                         bar: { 
@@ -367,35 +759,56 @@
                             dataLabels: { position: 'top' }
                         } 
                     },
+                    grid: {
+                        xaxis: { lines: { show: true } },
+                        padding: { right: 50 } 
+                    },
                     dataLabels: {
                         enabled: true,
-                        offsetX: -6,
-                        style: { fontSize: '12px', colors: ['#fff'] },
+                        textAnchor: 'start',
+                        offsetX: 10,
+                        style: { 
+                            fontSize: '11px', 
+                            fontWeight: '600',
+                            colors: ['#566a7f'] 
+                        },
                         formatter: function(val) {
-                            return orderBy === 'revenue' ? '$' + formatRevenue(val) : val;
+                            return val + ' 件';
                         }
                     },
                     xaxis: { 
                         categories: data.map(x => x.productName),
+                        max: targetMax,
+                        forceNiceScale: true, // 自動對齊漂亮刻度
                         labels: {
                             formatter: function(val) {
-                                return orderBy === 'revenue' ? formatRevenue(val) : val;
+                                return Math.round(val);
+                            }
+                        },
+                        crosshairs: {
+                            show: true,
+                            fill: {
+                                type: 'solid',
+                                color: '#b6b6b6',
+                                opacity: 0.1
                             }
                         }
                     },
                     colors: barColors,
                     legend: { show: false },
                     tooltip: {
+                        shared: true,
+                        intersect: false,
                         y: {
                             formatter: function(val) {
-                                return orderBy === 'revenue' ? '$' + val.toLocaleString() : val + ' 件';
+                                return val.toLocaleString() + ' 件';
                             }
                         }
                     }
                 };
-                if(top10Chart) top10Chart.destroy();
-                top10Chart = new ApexCharts(document.querySelector("#top10Chart"), options);
-                top10Chart.render();
+                if(topSellingCategoriesChart) topSellingCategoriesChart.destroy();
+                topSellingCategoriesChart = new ApexCharts(document.querySelector("#topSellingCategoriesChart"), options);
+                topSellingCategoriesChart.render();
             });
         }
 
@@ -410,43 +823,67 @@
             $.get(`/Orders/GetCategoryContribution?period=${period}&storeId=${storeId}`, function(data) {
                 if(!data.series || data.series.length === 0) return;
                 
+                // 紀錄全體總營收 (用於彈窗百分比計算)
+                const rawSeries = data.series[0].data;
+                grandTotalRevenue = rawSeries.reduce((a, b) => a + b, 0);
+
                 const chartColors = data.labels.map(name => getCategoryColor(name));
                 let options = {
                     chart: { 
                         height: 350, 
                         toolbar: { show: false },
-                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                        fontFamily: 'Public Sans, -apple-system, sans-serif',
+                        events: {
+                            dataPointSelection: function(event, chartContext, config) {
+                                let label = "";
+                                if (currentCategoryChartType === 'pie') {
+                                    label = config.w.config.labels[config.dataPointIndex];
+                                } else if (currentCategoryChartType === 'bar') {
+                                    label = config.w.config.xaxis.categories[config.dataPointIndex];
+                                }
+                                
+                                showCategoryDetail('Revenue', label);
+                            }
+                        }
                     },
                     colors: chartColors
                 };
 
-                if (currentCategoryChartType === 'treemap') {
-                    const treemapData = data.labels.map((label, index) => ({ x: label, y: data.series[0].data[index] }));
+                if (currentCategoryChartType === 'pie') {
+                    // 視覺優化：設定「最小視覺佔比」為 2%，避免區塊太小點不到
+                    const minVisualPercent = 0.02; 
+                    const visualFloor = grandTotalRevenue * minVisualPercent;
+                    const visualSeries = rawSeries.map(v => Math.max(v, visualFloor));
+
                     options = {
                         ...options,
-                        series: [{ data: treemapData }],
-                        chart: { ...options.chart, type: 'treemap' },
-                        plotOptions: { treemap: { distributed: true, enableShades: false } },
-                        dataLabels: { 
-                            enabled: true, 
-                            formatter: (text, op) => [text, '$' + formatRevenue(op.value)] 
+                        series: visualSeries,
+                        labels: data.labels,
+                        chart: { ...options.chart, type: 'donut' },
+                        plotOptions: { 
+                            pie: { 
+                                donut: { size: '70%' },
+                                expandOnClick: true
+                            } 
+                        },
+                        legend: { 
+                            position: 'bottom'
                         },
                         tooltip: {
-                            y: { formatter: (val) => '$' + val.toLocaleString() }
-                        }
-                    };
-                } else if (currentCategoryChartType === 'radar') {
-                    options = {
-                        ...options,
-                        series: data.series,
-                        labels: data.labels,
-                        chart: { ...options.chart, type: 'radar' },
-                        fill: { opacity: 0.4 },
-                        stroke: { width: 2 },
-                        markers: { size: 4 },
-                        colors: [palette[0]],
-                        yaxis: {
-                            labels: { formatter: (val) => formatRevenue(val) }
+                            y: {
+                                formatter: function(val, { seriesIndex, dataPointIndex, w }) {
+                                    const actualValue = rawSeries[dataPointIndex];
+                                    const percent = grandTotalRevenue > 0 ? ((actualValue / grandTotalRevenue) * 100).toFixed(1) : 0;
+                                    return `$${actualValue.toLocaleString()} (${percent}%)`;
+                                }
+                            }
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: function (val, opts) {
+                                return val >= 4 ? val.toFixed(1) + "%" : ""; 
+                            },
+                            style: { fontSize: '13px', fontWeight: 'bold' }
                         }
                     };
                 } else {
@@ -455,16 +892,31 @@
                         ...options,
                         series: data.series,
                         chart: { ...options.chart, type: 'bar' },
-                        plotOptions: { bar: { distributed: true, borderRadius: 4, columnWidth: '50%' } },
+                        plotOptions: { 
+                            bar: { 
+                                distributed: true, 
+                                borderRadius: 4, 
+                                columnWidth: '50%',
+                                dataLabels: { position: 'top' } // 確保標籤在柱位頂端
+                            } 
+                        },
                         xaxis: { categories: data.labels },
                         legend: { show: false },
                         dataLabels: { 
                             enabled: true, 
-                            formatter: (val) => '$' + formatRevenue(val),
+                            formatter: function(val, opts) {
+                                const realVal = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex];
+                                return '$' + formatRevenue(realVal);
+                            },
                             offsetY: -20,
-                            style: { colors: ['#a1acb8'] }
+                            style: { 
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                colors: ['#566a7f']
+                            }
                         },
                         yaxis: {
+                            forceNiceScale: true,
                             labels: { formatter: (val) => formatRevenue(val) }
                         },
                         tooltip: {
@@ -476,6 +928,486 @@
                 if(categoryChart) categoryChart.destroy();
                 categoryChart = new ApexCharts(document.querySelector("#categoryChart"), options);
                 categoryChart.render();
+            });
+        }
+
+        let othersChart;
+        function showCategoryDetail(type, categoryName) {
+            const period = $('#periodFilter').val();
+            const storeId = $('#storeFilter').val();
+            const denominator = (type === 'Sales' || type === 'Composition') ? grandTotalSales : grandTotalRevenue;
+            
+            $.get(`/Orders/GetCategoryDetail?type=${type}&period=${period}&storeId=${storeId}&categoryName=${encodeURIComponent(categoryName)}`, function(data) {
+                if(!data || !data.series || data.series.length === 0 || data.labels.length === 0) {
+                    alert('沒有更多細節數據');
+                    return;
+                }
+
+                const rawData = data.series[0].data;
+                const othersTotal = rawData.reduce((a, b) => a + b, 0);
+                const othersToGrandPercent = denominator > 0 ? ((othersTotal / denominator) * 100).toFixed(1) : 0;
+
+                // 智慧型最大值計算邏輯 (參考熱銷類別成功案例)
+                const rawMax = rawData.length > 0 ? Math.max(...rawData) : 0;
+                let finalMax = 4;
+                if (rawMax > 0) {
+                    // 1. 預留 30% 緩衝空間
+                    let target = rawMax * 1.3;
+                    
+                    // 2. 根據數據規模找漂亮的步長 (Step)
+                    // 如果數據小於 10，每格 2 或 5
+                    // 如果數據較大，找一個能讓 tickAmount=4 跑出漂亮整數的值
+                    let step;
+                    if (target <= 10) step = 2;
+                    else if (target <= 20) step = 5;
+                    else if (target <= 100) step = 10;
+                    else if (target <= 500) step = 50;
+                    else if (target <= 2000) step = 200;
+                    else if (target <= 10000) step = 1000;
+                    else step = Math.pow(10, Math.floor(Math.log10(target / 4))) * 2; // 大數據自動步長
+                    
+                    finalMax = Math.ceil(target / step) * step;
+                    // 確保能被 4 整除以便對齊刻度
+                    if (finalMax % 4 !== 0) {
+                        finalMax = Math.ceil(finalMax / (step * 4)) * (step * 4);
+                    }
+                }
+
+                // 動態更新標題
+                let typeText = '營收額';
+                if (type === 'Sales') typeText = '銷售量';
+                if (type === 'Composition') typeText = '商品數';
+
+                const titlePrefix = categoryName === '其他' ? '「其他」類別細節' : `「${categoryName}」子類別明細`;
+                $('#othersDetailTitle').html(`${titlePrefix} - ${typeText}分解 <span class="badge bg-label-primary ms-2">(總計佔全體 ${othersToGrandPercent}%)</span>`);
+
+                const options = {
+                    series: [{
+                        name: typeText,
+                        data: rawData
+                    }],
+                    chart: {
+                        type: 'bar',
+                        height: Math.max(400, rawData.length * 40), 
+                        toolbar: { show: true },
+                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: true,
+                            borderRadius: 4,
+                            distributed: true,
+                            dataLabels: { 
+                                position: 'top',
+                                hideOverflowingLabels: false
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        textAnchor: 'start',
+                        style: {
+                            colors: ['#566a7f'],
+                            fontWeight: '600',
+                            fontSize: '11px'
+                        },
+                        formatter: function(val) {
+                            if (type === 'Sales' || type === 'Composition') {
+                                // 顯示：實際件數
+                                return val.toLocaleString() + ' 件';
+                            } else {
+                                // 營收顯示：格式化金額 (萬)
+                                return '$' + formatRevenue(val);
+                            }
+                        },
+                        offsetX: 25, // 增加偏移量，確保長文字(如 $116.9 萬) 不會蓋到柱子
+                        dropShadow: { enabled: false }
+                    },
+                    colors: data.labels.map(name => getCategoryColor(name)),
+                    xaxis: { 
+                        categories: data.labels,
+                        max: finalMax,
+                        tickAmount: 4,
+                        labels: {
+                            formatter: function(val) {
+                                if (type === 'Sales' || type === 'Composition') {
+                                    return Math.round(val);
+                                }
+                                return formatRevenue(val);
+                            }
+                        }
+                    },
+                    legend: { show: false },
+                    tooltip: {
+                        y: {
+                            formatter: (val) => {
+                                const suffix = (type === 'Sales' || type === 'Composition') ? ' 件' : '';
+                                const prefix = type === 'Revenue' ? '$' : '';
+                                return prefix + val.toLocaleString() + suffix;
+                            }
+                        }
+                    },
+                    grid: {
+                        xaxis: { lines: { show: true } },
+                        padding: { right: 80 } 
+                    }
+                };
+
+                $('#othersDetailModal').modal('show');
+                
+                setTimeout(() => {
+                    if(othersChart) othersChart.destroy();
+                    othersChart = new ApexCharts(document.querySelector("#othersDetailChart"), options);
+                    othersChart.render();
+                }, 300);
+            });
+        }
+
+        function loadComparisonChart() {
+            const y1 = $('#compYear1').val();
+            const y2 = $('#compYear2').val();
+            const storeId = $('#storeFilter').val();
+            
+            $.get(`/Orders/GetYearOverYearComparison?year1=${y1}&year2=${y2}&storeId=${storeId}`, function(data) {
+                if (!data || !data.series) return;
+
+                // 更新標籤與總金額
+                $('#labelYear1').text(y1);
+                $('#labelYear2').text(y2);
+                $('#valTotal1').text('$' + formatRevenue(data.total1));
+                $('#valTotal2').text('$' + formatRevenue(data.total2));
+                $('#growthText').text(data.growthRate + '% Growth');
+
+                // 動態更新圖表註解與標籤
+                $('.comp-year-label').text(`(${y1} vs ${y2})`);
+                $('#growthBridgeDesc').text(`展示各類別在 ${y1} 相對於 ${y2} 的營收變動貢獻`);
+                $('#categoryDeltaDesc').text(`分析各類別在 ${y1} 對比 ${y2} 的市佔率增減情況，正值為擴張，負值為萎縮。`);
+
+                // 1. 更新雙向柱狀圖
+                const barOptions = {
+                    series: data.series,
+                    chart: {
+                        type: 'bar',
+                        height: 400,
+                        stacked: false,
+                        toolbar: { show: false },
+                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                    },
+                    colors: ['#696cff', '#03c3ec'],
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '40%',
+                            borderRadius: 4,
+                            dataLabels: { position: 'top' } // 補上這一行，讓標籤浮在柱子頂端
+                        }
+                    },
+                    dataLabels: { 
+                        enabled: true,
+                        offsetY: -20, // 向上浮動
+                        style: {
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            colors: ['#566a7f']
+                        },
+                        formatter: (val) => formatRevenue(Math.abs(val))
+                    },
+                    grid: { 
+                        borderColor: '#f1f1f1',
+                        strokeDashArray: 3,
+                        xaxis: { lines: { show: true } },
+                        padding: { top: 20, bottom: 20 } // 增加上下留白
+                    },
+                    yaxis: {
+                        forceNiceScale: true, // 自動調整刻度，確保標籤不會超出邊界
+                        labels: { 
+                            formatter: (val) => formatRevenue(Math.abs(val)) // 這裡取絕對值，讓下方也顯示正數
+                        }
+                    },
+                    xaxis: { categories: data.labels },
+                    legend: { position: 'top', horizontalAlign: 'right' },
+                    tooltip: {
+                        shared: true,
+                        intersect: false,
+                        y: { 
+                            formatter: (val) => "$" + Math.abs(val).toLocaleString() // Tooltip 也取絕對值
+                        }
+                    }
+                };
+
+                if (comparisonChart) comparisonChart.destroy();
+                comparisonChart = new ApexCharts(document.querySelector("#comparisonChart"), barOptions);
+                comparisonChart.render();
+
+                // 2. 更新實心漸層圓環 (Smooth Gradient Radial Bar)
+                const absGrowth = Math.min(Math.abs(data.growthRate), 100);
+                const radialOptions = {
+                    series: [absGrowth],
+                    chart: {
+                        type: 'radialBar',
+                        height: 250,
+                        sparkline: { enabled: true }
+                    },
+                    plotOptions: {
+                        radialBar: {
+                            startAngle: -135,
+                            endAngle: 135,
+                            hollow: { size: '70%' },
+                            track: { 
+                                background: '#f2f2f2', 
+                                strokeWidth: '100%',
+                                margin: 5
+                            },
+                            dataLabels: {
+                                name: { show: false },
+                                value: {
+                                    offsetY: 10,
+                                    fontSize: '32px',
+                                    color: data.growthRate >= 0 ? '#ff3e1d' : '#71dd37',
+                                    fontWeight: 'bold',
+                                    formatter: () => (data.growthRate > 0 ? '+' : '') + data.growthRate + '%'
+                                }
+                            }
+                        }
+                    },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shade: 'dark',
+                            type: 'horizontal',
+                            shadeIntensity: 0.5,
+                            gradientToColors: [data.growthRate >= 0 ? '#ffab00' : '#03c3ec'], // 成長用紅橘漸層，衰退用綠藍漸層
+                            inverseColors: true,
+                            opacityFrom: 1,
+                            opacityTo: 1,
+                            stops: [0, 100]
+                        }
+                    },
+                    stroke: { 
+                        lineCap: 'round'
+                    },
+                    colors: [data.growthRate >= 0 ? '#ff3e1d' : '#71dd37'], // 成長紅 / 衰退綠
+                    labels: ['Growth']
+                };
+
+                if (growthGaugeChart) growthGaugeChart.destroy();
+                growthGaugeChart = new ApexCharts(document.querySelector("#growthGaugeChart"), radialOptions);
+                growthGaugeChart.render();
+
+                // 3. 載入成長動因瀑布圖 (Growth Bridge)
+                loadGrowthBridgeChart(y1, y2, storeId);
+
+                // 4. 載入類別月度消長趨勢圖 (Line Chart)
+                loadCategoryDeltaTrend(y1, y2, storeId);
+
+            }).fail(function(err) {
+                console.error("Year Comparison Chart failed:", err);
+            });
+        }
+
+        function loadGrowthBridgeChart(y1, y2, storeId) {
+            $.get(`/Orders/GetGrowthBridgeData?year1=${y1}&year2=${y2}&storeId=${storeId}`, function(data) {
+                if (!data || data.length === 0) return;
+
+                // 1. 計算總量與排序
+                const totalYear2Revenue = data.reduce((sum, item) => sum + (item.v2 || 0), 0) || 1;
+                const totalDelta = data.reduce((sum, item) => sum + item.y, 0);
+                
+                // 數據排序：從增長最多到衰退最多
+                data.sort((a, b) => b.y - a.y);
+
+                // 2. 準備數據 (僅保留各類別變動)
+                const seriesData = data.map(item => {
+                    const contributionPercent = (item.y / totalYear2Revenue) * 100;
+                    return {
+                        x: item.x,
+                        y: item.y,
+                        percent: contributionPercent,
+                        color: item.y >= 0 ? '#ff3e1d' : '#71dd37' // 台灣股市：成長紅 / 衰退綠
+                    };
+                });
+
+                const options = {
+                    series: [{
+                        name: '營收變動',
+                        data: seriesData
+                    }],
+                    chart: {
+                        type: 'bar',
+                        height: 450,
+                        toolbar: { show: false },
+                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '60%',
+                            distributed: true,
+                            borderRadius: 4,
+                            dataLabels: { position: 'top' }
+                        }
+                    },
+                    colors: seriesData.map(d => d.color),
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function(val) {
+                            return (val > 0 ? '+' : '') + '$' + Math.abs(Math.round(val)).toLocaleString();
+                        },
+                        style: {
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            colors: ['#566a7f']
+                        },
+                        offsetY: -20
+                    },
+                    xaxis: {
+                        type: 'category',
+                        labels: {
+                            rotate: -45,
+                            style: { fontSize: '12px' }
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            formatter: function(val) {
+                                return (val > 0 ? '+' : '') + '$' + Math.round(val).toLocaleString();
+                            },
+                            style: { fontSize: '11px' }
+                        }
+                    },
+                    grid: {
+                        xaxis: { lines: { show: false } },
+                        yaxis: { lines: { show: true } }
+                    },
+                    legend: { show: false },
+                    tooltip: {
+                        shared: true,
+                        intersect: false,
+                        y: {
+                            formatter: function(val, { dataPointIndex, w }) {
+                                // 由於 shared: true，val 會是當前點的數值
+                                const item = w.config.series[0].data[dataPointIndex];
+                                if (!item) return '';
+                                const label = val >= 0 ? '營收增加 ' : '營收減少 ';
+                                return `${label} $${Math.abs(val).toLocaleString()} (${item.percent.toFixed(2)}%)`;
+                            }
+                        }
+                    },
+                    annotations: {
+                        yaxis: [{
+                            y: 0,
+                            borderColor: '#8592a3',
+                            strokeDashArray: 0,
+                            borderWidth: 1
+                        }]
+                    }
+                };
+
+                // 更新標題旁的總淨額標籤 (保留邏輯)
+                const totalGrowthPercent = (totalDelta / totalYear2Revenue) * 100;
+                const totalText = (totalDelta >= 0 ? '總體成長 ' : '總體衰退 ') + totalGrowthPercent.toFixed(1) + '% ($' + Math.abs(totalDelta).toLocaleString() + ')';
+                const totalBadgeClass = totalDelta >= 0 ? 'bg-label-danger' : 'bg-label-success';
+                
+                $('#bridgeTotalBadge').remove();
+                $('#growthBridgeYearLabel').after(`<span class="badge ${totalBadgeClass} ms-2 fw-bold" id="bridgeTotalBadge">${totalText}</span>`);
+
+                if (growthBridgeChart) growthBridgeChart.destroy();
+                growthBridgeChart = new ApexCharts(document.querySelector("#growthBridgeChart"), options);
+                growthBridgeChart.render();
+            });
+        }
+
+        function loadCategoryDeltaTrend(y1, y2, storeId) {
+            $.get(`/Orders/GetCategoryMonthlyGrowth?year1=${y1}&year2=${y2}&storeId=${storeId}`, function(data) {
+                if (!data || data.length === 0) return;
+
+                const trendSeries = data.map(item => ({
+                    name: item.categoryName,
+                    data: item.monthlyGrowthRates
+                }));
+
+                // 動態計算所有數據點中的最大與最小值
+                let allPoints = [];
+                trendSeries.forEach(s => allPoints.push(...s.data));
+                const maxPoint = Math.max(...allPoints);
+                const minPoint = Math.min(...allPoints);
+
+                // 設定以 10% 為單位的刻度邏輯
+                const yMin = Math.floor(minPoint / 10) * 10 - 10; // 向下取 10 的倍數並多給一格緩衝
+                const yMax = Math.ceil(maxPoint / 10) * 10 + 10;  // 向上取 10 的倍數並多給一格緩衝
+                const tickAmount = (yMax - yMin) / 10;
+
+                const options = {
+                    series: trendSeries,
+                    chart: {
+                        height: 450,
+                        type: 'line',
+                        toolbar: { 
+                            show: false 
+                        },
+                        zoom: {
+                            enabled: true,
+                            type: 'x',
+                            autoScaleYaxis: true
+                        },
+                        panning: {
+                            enabled: true
+                        },
+                        fontFamily: 'Public Sans, -apple-system, sans-serif'
+                    },
+                    colors: data.map(item => getCategoryColor(item.categoryName)),
+                    stroke: {
+                        width: 4,
+                        curve: 'straight',
+                        lineCap: 'round'
+                    },
+                    legend: {
+                        position: 'top',
+                        horizontalAlign: 'center',
+                        onItemHover: { highlightDataSeries: true }
+                    },
+                    markers: {
+                        size: 6,
+                        hover: { size: 9 }
+                    },
+                    annotations: {
+                        yaxis: [{
+                            y: 0,
+                            borderColor: '#8592a3',
+                            strokeDashArray: 0
+                        }]
+                    },
+                    xaxis: {
+                        categories: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+                    },
+                    yaxis: {
+                        min: yMin,
+                        max: yMax,
+                        tickAmount: tickAmount,
+                        forceNiceScale: false,
+                        labels: {
+                            formatter: (val) => (val > 0 ? '+' : '') + Math.round(val) + '%'
+                        }
+                    },
+                    tooltip: {
+                        shared: false,
+                        intersect: true,
+                        y: {
+                            formatter: function(val, { seriesIndex, dataPointIndex, w }) {
+                                const categoryData = data[seriesIndex];
+                                const revenueDelta = categoryData.monthlyRevenueDeltas[dataPointIndex];
+                                
+                                let text = (val >= 0 ? '市佔擴張 ' : '市佔萎縮 ') + Math.abs(val).toFixed(2) + '%';
+                                text += ' | ' + (revenueDelta >= 0 ? '營收增加 ' : '營收減少 ') + '$' + Math.abs(revenueDelta).toLocaleString();
+                                return text;
+                            }
+                        }
+                    }
+                };
+
+                if (deltaTrendChart) deltaTrendChart.destroy();
+                deltaTrendChart = new ApexCharts(document.querySelector("#categoryDeltaLineChart"), options);
+                deltaTrendChart.render();
             });
         }
     </script>
