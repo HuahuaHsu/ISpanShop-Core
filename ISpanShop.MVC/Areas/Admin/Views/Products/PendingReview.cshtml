@@ -224,16 +224,16 @@
             <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
                 @if (reApplyList.Any())
                 {
-                    <div>
+                    <div style="overflow-x:auto;min-width:0;">
                         <table class="table table-custom align-middle">
                             <thead>
                                 <tr>
-                                    <th style="width:60px;">圖片</th>
+                                    <th style="width:60px;" class="col-img">圖片</th>
                                     <th>商品名稱</th>
-                                    <th>商店</th>
-                                    <th>原始下架原因</th>
-                                    <th>下架時間</th>
-                                    <th>申請時間</th>
+                                    <th class="col-store">商店</th>
+                                    <th class="col-reapply-reason">原始下架原因</th>
+                                    <th class="col-date">下架時間</th>
+                                    <th class="col-date">申請時間</th>
                                     <th class="text-end">審核操作</th>
                                 </tr>
                             </thead>
@@ -241,7 +241,7 @@
                                 @foreach (var item in reApplyList)
                                 {
                                     <tr data-id="@item.Id" data-name="@item.Name.Replace("'","\\'")">
-                                        <td>
+                                        <td class="col-img">
                                             @if (!string.IsNullOrEmpty(item.MainImageUrl))
                                             {
                                                 <img src="@item.MainImageUrl" alt="@item.Name" loading="lazy"
@@ -252,11 +252,11 @@
                                                 <div style="width:54px;height:54px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🖼️</div>
                                             }
                                         </td>
-                                        <td>
+                                        <td class="product-name-cell">
                                             <div class="fw-semibold" style="color:#1e2d3d;">@item.Name</div>
                                         </td>
-                                        <td class="fs-7" style="color:#5a6a7a;">@(item.StoreName ?? $"Store #{item.StoreId}")</td>
-                                        <td>
+                                        <td class="fs-7 col-store" style="color:#5a6a7a;">@(item.StoreName ?? $"Store #{item.StoreId}")</td>
+                                        <td class="col-reapply-reason">
                                             @if (!string.IsNullOrWhiteSpace(item.ForceOffShelfReason))
                                             {
                                                 <span style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:0.82rem;padding:0.3em 0.7em;display:inline-block;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
@@ -271,10 +271,10 @@
                                                 <span class="fs-7" style="color:#a0aec0;">—</span>
                                             }
                                         </td>
-                                        <td class="fs-7" style="color:#4a5a6a;">
+                                        <td class="fs-7 col-date" style="color:#4a5a6a;">
                                             @(item.ForceOffShelfDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
                                         </td>
-                                        <td class="fs-7" style="color:#4a5a6a;">
+                                        <td class="fs-7 col-date" style="color:#4a5a6a;">
                                             @(item.ReApplyDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")
                                         </td>
                                         <td class="text-end">
@@ -330,20 +330,20 @@
                             <i class="bx bx-revision me-1"></i> 批次重新審核
                         </button>
                     </div>
-                    <div>
+                    <div style="overflow-x:auto;min-width:0;">
                         <table class="table table-custom align-middle">
                             <thead>
                                 <tr>
-                                    <th style="width:40px;" class="text-center">
+                                    <th style="width:40px;" class="text-center col-rej-cb">
                                         <input type="checkbox" id="selectAllRejected" class="form-check-input" title="全選退回">
                                     </th>
-                                    <th style="width:70px;">圖片</th>
+                                    <th style="width:70px;" class="col-img">圖片</th>
                                     <th>商品名稱</th>
-                                    <th>商家</th>
-                                    <th>退回原因</th>
+                                    <th class="col-store">商家</th>
+                                    <th class="col-rej-reason">退回原因</th>
                                     <th>自動刪除倒數</th>
-                                    <th>審核人</th>
-                                    <th>審核時間</th>
+                                    <th class="col-reviewer">審核人</th>
+                                    <th class="col-date">審核時間</th>
                                     <th class="text-end">操作</th>
                                 </tr>
                             </thead>
@@ -351,10 +351,10 @@
                                 @foreach (var item in rejectedList)
                                 {
                                     <tr data-id="@item.Id" data-name="@item.Name.Replace("'","\\'")">
-                                        <td class="text-center" style="width:40px;">
+                                        <td class="text-center col-rej-cb" style="width:40px;">
                                             <input type="checkbox" class="form-check-input rejected-row-check" value="@item.Id">
                                         </td>
-                                        <td>
+                                        <td class="col-img">
                                             @if (!string.IsNullOrEmpty(item.MainImageUrl))
                                             {
                                                 <img src="@item.MainImageUrl" alt="@item.Name" loading="lazy"
@@ -365,9 +365,9 @@
                                                 <div style="width:54px;height:54px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🖼️</div>
                                             }
                                         </td>
-                                        <td class="fw-semibold" style="color:#1e2d3d;">@item.Name</td>
-                                        <td class="fs-7" style="color:#5a6a7a;">@item.StoreName</td>
-                                        <td>
+                                        <td class="fw-semibold product-name-cell" style="color:#1e2d3d;">@item.Name</td>
+                                        <td class="fs-7 col-store" style="color:#5a6a7a;">@item.StoreName</td>
+                                        <td class="col-rej-reason">
                                             @if (!string.IsNullOrWhiteSpace(item.RejectReason))
                                             {
                                                 <span style="background:#fff0f0;color:#c53030;border-radius:6px;font-size:0.82rem;font-weight:500;padding:0.3em 0.7em;display:inline-block;">
@@ -393,8 +393,8 @@
                                                 <span class="fs-7" style="color:#a0aec0;">—</span>
                                             }
                                         </td>
-                                        <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewedBy ?? "—")</td>
-                                        <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewDate?.ToString("yyyy-MM-dd HH:mm") ?? item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                                        <td class="fs-7 col-reviewer" style="color:#4a5a6a;">@(item.ReviewedBy ?? "—")</td>
+                                        <td class="fs-7 col-date" style="color:#4a5a6a;">@(item.ReviewDate?.ToString("yyyy-MM-dd HH:mm") ?? item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
                                         <td class="text-end">
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-primary rounded-pill px-3"
@@ -438,15 +438,15 @@
                         顯示過去 <strong>24 小時</strong>內系統或管理員審核通過的商品，共
                         <span class="fw-bold text-success">@(approvedPaged?.TotalCount ?? 0)</span> 筆。
                     </p>
-                    <div>
+                    <div style="overflow-x:auto;min-width:0;">
                         <table class="table table-custom align-middle">
                             <thead>
                                 <tr>
-                                    <th style="width:60px;">圖片</th>
+                                    <th style="width:60px;" class="col-img">圖片</th>
                                     <th>商品名稱</th>
-                                    <th>商店</th>
-                                    <th>分類 / 品牌</th>
-                                    <th>審核人</th>
+                                    <th class="col-store">商店</th>
+                                    <th class="col-catbrand">分類 / 品牌</th>
+                                    <th class="col-reviewer">審核人</th>
                                     <th>通過時間</th>
                                 </tr>
                             </thead>
@@ -454,7 +454,7 @@
                                 @foreach (var item in approvedList)
                                 {
                                     <tr data-id="@item.Id" data-name="@item.Name.Replace("'","\\'")">
-                                        <td>
+                                        <td class="col-img">
                                             @if (!string.IsNullOrEmpty(item.MainImageUrl))
                                             {
                                                 <img src="@item.MainImageUrl" alt="@item.Name" loading="lazy"
@@ -465,15 +465,15 @@
                                                 <div style="width:54px;height:54px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🖼️</div>
                                             }
                                         </td>
-                                        <td class="fw-semibold" style="color:#1e2d3d;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                        <td class="fw-semibold product-name-cell" style="color:#1e2d3d;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                             @item.Name
                                         </td>
-                                        <td class="fs-7" style="color:#5a6a7a;">@item.StoreName</td>
-                                        <td>
+                                        <td class="fs-7 col-store" style="color:#5a6a7a;">@item.StoreName</td>
+                                        <td class="col-catbrand">
                                             <span class="badge-soft bg-primary-soft text-primary me-1">@item.CategoryName</span>
                                             <span class="badge-soft bg-info-soft text-info">@item.BrandName</span>
                                         </td>
-                                        <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewedBy ?? "—")</td>
+                                        <td class="fs-7 col-reviewer" style="color:#4a5a6a;">@(item.ReviewedBy ?? "—")</td>
                                         <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
                                     </tr>
                                 }
@@ -739,9 +739,15 @@
     #reviewLayout.panel-open .col-store,
     #reviewLayout.panel-open .col-catbrand,
     #reviewLayout.panel-open .col-date,
-    #reviewLayout.panel-open .col-rowact { display: none; }
+    #reviewLayout.panel-open .col-rowact,
+    #reviewLayout.panel-open .col-reviewer,
+    #reviewLayout.panel-open .col-reapply-reason,
+    #reviewLayout.panel-open .col-rej-cb,
+    #reviewLayout.panel-open .col-rej-reason { display: none; }
     #reviewLayout.panel-open .table-custom td { padding: 0.55rem 1.2rem; }
     #reviewLayout.panel-open .product-name-cell { max-width: 180px; }
+    /* 面板展開時 6:4 比例（覆蓋共用 65%）*/
+    #reviewLayout #productDetailPanel.open { flex: 0 0 40%; width: 40%; }
     .table-custom tbody tr { cursor: pointer; }
 </style>
 
@@ -1464,23 +1470,36 @@
                         el.classList.add('bg-secondary');
                         el.textContent = '🗑️ 清除中...';
 
-                        var $row = $(el).closest('tr');
+                        var $row      = $(el).closest('tr');
+                        var removedId = parseInt($row.data('id'), 10); // 在 AJAX 前捕捉，避免 DOM 移除後失效
                         $.post(urlCleanup, { expirationSeconds: 60 })
                             .done(function (res) {
                                 if (res.success) {
                                     $row.fadeOut(800, function () {
                                         $(this).remove();
+                                        // ① 同步頁籤總數標籤
                                         var $badge = $('#rejected-count-badge');
                                         var current = parseInt($badge.text(), 10) || 0;
                                         if (current > 0) $badge.text(current - 1);
+                                        // ② 若右側面板正在展示此商品，立即關閉面板
+                                        if (_activeProductRowId === removedId &&
+                                            typeof closeProductDetailPanel === 'function') {
+                                            closeProductDetailPanel();
+                                        }
                                     });
                                 } else {
                                     // 後端回傳失敗（例如已被清除）：直接移除列
                                     $row.fadeOut(400, function () {
                                         $(this).remove();
+                                        // ① 同步頁籤總數標籤
                                         var $badge = $('#rejected-count-badge');
                                         var current = parseInt($badge.text(), 10) || 0;
                                         if (current > 0) $badge.text(current - 1);
+                                        // ② 若右側面板正在展示此商品，立即關閉面板
+                                        if (_activeProductRowId === removedId &&
+                                            typeof closeProductDetailPanel === 'function') {
+                                            closeProductDetailPanel();
+                                        }
                                     });
                                 }
                             })
@@ -1660,6 +1679,218 @@
             if (!href || href === '#') return;
             e.preventDefault();
             ajaxLoadReviewPage(href);
+        });
+    })();
+    </script>
+    <script>
+    // ── AJAX 分頁：面板展開時換頁不重整（近期審核通過 Tab）──
+    (function () {
+        function _reviewBindApprovedRows() {
+            document.querySelectorAll('#approvedPanel tbody tr[data-id]').forEach(function (tr) {
+                tr.addEventListener('click', function (e) {
+                    if (e.target.closest('a, button, input')) return;
+                    openProductOffcanvas(parseInt(this.dataset.id), this.dataset.name);
+                });
+            });
+        }
+
+        function ajaxLoadApprovedPage(href) {
+            var fetchUrl   = href.split('#')[0];          // 去除 #approvedTab hash 後再 fetch
+            var tabContent = document.getElementById('reviewTabsContent');
+            var listCol    = document.getElementById('reviewListCol');
+            if (tabContent) tabContent.style.opacity = '0.4';
+            fetch(fetchUrl)
+                .then(function (res) { if (!res.ok) throw new Error(); return res.text(); })
+                .then(function (html) {
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+                    // 更新近期通過表格 tbody
+                    var newTbody = doc.querySelector('#approvedPanel .table-custom tbody');
+                    var tbody    = document.querySelector('#approvedPanel .table-custom tbody');
+                    if (tbody && newTbody) tbody.innerHTML = newTbody.innerHTML;
+                    // 更新近期通過分頁導航
+                    var newNav = doc.querySelector('#approvedPanel nav');
+                    var curNav = document.querySelector('#approvedPanel nav');
+                    if (curNav && newNav) curNav.outerHTML = newNav.outerHTML;
+                    // 重綁行點擊
+                    _reviewBindApprovedRows();
+                    // 滾回頂部
+                    if (listCol) listCol.scrollTop = 0;
+                    // 恢復透明度
+                    if (tabContent) tabContent.style.opacity = '1';
+                    // 自動開啟第一筆
+                    _activeProductRowId = null;
+                    var firstRow = document.querySelector('#approvedPanel tbody tr[data-id]');
+                    if (firstRow) {
+                        openProductOffcanvas(parseInt(firstRow.dataset.id), firstRow.dataset.name || '商品詳情');
+                    }
+                    // 同步網址列（保留 hash 讓 Tab 維持選中）
+                    history.pushState(null, '', href);
+                })
+                .catch(function () { window.location.href = href; });
+        }
+
+        // 事件委派：攔截 #reviewListCol 內近期通過 Tab 的分頁點擊（面板已開啟時）
+        document.getElementById('reviewListCol').addEventListener('click', function (e) {
+            var panel = document.getElementById('productDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            if (!e.target.closest('#approvedPanel')) return;
+            var link = e.target.closest('.page-link');
+            if (!link) return;
+            var pageItem = link.closest('.page-item');
+            if (!pageItem || pageItem.classList.contains('disabled') || pageItem.classList.contains('active')) return;
+            var href = link.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadApprovedPage(href);
+        });
+    })();
+    </script>
+    <script>
+    // ── AJAX 分頁：面板展開時換頁不重整（重新申請審核 Tab）──
+    (function () {
+        function _reviewBindReApplyRows() {
+            document.querySelectorAll('#reApplyPanel tbody tr[data-id]').forEach(function (tr) {
+                tr.addEventListener('click', function (e) {
+                    if (e.target.closest('a, button, input')) return;
+                    openProductOffcanvas(parseInt(this.dataset.id), this.dataset.name);
+                });
+            });
+        }
+
+        function ajaxLoadReApplyPage(href) {
+            var tabContent = document.getElementById('reviewTabsContent');
+            var listCol    = document.getElementById('reviewListCol');
+            if (tabContent) tabContent.style.opacity = '0.4';
+            fetch(href)
+                .then(function (res) { if (!res.ok) throw new Error(); return res.text(); })
+                .then(function (html) {
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+                    // 更新重新申請表格 tbody
+                    var newTbody = doc.querySelector('#reApplyPanel .table-custom tbody');
+                    var tbody    = document.querySelector('#reApplyPanel .table-custom tbody');
+                    if (tbody && newTbody) tbody.innerHTML = newTbody.innerHTML;
+                    // 更新重新申請分頁導航
+                    var newNav = doc.querySelector('#reApplyPanel nav');
+                    var curNav = document.querySelector('#reApplyPanel nav');
+                    if (curNav && newNav) curNav.outerHTML = newNav.outerHTML;
+                    // 重綁行點擊
+                    _reviewBindReApplyRows();
+                    // 滾回頂部
+                    if (listCol) listCol.scrollTop = 0;
+                    // 恢復透明度
+                    if (tabContent) tabContent.style.opacity = '1';
+                    // 自動開啟第一筆
+                    _activeProductRowId = null;
+                    var firstRow = document.querySelector('#reApplyPanel tbody tr[data-id]');
+                    if (firstRow) {
+                        openProductOffcanvas(parseInt(firstRow.dataset.id), firstRow.dataset.name || '商品詳情');
+                    }
+                    // 同步網址列
+                    history.pushState(null, '', href);
+                })
+                .catch(function () { window.location.href = href; });
+        }
+
+        // 事件委派：攔截 #reviewListCol 內重新申請 Tab 的分頁點擊（面板已開啟時）
+        document.getElementById('reviewListCol').addEventListener('click', function (e) {
+            var panel = document.getElementById('productDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            if (!e.target.closest('#reApplyPanel')) return;
+            var link = e.target.closest('.page-link');
+            if (!link) return;
+            var pageItem = link.closest('.page-item');
+            if (!pageItem || pageItem.classList.contains('disabled') || pageItem.classList.contains('active')) return;
+            var href = link.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadReApplyPage(href);
+        });
+    })();
+    </script>
+    <script>
+    // ── AJAX 分頁：面板展開時換頁不重整（近期退回紀錄 Tab）──
+    (function () {
+        function _reviewBindRejectedRows() {
+            document.querySelectorAll('#rejectedPanel tbody tr[data-id]').forEach(function (tr) {
+                tr.addEventListener('click', function (e) {
+                    if (e.target.closest('a, button, input')) return;
+                    openProductOffcanvas(parseInt(this.dataset.id), this.dataset.name);
+                });
+            });
+            // 重綁 per-row checkbox（重置批次列的選取狀態）
+            var batchBar = document.getElementById('rejectedBatchBar');
+            var batchBtn = document.getElementById('btnBatchUndoReject');
+            var countEl  = document.getElementById('rejected-selected-count');
+            if (countEl) countEl.textContent = '0';
+            if (batchBtn) batchBtn.disabled = true;
+            document.querySelectorAll('#rejectedPanel .rejected-row-check').forEach(function (cb) {
+                cb.addEventListener('change', function () {
+                    var checked = document.querySelectorAll('#rejectedPanel .rejected-row-check:checked').length;
+                    if (countEl) countEl.textContent = checked;
+                    if (batchBar) batchBar.style.removeProperty('display');
+                    if (batchBtn) batchBtn.disabled = (checked === 0);
+                });
+            });
+            var allCheck = document.getElementById('selectAllRejected');
+            if (allCheck) {
+                allCheck.checked = false;
+                allCheck.addEventListener('change', function () {
+                    document.querySelectorAll('#rejectedPanel .rejected-row-check').forEach(function (cb) {
+                        cb.checked = allCheck.checked;
+                        cb.dispatchEvent(new Event('change'));
+                    });
+                });
+            }
+        }
+
+        function ajaxLoadRejectedPage(href) {
+            var fetchUrl   = href.split('#')[0];          // 去除 #rejectedTab hash 後再 fetch
+            var tabContent = document.getElementById('reviewTabsContent');
+            var listCol    = document.getElementById('reviewListCol');
+            if (tabContent) tabContent.style.opacity = '0.4';
+            fetch(fetchUrl)
+                .then(function (res) { if (!res.ok) throw new Error(); return res.text(); })
+                .then(function (html) {
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+                    // 更新退回紀錄表格 tbody
+                    var newTbody = doc.querySelector('#rejectedPanel .table-custom tbody');
+                    var tbody    = document.querySelector('#rejectedPanel .table-custom tbody');
+                    if (tbody && newTbody) tbody.innerHTML = newTbody.innerHTML;
+                    // 更新退回紀錄分頁導航
+                    var newNav = doc.querySelector('#rejectedPanel nav');
+                    var curNav = document.querySelector('#rejectedPanel nav');
+                    if (curNav && newNav) curNav.outerHTML = newNav.outerHTML;
+                    // 重綁行點擊與 checkbox（含倒數 — setInterval 會自動接管新 .live-countdown）
+                    _reviewBindRejectedRows();
+                    // 滾回頂部
+                    if (listCol) listCol.scrollTop = 0;
+                    // 恢復透明度
+                    if (tabContent) tabContent.style.opacity = '1';
+                    // 自動開啟第一筆
+                    _activeProductRowId = null;
+                    var firstRow = document.querySelector('#rejectedPanel tbody tr[data-id]');
+                    if (firstRow) {
+                        openProductOffcanvas(parseInt(firstRow.dataset.id), firstRow.dataset.name || '商品詳情');
+                    }
+                    // 同步網址列（保留 hash 讓 Tab 維持選中）
+                    history.pushState(null, '', href);
+                })
+                .catch(function () { window.location.href = href; });
+        }
+
+        // 事件委派：攔截 #reviewListCol 內近期退回 Tab 的分頁點擊（面板已開啟時）
+        document.getElementById('reviewListCol').addEventListener('click', function (e) {
+            var panel = document.getElementById('productDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            if (!e.target.closest('#rejectedPanel')) return;
+            var link = e.target.closest('.page-link');
+            if (!link) return;
+            var pageItem = link.closest('.page-item');
+            if (!pageItem || pageItem.classList.contains('disabled') || pageItem.classList.contains('active')) return;
+            var href = link.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadRejectedPage(href);
         });
     })();
     </script>

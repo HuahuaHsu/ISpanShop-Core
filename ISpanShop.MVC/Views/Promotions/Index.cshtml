@@ -44,6 +44,8 @@
     #promoLayout.panel-open .promo-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
     #promoLayout.panel-open .promo-desc { display: none; }
     .table tbody tr { cursor: pointer; }
+    /* 面板展開時 6:4 比例（覆蓋共用 65%）*/
+    #promoLayout #promotionDetailPanel.open { flex: 0 0 40%; width: 40%; }
 </style>
 
 <div class="page-fluid-root container-fluid font-noto">

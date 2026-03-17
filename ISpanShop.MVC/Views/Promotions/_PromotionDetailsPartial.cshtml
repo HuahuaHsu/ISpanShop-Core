@@ -9,6 +9,44 @@
     .pd-items-table th, .pd-items-table td { font-size: .85rem !important; vertical-align: middle; }
     .pd-review-panel { border-radius: 12px; border: 2px solid #f59e0b; background: #fffbeb; padding: 1.25rem; }
     .pd-reject-banner { background: #fff5f5; border-left: 4px solid #ea5455; border-radius: 6px; padding: .75rem 1rem; }
+    /* ── 面板底部操作按鈕區（與商品審核中心統一）── */
+    .panel-action-footer {
+        position: sticky; bottom: 0; background: #fff;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+        padding: 14px 16px;
+        display: flex; gap: 10px; flex-wrap: wrap;
+        align-items: flex-start; z-index: 10;
+    }
+    .btn-panel-approve {
+        flex: 1; min-width: 120px;
+        background: #d1fae5; color: #065f46;
+        border: 1px solid #6ee7b7; font-weight: 600;
+        padding: 0.6rem 1rem; border-radius: 10px; font-size: .95rem;
+        transition: all .2s;
+    }
+    .btn-panel-approve:hover {
+        background: #059669; color: #fff; border-color: #059669;
+        box-shadow: 0 4px 12px rgba(5,150,105,.3);
+    }
+    .btn-panel-reject {
+        flex: 1; min-width: 120px;
+        background: #fee2e2; color: #991b1b;
+        border: 1px solid #fca5a5; font-weight: 600;
+        padding: 0.6rem 1rem; border-radius: 10px; font-size: .95rem;
+        transition: all .2s;
+    }
+    .btn-panel-reject:hover {
+        background: #dc2626; color: #fff; border-color: #dc2626;
+        box-shadow: 0 4px 12px rgba(220,38,38,.3);
+    }
+    .panel-footer-info-box {
+        width: 100%; display: flex; align-items: flex-start; gap: 8px;
+        font-weight: 600; font-size: .95rem;
+        padding: 10px 14px; border-radius: 10px;
+    }
+    .panel-footer-info-box.success { background: #f0fdf4; color: #15803d; }
+    .panel-footer-info-box.danger  { background: #fff1f2; color: #991b1b; }
 </style>
 
 @{
@@ -392,42 +430,43 @@
 
 </div>
 
-@* ── Sticky 底部操作欄 ── *@
-<div style="position:sticky; bottom:0; z-index:5; box-shadow:0 -2px 8px rgba(0,0,0,.06);">
+@* ── Sticky 底部操作欄（與商品審核中心統一樣式）── *@
+<div class="panel-action-footer">
     @if (Model.IsPending)
     {
-        @* 拒絕原因輸入區（收合，點拒絕後展開） *@
-        <div id="pdRejectSlide" style="display:none; background:#fff5f5; border-top:2px solid #ea5455; padding:.75rem 1rem;">
-            <label class="form-label fw-semibold text-danger mb-1" style="font-size:.82rem;">
-                <i class="bx bx-error-circle me-1"></i>拒絕理由 <span class="text-danger">*</span>
-            </label>
-            <textarea id="pdRejectReason" class="form-control form-control-sm mb-2" rows="3"
-                      placeholder="請說明拒絕原因，此訊息將通知賣家..."></textarea>
-            <button type="button" class="btn btn-danger btn-sm w-100" onclick="pdRejectPromotion(@Model.Id)">
-                <i class="bx bx-send me-1"></i>送出拒絕
-            </button>
-        </div>
-        @* 審核按鈕列 *@
-        <div class="bg-white border-top px-3 py-2 d-flex justify-content-between align-items-center gap-2">
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-success btn-sm" onclick="pdApprovePromotion(@Model.Id)">
-                    <i class="bx bx-check me-1"></i>核准
-                </button>
-                <button type="button" class="btn btn-danger btn-sm" id="pdRejectToggleBtn" onclick="pdToggleRejectPanel()">
-                    <i class="bx bx-x me-1"></i>拒絕
-                </button>
+        <button type="button" class="btn btn-panel-approve"
+                onclick="pdApprovePromotion(@Model.Id)">
+            <i class="bx bx-check-circle me-2"></i>核准
+        </button>
+        <button type="button" class="btn btn-panel-reject"
+                onclick="openRejectModal(@Model.Id, '@Html.Raw(Model.Name.Replace("'", "\\'"))')">
+            <i class="bx bx-x-circle me-2"></i>拒絕
+        </button>
+    }
+    else if (Model.Status == 1)
+    {
+        <div class="panel-footer-info-box success">
+            <i class="bx bx-check-circle me-2 mt-1" style="flex-shrink:0;"></i>
+            <div>
+                <div>已核准</div>
+                @if (Model.ReviewedAt.HasValue)
+                {
+                    <div style="font-size:0.83rem;color:#9ca3af;margin-top:1px;">@Model.ReviewedAt.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                }
             </div>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="offcanvas">
-                <i class="bx bx-x me-1"></i>關閉
-            </button>
         </div>
     }
-    else
+    else if (Model.Status == 2)
     {
-        <div class="border-top bg-white px-3 py-2 d-flex justify-content-end">
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="offcanvas">
-                <i class="bx bx-x me-1"></i>關閉
-            </button>
+        <div class="panel-footer-info-box danger">
+            <i class="bx bx-x-circle me-2 mt-1" style="flex-shrink:0;"></i>
+            <div>
+                <div>已拒絕</div>
+                @if (!string.IsNullOrEmpty(Model.RejectReason))
+                {
+                    <div style="font-size:0.83rem;color:#9ca3af;margin-top:2px;">原因：@Model.RejectReason</div>
+                }
+            </div>
         </div>
     }
 </div>
@@ -436,16 +475,6 @@
 <form id="pdActionForm" method="post" style="display:none;">@Html.AntiForgeryToken()</form>
 
 <script>
-    function pdToggleRejectPanel() {
-        var slide = document.getElementById('pdRejectSlide');
-        var btn   = document.getElementById('pdRejectToggleBtn');
-        var open  = slide.style.display === 'none';
-        slide.style.display = open ? 'block' : 'none';
-        if (btn) btn.innerHTML = open
-            ? '<i class="bx bx-chevron-down me-1"></i>收起'
-            : '<i class="bx bx-x me-1"></i>拒絕';
-    }
-
     async function pdApprovePromotion(id) {
         var name = @Html.Raw($"'{Model.Name.Replace("'", "\\'")}'");
         var ok = await showConfirm('確認核准', '確定要核准活動「' + name + '」嗎？');
@@ -459,18 +488,6 @@
         if (result.success) setTimeout(function () { location.reload(); }, 1500);
     }
 
-    async function pdRejectPromotion(id) {
-        var reason = document.getElementById('pdRejectReason').value.trim();
-        if (!reason) { showMsg('error', '請填寫拒絕理由'); return; }
-        var token = document.querySelector('#pdActionForm [name="__RequestVerificationToken"]').value;
-        var fd = new FormData();
-        fd.append('__RequestVerificationToken', token);
-        fd.append('reason', reason);
-        var res = await fetch('/Promotions/Reject/' + id, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
-        var result = await res.json();
-        showMsg(result.success ? 'success' : 'error', result.message);
-        if (result.success) setTimeout(function () { location.reload(); }, 1500);
-    }
-
     // showConfirm / showMsg 使用全域版本（由 _SneatLayout 提供）
+    // openRejectModal / submitReject 使用 Promotions/Index.cshtml 提供的全域版本
 </script>

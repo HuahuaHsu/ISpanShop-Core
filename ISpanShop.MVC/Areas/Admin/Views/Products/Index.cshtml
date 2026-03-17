@@ -661,6 +661,8 @@
     .table-custom tbody tr { cursor: pointer; }
     /* 面板展開時隱藏篩選卡，避免精簡模式下擠壓 */
     #productIndexLayout.panel-open .filter-card { display: none; }
+    /* 面板展開時 6:4 比例（覆蓋共用 65%）*/
+    #productIndexLayout #productIndexDetailPanel.open { flex: 0 0 40%; width: 40%; }
 </style>
 
 @section Scripts {

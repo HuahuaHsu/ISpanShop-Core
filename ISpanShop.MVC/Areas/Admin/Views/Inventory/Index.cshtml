@@ -536,6 +536,8 @@
     /* ── Toggle chevron animation ── */
     .toggle-btn .bx-chevron-right { transition: transform .2s ease; display: inline-block; }
     .toggle-btn[aria-expanded="true"] .bx-chevron-right { transform: rotate(90deg); }
+    /* 面板展開時 6:4 比例（覆蓋共用 65%）*/
+    #invLayout #invDetailPanel.open { flex: 0 0 40%; width: 40%; }
 </style>
 
 @section Scripts {
