@@ -28,7 +28,7 @@
         <div class="d-flex justify-content-end align-items-center gap-2 mb-3 flex-wrap">
             <span id="pending-batch-tag" class="batch-tag d-none">
                 <i class="bx bx-checkbox-checked"></i>
-                已選取 <span id="pending-selected-count">0</span> 筆
+                已選取 <span id="pending-selected-count">0</span> 項
                 <button id="btn-clear-pending" type="button" class="batch-tag-close" aria-label="清除選取">×</button>
             </span>
             @* 主要業務按鈕 *@
@@ -37,6 +37,9 @@
             </button>
             <button id="btnBatchReject" class="btn btn-danger rounded-pill px-4" disabled>
                 <i class="bx bx-x-circle me-1"></i> 批次審核退回
+            </button>
+            <button id="btnBatchSimulate" class="btn btn-warning rounded-pill px-4" disabled onclick="batchSimulateResubmit()">
+                <i class="bx bx-repost me-1"></i> 批次模擬賣家送審
             </button>
             @* 測試展示工具：收納至 Dropdown *@
             <div class="dropdown ms-2">
@@ -198,7 +201,7 @@
                     {
                         CurrentPage = Model.CurrentPage,
                         TotalPages  = Model.TotalPages,
-                        UrlForPage  = p => Url.Action("PendingReview", new { pendingPage = p, rejectedPage })!
+                        UrlForPage  = p => Url.Action("PendingReview", new { pendingPage = p })!
                     })
                 }
             </div>
@@ -254,6 +257,15 @@
                 {
                     <div class="text-center py-5"><p class="text-muted">目前沒有待重新審核的商品</p></div>
                 }
+                @if (reApplyPaged != null)
+                {
+                    @await Html.PartialAsync("_Pagination", new ISpanShop.MVC.Areas.Admin.Models.Common.PaginationVm
+                    {
+                        CurrentPage = reApplyPaged.CurrentPage,
+                        TotalPages  = reApplyPaged.TotalPages,
+                        UrlForPage  = p => Url.Action("PendingReview", new { reApplyPage = p })!
+                    })
+                }
             </div>
         </div>
 
@@ -269,28 +281,32 @@
                                 <th style="width:70px;" class="col-img">圖片</th>
                                 <th>商品名稱</th>
                                 <th class="col-store">商家</th>
-                                <th class="col-rej-reason">退回原因</th>
+                                <th class="col-rej-reason reject-reason-col">退回原因</th>
+                                <th class="text-center">銷毀倒數</th>
                                 <th class="text-end">操作</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var item in rejectedList)
                             {
-                                <tr data-id="@item.Id" data-name="@item.Name.Replace("'","\\'")">
+                                <tr data-id="@item.Id" data-name="@item.Name.Replace("'","\\'")" class="rejected-row">
                                     <td><input type="checkbox" class="form-check-input item-checkbox" value="@item.Id"></td>
                                     <td class="col-img">
                                         <img src="@(item.MainImageUrl ?? "/img/default.jpg")" style="width:50px;height:50px;object-fit:cover;border-radius:10px;" />
                                     </td>
                                     <td class="fw-semibold product-name-cell">@item.Name</td>
                                     <td class="fs-7 col-store">@item.StoreName</td>
-                                    <td class="col-rej-reason">@item.RejectReason</td>
+                                    <td class="col-rej-reason reject-reason-col">@item.RejectReason</td>
+                                    <td class="text-center text-nowrap">
+                                        <span class="badge rounded-pill bg-label-danger d-inline-flex flex-row align-items-center justify-content-center px-3 py-2">
+                                            <i class="bx bx-time-five me-1"></i>
+                                            <span class="countdown-timer fw-bold" data-time="10" style="font-size: 0.9rem; min-width: 25px;">10</span>
+                                            <span class="fw-bold ms-1">s</span>
+                                        </span>
+                                    </td>
                                     <td class="text-end text-nowrap">
-                                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1"
-                                                onclick="undoReject(@item.Id, '@item.Name.Replace("'", "\\'")')">
-                                            <i class="bx bx-revision me-1"></i>重新審核
-                                        </button>
                                         <button class="btn btn-sm btn-outline-warning rounded-pill px-3"
-                                                onclick="simulateSellerResubmit(@item.Id, '@item.Name.Replace("'", "\\'")')">
+                                                onclick="simulateResubmit(@item.Id, '@item.Name.Replace("'", "\\'")')">
                                             <i class="bx bx-store-alt me-1"></i>模擬賣家送審
                                         </button>
                                     </td>
@@ -302,6 +318,15 @@
                 else
                 {
                     <div class="text-center py-5"><p class="text-muted">近期無退回紀錄</p></div>
+                }
+                @if (rejectedPaged != null)
+                {
+                    @await Html.PartialAsync("_Pagination", new ISpanShop.MVC.Areas.Admin.Models.Common.PaginationVm
+                    {
+                        CurrentPage = rejectedPaged.CurrentPage,
+                        TotalPages  = rejectedPaged.TotalPages,
+                        UrlForPage  = p => Url.Action("PendingReview", new { rejectedPage = p })!
+                    })
                 }
             </div>
         </div>
@@ -339,6 +364,15 @@
                 {
                     <div class="text-center py-5"><p class="text-muted">過去 24 小時內無審核通過記錄</p></div>
                 }
+                @if (approvedPaged != null)
+                {
+                    @await Html.PartialAsync("_Pagination", new ISpanShop.MVC.Areas.Admin.Models.Common.PaginationVm
+                    {
+                        CurrentPage = approvedPaged.CurrentPage,
+                        TotalPages  = approvedPaged.TotalPages,
+                        UrlForPage  = p => Url.Action("PendingReview", new { approvedPage = p })!
+                    })
+                }
             </div>
         </div>
     </div>
@@ -375,6 +409,32 @@
     .btn-approve-soft:hover { background-color: #dcfce7; }
     .btn-reject-soft { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 0.25rem 0.75rem; border-radius: 0.375rem; transition: all 0.2s; }
     .btn-reject-soft:hover { background-color: #fee2e2; }
+
+    /* ── 批次選取 Tag（輕量樣式，有勾選才顯示） ── */
+    .batch-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: transparent;
+        color: #374151;
+        border: 1.5px solid #d1d5db;
+        border-radius: 20px;
+        padding: 0.3rem 0.75rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .batch-tag-close {
+        background: none;
+        border: none;
+        color: #6b7280;
+        font-size: 1.1rem;
+        line-height: 1;
+        padding: 0 2px;
+        cursor: pointer;
+        opacity: 0.75;
+    }
+    .batch-tag-close:hover { opacity: 1; color: #374151; }
 </style>
 
 @section Scripts {
@@ -385,6 +445,7 @@
             reject: '@Url.Action("RejectProduct", "Products")',
             batchApprove: '@Url.Action("BatchApprove", "Products")',
             batchReject: '@Url.Action("BatchReject", "Products")',
+            batchSimulateResubmit: '@Url.Action("BatchSimulateResubmit", "Products")',
             simulateAutoReview: '@Url.Action("SimulateAutoReview", "Products")',
             simulateSellerResubmit: '@Url.Action("SimulateSellerResubmit", "ProductReviews", new { area = "" })',
             undoReject: '@Url.Action("UndoReject", "Products")',
@@ -392,24 +453,184 @@
             rejectForced: '@Url.Action("RejectForcedProduct", "Products")'
         };
 
-        (function() {
-            var selectedIds = new Set();
+        var _activeProductRowId = null;
 
-            // ── 更新選取 UI ──
+        // 宣告與讀取黑名單 (倒數計時結束的商品 ID)
+        let expiredRejectedIds = JSON.parse(sessionStorage.getItem('expiredRejectedIds')) || [];
+
+        window.openProductOffcanvas = function (id, name) {
+            document.querySelectorAll('tr.row-active').forEach(r => r.classList.remove('row-active'));
+            var row = document.querySelector('tr[data-id="' + id + '"]');
+            if (row) row.classList.add('row-active');
+            _activeProductRowId = id;
+            document.getElementById('productDetailPanel').classList.add('open');
+            document.getElementById('reviewLayout').classList.add('panel-open');
+            
+            // 1. 展開時自動隱藏欄位
+            $('.reject-reason-col').hide();
+
+            // 記錄右側面板的開關狀態
+            sessionStorage.setItem('isReviewDetailOpen', 'true');
+
+            fetch('@Url.Action("GetProductDetailsPartial", "Products")?id=' + id + '&isReviewMode=true')
+                .then(res => res.text()).then(html => { 
+                    document.getElementById('productDetailPanelBody').innerHTML = html; 
+                });
+        };
+        window.closeProductDetailPanel = function () {
+            document.getElementById('productDetailPanel').classList.remove('open');
+            document.getElementById('reviewLayout').classList.remove('panel-open');
+            document.querySelectorAll('tr.row-active').forEach(r => r.classList.remove('row-active'));
+            
+            // 1. 關閉時自動顯示欄位
+            $('.reject-reason-col').show();
+
+            // 記錄右側面板的開關狀態
+            sessionStorage.setItem('isReviewDetailOpen', 'false');
+        };
+
+        // 事件綁定 (包含行點擊)
+        function bindRowClicks() {
+            document.querySelectorAll('tbody tr[data-id]').forEach(tr => {
+                tr.removeEventListener('click', onRowClick);
+                tr.addEventListener('click', onRowClick);
+            });
+        }
+        function onRowClick(e) {
+            if (e.target.closest('a, button, input')) return;
+            openProductOffcanvas(this.dataset.id, this.dataset.name);
+        }
+
+        // 初始綁定
+        bindRowClicks();
+
+        // 點擊列表外部 (Layout 邊距) 關閉面板
+        document.getElementById('reviewLayout').addEventListener('click', function (e) {
+            if (e.target === this) {
+                var panel = document.getElementById('productDetailPanel');
+                if (panel && panel.classList.contains('open')) {
+                    closeProductDetailPanel();
+                }
+            }
+        });
+
+        // 點擊列表內空白區域 (非資料列、非互動元素) 關閉面板
+        document.getElementById('reviewListCol').addEventListener('click', function (e) {
+            var panel = document.getElementById('productDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            // 排除表格列、按鈕、連結、輸入框等元素
+            if (e.target.closest('tr, button, a, input, select, label, .filter-card, .nav-tabs, .page-above-content, .back-to-list-btn')) return;
+            closeProductDetailPanel();
+        });
+
+        // 1. 全域狀態管理 (抄寫 Products/Index.cshtml 的 sessionStorage 邏輯)
+        (function() {
+            var STORE_KEY = 'selectedReviewIds';
+
+            function loadIds() {
+                try { return new Set(JSON.parse(sessionStorage.getItem(STORE_KEY) || '[]')); }
+                catch { return new Set(); }
+            }
+            function saveIds(set) {
+                sessionStorage.setItem(STORE_KEY, JSON.stringify(Array.from(set)));
+            }
+
+            let selectedReviewIds = loadIds();
+
+            // 輔助函式：清空選取狀態
+            function clearSelection() {
+                selectedReviewIds.clear();
+                saveIds(selectedReviewIds);
+                updateSelectionUI();
+            }
+
+            // 輔助函式：切換頁籤並重整 (持久化目標頁籤)
+            window.switchTabAndReload = function(tabId) {
+                clearSelection();
+                // 儲存目標頁籤 ID (相容使用者建議的 # 前綴)
+                if (tabId) sessionStorage.setItem('activeTab', tabId.startsWith('#') ? tabId : '#' + tabId);
+                location.reload();
+            }
+
+            // 4. 動態更新 UI
             function updateSelectionUI() {
-                var count = selectedIds.size;
+                var count = selectedReviewIds.size;
                 var tag   = document.getElementById('pending-batch-tag');
                 var badge = document.getElementById('pending-selected-count');
                 var btnApprove = document.getElementById('btnBatchApprove');
                 var btnReject  = document.getElementById('btnBatchReject');
+                var btnSimulate = document.getElementById('btnBatchSimulate');
 
                 if (badge) badge.textContent = count;
                 if (tag)   count > 0 ? tag.classList.remove('d-none') : tag.classList.add('d-none');
                 if (btnApprove) btnApprove.disabled = count === 0;
                 if (btnReject)  btnReject.disabled  = count === 0;
+                if (btnSimulate) btnSimulate.disabled = count === 0;
+
+                // 同步當前頁面的 checkbox 狀態
+                document.querySelectorAll('.item-checkbox').forEach(cb => {
+                    cb.checked = selectedReviewIds.has(parseInt(cb.value, 10));
+                });
+
+                // 同步全選框狀態
+                ['pendingPanel', 'reApplyPanel', 'rejectedPanel'].forEach(panelId => {
+                    let panel = document.getElementById(panelId);
+                    if (!panel) return;
+                    let all = panel.querySelectorAll('.item-checkbox');
+                    let checkedCount = Array.from(all).filter(cb => cb.checked).length;
+                    let selectAll = panel.querySelector('#selectAll, .selectAllReApply, .selectAllRejected');
+                    if (selectAll && all.length > 0) {
+                        selectAll.checked = all.length === checkedCount;
+                        selectAll.indeterminate = checkedCount > 0 && checkedCount < all.length;
+                    }
+                });
             }
 
-            // ── 全選與單選邏輯 ──
+            // 3. 換頁狀態還原
+            window.restoreSelection = function() {
+                updateSelectionUI();
+                
+                // 還原上次操作或換頁前的頁籤
+                let targetTab = sessionStorage.getItem('activeTab');
+                if (targetTab) {
+                    // 兼容帶 # 與不帶 # 的情況
+                    let tabEl = targetTab.startsWith('#') 
+                        ? document.querySelector(targetTab) 
+                        : document.getElementById(targetTab);
+                    if (tabEl) {
+                        // 使用 Bootstrap API 或直接點擊觸發
+                        tabEl.click();
+                    }
+                }
+            };
+
+            // 監聽頁籤切換事件，記憶當前頁籤
+            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tabEl => {
+                tabEl.addEventListener('shown.bs.tab', function (e) {
+                    sessionStorage.setItem('activeTab', e.target.id);
+
+                    // 如果右側面板是開啟的，切換頁籤後自動抓取並載入新頁籤的第一筆資料
+                    let isOpen = sessionStorage.getItem('isReviewDetailOpen') === 'true';
+                    if (isOpen) {
+                        let targetId = e.target.getAttribute('data-bs-target');
+                        let targetPane = document.querySelector(targetId);
+                        if (targetPane) {
+                            let firstRow = targetPane.querySelector('tbody tr[data-id]');
+                            if (firstRow) {
+                                // 觸發第一列資料的點擊 (會呼叫 openProductOffcanvas)
+                                firstRow.click();
+                            } else {
+                                // 若該頁籤沒有資料，自動關閉面板並清空狀態
+                                if (typeof window.closeProductDetailPanel === 'function') {
+                                    window.closeProductDetailPanel();
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+
+            // 2. 勾選/取消勾選邏輯
             function bindCheckboxEvents(containerId, selectAllId) {
                 var container = document.getElementById(containerId);
                 var selectAll = document.getElementById(selectAllId);
@@ -419,8 +640,10 @@
                     container.querySelectorAll('.item-checkbox').forEach(cb => {
                         cb.checked = this.checked;
                         var id = parseInt(cb.value);
-                        this.checked ? selectedIds.add(id) : selectedIds.delete(id);
+                        if (this.checked) selectedReviewIds.add(id);
+                        else              selectedReviewIds.delete(id);
                     });
+                    saveIds(selectedReviewIds);
                     updateSelectionUI();
                 };
 
@@ -428,22 +651,22 @@
                     cb.onclick = function(e) {
                         e.stopPropagation();
                         var id = parseInt(this.value);
-                        this.checked ? selectedIds.add(id) : selectedIds.delete(id);
+                        if (this.checked) selectedReviewIds.add(id);
+                        else              selectedReviewIds.delete(id);
                         
-                        var all = container.querySelectorAll('.item-checkbox');
-                        var checked = container.querySelectorAll('.item-checkbox:checked');
-                        selectAll.checked = all.length === checked.length;
-                        selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
-                        
+                        saveIds(selectedReviewIds);
                         updateSelectionUI();
                     };
                 });
             }
 
-            // 初始化各分頁 Checkbox
-            bindCheckboxEvents('pendingPanel', 'selectAll');
-            bindCheckboxEvents('reApplyPanel', 'selectAllReApply');
-            bindCheckboxEvents('rejectedPanel', 'selectAllRejected');
+            // 初始化與還原
+            window.initReviewSelection = function() {
+                bindCheckboxEvents('pendingPanel', 'selectAll');
+                bindCheckboxEvents('reApplyPanel', 'selectAllReApply');
+                bindCheckboxEvents('rejectedPanel', 'selectAllRejected');
+                restoreSelection();
+            };
 
             // ── 通用 Fetch POST 函式 ──
             async function apiPost(url, data) {
@@ -481,45 +704,96 @@
                     if (!r.isConfirmed) return;
                     Swal.showLoading();
                     const res = await apiPost(_urls.reject, { id: id, reason: r.value });
-                    if (res.success) Swal.fire('已退回', res.message, 'success').then(() => location.reload());
+                    if (res.success) {
+                        Swal.fire('已退回', res.message, 'success').then(() => {
+                            // 1. 實作「退回」成功後的自動跳轉：切換至「近期退回紀錄」頁籤
+                            const tabTrigger = document.getElementById('rejected-tab');
+                            if (tabTrigger) {
+                                tabTrigger.click();
+                                // 注意：因為此頁面目前依賴 location.reload()，若 reload 則跳轉無效
+                                // 如果 reload 是必須的，這裡的 reload() 應該移除或改為 AJAX 重新整理局部
+                                location.reload(); 
+                            } else {
+                                location.reload();
+                            }
+                        });
+                    }
                     else Swal.fire('錯誤', res.message, 'error');
                 });
             };
 
             // ── 批次：核准 ──
             document.getElementById('btnBatchApprove').onclick = function() {
-                var ids = Array.from(selectedIds);
+                var ids = Array.from(selectedReviewIds);
                 if (ids.length === 0) return Swal.fire('請先選擇商品', '', 'warning');
                 
                 Swal.fire({
                     title: '批次核准上架',
-                    text: '確定要核准這 ' + ids.length + ' 筆商品嗎？',
+                    text: '確定要核准這 ' + ids.length + ' 項商品嗎？',
                     icon: 'question', showCancelButton: true, confirmButtonColor: '#1abb9c'
                 }).then(async (r) => {
                     if (!r.isConfirmed) return;
                     Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
                     const res = await apiPost(_urls.batchApprove, { ids: ids });
-                    if (res.success) Swal.fire('完成', res.message, 'success').then(() => location.reload());
+                    if (res.success) {
+                        selectedReviewIds.clear();
+                        saveIds(selectedReviewIds);
+                        Swal.fire('完成', res.message, 'success').then(() => location.reload());
+                    }
                     else Swal.fire('錯誤', res.message, 'error');
                 });
             };
 
             // ── 批次：退回 ──
             document.getElementById('btnBatchReject').onclick = function() {
-                var ids = Array.from(selectedIds);
+                var ids = Array.from(selectedReviewIds);
                 if (ids.length === 0) return Swal.fire('請先選擇商品', '', 'warning');
 
                 Swal.fire({
                     title: '批次退回審核',
-                    text: '即將退回 ' + ids.length + ' 筆商品，請輸入統一退回原因：',
+                    text: '即將退回 ' + ids.length + ' 項商品，請輸入統一退回原因：',
                     input: 'textarea', showCancelButton: true, confirmButtonColor: '#e53e3e',
                     inputValidator: (v) => { if (!v) return '原因必填！'; }
                 }).then(async (r) => {
                     if (!r.isConfirmed) return;
                     Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
                     const res = await apiPost(_urls.batchReject, { ids: ids, reason: r.value });
-                    if (res.success) Swal.fire('完成', res.message, 'success').then(() => location.reload());
+                    if (res.success) {
+                        selectedReviewIds.clear();
+                        saveIds(selectedReviewIds);
+                        Swal.fire('完成', res.message, 'success').then(() => {
+                            // 批次退回也自動跳轉
+                            const tabTrigger = document.getElementById('rejected-tab');
+                            if (tabTrigger) tabTrigger.click();
+                            location.reload();
+                        });
+                    }
                     else Swal.fire('錯誤', res.message, 'error');
+                });
+            };
+
+            // ── 批次：模擬賣家送審 ──
+            window.batchSimulateResubmit = function() {
+                var ids = Array.from(selectedReviewIds);
+                if (ids.length === 0) return Swal.fire('請先選擇商品', '', 'warning');
+
+                Swal.fire({
+                    title: '批次模擬賣家送審',
+                    text: '確定要將選取的 ' + ids.length + ' 項商品模擬賣家重新送審嗎？',
+                    icon: 'info', showCancelButton: true, confirmButtonColor: '#F59E0B'
+                }).then(async (r) => {
+                    if (!r.isConfirmed) return;
+                    Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
+                    // 使用原本模擬送審的 API 進行批次處理
+                    const res = await apiPost(_urls.batchSimulateResubmit, { ids: ids });
+                    if (res.success) {
+                        // 1. 清空前端黑名單暫存
+                        sessionStorage.removeItem('expiredRejectedIds');
+                        // 2. 切換至「重新申請審核」頁籤並重整
+                        switchTabAndReload('reapply-tab');
+                    } else {
+                        Swal.fire('錯誤', res.message, 'error');
+                    }
                 });
             };
 
@@ -550,88 +824,169 @@
             };
 
             // ── 其它按鈕 (Undo, Resubmit) ──
+            // 2. 補齊「重新審核」的防呆彈窗
             window.undoReject = function(id, name) {
-                apiPost(_urls.undoReject, { id: id }).then(() => location.reload());
+                Swal.fire({
+                    title: '確認重新審核',
+                    html: '確定要將商品 「<strong>' + name + '</strong>」 移至重新審核嗎？',
+                    icon: 'question', showCancelButton: true, confirmButtonColor: '#3085d6'
+                }).then(async (r) => {
+                    if (!r.isConfirmed) return;
+                    Swal.showLoading();
+                    const res = await apiPost(_urls.undoReject, { id: id });
+                    if (res.success) {
+                        Swal.fire('成功', res.message, 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('錯誤', res.message, 'error');
+                    }
+                });
             };
-            window.simulateSellerResubmit = function(id, name) {
-                apiPost(_urls.simulateSellerResubmit, { id: id }).then(() => location.reload());
+
+            // 3. 實作「模擬賣家送審」的自動跳轉與彈窗
+            window.simulateResubmit = function(id, name) {
+                Swal.fire({
+                    title: '模擬賣家送審',
+                    html: '確定要模擬賣家重新送審商品 「<strong>' + name + '</strong>」 嗎？',
+                    icon: 'info', showCancelButton: true, confirmButtonColor: '#F59E0B'
+                }).then(async (r) => {
+                    if (!r.isConfirmed) return;
+                    Swal.showLoading();
+                    const res = await apiPost(_urls.simulateSellerResubmit, { id: id });
+                    if (res.success) {
+                        // 1. 清空前端黑名單暫存
+                        sessionStorage.removeItem('expiredRejectedIds');
+                        Swal.fire('成功', res.message, 'success').then(() => {
+                            // 2. 切換至「重新申請審核」頁籤並重整
+                            switchTabAndReload('reapply-tab');
+                        });
+                    } else {
+                        Swal.fire('錯誤', res.message, 'error');
+                    }
+                });
             };
             window.approveForcedProduct = (id, name) => approveProduct(id, name);
             window.openRejectForcedModal = (id, name) => openRejectModal(id, name);
 
             // 清除選取
             document.getElementById('btn-clear-pending').onclick = function() {
-                selectedIds.clear();
-                document.querySelectorAll('.item-checkbox, #selectAll, .selectAllReApply, .selectAllRejected').forEach(cb => {
-                    cb.checked = false;
-                    cb.indeterminate = false;
-                });
+                selectedReviewIds.clear();
+                saveIds(selectedReviewIds);
                 updateSelectionUI();
             };
 
-            // ── 近期退回紀錄：60秒倒數銷毀機制 ──
+            // ── 近期退回紀錄：10秒倒數銷毀機制 ──
             setInterval(function() {
-                document.querySelectorAll('tr.rejected-row').forEach(row => {
-                    var timeLeft = parseInt(row.dataset.countdown);
+                document.querySelectorAll('.countdown-timer').forEach(timerEl => {
+                    let timeLeft = parseInt(timerEl.dataset.time);
                     if (isNaN(timeLeft)) return;
 
                     timeLeft--;
-                    row.dataset.countdown = timeLeft;
-                    
-                    var timerEl = row.querySelector('.countdown-timer');
-                    if (timerEl) timerEl.textContent = timeLeft + 's';
+                    timerEl.dataset.time = timeLeft;
+                    timerEl.textContent = timeLeft;
 
                     if (timeLeft <= 0) {
-                        var id = parseInt(row.dataset.id);
+                        let row = timerEl.closest('tr');
+                        if (!row) return;
+
+                        // 抓出該商品的 ID (從 .item-checkbox 的 value 取出)
+                        let itemId = row.querySelector('.item-checkbox')?.value;
+                        let id = parseInt(itemId);
+
+                        let tbody = row.closest('tbody');
                         
-                        // 1. 如果右側面板正開啟此商品，則自動關閉
-                        if (typeof _activeProductRowId !== 'undefined' && _activeProductRowId === id) {
+                        // 1. 精準扣除頁籤數字：使用 jQuery 抓取「近期退回紀錄」頁籤按鈕內的數字 Badge
+                        var $badge = $('#rejected-tab .badge');
+                        if ($badge.length > 0) {
+                            var currentCount = parseInt($badge.text()) || 0;
+                            if (currentCount > 0) $badge.text(currentCount - 1);
+                        }
+
+                        // 2. 強制關閉右側幽靈面板：如果刪除的正是目前展開的商品，立刻呼叫關閉函式
+                        // _activeProductRowId 可能為 string 或 number，使用 == 進行比較
+                        if (_activeProductRowId == id) {
                             closeProductDetailPanel();
                         }
 
-                        // 2. 更新 Tab 數字標籤
-                        var badge = document.getElementById('rejected-count-badge');
-                        if (badge) {
-                            var currentCount = parseInt(badge.textContent) || 0;
-                            if (currentCount > 0) badge.textContent = currentCount - 1;
-                        }
-
-                        // 3. 從 DOM 移除
+                        // 3. 移除資料並檢查隱藏無用的分頁列
                         row.style.transition = 'opacity 0.5s';
                         row.style.opacity = '0';
-                        setTimeout(() => row.remove(), 500);
+                        setTimeout(() => {
+                            // 倒數歸零時加入黑名單，防止殭屍復活
+                            if (id && !expiredRejectedIds.includes(id)) {
+                                expiredRejectedIds.push(id);
+                                sessionStorage.setItem('expiredRejectedIds', JSON.stringify(expiredRejectedIds));
+                            }
+
+                            row.remove();
+                            // 移除後檢查 tbody 內是否還有 tr (排除可能存在的提示列，這裡檢查 tr[data-id])
+                            if (tbody && tbody.querySelectorAll('tr[data-id]').length === 0) {
+                                // 找到同一個 tab-pane 內的分頁列並隱藏
+                                let pane = tbody.closest('.tab-pane');
+                                if (pane) {
+                                    let pagination = pane.querySelector('.pagination-container, nav');
+                                    if (pagination) pagination.style.display = 'none';
+
+                                    // 動態插入一列提示文字，避免只剩下表頭
+                                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">目前無近期退回紀錄</td></tr>';
+                                }
+                            }
+                        }, 500);
                         
-                        // 4. 從選取陣列中移除 (若有選取)
-                        if (selectedIds.has(id)) {
-                            selectedIds.delete(id);
+                        // 額外清理選取狀態 (若有選取)
+                        if (id && selectedReviewIds.has(id)) {
+                            selectedReviewIds.delete(id);
+                            saveIds(selectedReviewIds);
                             updateSelectionUI();
                         }
                     }
                 });
             }, 1000);
+
+            // 初始執行
+            initReviewSelection();
         })();
 
-        var _activeProductRowId = null;
-        window.openProductOffcanvas = function (id, name) {
-            document.querySelectorAll('tr.row-active').forEach(r => r.classList.remove('row-active'));
-            var row = document.querySelector('tr[data-id="' + id + '"]');
-            if (row) row.classList.add('row-active');
-            _activeProductRowId = id;
-            document.getElementById('productDetailPanel').classList.add('open');
-            document.getElementById('reviewLayout').classList.add('panel-open');
-            fetch('@Url.Action("GetProductDetailsPartial", "Products")?id=' + id + '&isReviewMode=true')
-                .then(res => res.text()).then(html => { document.getElementById('productDetailPanelBody').innerHTML = html; });
-        };
-        window.closeProductDetailPanel = function () {
-            document.getElementById('productDetailPanel').classList.remove('open');
-            document.getElementById('reviewLayout').classList.remove('panel-open');
-            document.querySelectorAll('tr.row-active').forEach(r => r.classList.remove('row-active'));
-        };
-        document.querySelectorAll('tbody tr[data-id]').forEach(tr => {
-            tr.addEventListener('click', function(e) {
-                if (e.target.closest('a, button, input')) return;
-                openProductOffcanvas(this.dataset.id, this.dataset.name);
+        // 2. 換頁後自動還原與載入第一筆
+        (function() {
+            let isOpen = sessionStorage.getItem('isReviewDetailOpen');
+            if (isOpen === 'true') {
+                // 抓取當前活動分頁內的第一列資料
+                let activePane = document.querySelector('.tab-pane.active');
+                if (activePane) {
+                    let firstRow = activePane.querySelector('tbody tr[data-id]');
+                    if (firstRow) {
+                        // 觸發第一列資料的點擊
+                        firstRow.click();
+                    } else {
+                        // 3. 防呆處理：如果當前頁面沒有任何資料，自動關閉面板
+                        closeProductDetailPanel();
+                    }
+                }
+            }
+        })();
+
+        // 3. 頁面載入時校正所有頁籤數字 (Sync Badge Count)
+        $(function() {
+            // 頁面載入時強制剃除殭屍：遍歷「近期退回紀錄」表格，移除已過期的商品列
+            $('#rejectedPanel tbody tr[data-id]').each(function() {
+                let id = parseInt($(this).attr('data-id'));
+                if (expiredRejectedIds.includes(id)) {
+                    $(this).remove();
+                }
             });
+
+            // 如果移除後 tbody 變空，補上提示文字
+            let $rejectedTbody = $('#rejectedPanel tbody');
+            if ($rejectedTbody.length > 0 && $rejectedTbody.find('tr[data-id]').length === 0) {
+                $('#rejectedPanel .pagination-container, #rejectedPanel nav').hide();
+                $rejectedTbody.html('<tr><td colspan="10" class="text-center text-muted py-4">目前無近期退回紀錄</td></tr>');
+            }
         });
+
+        // ── 模擬 AJAX 換頁成功後的處理 ──
+        // 如果未來有 AJAX 分頁，可以在成功回呼中呼叫：
+        // initReviewSelection(); 
+        // bindRowClicks();
+        // 觸發還原邏輯...
     </script>
 }
