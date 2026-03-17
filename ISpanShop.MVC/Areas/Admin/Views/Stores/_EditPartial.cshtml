@@ -56,7 +56,7 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold">變更營業狀態</label>
                     <select name="status" class="form-select">
-                        <option value="1" selected="@(Model.Store.StoreStatus == 1)">營業中</option>
+                        <option value="1" selected="@(Model.Store.StoreStatus == 1)">可營業</option>
                         @* <option value="2" selected="@(Model.Store.StoreStatus == 2)">休假中</option>管理員無權決定 *@
                         <option value="3" selected="@(Model.Store.StoreStatus == 3)">停權</option>
                     </select>
@@ -73,23 +73,13 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="storeId" value="@Model.Store.StoreId" />
                 <input type="hidden" name="isVerified" value="@((!Model.Store.IsVerified).ToString().ToLower())" />
-                <button type="submit" class="btn btn-outline-@(Model.Store.IsVerified ? "warning" : "success") w-100">
+                <button type="submit" class="btn btn-outline-@(Model.Store.IsVerified ? "danger" : "success") w-100">
                     <i class="bx bx-@(Model.Store.IsVerified ? "undo" : "check") me-1"></i> 
-                    @(Model.Store.IsVerified ? "取消審核" : "通過審核")
+                    @(Model.Store.IsVerified ? "撤回審核" : "通過審核")
                 </button>
             </form>
 
-            <!-- 封鎖操作 -->
-            <form method="post" asp-area="Admin" asp-controller="Stores" asp-action="ToggleBlacklist" class="flex-fill">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="storeId" value="@Model.Store.StoreId" />
-                <input type="hidden" name="isBlacklisted" value="@((!Model.Store.IsBlacklisted).ToString().ToLower())" />
-                <button type="submit" class="btn btn-outline-@(Model.Store.IsBlacklisted ? "success" : "danger") w-100" 
-                        onclick="return confirm('確定要變更此店家的封鎖狀態？')">
-                    <i class="bx bx-@(Model.Store.IsBlacklisted ? "refresh" : "block") me-1"></i>
-                    @(Model.Store.IsBlacklisted ? "解除封鎖" : "封鎖店家")
-                </button>
-            </form>
+            
         </div>
     </div>
 </div>
