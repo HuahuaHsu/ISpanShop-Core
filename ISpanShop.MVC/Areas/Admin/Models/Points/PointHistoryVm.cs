@@ -4,15 +4,15 @@ using ISpanShop.Models.DTOs.Common;
 
 namespace ISpanShop.MVC.Areas.Admin.Models.Points
 {
-    public class PointHistoryIndexVm
-    {
+    public class PointHistoryIndexVm //點數首頁模型(含分頁與搜尋)
+	{
         public PagedResult<PointHistoryItemVm> PagedResult { get; set; }
         public string Keyword { get; set; }
         public int? UserId { get; set; }
     }
 
-    public class PointHistoryItemVm
-    {
+    public class PointHistoryItemVm //點數歷史項目模型
+	{
         public long Id { get; set; }
 
         public int UserId { get; set; }
@@ -39,8 +39,8 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Points
         public DateTime? CreatedAt { get; set; }
     }
 
-    public class PointUpdateVm
-    {
+    public class PointUpdateVm //點數異動紀錄輸入模型
+	{
         [Required(ErrorMessage = "請選擇會員")]
         public int UserId { get; set; }
 
@@ -65,8 +65,8 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Points
         public string Remark { get; set; }
     }
 
-    public class BulkPointUpdateVm
-    {
+    public class BulkPointUpdateVm //批次點數更新模型
+	{
         [Required(ErrorMessage = "請輸入變動點數")]
         public int ChangeAmount { get; set; }
 

@@ -18,11 +18,11 @@ namespace ISpanShop.Repositories.Members.Implementations
         public async Task<(IEnumerable<PointHistory> Items, int TotalCount)> GetPagedPointHistoryAsync(string keyword, int? userId, int page, int pageSize)
         {
             var query = _context.PointHistories
-                .Include(ph => ph.User)
-                .ThenInclude(u => u.MemberProfile)
-                .AsNoTracking();
+                .Include(ph => ph.User) //Eager Loading（預先載入）
+				.ThenInclude(u => u.MemberProfile)
+                .AsNoTracking(); //效能優化
 
-            if (userId.HasValue)
+			if (userId.HasValue)
             {
                 query = query.Where(ph => ph.UserId == userId.Value);
             }

@@ -29,8 +29,8 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Points
 
         [HttpGet]
         public async Task<IActionResult> Index(string keyword = "", int? userId = null, int page = 1, int pageSize = 10)
-        {
-            var pagedResult = await _pointService.GetPagedHistoryAsync(keyword, userId, page, pageSize);
+		{//點數歷史清單 (讀取)
+			var pagedResult = await _pointService.GetPagedHistoryAsync(keyword, userId, page, pageSize);
 
             var viewModel = new PointHistoryIndexVm
             {
@@ -61,8 +61,8 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Points
         }
 
         [HttpGet("SearchMembers")]
-        public IActionResult SearchMembers(string term)
-        {
+        public IActionResult SearchMembers(string term)//動態搜尋會員
+		{
             var members = _memberService.Search(term, null)
                 .Select(m => new { 
                     id = m.Id, 
@@ -74,8 +74,8 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Points
 
         [HttpPost("UpdatePoints")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdatePoints(PointUpdateVm vm)
-        {
+        public async Task<IActionResult> UpdatePoints(PointUpdateVm vm)//單筆點數調整 (寫入)
+		{
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "資料格式不正確，請檢查輸入內容。";
@@ -126,8 +126,8 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Points
 
         [HttpPost("BulkUpdatePoints")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BulkUpdatePoints(BulkPointUpdateVm vm)
-        {
+        public async Task<IActionResult> BulkUpdatePoints(BulkPointUpdateVm vm)//全體批次更新
+		{
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "資料格式不正確。";
@@ -164,9 +164,9 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Points
         }
 
         [HttpPost("GenerateMockData")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> GenerateMockData()
-        {
+        [ValidateAntiForgeryToken] //防止跨站請求偽造攻擊
+		public async Task<IActionResult> GenerateMockData()//產生假資料 (開發專用)
+		{
             var random = new Random();
             var users = await _context.Users
                 .Include(u => u.MemberProfile)
