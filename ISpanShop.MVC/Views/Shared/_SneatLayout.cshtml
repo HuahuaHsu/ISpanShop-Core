@@ -990,6 +990,7 @@
                     if (onConfirm) onConfirm();
                 };
                 document.getElementById('_gCancel').onclick = function () {
+                    getModal().hide();
                     if (onCancel) onCancel();
                 };
                 getModal().show();

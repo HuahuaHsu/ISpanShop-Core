@@ -19,11 +19,47 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
         public async Task<IActionResult> Index()
         {
             var counts = await _orderService.GetOrderStatusCountsAsync();
+            var totalPending = counts.TryGetValue(1, out int c1) ? c1 : 0;
+
+            // 取得緊急處理 (超過 48 小時未出貨)
+            var urgentResult = await _orderService.GetFilteredOrdersAsync(new OrderSearchDto
+            {
+                Statuses = new List<int> { 1 },
+                EndDate = DateTime.Now.AddDays(-2),
+                PageSize = 1
+            });
+
             var vm = new OrderIndexVm
             {
-                CountTotal = counts.TryGetValue(1, out int c1) ? c1 : 0 // 僅顯示待出貨總數
+                CountTotal = totalPending,
+                CountUrgentShipment = urgentResult.TotalCount,
+                DateDimensionOptions = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+                {
+                    new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Text = "下單時間", Value = "1" },
+                    new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Text = "付款時間", Value = "2" }
+                }
             };
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetStatsAjax()
+        {
+            var counts = await _orderService.GetOrderStatusCountsAsync();
+            var totalPending = counts.TryGetValue(1, out int c1) ? c1 : 0;
+
+            var urgentResult = await _orderService.GetFilteredOrdersAsync(new OrderSearchDto
+            {
+                Statuses = new List<int> { 1 },
+                EndDate = DateTime.Now.AddDays(-2),
+                PageSize = 1
+            });
+
+            return Json(new { 
+                success = true, 
+                totalPending = totalPending, 
+                totalUrgent = urgentResult.TotalCount 
+            });
         }
 
         [HttpPost]

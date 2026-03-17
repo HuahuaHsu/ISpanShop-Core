@@ -104,16 +104,22 @@ namespace ISpanShop.Repositories.Orders
 				query = query.Where(o => o.FinalAmount <= criteria.MaxAmount.Value);
 
 			// A4 & A5. 日期篩選
-			if (criteria.StartDate.HasValue || criteria.EndDate.HasValue)
+			if (criteria.StartDate.HasValue)
 			{
-				DateTime start = criteria.StartDate ?? DateTime.MinValue;
-				DateTime end = criteria.EndDate ?? DateTime.MaxValue;
-
 				query = criteria.DateDimension switch
 				{
-					2 => query.Where(o => o.PaymentDate >= start && o.PaymentDate <= end),
-					3 => query.Where(o => o.CompletedAt >= start && o.CompletedAt <= end),
-					_ => query.Where(o => o.CreatedAt >= start && o.CreatedAt <= end)
+					2 => query.Where(o => o.PaymentDate >= criteria.StartDate.Value),
+					3 => query.Where(o => o.CompletedAt >= criteria.StartDate.Value),
+					_ => query.Where(o => o.CreatedAt >= criteria.StartDate.Value)
+				};
+			}
+			if (criteria.EndDate.HasValue)
+			{
+				query = criteria.DateDimension switch
+				{
+					2 => query.Where(o => o.PaymentDate <= criteria.EndDate.Value),
+					3 => query.Where(o => o.CompletedAt <= criteria.EndDate.Value),
+					_ => query.Where(o => o.CreatedAt <= criteria.EndDate.Value)
 				};
 			}
 
@@ -163,7 +169,10 @@ namespace ISpanShop.Repositories.Orders
 					dto.ItemsSummary = string.Join(", ", o.OrderDetails.Select(od => $"{od.ProductName} x{od.Quantity}"));
 					if (o.PaymentDate.HasValue)
 					{
-						var diff = DateTime.Now - o.PaymentDate.Value;
+						// 避免伺服器時區差異導致負數
+						var now = DateTime.Now;
+						var diff = now > o.PaymentDate.Value ? now - o.PaymentDate.Value : TimeSpan.Zero;
+						
 						dto.WaitingTime = diff.TotalHours >= 24 
 							? $"{(int)diff.TotalDays}天{diff.Hours}小時" 
 							: $"{(int)diff.TotalHours}小時{diff.Minutes}分";
