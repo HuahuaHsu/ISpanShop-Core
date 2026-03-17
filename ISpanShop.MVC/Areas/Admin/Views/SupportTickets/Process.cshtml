@@ -1,0 +1,104 @@
+@model ISpanShop.Models.EfModels.SupportTicket
+
+@{
+    ViewData["Title"] = "處理工單";
+    Layout = "_SneatLayout";
+}
+
+<div class="container mt-4">
+    <h2>處理工單：@Model.Subject</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">使用者反應問題</div>
+                <div class="card-body">
+                    <p><strong>申請人帳號：</strong> @(Model.User?.Account ?? "未知")</p>
+                    <p><strong>問題描述：</strong> @Model.Description</p>
+                    <p><strong>目前狀態：</strong> 
+                        @if (Model.Status == 0) { <span class="badge bg-warning text-dark">待處理</span> }
+                        else if (Model.Status == 1) { <span class="badge bg-primary">處理中</span> }
+                        else if (Model.Status == 2) { <span class="badge bg-success">已結案</span> }
+                    </p>
+                </div>
+            </div>
+
+            @* 補回：回覆與結案區塊 *@
+            <div class="card border-primary mb-3">
+                <div class="card-header bg-info text-white">回覆使用者與更新進度</div>
+                <div class="card-body">
+                    <form method="post" asp-action="ReplyTicket">
+                        <input type="hidden" name="ticketId" value="@Model.Id" />
+                        
+                        <div class="mb-3">
+                            <label class="form-label">管理員回覆內容：</label>
+                            <textarea class="form-control" name="adminReply" rows="4" required>@Model.AdminReply</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">更新工單狀態：</label>
+                            <select class="form-select" name="status">
+                                <option value="0" selected="@(Model.Status == 0)">待處理</option>
+                                <option value="1" selected="@(Model.Status == 1)">處理中</option>
+                                <option value="2" selected="@(Model.Status == 2)">已結案</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-info text-white">送出回覆</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-danger mb-3">
+                <div class="card-header bg-danger text-white">工程師管理動作</div>
+                <div class="card-body">
+                    <p>帳號當前狀態：
+                        @if (Model.User?.IsBlacklisted == true) {
+                            <span class="badge bg-dark">已停權</span>
+                        } else {
+                            <span class="badge bg-success">正常</span>
+                        }
+                    </p>
+                    
+                    <form method="post" asp-action="SuspendUser">
+                        <input type="hidden" name="userId" value="@Model.UserId" />
+                        <input type="hidden" name="ticketId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-danger">執行停權 (加入黑名單)</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-dark text-white">近期登入 Log 追蹤</div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>時間</th>
+                                <th>IP 位址</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.LoginLogs != null)
+                            {
+                                foreach (var log in (IEnumerable<ISpanShop.Models.EfModels.LoginHistory>)ViewBag.LoginLogs)
+                                {
+                                    <tr>
+                                        <td>@log.LoginTime?.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>@log.Ipaddress</td>
+                                        <td>@(log.IsSuccessful == true ? "成功" : "失敗")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

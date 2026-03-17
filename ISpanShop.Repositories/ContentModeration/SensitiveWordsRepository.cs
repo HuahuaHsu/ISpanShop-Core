@@ -21,6 +21,7 @@ namespace ISpanShop.Repositories.ContentModeration
 		{
 			// 將資料表轉換成 List，並用建立時間倒序排列（最新建立的在最上面）
 			return await _context.SensitiveWords
+				.Include(w => w.CategoryNavigation)
 				.OrderByDescending(w => w.CreatedTime)
 				.ToListAsync();
 		}
@@ -29,6 +30,7 @@ namespace ISpanShop.Repositories.ContentModeration
 		public async Task<SensitiveWord> GetByIdAsync(int id)
 		{
 			return await _context.SensitiveWords
+				.Include(w => w.CategoryNavigation)
 				.FirstOrDefaultAsync(w => w.Id == id);
 		}
 
@@ -53,9 +55,13 @@ namespace ISpanShop.Repositories.ContentModeration
 			await _context.SaveChangesAsync();
 		}
 
-		public Task<IEnumerable<string>> GetAllWordsAsync()
+		public async Task<IEnumerable<string>> GetAllWordsAsync()
 		{
-			throw new NotImplementedException();
+			// 取得所有「啟用中」的敏感字字串列表
+			return await _context.SensitiveWords
+				.Where(w => w.IsActive == true)
+				.Select(w => w.Word)
+				.ToListAsync();
 		}
 	}
 }

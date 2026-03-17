@@ -22,4 +22,7 @@ namespace ISpanShop.Services.ContentModeration;
 
 		// 刪除敏感字 (只要傳 ID 進來即可)
 		Task DeleteAsync(int id);
+
+		// [新功能] 自動偵測內容是否包含敏感字
+		Task<bool> HasSensitiveWordAsync(string content);
 	}
