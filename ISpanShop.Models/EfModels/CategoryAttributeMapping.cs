@@ -5,11 +5,11 @@ using System.Collections.Generic;
 
 namespace ISpanShop.Models.EfModels;
 
-public partial class CategorySpecMapping
+public partial class CategoryAttributeMapping
 {
     public int CategoryId { get; set; }
 
-    public int CategorySpecId { get; set; }
+    public int CategoryAttributeId { get; set; }
 
     public bool IsFilterable { get; set; }
 
@@ -17,5 +17,5 @@ public partial class CategorySpecMapping
 
     public virtual Category Category { get; set; }
 
-    public virtual CategorySpec CategorySpec { get; set; }
+    public virtual CategoryAttribute CategoryAttribute { get; set; }
 }

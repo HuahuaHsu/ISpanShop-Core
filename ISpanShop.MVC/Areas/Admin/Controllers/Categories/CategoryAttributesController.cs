@@ -11,22 +11,21 @@ using System.Collections.Generic;
 
 namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
 {
-    [RequirePermission("product_manage")]
-    public class CategorySpecsController : AdminBaseController
+    public class CategoryAttributesController : AdminBaseController
     {
-        private readonly CategorySpecService _categorySpecService;
+        private readonly CategoryAttributeService _categoryAttributeService;
 
-        public CategorySpecsController(CategorySpecService categorySpecService)
+        public CategoryAttributesController(CategoryAttributeService categoryAttributeService)
         {
-            _categorySpecService = categorySpecService;
+            _categoryAttributeService = categoryAttributeService;
         }
 
         public async Task<IActionResult> Index(int page = 1)
         {
             const int pageSize = 10;
-            var pagedSpecs = await _categorySpecService.GetPagedAsync(page, pageSize);
-            ViewBag.Categories    = _categorySpecService.GetAllCategories();
-            ViewBag.AllSpecsForJs = _categorySpecService.GetAll();
+            var pagedSpecs = await _categoryAttributeService.GetPagedAsync(page, pageSize);
+            ViewBag.Categories    = _categoryAttributeService.GetAllCategories();
+            ViewBag.AllSpecsForJs = _categoryAttributeService.GetAll();
             return View(pagedSpecs);
         }
 
@@ -36,7 +35,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         [HttpGet]
         public IActionResult GetBoundSpecIds(int categoryId)
         {
-            var ids = _categorySpecService.GetBoundAttributeIds(categoryId);
+            var ids = _categoryAttributeService.GetBoundAttributeIds(categoryId);
             return Json(ids);
         }
 
@@ -46,7 +45,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         [HttpGet]
         public IActionResult GetBoundSpecItems(int categoryId)
         {
-            var items = _categorySpecService.GetBoundSpecItems(categoryId);
+            var items = _categoryAttributeService.GetBoundSpecItems(categoryId);
             return Json(items);
         }
 
@@ -56,13 +55,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         [HttpGet]
         public IActionResult GetMatrixData()
         {
-            var allCats  = _categorySpecService.GetAllCategories().ToList();
+            var allCats  = _categoryAttributeService.GetAllCategories().ToList();
             var parents  = allCats.Where(c => c.ParentId == null)
                 .Select(c => new { id = c.Id, name = c.Name });
             var children = allCats.Where(c => c.ParentId != null)
                 .Select(c => new { id = c.Id, name = c.Name, parentId = c.ParentId });
 
-            var specs = _categorySpecService.GetAll()
+            var specs = _categoryAttributeService.GetAll()
                 .Select(s => new {
                     id         = s.Id,
                     name       = s.Name,
@@ -71,7 +70,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
                     options    = s.Options
                 });
 
-            var bindings = _categorySpecService.GetAllBindingPairs();
+            var bindings = _categoryAttributeService.GetAllBindingPairs();
 
             return Json(new {
                 specs,
@@ -88,7 +87,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         public IActionResult ToggleSpec([FromBody] ToggleSpecDto dto)
         {
             if (dto == null) return BadRequest(new { success = false });
-            _categorySpecService.ToggleBinding(dto.CategoryId, dto.AttributeId, dto.IsBound);
+            _categoryAttributeService.ToggleBinding(dto.CategoryId, dto.AttributeId, dto.IsBound);
             return Json(new { success = true });
         }
 
@@ -99,7 +98,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         public IActionResult ToggleFilterable([FromBody] ToggleFilterableDto dto)
         {
             if (dto == null) return BadRequest();
-            _categorySpecService.ToggleFilterable(dto.CategoryId, dto.SpecId, dto.IsFilterable);
+            _categoryAttributeService.ToggleFilterable(dto.CategoryId, dto.SpecId, dto.IsFilterable);
             return Json(new { success = true });
         }
 
@@ -114,7 +113,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         {
             if (!ModelState.IsValid) return View(vm);
 
-            _categorySpecService.Create(
+            _categoryAttributeService.Create(
                 vm.Name,
                 vm.InputType,
                 vm.IsRequired,
@@ -129,7 +128,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
 
         public IActionResult Edit(int id)
         {
-            var dto = _categorySpecService.GetById(id);
+            var dto = _categoryAttributeService.GetById(id);
             if (dto == null) return NotFound();
 
             var vm = new CategorySpecEditVm
@@ -152,7 +151,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         {
             if (!ModelState.IsValid) return View(vm);
 
-            _categorySpecService.Update(
+            _categoryAttributeService.Update(
                 vm.Id,
                 vm.Name,
                 vm.InputType,
@@ -170,7 +169,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
-            _categorySpecService.Delete(id);
+            _categoryAttributeService.Delete(id);
             TempData["SuccessMessage"] = "分類屬性已刪除！";
             return RedirectToAction(nameof(Index));
         }
@@ -183,7 +182,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         [HttpGet]
         public IActionResult GetBoundSpecs(int categoryId)
         {
-            var items = _categorySpecService.GetBoundSpecsWithDetails(categoryId);
+            var items = _categoryAttributeService.GetBoundSpecsWithDetails(categoryId);
             return Json(items);
         }
 
@@ -192,7 +191,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         public IActionResult BindSpec([FromBody] BindSpecDto dto)
         {
             if (dto == null) return BadRequest();
-            _categorySpecService.BindSpec(dto.CategoryId, dto.SpecId);
+            _categoryAttributeService.BindSpec(dto.CategoryId, dto.SpecId);
             return Json(new { success = true });
         }
 
@@ -201,7 +200,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         public IActionResult UnbindSpec([FromBody] BindSpecDto dto)
         {
             if (dto == null) return BadRequest();
-            _categorySpecService.UnbindSpec(dto.CategoryId, dto.SpecId);
+            _categoryAttributeService.UnbindSpec(dto.CategoryId, dto.SpecId);
             return Json(new { success = true });
         }
 
@@ -210,7 +209,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         public IActionResult UpdateBindingSort([FromBody] UpdateBindingSortDto dto)
         {
             if (dto == null) return BadRequest();
-            _categorySpecService.UpdateBindingSort(dto.CategoryId, dto.OrderedSpecIds);
+            _categoryAttributeService.UpdateBindingSort(dto.CategoryId, dto.OrderedSpecIds);
             return Json(new { success = true });
         }
 
@@ -221,10 +220,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
             if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
                 return Json(new { success = false, message = "屬性名稱為必填" });
 
-            _categorySpecService.Create(dto.Name, dto.InputType, dto.IsRequired,
+            _categoryAttributeService.Create(dto.Name, dto.InputType, dto.IsRequired,
                                         dto.AllowCustomInput, dto.SortOrder, dto.Options ?? new List<string>());
 
-            var newSpec = _categorySpecService.GetAll()
+            var newSpec = _categoryAttributeService.GetAll()
                 .Where(s => s.Name == dto.Name)
                 .OrderByDescending(s => s.Id)
                 .FirstOrDefault();
@@ -238,7 +237,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         {
             if (dto == null) return Json(new { success = false });
 
-            _categorySpecService.Update(dto.Id, dto.Name, dto.InputType, dto.IsRequired,
+            _categoryAttributeService.Update(dto.Id, dto.Name, dto.InputType, dto.IsRequired,
                                         dto.AllowCustomInput, dto.SortOrder, dto.Options ?? new List<string>());
             return Json(new { success = true });
         }
@@ -249,10 +248,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         {
             if (dto == null) return Json(new { success = false });
 
-            if (_categorySpecService.HasBindings(dto.Id))
+            if (_categoryAttributeService.HasBindings(dto.Id))
                 return Json(new { success = false, message = "此屬性已綁定至分類，請先解除所有綁定才能刪除。" });
 
-            _categorySpecService.Delete(dto.Id);
+            _categoryAttributeService.Delete(dto.Id);
             return Json(new { success = true });
         }
     }

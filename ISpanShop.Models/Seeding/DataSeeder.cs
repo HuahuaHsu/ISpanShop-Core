@@ -46,6 +46,35 @@ namespace ISpanShop.Models.Seeding
 			{ "", " (2025 全新升級版)", " (特仕限量版)", " (海外平輸版)", " - 聯名精裝版" };
 
 		// ====================================================================
+		// CategoryId → StoreId 對應表（依 ReadMe 賣場分類對應）
+		// ====================================================================
+		private static readonly Dictionary<int, int[]> CategoryToStores = new Dictionary<int, int[]>
+		{
+			{ 7,  new[] { 1 } },        // 生鮮食材與飲品   → 小明の奇妙雜貨
+			{ 8,  new[] { 1, 2, 7 } },  // 居家裝飾與收納   → Store 1, 2, 7 隨機
+			{ 9,  new[] { 1, 2 } },     // 廚房餐具與用品   → Store 1, 2 隨機
+			{ 5,  new[] { 2 } },        // 大型家具         → 建國五金
+			{ 11, new[] { 3 } },        // 筆記型電腦       → 豪客3C
+			{ 16, new[] { 3 } },        // 手機與平板周邊   → 豪客3C
+			{ 20, new[] { 3 } },        // 智慧型手機       → 豪客3C
+			{ 24, new[] { 3 } },        // 平板電腦         → 豪客3C
+			{ 13, new[] { 4 } },        // 男款上衣與襯衫   → 秘密衣櫥
+			{ 14, new[] { 4 } },        // 男士鞋款         → 秘密衣櫥
+			{ 26, new[] { 4 } },        // 女款上衣與洋裝   → 秘密衣櫥
+			{ 28, new[] { 4 } },        // 精品包包         → 秘密衣櫥
+			{ 29, new[] { 4 } },        // 派對與晚禮服     → 秘密衣櫥
+			{ 31, new[] { 4 } },        // 女款鞋類         → 秘密衣櫥
+			{ 32, new[] { 4 } },        // 女士腕錶         → 秘密衣櫥
+			{ 3,  new[] { 5, 6 } },     // 香水與香氛       → Store 5, 6 隨機
+			{ 19, new[] { 5, 6 } },     // 臉部與身體保養   → Store 5, 6 隨機
+			{ 2,  new[] { 6 } },        // 彩妝與修容       → 心怡日韓嚴選
+			{ 15, new[] { 7 } },        // 男士腕錶         → 宇過天晴文創
+			{ 30, new[] { 7 } },        // 珠寶與飾品       → 宇過天晴文創
+			{ 22, new[] { 8 } },        // 運動裝備與球類   → 流浪戶外
+			{ 23, new[] { 8 } },        // 太陽眼鏡與配件   → 流浪戶外
+		};
+
+		// ====================================================================
 		// ★★★ 核心播種方法 ★★★
 		// ====================================================================
 		public static async Task SeedAsync(ISpanShopDBContext context)
@@ -75,6 +104,13 @@ namespace ISpanShop.Models.Seeding
 					// 建立圖片清單 (可被所有克隆版本共用模板)
 					var imageTemplates = BuildImageTemplates(dummy.Images);
 
+					// 根據分類決定所屬賣場（找不到對應則退回預設賣場）
+					int resolvedStoreId;
+					if (category != null && CategoryToStores.TryGetValue(category.Id, out var storeOptions))
+						resolvedStoreId = storeOptions[_random.Next(storeOptions.Length)];
+					else
+						resolvedStoreId = store.Id;
+
 					// 資料倍增術：將 1 筆真實商品變種成 5 筆
 					for (int k = 0; k < CloneSuffixes.Length; k++)
 					{
@@ -82,7 +118,7 @@ namespace ISpanShop.Models.Seeding
 						var variants = ProductVariantHelper.GenerateVariants(dummy.Category, clonePrice, maxCombinations: 6);
 
 						products.Add(CreateProductEntity(
-							storeId: store.Id,
+							storeId: resolvedStoreId,
 							categoryId: category?.Id ?? categories.First().Id,
 							brandId: brand?.Id ?? brands.First().Id,
 							name: productName + CloneSuffixes[k],
@@ -97,6 +133,37 @@ namespace ISpanShop.Models.Seeding
 				foreach (var p in products.Skip(Math.Max(0, products.Count - 15)))
 				{
 					p.Status = 2;
+				}
+
+				// 3b. 庫存狀態平均分佈：1/3 零庫存 / 1/3 低庫存 / 1/3 正常
+				//     低庫存閾值由各 variant 的 SafetyStock 決定（系統判斷：Stock <= SafetyStock）
+				var allVariants = products
+					.SelectMany(p => p.ProductVariants)
+					.OrderBy(_ => _random.Next())   // 隨機打散，確保各狀態平均分佈到不同商品
+					.ToList();
+				int vTotal = allVariants.Count;
+				int vThird = vTotal / 3;
+
+				for (int vi = 0; vi < vTotal; vi++)
+				{
+					var v = allVariants[vi];
+					int safety = v.SafetyStock ?? 10;
+
+					if (vi < vThird)
+					{
+						// 零庫存（已售罄狀態）
+						v.Stock = 0;
+					}
+					else if (vi < vThird * 2)
+					{
+						// 低庫存警報：Stock 設為 1 ~ SafetyStock，確保 Stock <= SafetyStock 觸發警報
+						v.Stock = _random.Next(1, Math.Max(2, safety + 1));
+					}
+					else
+					{
+						// 正常庫存：50 ~ 200，且確保高於 SafetyStock（SafetyStock 最高 19，不影響下限 50）
+						v.Stock = _random.Next(Math.Max(50, safety + 1), 201);
+					}
 				}
 
 				// 4. 一次性批次寫入資料庫

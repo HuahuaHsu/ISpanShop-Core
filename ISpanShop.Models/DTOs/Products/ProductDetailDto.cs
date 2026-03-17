@@ -20,10 +20,14 @@ namespace ISpanShop.Models.DTOs.Products
         public int? TotalSales { get; set; }
         public int? ViewCount { get; set; }
         public string? RejectReason { get; set; }
-        /// <summary>審核狀態 (0=待審核, 1=通過, 2=退回)</summary>
+        /// <summary>審核狀態 (0=待審核, 1=通過, 2=退回, 3=重新申請審核)</summary>
         public int ReviewStatus { get; set; }
         public string? ReviewedBy { get; set; }
         public DateTime? ReviewDate { get; set; }
+        public string? ForceOffShelfReason { get; set; }
+        public DateTime? ForceOffShelfDate { get; set; }
+        public int? ForceOffShelfBy { get; set; }
+        public DateTime? ReApplyDate { get; set; }
         public string? SpecDefinitionJson { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

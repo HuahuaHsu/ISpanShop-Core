@@ -17,6 +17,17 @@ namespace ISpanShop.Services.ContentModeration;
 			_repo = repo;
 		}
 
+		/// <inheritdoc/>
+		public async Task<List<string>> GetActiveWordListAsync()
+		{
+			var words = await _repo.GetAllWordsAsync();
+			return words.ToList();
+		}
+
+		/// <inheritdoc/>
+		public async Task<(List<string> HighRisk, List<string> LowRisk)> GetActiveWordsByRiskAsync()
+			=> await _repo.GetActiveWordsGroupedAsync();
+
 		public async Task<List<SensitiveWordDto>> GetAllAsync()
 		{
 			var entities = await _repo.GetAllAsync();

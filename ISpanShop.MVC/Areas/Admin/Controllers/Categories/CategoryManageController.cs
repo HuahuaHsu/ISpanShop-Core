@@ -76,11 +76,40 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
             return Json(new { success = true });
         }
 
+        /// <summary>批次更新分類排序（拖曳排序用）</summary>
+        [HttpPost]
+        public async Task<IActionResult> UpdateSortOrder([FromBody] List<CategorySortDto> newOrders)
+        {
+            try
+            {
+                if (newOrders == null || !newOrders.Any())
+                    return BadRequest(new { success = false, message = "排序資料不可為空" });
+
+                foreach (var item in newOrders)
+                {
+                    _svc.UpdateSortOrder(item.Id, item.Sort);
+                }
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpGet]
         public IActionResult GetProductCount(int categoryId)
         {
             var count = _svc.GetProductCount(categoryId);
             return Json(new { count });
         }
+    }
+
+    /// <summary>批次排序 DTO</summary>
+    public class CategorySortDto
+    {
+        public int Id { get; set; }
+        public int Sort { get; set; }
     }
 }

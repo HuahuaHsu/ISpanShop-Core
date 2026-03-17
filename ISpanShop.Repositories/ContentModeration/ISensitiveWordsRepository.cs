@@ -13,6 +13,13 @@ namespace ISpanShop.Repositories.ContentModeration
 		Task<List<SensitiveWord>> GetAllAsync();
 		Task<IEnumerable<string>> GetAllWordsAsync();
 
+		/// <summary>
+		/// 回傳啟用中的敏感字依風險等級分組。
+		/// 優先使用 CategoryNavigation.Name 判斷，不含高風險關鍵字的分類歸入低風險。
+		/// 若全部無法分類，則前半為高風險、後半為低風險。
+		/// </summary>
+		Task<(List<string> HighRisk, List<string> LowRisk)> GetActiveWordsGroupedAsync();
+
 		// 根據 ID 取得單筆敏感字 (用來做修改或刪除前的查詢)
 		Task<SensitiveWord> GetByIdAsync(int id);
 

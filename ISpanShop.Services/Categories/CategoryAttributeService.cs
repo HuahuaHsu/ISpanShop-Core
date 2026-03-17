@@ -8,98 +8,98 @@ using ISpanShop.Repositories.Inventories;
 
 namespace ISpanShop.Services.Categories
 {
-    public class CategorySpecService
+    public class CategoryAttributeService
     {
-        private readonly ICategorySpecRepository _categorySpecRepository;
+        private readonly ICategoryAttributeRepository _categoryAttributeRepository;
 
-        public CategorySpecService(ICategorySpecRepository categorySpecRepository)
+        public CategoryAttributeService(ICategoryAttributeRepository categoryAttributeRepository)
         {
-            _categorySpecRepository = categorySpecRepository;
+            _categoryAttributeRepository = categoryAttributeRepository;
         }
 
         public IEnumerable<CategorySpecDto> GetAll()
         {
-            return _categorySpecRepository.GetAll();
+            return _categoryAttributeRepository.GetAll();
         }
 
         public CategorySpecDto? GetById(int id)
         {
-            return _categorySpecRepository.GetById(id);
+            return _categoryAttributeRepository.GetById(id);
         }
 
         public void Create(string name, string inputType, bool isRequired, bool allowCustomInput, int sortOrder, List<string> options)
         {
             var cleanOptions = NeedsOptions(inputType) ? options : new List<string>();
-            _categorySpecRepository.Create(name, inputType, isRequired, allowCustomInput, sortOrder, cleanOptions);
+            _categoryAttributeRepository.Create(name, inputType, isRequired, allowCustomInput, sortOrder, cleanOptions);
         }
 
         public void Update(int id, string name, string inputType, bool isRequired, bool allowCustomInput, int sortOrder, List<string> options)
         {
             var cleanOptions = NeedsOptions(inputType) ? options : new List<string>();
-            _categorySpecRepository.Update(id, name, inputType, isRequired, allowCustomInput, sortOrder, cleanOptions);
+            _categoryAttributeRepository.Update(id, name, inputType, isRequired, allowCustomInput, sortOrder, cleanOptions);
         }
 
         public void Delete(int id)
         {
-            _categorySpecRepository.Delete(id);
+            _categoryAttributeRepository.Delete(id);
         }
 
         public void UpdateIsActive(int id, bool isActive)
         {
-            _categorySpecRepository.UpdateIsActive(id, isActive);
+            _categoryAttributeRepository.UpdateIsActive(id, isActive);
         }
 
         // ── 分類綁定相關 ──────────────────────────────
 
         public IEnumerable<CategoryDto> GetAllCategories()
         {
-            return _categorySpecRepository.GetAllCategories();
+            return _categoryAttributeRepository.GetAllCategories();
         }
 
         public List<int> GetBoundAttributeIds(int categoryId)
         {
-            return _categorySpecRepository.GetBoundAttributeIds(categoryId);
+            return _categoryAttributeRepository.GetBoundAttributeIds(categoryId);
         }
 
         public List<BoundSpecItem> GetBoundSpecItems(int categoryId)
         {
-            return _categorySpecRepository.GetBoundSpecItems(categoryId);
+            return _categoryAttributeRepository.GetBoundSpecItems(categoryId);
         }
 
         public void ToggleBinding(int categoryId, int specId, bool isBound)
         {
-            _categorySpecRepository.ToggleBinding(categoryId, specId, isBound);
+            _categoryAttributeRepository.ToggleBinding(categoryId, specId, isBound);
         }
 
         public void ToggleFilterable(int categoryId, int specId, bool isFilterable)
         {
-            _categorySpecRepository.ToggleFilterable(categoryId, specId, isFilterable);
+            _categoryAttributeRepository.ToggleFilterable(categoryId, specId, isFilterable);
         }
 
         public List<object> GetAllBindingPairs()
         {
-            return _categorySpecRepository.GetAllBindingPairs();
+            return _categoryAttributeRepository.GetAllBindingPairs();
         }
 
         // ── 新版綁定管理 ─────────────────────────────────────────
 
         public List<BoundSpecDetailDto> GetBoundSpecsWithDetails(int categoryId)
-            => _categorySpecRepository.GetBoundSpecsWithDetails(categoryId);
+            => _categoryAttributeRepository.GetBoundSpecsWithDetails(categoryId);
 
         public void BindSpec(int categoryId, int specId)
-            => _categorySpecRepository.BindSpec(categoryId, specId);
+            => _categoryAttributeRepository.BindSpec(categoryId, specId);
 
         public void UnbindSpec(int categoryId, int specId)
-            => _categorySpecRepository.UnbindSpec(categoryId, specId);
+            => _categoryAttributeRepository.UnbindSpec(categoryId, specId);
 
         public void UpdateBindingSort(int categoryId, List<int> orderedSpecIds)
-            => _categorySpecRepository.UpdateBindingSort(categoryId, orderedSpecIds);
+            => _categoryAttributeRepository.UpdateBindingSort(categoryId, orderedSpecIds);
 
         public bool HasBindings(int specId)
-            => _categorySpecRepository.HasBindings(specId);
+            => _categoryAttributeRepository.HasBindings(specId);
 
         public async Task<PagedResult<CategorySpecDto>> GetPagedAsync(int pageNumber, int pageSize)
-            => await _categorySpecRepository.GetPagedAsync(pageNumber, pageSize);
+            => await _categoryAttributeRepository.GetPagedAsync(pageNumber, pageSize);
 
         private static bool NeedsOptions(string inputType)
         {

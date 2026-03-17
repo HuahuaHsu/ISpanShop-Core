@@ -86,6 +86,11 @@ namespace ISpanShop.Services.Products
         /// </summary>
         Task<int> UpdateBatchStatusAsync(List<int> productIds, byte targetStatus);
 
+        /// <summary>
+        /// 批次更新商品審核狀態
+        /// </summary>
+        Task<int> UpdateBatchReviewStatusAsync(List<int> productIds, int targetReviewStatus, string adminId);
+
         // ═══════════════════════════════════════════════════════════
         //  非同步版本（效能最佳化：async/await + 投影 + 真分頁）
         // ═══════════════════════════════════════════════════════════
@@ -120,13 +125,40 @@ namespace ISpanShop.Services.Products
         /// <summary>[Async] 重設為待審核：清空審核結果欄位，商品回到 Status=2 / ReviewStatus=0</summary>
         Task ResetToPendingAsync(int productId);
 
-        /// <summary>[Async] 取得全站商品各狀態統計數字</summary>
-        Task<(int Total, int Published, int Unpublished, int Pending)> GetProductStatusCountsAsync();
+        /// <summary>[Async] 取得全站商品各狀態統計數字（Unpublished 不含強制下架）</summary>
+        Task<(int Total, int Published, int Unpublished, int Pending, int ForcedOffShelf)> GetProductStatusCountsAsync();
 
-        /// <summary>[Async] 管理員強制下架（儲存下架原因）</summary>
-        Task ForceUnpublishAsync(int id, string? reason);
+        /// <summary>[Async] 管理員強制下架（Status→4，儲存下架原因與操作人）</summary>
+        Task ForceUnpublishAsync(int id, string? reason, int? adminBy);
 
-        /// <summary>[Async] 模擬系統自動審核：新增測試商品並執行違禁詞批次審核，回傳攔截與放行筆數</summary>
+        /// <summary>[Async] 批次強制下架</summary>
+        Task<int> BatchForceOffShelfAsync(List<int> ids, string? reason, int? adminBy);
+
+        /// <summary>[Async] 分頁取得重新申請審核商品（ReviewStatus==3）</summary>
+        Task<PagedResult<ProductReviewDto>> GetReApplyProductsPagedAsync(int page, int pageSize);
+
+        /// <summary>[Async] 賣家申請重新上架</summary>
+        Task ReApplyAsync(int id);
+
+        /// <summary>[Async] 管理員核准強制下架商品重新上架</summary>
+        Task ApproveForcedProductAsync(int id, string adminId);
+
+        /// <summary>[Async] 管理員駁回重新申請</summary>
+        Task RejectForcedProductAsync(int id, string adminId, string reason);
+
+        /// <summary>[Async] 模擬系統自動審核：對所有待審核商品執行敏感字比對，回傳詳細結果</summary>
         Task<SimulateAutoReviewResult> SimulateAutoReviewAsync();
+
+        /// <summary>[Async] 生成測試商品（乾淨 5 筆 / 高風險 5 筆 / 邊緣 5 筆，共 15 筆，全為待審核）</summary>
+        Task<GenerateTestProductsResult> GenerateTestProductsAsync();
+
+        /// <summary>[Async] 取得近期審核通過的商品（最近 N 小時內 ReviewStatus=1）</summary>
+        Task<IEnumerable<ProductReviewDto>> GetRecentlyApprovedAsync(int hours = 24);
+
+        /// <summary>[Async] 分頁取得近期審核通過的商品（最近 N 小時內 ReviewStatus=1）</summary>
+        Task<PagedResult<ProductReviewDto>> GetRecentlyApprovedPagedAsync(int page, int pageSize, int hours = 24);
+
+        /// <summary>[Async] 模擬賣家修改後重新送審：將 ReviewStatus=2（已退回）的商品改為 ReviewStatus=3（待重新審核），出現在重新申請審核列表。</summary>
+        Task SimulateSellerResubmitAsync(int id);
     }
 }

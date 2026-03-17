@@ -51,15 +51,15 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[CategorySpecMappings]",
+         "Name": "[dbo].[CategoryAttributeMappings]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[CategorySpecOptions]",
+         "Name": "[dbo].[CategoryAttributeOptions]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[CategorySpecs]",
+         "Name": "[dbo].[CategoryAttributes]",
          "ObjectType": 0
       },
       {
@@ -112,6 +112,18 @@
       },
       {
          "Name": "[dbo].[ProductVariants]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PromotionItems]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PromotionRules]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Promotions]",
          "ObjectType": 0
       },
       {

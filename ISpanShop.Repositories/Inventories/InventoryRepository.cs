@@ -45,6 +45,9 @@ namespace ISpanShop.Repositories.Inventories
                     v.SkuCode.Contains(kw));
             }
 
+            if (criteria.ParentCategoryId.HasValue)
+                baseQuery = baseQuery.Where(v => v.Product.Category.ParentId == criteria.ParentCategoryId.Value || v.Product.CategoryId == criteria.ParentCategoryId.Value);
+
             if (criteria.CategoryId.HasValue)
                 baseQuery = baseQuery.Where(v => v.Product.CategoryId == criteria.CategoryId.Value);
 
@@ -102,6 +105,9 @@ namespace ISpanShop.Repositories.Inventories
                     v.VariantName.Contains(kw)  ||
                     v.SkuCode.Contains(kw));
             }
+
+            if (criteria.ParentCategoryId.HasValue)
+                baseQuery = baseQuery.Where(v => v.Product.Category.ParentId == criteria.ParentCategoryId.Value || v.Product.CategoryId == criteria.ParentCategoryId.Value);
 
             if (criteria.CategoryId.HasValue)
                 baseQuery = baseQuery.Where(v => v.Product.CategoryId == criteria.CategoryId.Value);
@@ -235,6 +241,22 @@ namespace ISpanShop.Repositories.Inventories
         public IEnumerable<(int Id, string Name)> GetCategoryOptions()
             => _context.Categories
                 .Where(c => c.IsVisible != false)
+                .OrderBy(c => c.Sort).ThenBy(c => c.Name)
+                .Select(c => new { c.Id, c.Name })
+                .ToList()
+                .Select(c => (c.Id, c.Name));
+
+        public IEnumerable<(int Id, string Name)> GetMainCategories()
+            => _context.Categories
+                .Where(c => c.ParentId == null && c.IsVisible != false)
+                .OrderBy(c => c.Sort).ThenBy(c => c.Name)
+                .Select(c => new { c.Id, c.Name })
+                .ToList()
+                .Select(c => (c.Id, c.Name));
+
+        public IEnumerable<(int Id, string Name)> GetSubCategories(int parentId)
+            => _context.Categories
+                .Where(c => c.ParentId == parentId && c.IsVisible != false)
                 .OrderBy(c => c.Sort).ThenBy(c => c.Name)
                 .Select(c => new { c.Id, c.Name })
                 .ToList()

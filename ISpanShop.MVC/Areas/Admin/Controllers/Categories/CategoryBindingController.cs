@@ -11,17 +11,17 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
     [RequirePermission("product_manage")]
     public class CategoryBindingController : AdminBaseController
     {
-        private readonly CategorySpecService _specService;
+        private readonly CategoryAttributeService _attributeService;
 
-        public CategoryBindingController(CategorySpecService specService)
+        public CategoryBindingController(CategoryAttributeService attributeService)
         {
-            _specService = specService;
+            _attributeService = attributeService;
         }
 
         // 首頁：只渲染分類列表，規格用 AJAX 載入
         public IActionResult Index()
         {
-            var categories = _specService.GetAllCategories();
+            var categories = _attributeService.GetAllCategories();
             return View(categories);
         }
 
@@ -29,9 +29,9 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
         [HttpGet]
         public IActionResult GetSpecsForCategory(int categoryId)
         {
-            var allSpecs = _specService.GetAll();
-            var boundIds = _specService.GetBoundAttributeIds(categoryId);
-            var categoryName = _specService.GetAllCategories()
+            var allSpecs = _attributeService.GetAll();
+            var boundIds = _attributeService.GetBoundAttributeIds(categoryId);
+            var categoryName = _attributeService.GetAllCategories()
                 .FirstOrDefault(c => c.Id == categoryId)?.Name ?? "";
 
             var result = allSpecs.Select(s => new {
@@ -53,13 +53,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
             if (dto == null) return BadRequest(new { success = false });
 
             var newIds     = dto.AttributeIds ?? new System.Collections.Generic.List<int>();
-            var currentIds = _specService.GetBoundAttributeIds(dto.CategoryId);
+            var currentIds = _attributeService.GetBoundAttributeIds(dto.CategoryId);
 
             foreach (var id in newIds.Except(currentIds))
-                _specService.ToggleBinding(dto.CategoryId, id, true);
+                _attributeService.ToggleBinding(dto.CategoryId, id, true);
 
             foreach (var id in currentIds.Except(newIds))
-                _specService.ToggleBinding(dto.CategoryId, id, false);
+                _attributeService.ToggleBinding(dto.CategoryId, id, false);
 
             return Json(new { success = true });
         }

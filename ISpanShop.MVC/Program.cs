@@ -42,6 +42,7 @@ namespace ISpanShop.MVC
 			// Add services to the container.
 			builder.Services.AddControllersWithViews();
 
+			//連線註冊
 			builder.Services.AddDbContext<ISpanShopDBContext>
 				(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 				);
@@ -70,9 +71,9 @@ namespace ISpanShop.MVC
 
 			builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
-			builder.Services.AddScoped<ICategorySpecRepository, CategorySpecRepository>();
+			builder.Services.AddScoped<ICategoryAttributeRepository, CategoryAttributeRepository>();
 
-			builder.Services.AddScoped<CategorySpecService>();
+			builder.Services.AddScoped<CategoryAttributeService>();
 
 			builder.Services.AddScoped<ICategoryManageRepository, CategoryManageRepository>();
 			builder.Services.AddScoped<CategoryManageService>();
@@ -236,21 +237,21 @@ namespace ISpanShop.MVC
 					)
 					ALTER TABLE Categories ADD NameEn NVARCHAR(200) NULL");
 
-				// 確保 CategorySpecMappings 資料表有 Sort 欄位（分類內屬性排序用）
+				// 確保 CategoryAttributeMappings 資料表有 Sort 欄位（分類內屬性排序用）
 				await context.Database.ExecuteSqlRawAsync(@"
 					IF NOT EXISTS (
 						SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-						WHERE TABLE_NAME = 'CategorySpecMappings' AND COLUMN_NAME = 'Sort'
+						WHERE TABLE_NAME = 'CategoryAttributeMappings' AND COLUMN_NAME = 'Sort'
 					)
-					ALTER TABLE CategorySpecMappings ADD Sort INT NOT NULL DEFAULT 0");
+					ALTER TABLE CategoryAttributeMappings ADD Sort INT NOT NULL DEFAULT 0");
 
-				// 確保 CategorySpecs 資料表有 AllowCustomInput 欄位（允許賣家自填選項）
+				// 確保 CategoryAttributes 資料表有 AllowCustomInput 欄位（允許賣家自填選項）
 				await context.Database.ExecuteSqlRawAsync(@"
 					IF NOT EXISTS (
 						SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-						WHERE TABLE_NAME = 'CategorySpecs' AND COLUMN_NAME = 'AllowCustomInput'
+						WHERE TABLE_NAME = 'CategoryAttributes' AND COLUMN_NAME = 'AllowCustomInput'
 					)
-					ALTER TABLE CategorySpecs ADD AllowCustomInput BIT NOT NULL DEFAULT 0");
+					ALTER TABLE CategoryAttributes ADD AllowCustomInput BIT NOT NULL DEFAULT 0");
 
 				// 清除歷史資料中被錯誤加上的 [待審核] 名稱前綴
 				await context.Database.ExecuteSqlRawAsync(@"

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace ISpanShop.Models.EfModels;
 
-public partial class CategorySpec
+public partial class CategoryAttribute
 {
     public int Id { get; set; }
 
@@ -15,13 +15,11 @@ public partial class CategorySpec
 
     public bool IsRequired { get; set; }
 
-    public int SortOrder { get; set; }
-
     public bool IsActive { get; set; }
 
     public bool AllowCustomInput { get; set; }
 
-    public virtual ICollection<CategorySpecMapping> CategorySpecMappings { get; set; } = new List<CategorySpecMapping>();
+    public virtual ICollection<CategoryAttributeMapping> CategoryAttributeMappings { get; set; } = new List<CategoryAttributeMapping>();
 
-    public virtual ICollection<CategorySpecOption> CategorySpecOptions { get; set; } = new List<CategorySpecOption>();
+    public virtual ICollection<CategoryAttributeOption> CategoryAttributeOptions { get; set; } = new List<CategoryAttributeOption>();
 }

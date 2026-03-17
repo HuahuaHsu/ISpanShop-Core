@@ -17,5 +17,7 @@ namespace ISpanShop.Services.Inventories
         void UpdateStockAndSafetyStock(int variantId, int newStock, int newSafetyStock);
         IEnumerable<(int Id, string Name)> GetStoreOptions();
         IEnumerable<(int Id, string Name)> GetCategoryOptions();
+        IEnumerable<(int Id, string Name)> GetMainCategories();
+        IEnumerable<(int Id, string Name)> GetSubCategories(int parentId);
     }
 }

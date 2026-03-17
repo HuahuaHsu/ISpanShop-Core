@@ -157,17 +157,6 @@ namespace ISpanShop.Models.Seeding
 			// === 🏀 運動器材 ===
 			{ "sports-accessories", new List<SpecDimension> {
 				new("規格", new[] { "標準款", "比賽用", "練習用" })
-			}},
-
-			// === 🏍️ 機車 ===
-			{ "motorcycle", new List<SpecDimension> {
-				new("顏色", new[] { "極速黑", "珍珠白", "賽車紅", "消光灰" })
-			}},
-
-			// === 🚗 汽車 ===
-			{ "vehicle", new List<SpecDimension> {
-				new("外觀色", new[] { "星曜黑", "冰川白", "鈦灰銀", "烈焰紅" }),
-				new("內裝", new[] { "黑色皮革", "米色皮革" })
 			}}
 		};
 
@@ -198,8 +187,7 @@ namespace ISpanShop.Models.Seeding
 			{ "womens-jewellery", ("女裝與配件", "珠寶與飾品") },
 			{ "sunglasses", ("運動與休閒", "太陽眼鏡與配件") },
 			{ "sports-accessories", ("運動與休閒", "運動裝備與球類") },
-			{ "motorcycle", ("汽機車百貨", "機車與周邊配件") },
-			{ "vehicle", ("汽機車百貨", "汽車與周邊配件") }
+			// motorcycle/vehicle（汽機車百貨）已移除
 		};
 
 		// ====================================================================

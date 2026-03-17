@@ -20,3 +20,41 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* ── 全域表格易讀性提升 ── */
+.table > thead > tr > th,
+.table > thead > tr > td {
+    font-size: 0.8125rem;       /* 13px：表頭保持緊湊，搭配 uppercase */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 0.8rem 0.9rem;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table > tbody > tr > td {
+    font-size: 0.9375rem;       /* 15px：比預設 14px 大一級，易讀不臃腫 */
+    line-height: 1.65;
+    padding: 0.8rem 0.9rem;
+    vertical-align: middle;
+}
+
+/* 小型內嵌表格（SKU 明細、offcanvas 內等）保留較緊湊字體 */
+.table-sm > thead > tr > th,
+.table-sm > thead > tr > td {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
+}
+
+.table-sm > tbody > tr > td {
+    font-size: 0.875rem;
+    padding: 0.45rem 0.75rem;
+    line-height: 1.5;
+}
+
+/* 整列可點擊時的視覺提示 */
+.table > tbody > tr.clickable-row,
+.table > tbody > tr[data-product-id] {
+    cursor: pointer;
+}
