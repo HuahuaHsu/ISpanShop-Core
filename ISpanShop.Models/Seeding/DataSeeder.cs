@@ -135,6 +135,37 @@ namespace ISpanShop.Models.Seeding
 					p.Status = 2;
 				}
 
+				// 3b. 庫存狀態平均分佈：1/3 零庫存 / 1/3 低庫存 / 1/3 正常
+				//     低庫存閾值由各 variant 的 SafetyStock 決定（系統判斷：Stock <= SafetyStock）
+				var allVariants = products
+					.SelectMany(p => p.ProductVariants)
+					.OrderBy(_ => _random.Next())   // 隨機打散，確保各狀態平均分佈到不同商品
+					.ToList();
+				int vTotal = allVariants.Count;
+				int vThird = vTotal / 3;
+
+				for (int vi = 0; vi < vTotal; vi++)
+				{
+					var v = allVariants[vi];
+					int safety = v.SafetyStock ?? 10;
+
+					if (vi < vThird)
+					{
+						// 零庫存（已售罄狀態）
+						v.Stock = 0;
+					}
+					else if (vi < vThird * 2)
+					{
+						// 低庫存警報：Stock 設為 1 ~ SafetyStock，確保 Stock <= SafetyStock 觸發警報
+						v.Stock = _random.Next(1, Math.Max(2, safety + 1));
+					}
+					else
+					{
+						// 正常庫存：50 ~ 200，且確保高於 SafetyStock（SafetyStock 最高 19，不影響下限 50）
+						v.Stock = _random.Next(Math.Max(50, safety + 1), 201);
+					}
+				}
+
 				// 4. 一次性批次寫入資料庫
 				context.Products.AddRange(products);
 				await context.SaveChangesAsync();

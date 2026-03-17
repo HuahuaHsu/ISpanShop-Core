@@ -207,6 +207,7 @@
                         <th class="col-time" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">時間區間</th>
                         <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">狀態</th>
                         <th class="col-seller" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">賣家</th>
+                        <th class="col-act text-end" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -231,6 +232,17 @@
                                     <span class="badge @item.StatusBadgeClass">@item.DisplayStatus</span>
                                 </td>
                                 <td class="col-seller" style="font-size:.875rem; color:#4a5568;">@item.SellerName</td>
+                                <td class="col-act text-end" onclick="event.stopPropagation()">
+                                    @if (item.Status == 2)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-warning rounded-pill px-3"
+                                                title="模擬賣家修改後重新送審（展示用）"
+                                                onclick="simulateSellerResubmitPromo(@item.Id, '@Html.Raw(item.Name.Replace("'","\\'"  ))')">
+                                            <i class="bx bx-store-alt me-1"></i>模擬賣家送審
+                                        </button>
+                                    }
+                                </td>
                             </tr>
                             _ni++;
                         }
@@ -600,6 +612,24 @@
         document.getElementById('rejectReasonInput').value = text;
         document.getElementById('rejectReasonError').style.display = 'none';
         document.getElementById('rejectReasonInput').focus();
+    }
+
+    // ── 模擬賣家修改後重新送審（展示用）──
+    async function simulateSellerResubmitPromo(id, name) {
+        const ok = await showConfirm(
+            '🛍️ 模擬賣家重新送審',
+            `模擬賣家修改後重新送審活動「${name}」？<br><small style="color:#718096;">活動將回到待審核列表，展示完整拒絕 → 修改 → 重新送審流程。</small>`
+        );
+        if (!ok) return;
+        const token = document.querySelector('#actionForm [name="__RequestVerificationToken"]').value;
+        const fd = new FormData();
+        fd.append('__RequestVerificationToken', token);
+        const res = await fetch(`/Promotions/SimulateSellerResubmit/${id}`, {
+            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+        });
+        const result = await res.json();
+        showMsg(result.success ? 'success' : 'error', result.message);
+        if (result.success) setTimeout(() => location.reload(), 1500);
     }
 </script>
 <script>

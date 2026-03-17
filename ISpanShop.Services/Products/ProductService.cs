@@ -395,6 +395,10 @@ namespace ISpanShop.Services.Products
             => await _productRepository.ReApplyAsync(id);
 
         /// <inheritdoc/>
+        public async Task SimulateSellerResubmitAsync(int id)
+            => await _productRepository.SimulateSellerResubmitAsync(id);
+
+        /// <inheritdoc/>
         public async Task ApproveForcedProductAsync(int id, string adminId)
             => await _productRepository.ApproveForcedProductAsync(id, adminId);
 

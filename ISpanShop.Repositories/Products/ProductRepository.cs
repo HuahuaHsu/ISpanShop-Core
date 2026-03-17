@@ -760,6 +760,20 @@ namespace ISpanShop.Repositories.Products
         }
 
         /// <inheritdoc/>
+        public async Task SimulateSellerResubmitAsync(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            // 只對 ReviewStatus=2（已退回）的商品有效
+            if (product == null || product.ReviewStatus != 2) return;
+
+            product.ReviewStatus = 3;           // 待重新審核
+            product.ReApplyDate  = DateTime.Now;
+            product.UpdatedAt    = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+        }
+
+        /// <inheritdoc/>
         public async Task ApproveForcedProductAsync(int id, string adminId)
         {
             var product = await _context.Products.FindAsync(id);

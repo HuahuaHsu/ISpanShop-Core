@@ -515,6 +515,26 @@ namespace ISpanShop.MVC.Controllers.Promotions
         }
 
         // ===================================================================
+        // SimulateSellerResubmit POST (AJAX — 展示用：模擬賣家修改後重新送審)
+        // ===================================================================
+        /// <summary>
+        /// 將 Status=2（已拒絕）的活動重置回 Status=0（待審核），模擬賣家修改後重新送審的流程。
+        /// </summary>
+        [HttpPost("SimulateSellerResubmit/{id}")]
+        [ValidateAntiForgeryToken]
+        public IActionResult SimulateSellerResubmit(int id)
+        {
+            var promo = _store.FirstOrDefault(p => p.Id == id && !p.IsDeleted);
+            if (promo == null) return Json(new { success = false, message = "找不到活動" });
+            if (promo.Status != 2) return Json(new { success = false, message = "只有已拒絕的活動才能重新送審" });
+
+            promo.Status       = 0;          // 回到待審核
+            promo.RejectReason = null;
+            promo.ReviewedAt   = null;
+            return Json(new { success = true, message = $"已模擬賣家重新送審，活動「{promo.Name}」已回到待審核列表。" });
+        }
+
+        // ===================================================================
         // Delete POST (AJAX / Form)
         // ===================================================================
         [HttpPost("Delete/{id}")]

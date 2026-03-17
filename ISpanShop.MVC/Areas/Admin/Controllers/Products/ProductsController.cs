@@ -395,6 +395,26 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         }
 
         /// <summary>
+        /// [AJAX] 模擬賣家修改後重新送審 — 將 ReviewStatus=2（已退回）的商品移至 ReviewStatus=3（待重新審核）。
+        /// 商品將出現在「重新申請審核」頁籤，展示完整的退回→修改→重新送審流程。
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SimulateSellerResubmit([FromBody] RejectDto dto)
+        {
+            if (dto == null || dto.Id <= 0)
+                return Json(new { success = false, message = "無效的請求資料。" });
+            try
+            {
+                await _productService.SimulateSellerResubmitAsync(dto.Id);
+                return Json(new { success = true, message = "已模擬賣家重新送審，商品已移至「重新申請審核」列表。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
         /// [AJAX] 重新送審 - 前台賣家或管理員呼叫，效果同 UndoReject
         /// </summary>
         [HttpPost]

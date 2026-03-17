@@ -157,5 +157,8 @@ namespace ISpanShop.Services.Products
 
         /// <summary>[Async] 分頁取得近期審核通過的商品（最近 N 小時內 ReviewStatus=1）</summary>
         Task<PagedResult<ProductReviewDto>> GetRecentlyApprovedPagedAsync(int page, int pageSize, int hours = 24);
+
+        /// <summary>[Async] 模擬賣家修改後重新送審：將 ReviewStatus=2（已退回）的商品改為 ReviewStatus=3（待重新審核），出現在重新申請審核列表。</summary>
+        Task SimulateSellerResubmitAsync(int id);
     }
 }
