@@ -34,6 +34,7 @@ namespace ISpanShop.Repositories.Orders
 				.Include(o => o.Store)
 				.Include(o => o.OrderDetails)
 					.ThenInclude(od => od.Product)
+						.ThenInclude(p => p.ProductVariants)
 				.Include(o => o.ReturnRequests)
 					.ThenInclude(rr => rr.ReturnRequestImages)
 				.FirstOrDefaultAsync(o => o.Id == id);
@@ -161,6 +162,22 @@ namespace ISpanShop.Repositories.Orders
 			if (!string.IsNullOrEmpty(criteria.StoreName))
 				query = query.Where(o => o.Store != null && o.Store.StoreName.Contains(criteria.StoreName));
 
+			// C. 庫存狀態篩選 (1=充足, 2=不足)
+			// 注意：這是一個較複雜的篩選，需檢查訂單內的所有商品規格
+			if (criteria.StockStatus.HasValue)
+			{
+				if (criteria.StockStatus == 1) // 充足：所有品項庫存 >= 訂購數
+				{
+					query = query.Where(o => o.OrderDetails.All(od => 
+						_context.ProductVariants.Any(v => v.Id == od.VariantId && v.Stock >= od.Quantity)));
+				}
+				else if (criteria.StockStatus == 2) // 不足：至少有一項庫存 < 訂購數
+				{
+					query = query.Where(o => o.OrderDetails.Any(od => 
+						_context.ProductVariants.Any(v => v.Id == od.VariantId && v.Stock < od.Quantity)));
+				}
+			}
+
 			// B. 動態排序
 			query = criteria.SortBy switch
 			{
@@ -169,6 +186,9 @@ namespace ISpanShop.Repositories.Orders
 				"MemberName" => criteria.IsDescending ? query.OrderByDescending(o => o.User.MemberProfile.FullName) : query.OrderBy(o => o.User.MemberProfile.FullName),
 				"ReturnRequestDate" => criteria.IsDescending ? query.OrderByDescending(o => o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault().CreatedAt) : query.OrderBy(o => o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault().CreatedAt),
 				"RefundDate" => criteria.IsDescending ? query.OrderByDescending(o => o.ReturnRequests.OrderByDescending(r => r.UpdatedAt).FirstOrDefault().UpdatedAt) : query.OrderBy(o => o.ReturnRequests.OrderByDescending(r => r.UpdatedAt).FirstOrDefault().UpdatedAt),
+				"StockStatus" => criteria.IsDescending 
+					? query.OrderByDescending(o => o.OrderDetails.Count(od => _context.ProductVariants.Any(v => v.Id == od.VariantId && v.Stock < od.Quantity)))
+					: query.OrderBy(o => o.OrderDetails.Count(od => _context.ProductVariants.Any(v => v.Id == od.VariantId && v.Stock < od.Quantity))),
 				_ => criteria.IsDescending ? query.OrderByDescending(o => o.CreatedAt) : query.OrderBy(o => o.CreatedAt)
 			};
 

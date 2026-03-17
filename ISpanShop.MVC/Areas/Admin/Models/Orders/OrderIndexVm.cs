@@ -19,6 +19,7 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Orders
 		public int CountPendingShipment { get; set; }
 		public int CountCompleted { get; set; }
 		public int CountUrgentShipment { get; set; }
+		public int CountLowStock { get; set; }
 	}
 }
 

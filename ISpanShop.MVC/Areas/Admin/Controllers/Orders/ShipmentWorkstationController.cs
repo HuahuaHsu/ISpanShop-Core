@@ -29,10 +29,19 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
                 PageSize = 1
             });
 
+            // 取得庫存緊缺總數
+            var lowStockResult = await _orderService.GetFilteredOrdersAsync(new OrderSearchDto
+            {
+                Statuses = new List<int> { 1 },
+                StockStatus = 2,
+                PageSize = 1
+            });
+
             var vm = new OrderIndexVm
             {
                 CountTotal = totalPending,
                 CountUrgentShipment = urgentResult.TotalCount,
+                CountLowStock = lowStockResult.TotalCount,
                 DateDimensionOptions = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
                 {
                     new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Text = "下單時間", Value = "1" },
@@ -55,11 +64,27 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
                 PageSize = 1
             });
 
+            var lowStockResult = await _orderService.GetFilteredOrdersAsync(new OrderSearchDto
+            {
+                Statuses = new List<int> { 1 },
+                StockStatus = 2,
+                PageSize = 1
+            });
+
             return Json(new { 
                 success = true, 
                 totalPending = totalPending, 
-                totalUrgent = urgentResult.TotalCount 
+                totalUrgent = urgentResult.TotalCount,
+                totalLowStock = lowStockResult.TotalCount
             });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetOrderDetailAjax(long id)
+        {
+            var order = await _orderService.GetOrderDetailAsync(id);
+            if (order == null) return Json(new { success = false, message = "找不到訂單" });
+            return Json(new { success = true, data = order });
         }
 
         [HttpPost]

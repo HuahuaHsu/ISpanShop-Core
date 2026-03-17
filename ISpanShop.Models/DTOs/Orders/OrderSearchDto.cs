@@ -28,6 +28,9 @@ namespace ISpanShop.Models.DTOs.Orders
 		public int? StoreId { get; set; }
 		public string StoreName { get; set; }
 
+		// C. 庫存狀態篩選 (1=充足, 2=不足)
+		public int? StockStatus { get; set; }
+
 		// B. 動態排序與分頁
 		public string SortBy { get; set; } 
 		public bool IsDescending { get; set; } = true;

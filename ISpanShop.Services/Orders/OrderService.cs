@@ -64,12 +64,14 @@ namespace ISpanShop.Services.Orders
 				{
 					Id = od.Id,
 					ProductId = od.ProductId,
+					VariantId = od.VariantId,
 					ProductName = od.ProductName,
 					VariantName = od.VariantName,
 					SkuCode = od.SkuCode,
 					CoverImage = od.CoverImage,
 					Price = od.Price ?? 0,
-					Quantity = od.Quantity
+					Quantity = od.Quantity,
+					Stock = od.Product?.ProductVariants?.FirstOrDefault(v => v.Id == od.VariantId)?.Stock ?? 0
 				}).ToList()
 			};
 		}
