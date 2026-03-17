@@ -261,15 +261,43 @@
         $(document).ready(function() {
             $('.select2').select2({ placeholder: '選擇狀態', allowClear: true, width: '100%' });
 
-            // 處理 URL 參數 (如果有)
-            const urlParams = new URLSearchParams(window.location.search);
-            if(urlParams.get('Statuses')) {
-                const status = urlParams.get('Statuses');
-                $('#statusSelect').val([status]).trigger('change');
-                updateCardActiveStatus(status);
+            // 嘗試還原狀態
+            const savedState = sessionStorage.getItem('orders_list_state');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                
+                // 還原表單欄位
+                const form = $('#filterForm');
+                if (state.Keyword) form.find('[name="Keyword"]').val(state.Keyword);
+                if (state.MinAmount) form.find('[name="MinAmount"]').val(state.MinAmount);
+                if (state.MaxAmount) form.find('[name="MaxAmount"]').val(state.MaxAmount);
+                if (state.StartDate) form.find('[name="StartDate"]').val(state.StartDate);
+                if (state.EndDate) form.find('[name="EndDate"]').val(state.EndDate);
+                if (state.DateDimension) form.find('[name="DateDimension"]').val(state.DateDimension);
+                
+                // 還原 Select2
+                if (state.Statuses && state.Statuses.length > 0) {
+                    $('#statusSelect').val(state.Statuses.map(String)).trigger('change');
+                }
+
+                // 還原分頁與排序變數
+                currentPage = state.PageNumber || 1;
+                currentSort.SortBy = state.SortBy || 'OrderDate';
+                currentSort.IsDescending = state.IsDescending !== undefined ? state.IsDescending : true;
+                $('#sortSelect').val(`${currentSort.SortBy}_${currentSort.IsDescending ? 'desc' : 'asc'}`);
+
+                updateCardActiveStatus(state.Statuses && state.Statuses.length === 1 ? state.Statuses[0] : null);
+            } else {
+                // 處理 URL 參數 (僅在無 Session 紀錄時)
+                const urlParams = new URLSearchParams(window.location.search);
+                if(urlParams.get('Statuses')) {
+                    const status = urlParams.get('Statuses');
+                    $('#statusSelect').val([status]).trigger('change');
+                    updateCardActiveStatus(status);
+                }
             }
 
-            loadOrderData(1);
+            loadOrderData(currentPage);
         });
 
         function filterByStatus(statusId) {
@@ -284,7 +312,7 @@
 
         function updateCardActiveStatus(statusId) {
             $('.stat-card').removeClass('stat-active');
-            if (statusId === null) {
+            if (statusId === null || statusId === undefined) {
                 $('#card-all').addClass('stat-active');
             } else {
                 $(`#card-${statusId}`).addClass('stat-active');
@@ -292,9 +320,11 @@
         }
 
         function resetForm() {
+            sessionStorage.removeItem('orders_list_state');
             $('#filterForm')[0].reset();
             $('.select2').val(null).trigger('change');
             updateCardActiveStatus(null);
+            currentPage = 1;
             loadOrderData(1);
         }
 
@@ -344,6 +374,9 @@
                 ...searchParams, ...currentSort, 
                 PageNumber: page, PageSize: pageSize 
             };
+
+            // 儲存狀態到 SessionStorage
+            sessionStorage.setItem('orders_list_state', JSON.stringify(requestData));
 
             $.ajax({
                 url: '@Url.Action("GetOrderListAjax", "Orders")',

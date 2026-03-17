@@ -204,7 +204,32 @@
         const pageSize = 10;
 
         $(document).ready(function() {
-            loadReturnData(1);
+            // 嘗試還原狀態
+            const savedState = sessionStorage.getItem('returns_list_state');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                
+                // 還原表單
+                const form = $('#filterForm');
+                if (state.Keyword) form.find('[name="Keyword"]').val(state.Keyword);
+                if (state.DateDimension) form.find('[name="DateDimension"]').val(state.DateDimension);
+                if (state.StartDate) form.find('[name="StartDate"]').val(state.StartDate);
+                if (state.EndDate) form.find('[name="EndDate"]').val(state.EndDate);
+                
+                if (state.Statuses && state.Statuses.length > 0) {
+                    $('#statusSelect').val(state.Statuses[0].toString());
+                }
+
+                // 還原分頁與排序
+                currentPage = state.PageNumber || 1;
+                currentSort.SortBy = state.SortBy || 'ReturnRequestDate';
+                currentSort.IsDescending = state.IsDescending !== undefined ? state.IsDescending : true;
+                $('#sortSelect').val(`${currentSort.SortBy}_${currentSort.IsDescending ? 'desc' : 'asc'}`);
+
+                updateCardActiveStatus(state.Statuses && state.Statuses.length === 1 ? state.Statuses[0] : null);
+            }
+
+            loadReturnData(currentPage);
         });
 
         function filterByStatus(statusId) {
@@ -219,13 +244,15 @@
 
         function updateCardActiveStatus(statusId) {
             $('.stat-card').removeClass('stat-active');
-            if (statusId === null) $('#card-all').addClass('stat-active');
+            if (statusId === null || statusId === undefined) $('#card-all').addClass('stat-active');
             else $(`#card-${statusId}`).addClass('stat-active');
         }
 
         function resetForm() {
+            sessionStorage.removeItem('returns_list_state');
             $('#filterForm')[0].reset();
             updateCardActiveStatus(null);
+            currentPage = 1;
             loadReturnData(1);
         }
 
@@ -250,6 +277,9 @@
             });
             
             const requestData = { ...searchParams, ...currentSort, PageNumber: page, PageSize: pageSize };
+
+            // 儲存狀態
+            sessionStorage.setItem('returns_list_state', JSON.stringify(requestData));
 
             $.ajax({
                 url: '@Url.Action("GetReturnListAjax", "ReturnRequests")',
