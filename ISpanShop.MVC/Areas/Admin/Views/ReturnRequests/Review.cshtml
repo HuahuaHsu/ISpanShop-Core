@@ -318,7 +318,7 @@
                                     text: res.message,
                                     icon: 'success'
                                 }).then(() => {
-                                    window.location.href = '@Url.Action("Index", "ReturnRequests")';
+                                    window.location.reload();
                                 });
                             } else {
                                 Swal.fire('錯誤', res.message, 'error');

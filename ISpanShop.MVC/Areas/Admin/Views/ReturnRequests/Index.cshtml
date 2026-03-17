@@ -120,7 +120,7 @@
             </div>
 
             <!-- 日期維度 -->
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="form-label">日期篩選維度</label>
                 <select class="form-select" name="DateDimension">
                     @foreach (var item in Model.DateDimensionOptions)
@@ -131,9 +131,13 @@
             </div>
 
             <!-- 排序方式 -->
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="form-label">排序方式</label>
                 <select class="form-select" name="SortBy" id="sortSelect">
+                    <option value="ReturnRequestDate_desc">申請時間 (新→舊)</option>
+                    <option value="ReturnRequestDate_asc">申請時間 (舊→新)</option>
+                    <option value="RefundDate_desc">完成退款 (新→舊)</option>
+                    <option value="RefundDate_asc">完成退款 (舊→新)</option>
                     <option value="OrderDate_desc">下單時間 (新→舊)</option>
                     <option value="OrderDate_asc">下單時間 (舊→新)</option>
                     <option value="TotalAmount_desc">退款金額 (高→低)</option>
@@ -172,6 +176,8 @@
                         <th>買家名稱</th>
                         <th>申請退款金額</th>
                         <th>下單日期</th>
+                        <th>申請日期</th>
+                        <th>完成日期</th>
                         <th>當前狀態</th>
                         <th class="text-center">操作</th>
                     </tr>
@@ -193,7 +199,7 @@
 
 @section Scripts {
     <script>
-        let currentSort = { SortBy: 'OrderDate', IsDescending: true };
+        let currentSort = { SortBy: 'ReturnRequestDate', IsDescending: true };
         let currentPage = 1;
         const pageSize = 10;
 
@@ -263,7 +269,7 @@
             const tbody = $('#returnsTableBody');
             tbody.empty();
             if(!data || data.length === 0) {
-                tbody.append('<tr><td colspan="6" class="text-center py-5">目前沒有待處理的退貨申請</td></tr>');
+                tbody.append('<tr><td colspan="8" class="text-center py-5">目前沒有待處理的退貨申請</td></tr>');
                 return;
             }
 
@@ -275,12 +281,18 @@
                 const btnText = isPending ? '審核退款' : '查看詳情';
                 const btnIcon = isPending ? 'bx-edit-alt' : 'bx-show';
 
+                const orderDate = new Date(order.orderDate).toLocaleDateString();
+                const reqDate = order.returnRequestCreatedAt ? new Date(order.returnRequestCreatedAt).toLocaleDateString() : '-';
+                const refDate = order.refundDate ? new Date(order.refundDate).toLocaleDateString() : '-';
+
                 tbody.append(`
                     <tr>
                         <td><span class="fw-bold text-danger">${order.orderUuid}</span></td>
                         <td>${order.memberName}</td>
                         <td class="fw-bold text-dark">$${order.totalAmount.toLocaleString()}</td>
-                        <td class="small">${new Date(order.orderDate).toLocaleDateString()}</td>
+                        <td class="small">${orderDate}</td>
+                        <td class="small text-primary">${reqDate}</td>
+                        <td class="small text-success">${refDate}</td>
                         <td><span class="badge-soft ${statusStyles[order.statusId] || 'bg-label-secondary'}">${order.statusName}</span></td>
                         <td class="text-center">
                             <a href="@Url.Action("Review", "ReturnRequests")/${order.orderId}" class="btn btn-sm ${btnClass} rounded-pill px-3">

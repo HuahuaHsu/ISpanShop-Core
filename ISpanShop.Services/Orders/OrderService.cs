@@ -59,7 +59,7 @@ namespace ISpanShop.Services.Orders
 				ReturnReason = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.ReasonCategory,
 				ReturnDescription = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.ReasonDescription,
 				ReturnRequestCreatedAt = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.CreatedAt,
-				RefundDate = o.ReturnRequests.Where(r => r.Status == 6).OrderByDescending(r => r.UpdatedAt).FirstOrDefault()?.UpdatedAt,
+				RefundDate = o.ReturnRequests.Where(r => r.Status == 1).OrderByDescending(r => r.UpdatedAt).FirstOrDefault()?.UpdatedAt,
 				Details = o.OrderDetails.Select(od => new OrderDetailDto
 				{
 					Id = od.Id,

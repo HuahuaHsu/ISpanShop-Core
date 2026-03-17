@@ -22,7 +22,7 @@ namespace ISpanShop.Models.DTOs.Orders
 		// A4 & A5. 日期篩選
 		public DateTime? StartDate { get; set; }
 		public DateTime? EndDate { get; set; }
-		public int DateDimension { get; set; } = 1; // 1=下單, 2=付款, 3=完成
+		public int DateDimension { get; set; } = 1; // 1=下單, 2=付款, 3=完成, 4=退貨申請, 5=退款完成
 
 		// A6. 商店屬性
 		public int? StoreId { get; set; }

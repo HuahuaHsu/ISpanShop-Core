@@ -53,11 +53,32 @@ namespace ISpanShop.Repositories.Orders
 					var rr = order.ReturnRequests.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
 					if (rr != null && rr.Status == 0) rr.Status = 2;
 				}
+				else if (status == 5) // 退貨/款中 (Refund/Return in Progress = 5)
+				{
+					// 自動產生退貨申請紀錄 (如果不存在進行中的申請)
+					var hasActiveRequest = order.ReturnRequests.Any(r => r.Status == 0);
+					if (!hasActiveRequest)
+					{
+						var newRequest = new ReturnRequest
+						{
+							OrderId = order.Id,
+							ReasonCategory = "管理員發起",
+							ReasonDescription = "由管理員手動發起退貨流程",
+							Status = 0, // 待處理
+							CreatedAt = DateTime.Now
+						};
+						_context.ReturnRequests.Add(newRequest);
+					}
+				}
 				else if (status == 6) // 已退款 (Refunded = 6)
 				{
-					// 如果有退貨申請，標記為已核准 (1: Approved)
+					// 如果有退貨申請，標記為已核准 (1: Approved) 並更新時間
 					var rr = order.ReturnRequests.OrderByDescending(x => x.CreatedAt).FirstOrDefault();
-					if (rr != null && rr.Status == 0) rr.Status = 1;
+					if (rr != null && rr.Status == 0)
+					{
+						rr.Status = 1;
+						rr.UpdatedAt = DateTime.Now;
+					}
 				}
 
 				await _context.SaveChangesAsync();
@@ -77,6 +98,13 @@ namespace ISpanShop.Repositories.Orders
 			if (isShipmentWorkstation)
 			{
 				query = query.Include(o => o.OrderDetails);
+			}
+
+			// 如果涉及退貨相關的篩選或排序，則載入退貨資訊
+			bool isReturnRelated = criteria.Statuses != null && (criteria.Statuses.Contains(5) || criteria.Statuses.Contains(6));
+			if (isReturnRelated || criteria.DateDimension == 4 || criteria.DateDimension == 5 || criteria.SortBy == "RefundDate" || criteria.SortBy == "ReturnRequestDate")
+			{
+				query = query.Include(o => o.ReturnRequests);
 			}
 
 			// A1. 基礎資訊篩選
@@ -110,6 +138,8 @@ namespace ISpanShop.Repositories.Orders
 				{
 					2 => query.Where(o => o.PaymentDate >= criteria.StartDate.Value),
 					3 => query.Where(o => o.CompletedAt >= criteria.StartDate.Value),
+					4 => query.Where(o => o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault().CreatedAt >= criteria.StartDate.Value),
+					5 => query.Where(o => o.ReturnRequests.OrderByDescending(r => r.UpdatedAt).FirstOrDefault().UpdatedAt >= criteria.StartDate.Value),
 					_ => query.Where(o => o.CreatedAt >= criteria.StartDate.Value)
 				};
 			}
@@ -119,6 +149,8 @@ namespace ISpanShop.Repositories.Orders
 				{
 					2 => query.Where(o => o.PaymentDate <= criteria.EndDate.Value),
 					3 => query.Where(o => o.CompletedAt <= criteria.EndDate.Value),
+					4 => query.Where(o => o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault().CreatedAt <= criteria.EndDate.Value),
+					5 => query.Where(o => o.ReturnRequests.OrderByDescending(r => r.UpdatedAt).FirstOrDefault().UpdatedAt <= criteria.EndDate.Value),
 					_ => query.Where(o => o.CreatedAt <= criteria.EndDate.Value)
 				};
 			}
@@ -135,6 +167,8 @@ namespace ISpanShop.Repositories.Orders
 				"TotalAmount" => criteria.IsDescending ? query.OrderByDescending(o => o.FinalAmount) : query.OrderBy(o => o.FinalAmount),
 				"Status" => criteria.IsDescending ? query.OrderByDescending(o => o.Status) : query.OrderBy(o => o.Status),
 				"MemberName" => criteria.IsDescending ? query.OrderByDescending(o => o.User.MemberProfile.FullName) : query.OrderBy(o => o.User.MemberProfile.FullName),
+				"ReturnRequestDate" => criteria.IsDescending ? query.OrderByDescending(o => o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault().CreatedAt) : query.OrderBy(o => o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault().CreatedAt),
+				"RefundDate" => criteria.IsDescending ? query.OrderByDescending(o => o.ReturnRequests.OrderByDescending(r => r.UpdatedAt).FirstOrDefault().UpdatedAt) : query.OrderBy(o => o.ReturnRequests.OrderByDescending(r => r.UpdatedAt).FirstOrDefault().UpdatedAt),
 				_ => criteria.IsDescending ? query.OrderByDescending(o => o.CreatedAt) : query.OrderBy(o => o.CreatedAt)
 			};
 
@@ -161,7 +195,9 @@ namespace ISpanShop.Repositories.Orders
 					CompletedAt = o.CompletedAt,
 					RecipientName = o.RecipientName,
 					RecipientPhone = o.RecipientPhone,
-					StoreName = o.Store != null ? o.Store.StoreName : "平台"
+					StoreName = o.Store != null ? o.Store.StoreName : "平台",
+					ReturnRequestCreatedAt = o.ReturnRequests?.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.CreatedAt,
+					RefundDate = o.ReturnRequests?.Where(r => r.Status == 1).OrderByDescending(r => r.UpdatedAt).FirstOrDefault()?.UpdatedAt
 				};
 
 				if (isShipmentWorkstation && o.OrderDetails != null)
