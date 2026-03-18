@@ -92,14 +92,14 @@
     @* ── 篩選列（可收合）── *@
     <div class="inv-filter-card mb-3">
         <div class="inv-filter-header" data-bs-toggle="collapse" data-bs-target="#invFilterBody"
-             aria-expanded="false" aria-controls="invFilterBody">
+             aria-expanded="true" aria-controls="invFilterBody">
             <div class="d-flex align-items-center gap-2">
                 <i class="bx bx-filter-alt" style="color:#3182ce;font-size:1.1rem;"></i>
                 <span class="fw-semibold" style="color:#1e2d3d;">篩選條件</span>
             </div>
             <i class="bx bx-chevron-down inv-filter-toggle-icon"></i>
         </div>
-        <div class="collapse" id="invFilterBody">
+        <div class="collapse show" id="invFilterBody">
             <form method="get" asp-action="Index" class="pt-3">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4">
@@ -114,7 +114,7 @@
                         <label class="form-label">主分類</label>
                         <select id="parentCategoryId" name="parentCategoryId" class="form-select">
                             <option value="">全部主分類</option>
-                            @foreach (var c in mainCategories)
+                            @foreach (var c in mainCategories.Where(c => !c.Name.Contains("汽車") && !c.Name.Contains("機車")))
                             {
                                 <option value="@c.Id" selected="@(parentCategoryId == c.Id)">@c.Name</option>
                             }
