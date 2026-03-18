@@ -28,7 +28,21 @@
                     // 根據隱藏狀態決定整行的背景色，被隱藏的稍微反灰
                     <tr class="@(item.IsHidden ? "table-secondary text-muted" : "")">
                         <td># @item.Id</td>
-                        <td> @item.OrderId</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                @{
+                                    var mainImg = item.ProductMainImage;
+                                    // 簡單判斷是否為網址，若不是網址則補上 /images/ 前綴 (或依您的專案路徑調整)
+                                    if (!string.IsNullOrEmpty(mainImg) && !mainImg.StartsWith("http") && !mainImg.StartsWith("/")) {
+                                        mainImg = "/images/" + mainImg;
+                                    }
+                                }
+                                <img src="@mainImg" class="rounded me-2" 
+                                     style="width: 40px; height: 40px; object-fit: cover;" 
+                                     onerror="this.onerror=null;this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2040%2040%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18e5470d050%20text%20%7B%20fill%3Argba(255%2C255%2C255%2C.75)%3Bfont-weight%3Anormal%3Bfont-family%3AHelvetica%2C%20monospace%3Bfont-size%3A10pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Crect%20width%3D%2240%22%20height%3D%2240%22%20fill%3D%22%23777%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%224%22%20y%3D%2224%22%3E%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fsvg%3E';" />
+                                <span># @item.OrderId</span>
+                            </div>
+                        </td>
                         <td class="text-warning">
                             @for (int i = 0; i < item.Rating; i++)
                             {
@@ -47,7 +61,26 @@
                                 </span>
                                 <br />
                             }
-                            @item.Comment @if (!string.IsNullOrEmpty(item.StoreReply))
+                            @item.Comment 
+                            
+                            @if (item.ImageUrls != null && item.ImageUrls.Any())
+                            {
+                                <div class="mt-2 d-flex flex-wrap gap-1">
+                                    <span class="badge bg-secondary mb-1 w-100 text-start" style="font-size: 0.7rem;">
+                                        <i class="fas fa-images"></i> 附圖 (@item.ImageUrls.Count)
+                                    </span>
+                                    @foreach (var url in item.ImageUrls)
+                                    {
+                                        <a href="@url" target="_blank" title="點擊查看原圖">
+                                            <img src="@url" class="img-thumbnail" 
+                                                 style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;" 
+                                                 onerror="this.src='/images/no-image.png';this.title='圖片連結失效';" />
+                                        </a>
+                                    }
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(item.StoreReply))
                             {
                                 <div class="text-success small mt-1">
                                     <strong>賣家回覆：</strong> @item.StoreReply

@@ -16,7 +16,13 @@ namespace ISpanShop.Repositories.Orders
 
         public async Task<List<OrderReview>> GetAllAsync()
         {
-            return await _context.OrderReviews.ToListAsync();
+            return await _context.OrderReviews
+                .Include(r => r.ReviewImages)
+                .Include(r => r.Order)
+                    .ThenInclude(o => o.OrderDetails)
+                        .ThenInclude(od => od.Product)
+                            .ThenInclude(p => p.ProductImages)
+                .ToListAsync();
         }
 
         public async Task<OrderReview> GetByIdAsync(int id)

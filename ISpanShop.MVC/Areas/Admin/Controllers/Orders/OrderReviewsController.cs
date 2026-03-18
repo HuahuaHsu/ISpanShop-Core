@@ -48,7 +48,9 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
                 StoreReply = d.StoreReply,
                 IsHidden = d.IsHidden,
                 IsAutoFlagged = d.IsAutoFlagged,
-                CreatedAt = d.CreatedAt
+                CreatedAt = d.CreatedAt,
+                ImageUrls = d.ImageUrls,
+                ProductMainImage = d.ProductMainImage
             }).ToList();
 
             // 將分頁資訊存入 ViewBag
