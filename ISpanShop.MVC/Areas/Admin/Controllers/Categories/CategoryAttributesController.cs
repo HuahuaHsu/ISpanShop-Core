@@ -25,6 +25,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Categories
             var pagedSpecs = await _categoryAttributeService.GetPagedAsync(page, pageSize);
             ViewBag.Categories    = _categoryAttributeService.GetAllCategories();
             ViewBag.AllSpecsForJs = _categoryAttributeService.GetAll();
+            ViewBag.BindingPairs  = _categoryAttributeService.GetAllBindingPairs();
             return View(pagedSpecs);
         }
 
