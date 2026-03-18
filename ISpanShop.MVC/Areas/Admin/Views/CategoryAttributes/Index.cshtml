@@ -42,7 +42,7 @@
 </div>
 
 @* ─── 主體：左右分欄 ──────────────────────────────── *@
-<div class="row g-4">
+<div class="row g-3 w-100" style="margin-left:0;margin-right:0;">
 
     @* 左欄：分類樹 *@
     <div class="col-lg-3">
@@ -59,17 +59,24 @@
                 {
                     var subs = children.Where(c => c.ParentId == parent.Id).ToList();
                     if (!subs.Any()) continue;
-                    <div class="cat-group mb-1">
-                        <div class="cat-parent-label">@parent.Name</div>
-                        @foreach (var sub in subs)
-                        {
-                            <div class="cat-item" data-id="@sub.Id" data-name="@sub.Name"
-                                 onclick="selectCategory(this)">
-                                <span class="cat-item-name small fw-medium">@sub.Name</span>
-                                <span class="badge rounded-pill bg-primary-subtle text-primary d-none"
-                                      id="cnt-@sub.Id"></span>
-                            </div>
-                        }
+                    <div class="cat-group mb-1" data-parent-id="@parent.Id">
+                        <div class="cat-parent-row" onclick="toggleParent(this)">
+                            <span class="cat-parent-arrow"><i class="bx bx-chevron-right"></i></span>
+                            <span class="cat-parent-name fw-semibold">@parent.Name</span>
+                            <span class="badge rounded-pill bg-secondary-subtle text-secondary ms-auto"
+                                  id="pcnt-@parent.Id" style="display:none;font-size:.7rem;"></span>
+                        </div>
+                        <div class="cat-children" style="display:none;">
+                            @foreach (var sub in subs)
+                            {
+                                <div class="cat-item" data-id="@sub.Id" data-name="@sub.Name"
+                                     data-parent-id="@parent.Id" onclick="selectCategory(this)">
+                                    <span class="cat-item-name small fw-medium">@sub.Name</span>
+                                    <span class="badge rounded-pill bg-primary-subtle text-primary"
+                                          id="cnt-@sub.Id" style="display:none;"></span>
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
             </div>
@@ -106,17 +113,26 @@
                         <i class="bx bx-unlink fs-1 d-block mb-2 opacity-50"></i>
                         此分類尚未綁定任何屬性，點擊「綁定屬性」開始設定
                     </div>
-                    <div id="boundTableWrap" class="d-none" style="max-height:400px;overflow-y:auto;">
-                        <table class="table table-hover align-middle bound-table mb-0">
+                    <div id="boundTableWrap" class="d-none" style="max-height:400px;overflow-y:auto;overflow-x:auto;width:100%;">
+                        <table class="table table-hover align-middle bound-table mb-0" style="width:100%;">
+                            <colgroup>
+                                <col style="width:40px;">
+                                <col style="width:20%;">
+                                <col style="width:11%;">
+                                <col style="width:8%;">
+                                <col style="width:9%;">
+                                <col>
+                                <col style="width:90px;">
+                            </colgroup>
                             <thead style="position:relative; z-index:2;">
                                 <tr>
-                                    <th width="40"></th>
-                                    <th>屬性名稱</th>
-                                    <th>輸入類型</th>
-                                    <th class="text-center">必填</th>
-                                    <th class="text-center">可篩選</th>
-                                    <th>選項預覽</th>
-                                    <th class="text-end">操作</th>
+                                    <th style="width:40px;"></th>
+                                    <th style="width:20%;min-width:120px;">屬性名稱</th>
+                                    <th style="width:10%;min-width:80px;">輸入類型</th>
+                                    <th class="text-center" style="width:8%;min-width:60px;">必填</th>
+                                    <th class="text-center" style="width:8%;min-width:70px;">可篩選</th>
+                                    <th style="min-width:80px;">選項預覽</th>
+                                    <th class="text-end" style="width:90px;min-width:90px;">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="boundTbody"></tbody>
@@ -146,8 +162,16 @@
                 }
                 else
                 {
-                    <div class="table-responsive mt-3">
-                        <table class="table table-hover align-middle lib-table mb-0" id="libTable">
+                    <div class="table-responsive mt-3" style="width:100%;">
+                        <table class="table table-hover align-middle lib-table mb-0" id="libTable" style="width:100%;">
+                            <colgroup>
+                                <col style="width:18%;min-width:120px;">
+                                <col style="width:10%;min-width:80px;">
+                                <col style="width:8%;min-width:60px;">
+                                <col style="min-width:100px;">
+                                <col style="width:22%;min-width:120px;">
+                                <col style="width:20%;min-width:160px;">
+                            </colgroup>
                             <thead>
                                 <tr>
                                     <th>屬性名稱</th>
@@ -206,13 +230,13 @@
                                                 <span class="text-muted small">未綁定</span>
                                             }
                                         </td>
-                                        <td class="text-end">
-                                            <div class="d-flex gap-1 justify-content-end">
-                                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                        <td class="text-end text-nowrap">
+                                            <div class="d-flex gap-2 justify-content-end flex-nowrap">
+                                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-2"
                                                         onclick="openEditAttrModal(@spec.Id)">
                                                     <i class="bx bx-edit me-1"></i>編輯
                                                 </button>
-                                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                <button class="btn btn-sm btn-outline-danger rounded-pill px-2"
                                                         onclick="deleteSpec(@spec.Id, '@Html.Raw(spec.Name.Replace("'", "\\'"))')">
                                                     <i class="bx bx-trash me-1"></i>刪除
                                                 </button>
@@ -320,10 +344,6 @@
                         </label>
                     </div>
                 </div>
-                <div class="mb-1">
-                    <label class="form-label fw-medium">排序值</label>
-                    <input id="createSortOrder" type="number" class="form-control" value="0" min="0">
-                </div>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
@@ -411,10 +431,6 @@
                         </label>
                     </div>
                 </div>
-                <div class="mb-1">
-                    <label class="form-label fw-medium">排序值</label>
-                    <input id="editSortOrder" type="number" class="form-control" min="0">
-                </div>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
@@ -439,12 +455,8 @@ const allSpecsData = @Html.Raw(JsonSerializer.Serialize(allSpecsJs.Select(s => n
     inputType        = s.InputType,
     isRequired       = s.IsRequired,
     allowCustomInput = s.AllowCustomInput,
-    sortOrder        = s.SortOrder,
     options          = s.Options
 })));
-
-const _bindingPairs = @Html.Raw(JsonSerializer.Serialize(
-    (ViewBag._categorySpecService_BindingPairs ?? new object[0])));
 
 // ── 狀態 ─────────────────────────────────────────
 let selectedCatId   = null;
@@ -463,25 +475,56 @@ document.addEventListener('DOMContentLoaded', () => {
 function initBoundCountBadges() {
     const pairs = @Html.Raw(JsonSerializer.Serialize(
         ViewBag.BindingPairs != null
-            ? ((IEnumerable<object>)ViewBag.BindingPairs).Select(p => p)
-            : new object[0]));
+            ? (List<object>)ViewBag.BindingPairs
+            : new List<object>()));
 
+    // 計算每個子分類的綁定數
     const counts = {};
     pairs.forEach(p => {
-        const id = p.categoryId ?? p.CategoryId;
-        if (id) counts[id] = (counts[id] || 0) + 1;
+        const id = p.categoryId;
+        if (id != null) counts[id] = (counts[id] || 0) + 1;
     });
+
+    // 套用到子分類 badge
     Object.entries(counts).forEach(([id, cnt]) => {
         const el = document.getElementById('cnt-' + id);
-        if (el) { el.textContent = cnt; el.classList.remove('d-none'); }
+        if (el) { el.textContent = cnt; el.style.display = ''; }
     });
+
+    // 計算並套用主分類總計 badge
+    document.querySelectorAll('.cat-group[data-parent-id]').forEach(group => {
+        const pid = group.dataset.parentId;
+        let total = 0;
+        group.querySelectorAll('.cat-item[data-id]').forEach(item => {
+            total += counts[item.dataset.id] || 0;
+        });
+        const pel = document.getElementById('pcnt-' + pid);
+        if (pel) { pel.textContent = total; if (total > 0) pel.style.display = ''; }
+    });
+}
+
+// ── 主分類折疊/展開 ────────────────────────────────
+function toggleParent(row) {
+    const group    = row.closest('.cat-group');
+    const children = group.querySelector('.cat-children');
+    const icon     = row.querySelector('.cat-parent-arrow i');
+    const open     = children.style.display !== 'none';
+    children.style.display = open ? 'none' : '';
+    icon.className = open ? 'bx bx-chevron-right' : 'bx bx-chevron-down';
 }
 
 function restoreSelection() {
     const savedId = sessionStorage.getItem('catAttrSelectedId');
     if (!savedId) return;
     const el = document.querySelector(`.cat-item[data-id="${savedId}"]`);
-    if (el) el.click();
+    if (!el) return;
+    // 展開所屬主分類
+    const group    = el.closest('.cat-group');
+    const children = group?.querySelector('.cat-children');
+    const icon     = group?.querySelector('.cat-parent-arrow i');
+    if (children) { children.style.display = ''; }
+    if (icon)     { icon.className = 'bx bx-chevron-down'; }
+    el.click();
 }
 
 // ── 分類選擇 ──────────────────────────────────────
@@ -515,7 +558,26 @@ function renderBoundTable() {
     const tableWrap = document.getElementById('boundTableWrap');
     const cntEl     = document.getElementById('cnt-' + selectedCatId);
 
-    if (cntEl) { cntEl.textContent = boundSpecs.length; cntEl.classList.toggle('d-none', boundSpecs.length === 0); }
+    // 更新子分類 badge
+    if (cntEl) {
+        cntEl.textContent = boundSpecs.length;
+        cntEl.style.display = boundSpecs.length > 0 ? '' : 'none';
+    }
+    // 更新主分類總計 badge
+    const catItem = document.querySelector(`.cat-item[data-id="${selectedCatId}"]`);
+    if (catItem) {
+        const group = catItem.closest('.cat-group');
+        const pid   = group?.dataset.parentId;
+        if (pid) {
+            let total = 0;
+            group.querySelectorAll('.cat-item[data-id]').forEach(item => {
+                const el = document.getElementById('cnt-' + item.dataset.id);
+                total += el ? (parseInt(el.textContent) || 0) : 0;
+            });
+            const pel = document.getElementById('pcnt-' + pid);
+            if (pel) { pel.textContent = total; pel.style.display = total > 0 ? '' : 'none'; }
+        }
+    }
 
     if (boundSpecs.length === 0) {
         emptyDiv.classList.remove('d-none');
@@ -547,8 +609,8 @@ function renderBoundTable() {
             <td class="text-muted small">
                 ${s.options.length ? s.options.slice(0,4).map(esc).join('、') + (s.options.length > 4 ? ` +${s.options.length-4}` : '') : '—'}
             </td>
-            <td class="text-end">
-                <button class="btn btn-sm btn-outline-danger rounded-pill"
+            <td class="text-end text-nowrap">
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-2"
                         onclick="unbindSpec(${s.specId}, '${escJs(s.name)}')">
                     <i class="bx bx-unlink me-1"></i>解除
                 </button>
@@ -633,7 +695,6 @@ function openCreateAttrModal() {
     document.getElementById('createInputType').value         = 'text';
     document.getElementById('createIsRequired').checked      = false;
     document.getElementById('createAllowCustomInput').checked = false;
-    document.getElementById('createSortOrder').value         = '0';
     document.getElementById('createOptions').innerHTML       = '';
     document.getElementById('createOptionsSection').classList.add('d-none');
     document.getElementById('createAllowCustomSection').classList.add('d-none');
@@ -657,7 +718,6 @@ async function saveCreateAttr() {
         inputType       : document.getElementById('createInputType').value,
         isRequired      : document.getElementById('createIsRequired').checked,
         allowCustomInput: document.getElementById('createAllowCustomInput').checked,
-        sortOrder       : +document.getElementById('createSortOrder').value || 0,
         options         : getOpts('createOptions')
     };
     const data = await post('/Admin/CategoryAttributes/CreateAjax', payload);
@@ -677,7 +737,6 @@ function openEditAttrModal(id) {
     document.getElementById('editInputType').value           = s.inputType;
     document.getElementById('editIsRequired').checked        = s.isRequired;
     document.getElementById('editAllowCustomInput').checked  = s.allowCustomInput;
-    document.getElementById('editSortOrder').value           = s.sortOrder;
     const needs = needsOptions(s.inputType);
     document.getElementById('editOptionsSection').classList.toggle('d-none', !needs);
     document.getElementById('editAllowCustomSection').classList.toggle('d-none', !needs);
@@ -701,7 +760,6 @@ async function saveEditAttr() {
         inputType       : document.getElementById('editInputType').value,
         isRequired      : document.getElementById('editIsRequired').checked,
         allowCustomInput: document.getElementById('editAllowCustomInput').checked,
-        sortOrder       : +document.getElementById('editSortOrder').value || 0,
         options         : getOpts('editOptions')
     });
     if (data.success) {
@@ -740,13 +798,36 @@ function initLibSearch() {
 
 function initCatSearch() {
     document.getElementById('catSearch').addEventListener('input', function() {
-        const q = this.value.toLowerCase();
-        document.querySelectorAll('.cat-item').forEach(el => {
-            el.style.display = el.dataset.name.toLowerCase().includes(q) ? '' : 'none';
-        });
-        document.querySelectorAll('.cat-group').forEach(g => {
-            const any = [...g.querySelectorAll('.cat-item')].some(e => e.style.display !== 'none');
-            g.style.display = any ? '' : 'none';
+        const q = this.value.trim().toLowerCase();
+        document.querySelectorAll('.cat-group').forEach(group => {
+            const items    = group.querySelectorAll('.cat-item');
+            const children = group.querySelector('.cat-children');
+            const icon     = group.querySelector('.cat-parent-arrow i');
+            let anyVisible = false;
+
+            items.forEach(item => {
+                const match = !q || item.dataset.name.toLowerCase().includes(q);
+                item.style.display = match ? '' : 'none';
+                if (match) anyVisible = true;
+            });
+
+            // 搜尋中：有匹配則自動展開，無匹配則隱藏整組
+            if (q) {
+                group.style.display    = anyVisible ? '' : 'none';
+                if (anyVisible && children) children.style.display = '';
+                if (anyVisible && icon)     icon.className = 'bx bx-chevron-down';
+            } else {
+                // 清空搜尋後回復預設（收合）
+                group.style.display = '';
+                if (children) children.style.display = 'none';
+                if (icon)     icon.className = 'bx bx-chevron-right';
+                // 若有已選中分類則維持其父層展開
+                const active = group.querySelector('.cat-item.cat-active');
+                if (active) {
+                    if (children) children.style.display = '';
+                    if (icon)     icon.className = 'bx bx-chevron-down';
+                }
+            }
         });
     });
 }
@@ -799,13 +880,20 @@ function toast(msg, icon) {
 
 @* ─── 樣式 ────────────────────────────────────────── *@
 <style>
-.cat-parent-label {
-    font-size:.71rem; letter-spacing:.8px; color:#8592a3; font-weight:600;
-    padding:.4rem .75rem .1rem; text-transform:uppercase;
+/* 主分類行 */
+.cat-parent-row {
+    display:flex; align-items:center; gap:.35rem;
+    padding:.45rem .75rem; border-radius:8px; cursor:pointer;
+    transition:background .12s; user-select:none;
 }
+.cat-parent-row:hover { background:#f0f3ff; }
+.cat-parent-arrow { color:#8592a3; line-height:1; flex-shrink:0; }
+.cat-parent-name  { font-size:.82rem; font-weight:600; color:#566a7f; }
+
+/* 子分類行（縮排） */
 .cat-item {
     display:flex; align-items:center; justify-content:space-between;
-    padding:.45rem .75rem; border-radius:8px; cursor:pointer; transition:background .12s;
+    padding:.4rem .75rem .4rem 2rem; border-radius:8px; cursor:pointer; transition:background .12s;
 }
 .cat-item:hover  { background:#f0f3ff; }
 .cat-active      { background:#e8eeff !important; }
@@ -816,7 +904,18 @@ function toast(msg, icon) {
     text-transform:uppercase; letter-spacing:.5px;
     background:#f8f9fa; border-bottom:none; white-space:nowrap;
 }
-.bound-table td, .lib-table td { padding:.75rem 1rem; border-bottom:1px solid #f0f2f5; }
+.bound-table td, .lib-table td { padding:.6rem .75rem; border-bottom:1px solid #f0f2f5; vertical-align:middle; }
 .bound-table tbody tr:last-child td, .lib-table tbody tr:last-child td { border-bottom:none; }
 .drag-handle:hover { color:#566a7f !important; }
+
+/* 屬性名稱欄不換行 */
+.lib-table td:first-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:0; }
+.bound-table td:nth-child(2) { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:0; }
+
+/* 操作欄不換行，確保按鈕有足夠顯示空間 */
+.lib-table td:last-child,
+.bound-table td:last-child { white-space:nowrap; }
+
+/* 確保表格撐滿容器 */
+.lib-table, .bound-table { width:100%; table-layout:fixed; }
 </style>

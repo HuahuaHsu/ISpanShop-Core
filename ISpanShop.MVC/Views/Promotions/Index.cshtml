@@ -193,7 +193,7 @@
                 </ul>
                 @* 右側：狀態 + 類型 + 搜尋 *@
                 <form method="get" asp-action="Index" asp-controller="Promotions" class="d-flex gap-2 align-items-center">
-                    <select name="status" class="form-select form-select-sm" style="width:110px;">
+                    <select name="status" class="form-select form-select-sm" style="width:110px;" onchange="this.form.submit()">
                         <option value="" selected="@(string.IsNullOrEmpty(Model.StatusFilter) || Model.StatusFilter == "all" ? "selected" : null)">所有狀態</option>
                         <option value="pending" selected="@(Model.StatusFilter == "pending" ? "selected" : null)">待審核</option>
                         <option value="resubmitted" selected="@(Model.StatusFilter == "resubmitted" ? "selected" : null)">重新送審</option>
@@ -250,10 +250,6 @@
                                     <td>
                                         <div class="promo-name d-flex align-items-center gap-1">
                                             @item.Name
-                                            @if (item.Status == 4)
-                                            {
-                                                <span class="badge bg-label-warning py-0 px-2" style="font-size:0.65rem; border:1px solid #ffab00;">重新送審</span>
-                                            }
                                         </div>
                                         <div class="promo-desc">@item.ItemCount 個項目</div>
                                     </td>

@@ -149,12 +149,12 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// <summary>
         /// 待審核商品列表
         /// </summary>
-        public async Task<IActionResult> PendingReview(int pendingPage = 1, int reApplyPage = 1, int rejectedPage = 1, int approvedPage = 1)
+        public async Task<IActionResult> PendingReview()
         {
-            const int pageSize = 10;
+            const int pageSize = 999; // 前端自行分頁，伺服器一次載入全量資料
 
-            // 分頁取待審核 (ReviewStatus == 0)
-            var pendingPaged = await _productService.GetPendingProductsPagedAsync(pendingPage, pageSize);
+            // 全量取待審核 (ReviewStatus == 0)
+            var pendingPaged = await _productService.GetPendingProductsPagedAsync(1, pageSize);
             var pendingVm = PagedResult<ProductReviewListVm>.Create(
                 pendingPaged.Data.Select(dto => new ProductReviewListVm
                 {
@@ -173,10 +173,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                     UpdatedAt    = dto.UpdatedAt,
                     MainImageUrl = dto.MainImageUrl
                 }).ToList(),
-                pendingPaged.TotalCount, pendingPage, pageSize);
+                pendingPaged.TotalCount, 1, pageSize);
 
-            // 分頁取已退回 (ReviewStatus == 2)
-            var rejectedPaged = await _productService.GetRejectedProductsPagedAsync(rejectedPage, pageSize);
+            // 全量取已退回 (ReviewStatus == 2)
+            var rejectedPaged = await _productService.GetRejectedProductsPagedAsync(1, pageSize);
             ViewBag.RejectedRecords = PagedResult<ProductReviewListVm>.Create(
                 rejectedPaged.Data.Select(dto => new ProductReviewListVm
                 {
@@ -194,12 +194,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                     UpdatedAt    = dto.UpdatedAt,
                     MainImageUrl = dto.MainImageUrl
                 }).ToList(),
-                rejectedPaged.TotalCount, rejectedPage, pageSize);
-
-            ViewBag.RejectedPage = rejectedPage;
+                rejectedPaged.TotalCount, 1, pageSize);
 
             // 重新申請審核 (ReviewStatus == 3)
-            var reApplyPaged = await _productService.GetReApplyProductsPagedAsync(reApplyPage, pageSize);
+            var reApplyPaged = await _productService.GetReApplyProductsPagedAsync(1, pageSize);
             ViewBag.ReApplyRecords = PagedResult<ProductReviewListVm>.Create(
                 reApplyPaged.Data.Select(dto => new ProductReviewListVm
                 {
@@ -223,11 +221,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                     UpdatedAt           = dto.UpdatedAt,
                     MainImageUrl        = dto.MainImageUrl
                 }).ToList(),
-                reApplyPaged.TotalCount, reApplyPage, pageSize);
-            ViewBag.ReApplyPage = reApplyPage;
+                reApplyPaged.TotalCount, 1, pageSize);
 
-            // 近期審核通過（24 小時內 ReviewStatus == 1）分頁
-            var approvedPaged = await _productService.GetRecentlyApprovedPagedAsync(approvedPage, pageSize, 24);
+            // 近期審核通過（24 小時內 ReviewStatus == 1）全量
+            var approvedPaged = await _productService.GetRecentlyApprovedPagedAsync(1, pageSize, 24);
             ViewBag.ApprovedRecords = PagedResult<ProductReviewListVm>.Create(
                 approvedPaged.Data.Select(dto => new ProductReviewListVm
                 {
@@ -244,8 +241,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                     CreatedAt    = dto.CreatedAt,
                     MainImageUrl = dto.MainImageUrl
                 }).ToList(),
-                approvedPaged.TotalCount, approvedPage, pageSize);
-            ViewBag.ApprovedPage = approvedPage;
+                approvedPaged.TotalCount, 1, pageSize);
 
             return View(pendingVm);
         }
@@ -748,15 +744,18 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
             try
             {
                 var result = await _productService.GenerateTestProductsAsync();
+                // 生成後取最新待審核總筆數，供前端動態更新分頁器
+                var pendingPaged = await _productService.GetPendingProductsPagedAsync(1, 1);
                 return Json(new
                 {
-                    success    = true,
-                    count      = result.TotalCount,
-                    clean      = result.CleanCount,
-                    highRisk   = result.HighRiskCount,
-                    borderline = result.BorderlineCount,
-                    message    = $"已生成 {result.TotalCount} 筆測試商品（乾淨 {result.CleanCount} 筆 ／ 高風險 {result.HighRiskCount} 筆 ／ 邊緣 {result.BorderlineCount} 筆），全部設為待審核。",
-                    products   = result.CreatedProducts.Select(p => new
+                    success          = true,
+                    count            = result.TotalCount,
+                    clean            = result.CleanCount,
+                    highRisk         = result.HighRiskCount,
+                    borderline       = result.BorderlineCount,
+                    pendingTotalCount = pendingPaged.TotalCount,
+                    message          = $"已生成 {result.TotalCount} 筆測試商品（乾淨 {result.CleanCount} 筆 ／ 高風險 {result.HighRiskCount} 筆 ／ 邊緣 {result.BorderlineCount} 筆），全部設為待審核。",
+                    products         = result.CreatedProducts.Select(p => new
                     {
                         id       = p.Id,
                         name     = p.Name,

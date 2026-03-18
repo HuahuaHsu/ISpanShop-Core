@@ -132,18 +132,14 @@
     @* ── 篩選卡片（可收合）── *@
     <div class="filter-card mb-4">
         <div class="filter-card-header" data-bs-toggle="collapse" data-bs-target="#filterCardBody"
-             aria-expanded="@(hasActiveFilters ? "true" : "false")" aria-controls="filterCardBody">
+             aria-expanded="true" aria-controls="filterCardBody">
             <div class="d-flex align-items-center gap-2">
                 <i class="bx bx-filter-alt" style="color:#3182ce;font-size:1.1rem;"></i>
                 <span class="fw-semibold" style="color:#1e2d3d;">篩選條件</span>
-                @if (hasActiveFilters)
-                {
-                    <span class="badge rounded-pill" style="background:#ebf8ff;color:#3182ce;font-size:.75rem;">已套用 @activeFilterCount 項</span>
-                }
             </div>
             <i class="bx bx-chevron-down filter-toggle-icon"></i>
         </div>
-        <div class="collapse @(hasActiveFilters ? "show" : "")" id="filterCardBody">
+        <div class="collapse show" id="filterCardBody">
             <form method="get" asp-action="Index" class="row g-3 align-items-end pt-3">
                 <div class="col-md-3">
                     <label class="form-label">關鍵字搜尋</label>
@@ -157,7 +153,7 @@
                     <label class="form-label">主分類</label>
                     <select id="parentCategorySelect" name="parentCategoryId" class="form-select">
                         <option value="">-- 全部 --</option>
-                        @foreach (var pc in parentCategories)
+                        @foreach (var pc in parentCategories.Where(pc => !pc.Name.Contains("汽車") && !pc.Name.Contains("機車")))
                         {
                             <option value="@pc.Id" selected="@(currentParentId == pc.Id)">@pc.Name</option>
                         }
