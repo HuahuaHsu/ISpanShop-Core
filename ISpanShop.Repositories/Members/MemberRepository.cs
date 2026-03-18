@@ -113,10 +113,29 @@ namespace ISpanShop.Repositories.Members.Implementations
 				}
 			}
 
-			// 等級篩選
+			// 等級篩選 (改為動態門檻篩選)
 			if (criteria.LevelId.HasValue)
 			{
-				query = query.Where(u => u.MemberProfile != null && u.MemberProfile.LevelId == criteria.LevelId.Value);
+				var allLevels = _context.MembershipLevels.OrderBy(l => l.MinSpending).ToList();
+				var targetLevel = allLevels.FirstOrDefault(l => l.Id == criteria.LevelId.Value);
+
+				if (targetLevel != null)
+				{
+					decimal min = targetLevel.MinSpending;
+					var nextLevel = allLevels.FirstOrDefault(l => l.MinSpending > min);
+
+					if (nextLevel != null)
+					{
+						query = query.Where(u => u.MemberProfile != null &&
+												 u.MemberProfile.TotalSpending >= min &&
+												 u.MemberProfile.TotalSpending < nextLevel.MinSpending);
+					}
+					else
+					{
+						query = query.Where(u => u.MemberProfile != null &&
+												 u.MemberProfile.TotalSpending >= min);
+					}
+				}
 			}
 
 			totalCount = query.Count();
