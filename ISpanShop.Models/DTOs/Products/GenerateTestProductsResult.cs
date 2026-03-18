@@ -9,5 +9,6 @@ namespace ISpanShop.Models.DTOs.Products
         public int CleanCount      { get; set; }
         public int HighRiskCount   { get; set; }
         public int BorderlineCount { get; set; }
+        public IEnumerable<ProductReviewDto> CreatedProducts { get; set; } = new List<ProductReviewDto>();
     }
 }

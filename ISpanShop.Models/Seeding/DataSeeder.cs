@@ -108,7 +108,7 @@ namespace ISpanShop.Models.Seeding
 
 					// 根據分類決定所屬賣場（找不到對應則退回預設賣場）
 					int resolvedStoreId;
-					if (category != null && CategoryToStores.TryGetValue(category.Id, out var storeOptions))
+					if (CategoryToStores.TryGetValue(category.Id, out var storeOptions))
 						resolvedStoreId = storeOptions[_random.Next(storeOptions.Length)];
 					else
 						resolvedStoreId = store.Id;
@@ -121,7 +121,7 @@ namespace ISpanShop.Models.Seeding
 
 						products.Add(CreateProductEntity(
 							storeId: resolvedStoreId,
-							categoryId: category?.Id ?? categories.First().Id,
+							categoryId: category.Id,
 							brandId: brand?.Id ?? brands.First().Id,
 							name: productName + CloneSuffixes[k],
 							description: productDescription,
@@ -131,11 +131,8 @@ namespace ISpanShop.Models.Seeding
 					}
 				}
 
-				// 3. 將最後 15 筆設為「待審核」
-				foreach (var p in products.Skip(Math.Max(0, products.Count - 15)))
-				{
-					p.Status = 2;
-				}
+				// 3. 所有商品預設為「已上架」狀態 (不再生成待審核商品)
+				// 備註：若需測試審核流程，請使用「商品總覽」的「生成測試用待審核商品」功能
 
 				// 3b. 庫存狀態平均分佈：1/3 零庫存 / 1/3 低庫存 / 1/3 正常
 				//     低庫存閾值由各 variant 的 SafetyStock 決定（系統判斷：Stock <= SafetyStock）
@@ -168,10 +165,25 @@ namespace ISpanShop.Models.Seeding
 					}
 				}
 
+				// 3c. 上架狀態二次分配：10-20% 已審核通過的商品設為「未上架」
+				//     確保商品總覽的「未上架」統計卡片有數據可展示
+				var approvedProducts = products
+					.OrderBy(_ => _random.Next())   // 隨機打散
+					.ToList();
+				int unpublishCount = (int)(approvedProducts.Count * _random.Next(10, 21) / 100.0);  // 10-20%
+
+				for (int i = 0; i < unpublishCount; i++)
+				{
+					approvedProducts[i].Status = 0;  // 未上架（已審核通過但未公開銷售）
+				}
+
 				// 4. 一次性批次寫入資料庫
 				context.Products.AddRange(products);
 				await context.SaveChangesAsync();
+
+				int publishedCount = products.Count(p => p.Status == 1);
 				Console.WriteLine($"✅ 成功匯入 {products.Count} 筆商品 (含多規格變體) 到資料庫");
+				Console.WriteLine($"   └─ 已上架: {publishedCount} 筆 / 未上架: {unpublishCount} 筆");
 			}
 			catch (Exception ex)
 			{
@@ -198,7 +210,10 @@ namespace ISpanShop.Models.Seeding
 				Description = description,
 				MinPrice = variants.Min(v => v.Price),
 				MaxPrice = variants.Max(v => v.Price),
-				Status = (byte)_random.Next(0, 2),
+				Status = 1,  // 修改：所有商品預設為「已上架」(1)，不再隨機分配待審核狀態
+				ReviewStatus = 1,  // 已審核通過
+				ReviewedBy = "系統預設",
+				ReviewDate = DateTime.Now.AddDays(-_random.Next(1, 30)),
 				CreatedAt = DateTime.Now.AddDays(-_random.Next(1, 100)),
 				UpdatedAt = DateTime.Now,
 				ProductVariants = variants,
@@ -215,12 +230,12 @@ namespace ISpanShop.Models.Seeding
 		// ★ 輔助方法：解析分類、品牌、翻譯
 		// ====================================================================
 
-		/// <summary>根據 API 分類名稱找到對應的子分類</summary>
+		/// <summary>根據 API 分類名稱找到對應的子分類；若分類不在對照表則回傳 null</summary>
 		private static Category ResolveCategory(string apiCategory, List<Category> categories)
 		{
-			var childCatName = SeederMappings.CategoryHierarchyMap.ContainsKey(apiCategory)
-				? SeederMappings.CategoryHierarchyMap[apiCategory].ChildName
-				: char.ToUpper(apiCategory[0]) + apiCategory.Substring(1);
+			if (!SeederMappings.CategoryHierarchyMap.ContainsKey(apiCategory))
+				return null;
+			var childCatName = SeederMappings.CategoryHierarchyMap[apiCategory].ChildName;
 			return categories.FirstOrDefault(c => c.Name == childCatName);
 		}
 
@@ -481,31 +496,15 @@ namespace ISpanShop.Models.Seeding
 		}
 
 		/// <summary>
-		/// 確保有足夠的待審核商品 (至少 15 筆)
+		/// [已停用] 確保有足夠的待審核商品 (至少 15 筆)
+		/// 修改說明：為了讓系統初始化時「待審核」列表為空，此方法已停用
+		/// 若需測試審核流程，請使用「商品總覽」的「生成測試用待審核商品」功能
 		/// </summary>
 		public static async Task EnsurePendingProductsAsync(ISpanShopDBContext context)
 		{
-			var currentCount = context.Products.Count(p => p.Status == 2);
-			if (currentCount >= 15)
-			{
-				Console.WriteLine($"ℹ️  待審核商品已有 {currentCount} 筆，無需補充。");
-				return;
-			}
-
-			var needed = 15 - currentCount;
-			var candidates = context.Products
-				.Where(p => p.Status != 2 && p.IsDeleted != true)
-				.Take(needed)
-				.ToList();
-
-			foreach (var p in candidates)
-			{
-				p.Status = 2;
-				p.UpdatedAt = DateTime.Now;
-			}
-
-			await context.SaveChangesAsync();
-			Console.WriteLine($"✅ 已補充 {candidates.Count} 筆待審核商品，目前共 {currentCount + candidates.Count} 筆");
+			// 停用此功能：不再自動補充待審核商品
+			Console.WriteLine("ℹ️  種子資料不再自動生成待審核商品，待審核列表保持淨空。");
+			await Task.CompletedTask;
 		}
 	}
 }

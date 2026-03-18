@@ -9,16 +9,18 @@
     .font-noto { font-family: 'Public Sans', 'Noto Sans TC', sans-serif; }
     .stat-card { border-radius: 12px; border: none; }
     .stat-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
-    .status-tabs .nav-link { color: #64748b; font-size: .875rem; padding: .4rem .9rem; border-radius: 6px; }
+    .status-tabs { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 2px; }
+    .status-tabs::-webkit-scrollbar { display: none; }
+    .status-tabs .nav-link { color: #64748b; font-size: .813rem; padding: .3rem .6rem; border-radius: 6px; white-space: nowrap; }
     .status-tabs .nav-link.active { color: #fff; background: #3182ce; }
-    .table > :not(caption) > * > * { padding: .85rem .75rem; }
-    .promo-name { font-weight: 600; color: #1e2d3d; font-size: .938rem; }
-    .promo-desc { font-size: .813rem; color: #a1acb8; }
+    .table > :not(caption) > * > * { padding: .75rem .6rem; font-size: 0.875rem; }
+    .promo-name { font-weight: 600; color: #1e2d3d; font-size: 0.875rem; }
+    .promo-desc { font-size: .75rem; color: #a1acb8; }
     .pending-row { border-left: 3px solid #f59e0b; }
     .act-icon {
-        width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+        width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
         border-radius: .375rem; border: 1px solid #e2e8f0; background: #fff; color: #64748b;
-        cursor: pointer; transition: all .2s; text-decoration: none;
+        cursor: pointer; transition: all .2s; text-decoration: none; font-size: 0.875rem;
     }
     .act-icon:hover { background: #f8fafc; color: #3182ce; border-color: #cbd5e1; }
     .act-icon.danger:hover { background: #fff5f5; color: #ea5455; border-color: #feb2b2; }
@@ -27,10 +29,10 @@
     a.stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(0,0,0,.13) !important; cursor: pointer; }
     a.stat-card.stat-active { border: 2px solid #3182ce !important; background: #eff6ff; }
     /* Badge 放大 */
-    .badge { font-size: .813rem !important; padding: 5px 10px !important; white-space: nowrap; }
+    .badge { font-size: .75rem !important; padding: 4px 8px !important; white-space: nowrap; }
     /* ── Promotions/Index 頁面專屬 ── */
-    /* 促銷表格 sticky 標題 */
-    #promoListCol .table thead th { position: sticky; top: 0; z-index: 2; background: #f8fafc; }
+    /* 促銷表格標題（已移除 sticky） */
+    #promoListCol .table thead th { position: relative; z-index: 2; background: #f8fafc; font-size: 0.813rem; }
     /* 選中列高亮 */
     .table tbody tr.row-active td { background: #eff6ff !important; }
     .table tbody tr.row-active td:first-child { box-shadow: inset 3px 0 0 #3182ce; }
@@ -42,13 +44,16 @@
     #promoLayout.panel-open .col-seller,
     #promoLayout.panel-open .col-act { display: none; }
     #promoLayout.panel-open .table > :not(caption) > * > * { padding: .55rem .75rem; }
-    #promoLayout.panel-open .promo-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+    #promoLayout.panel-open .promo-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
     #promoLayout.panel-open .promo-desc { display: none; }
     .table tbody tr { cursor: pointer; }
-    /* 面板展開時 6:4 比例（覆蓋共用 65%）*/
-    #promoLayout #promotionDetailPanel.open { flex: 0 0 40%; width: 40%; }
+    /* 面板展開時 5:5 比例（強制各佔一半）*/
+    #promoLayout #promotionDetailPanel.open { flex: 0 0 50%; width: 50%; max-width: none; border-left: 1px solid #e2e8f0; }
+    #promoLayout.panel-open #promoListCol { flex: 0 0 50%; width: 50%; }
     /* 重新送審列：藍色左框 */
     .resubmitted-row { border-left: 3px solid #0ea5e9; }
+    /* 詳細面板內文字縮小 */
+    #promotionDetailOffcanvasBody { font-size: 0.875rem; }
 </style>
 
 <div class="page-fluid-root container-fluid font-noto">
@@ -80,17 +85,17 @@
     }
 
     @* 統計卡片（可點擊篩選）*@
-    <div class="row g-3 mb-4">
+    <div class="row g-2 mb-3">
         <div class="col-sm-6 col-xl-3">
             <a href="@Url.Action("Index", new { status = "pending", keyword = Model.Keyword, type = Model.TypeFilter })"
                class="card stat-card shadow-sm h-100 @(Model.StatusFilter == "pending" ? "stat-active" : "")">
-                <div class="card-body d-flex align-items-center gap-3 py-3">
-                    <div class="stat-icon" style="background:#fff3cd;">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <div class="stat-icon" style="background:#fff3cd; width:40px; height:40px; font-size:1.2rem;">
                         <i class="bx bx-time-five" style="color:#f59e0b;"></i>
                     </div>
                     <div>
-                        <div class="text-muted" style="font-size:.8rem;">待審核</div>
-                        <h4 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.PendingCount</h4>
+                        <div class="text-muted" style="font-size:.75rem;">待審核 (含重新送審)</div>
+                        <h5 class="mb-0 fw-bold" style="color:#1e2d3d;">@(Model.PendingCount + Model.ReSubmittedCount)</h5>
                     </div>
                 </div>
             </a>
@@ -98,13 +103,13 @@
         <div class="col-sm-6 col-xl-3">
             <a href="@Url.Action("Index", new { status = "active", keyword = Model.Keyword, type = Model.TypeFilter })"
                class="card stat-card shadow-sm h-100 @(Model.StatusFilter == "active" ? "stat-active" : "")">
-                <div class="card-body d-flex align-items-center gap-3 py-3">
-                    <div class="stat-icon" style="background:#d1fae5;">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <div class="stat-icon" style="background:#d1fae5; width:40px; height:40px; font-size:1.2rem;">
                         <i class="bx bx-play-circle" style="color:#10b981;"></i>
                     </div>
                     <div>
-                        <div class="text-muted" style="font-size:.8rem;">進行中</div>
-                        <h4 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.ActiveCount</h4>
+                        <div class="text-muted" style="font-size:.75rem;">進行中</div>
+                        <h5 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.ActiveCount</h5>
                     </div>
                 </div>
             </a>
@@ -112,27 +117,27 @@
         <div class="col-sm-6 col-xl-3">
             <a href="@Url.Action("Index", new { status = "upcoming", keyword = Model.Keyword, type = Model.TypeFilter })"
                class="card stat-card shadow-sm h-100 @(Model.StatusFilter == "upcoming" ? "stat-active" : "")">
-                <div class="card-body d-flex align-items-center gap-3 py-3">
-                    <div class="stat-icon" style="background:#dbeafe;">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <div class="stat-icon" style="background:#dbeafe; width:40px; height:40px; font-size:1.2rem;">
                         <i class="bx bx-calendar-check" style="color:#3b82f6;"></i>
                     </div>
                     <div>
-                        <div class="text-muted" style="font-size:.8rem;">即將開始</div>
-                        <h4 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.UpcomingCount</h4>
+                        <div class="text-muted" style="font-size:.75rem;">即將開始</div>
+                        <h5 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.UpcomingCount</h5>
                     </div>
                 </div>
             </a>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <a href="@Url.Action("Index", new { status = "ended", keyword = Model.Keyword, type = Model.TypeFilter })"
-               class="card stat-card shadow-sm h-100 @(Model.StatusFilter == "ended" ? "stat-active" : "")">
-                <div class="card-body d-flex align-items-center gap-3 py-3">
-                    <div class="stat-icon" style="background:#f1f5f9;">
-                        <i class="bx bx-check-double" style="color:#94a3b8;"></i>
+            <a href="@Url.Action("Index", new { status = "all", keyword = Model.Keyword, type = Model.TypeFilter })"
+               class="card stat-card shadow-sm h-100 @(Model.StatusFilter == "all" || Model.StatusFilter == null ? "stat-active" : "")">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <div class="stat-icon" style="background:#f1f5f9; width:40px; height:40px; font-size:1.2rem;">
+                        <i class="bx bx-list-ul" style="color:#94a3b8;"></i>
                     </div>
                     <div>
-                        <div class="text-muted" style="font-size:.8rem;">已結束</div>
-                        <h4 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.EndedCount</h4>
+                        <div class="text-muted" style="font-size:.75rem;">所有活動</div>
+                        <h5 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.AllCount</h5>
                     </div>
                 </div>
             </a>
@@ -156,49 +161,60 @@
     <div class="card shadow-sm mb-0" style="border-radius:12px 12px 0 0; border-bottom:none;">
         <div class="card-body py-3">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                @* 狀態 Tabs *@
+                @* 狀態 Tabs (精簡版) *@
                 <ul class="nav status-tabs gap-1 mb-0">
                     @{
                         var tabs = new[] {
                             ("all","全部", ""),
                             ("pending","待審核",""),
-                            ("resubmitted","重新申請審核",""),
                             ("active","進行中",""),
                             ("upcoming","即將開始",""),
-                            ("rejected","已拒絕",""),
-                            ("ended","已結束",""),
                         };
                     }
                     @foreach (var (val, label, icon) in tabs)
                     {
                         var isActive = (Model.StatusFilter ?? "all") == val;
-                        var badge = val == "resubmitted" && Model.ReSubmittedCount > 0
-                            ? $" <span class=\"badge bg-info ms-1\">{Model.ReSubmittedCount}</span>"
-                            : val == "pending" && Model.PendingCount > 0
-                            ? $" <span class=\"badge bg-warning ms-1\">{Model.PendingCount}</span>"
-                            : "";
+                        var (badgeStyle, count) = val switch
+                        {
+                            "all"         => ("background:#e0e7ff;color:#3730a3", Model.AllCount),
+                            "pending"     => ("background:#fef3c7;color:#92400e", Model.PendingCount + Model.ReSubmittedCount),
+                            "active"      => ("background:#d1fae5;color:#065f46", Model.ActiveCount),
+                            "upcoming"    => ("background:#dbeafe;color:#1e3a8a", Model.UpcomingCount),
+                            _             => ("background:#f3f4f6;color:#374151", 0)
+                        };
                         <li class="nav-item">
                             <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = val == "all" ? null : val, type = Model.TypeFilter })"
-                               class="nav-link @(isActive ? "active" : "")">@label@Html.Raw(badge)</a>
+                               class="nav-link @(isActive ? "active" : "")">
+                                @label
+                                <span class="badge rounded-pill ms-1" style="@badgeStyle;font-size:0.78rem;">@count</span>
+                            </a>
                         </li>
                     }
                 </ul>
-                @* 右側：類型 + 搜尋 *@
+                @* 右側：狀態 + 類型 + 搜尋 *@
                 <form method="get" asp-action="Index" asp-controller="Promotions" class="d-flex gap-2 align-items-center">
-                    <input type="hidden" name="status" value="@Model.StatusFilter" />
-                    <select name="type" class="form-select form-select-sm" style="width:140px;">
-                        <option value="" @@(Model.TypeFilter == null ? "selected=\"selected\"" : "")>所有類型</option>
-                        <option value="1" @@(Model.TypeFilter == 1 ? "selected=\"selected\"" : "")>限時特賣</option>
-                        <option value="2" @@(Model.TypeFilter == 2 ? "selected=\"selected\"" : "")>滿額折扣</option>
-                        <option value="3" @@(Model.TypeFilter == 3 ? "selected=\"selected\"" : "")>限量搶購</option>
+                    <select name="status" class="form-select form-select-sm" style="width:110px;">
+                        <option value="" selected="@(string.IsNullOrEmpty(Model.StatusFilter) || Model.StatusFilter == "all" ? "selected" : null)">所有狀態</option>
+                        <option value="pending" selected="@(Model.StatusFilter == "pending" ? "selected" : null)">待審核</option>
+                        <option value="resubmitted" selected="@(Model.StatusFilter == "resubmitted" ? "selected" : null)">重新送審</option>
+                        <option value="active" selected="@(Model.StatusFilter == "active" ? "selected" : null)">進行中</option>
+                        <option value="upcoming" selected="@(Model.StatusFilter == "upcoming" ? "selected" : null)">即將開始</option>
+                        <option value="rejected" selected="@(Model.StatusFilter == "rejected" ? "selected" : null)">已拒絕</option>
+                        <option value="ended" selected="@(Model.StatusFilter == "ended" ? "selected" : null)">已結束</option>
                     </select>
-                    <div class="input-group input-group-sm" style="width:250px;">
-                        <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="搜尋活動名稱或賣家..." />
+                    <select name="type" class="form-select form-select-sm" style="width:110px;">
+                        <option value="" selected="@(Model.TypeFilter == null ? "selected" : null)">所有類型</option>
+                        <option value="1" selected="@(Model.TypeFilter == 1 ? "selected" : null)">限時特賣</option>
+                        <option value="2" selected="@(Model.TypeFilter == 2 ? "selected" : null)">滿額折扣</option>
+                        <option value="3" selected="@(Model.TypeFilter == 3 ? "selected" : null)">限量搶購</option>
+                    </select>
+                    <div class="input-group input-group-sm" style="width:200px;">
+                        <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="搜尋..." />
                         <button class="btn btn-primary" type="submit"><i class="bx bx-search"></i></button>
                     </div>
-                    @if (!string.IsNullOrWhiteSpace(Model.Keyword) || Model.TypeFilter.HasValue)
+                    @if (!string.IsNullOrWhiteSpace(Model.Keyword) || Model.TypeFilter.HasValue || (!string.IsNullOrEmpty(Model.StatusFilter) && Model.StatusFilter != "all"))
                     {
-                        <a href="@Url.Action("Index", new { status = Model.StatusFilter })" class="btn btn-sm btn-label-secondary">清除</a>
+                        <a href="@Url.Action("Index")" class="btn btn-sm btn-label-secondary">清除</a>
                     }
                 </form>
             </div>
@@ -207,66 +223,77 @@
 
     @* 主表格 *@
     <div class="card shadow-sm" style="border-radius:0 0 12px 12px;">
-        <div class="promo-table-wrap">
-            <table class="table table-hover align-middle mb-0" style="width:100%;">
-                <thead style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
-                    <tr>
-                        <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">活動名稱</th>
-                        <th class="col-type" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">類型</th>
-                        <th class="col-time" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">時間區間</th>
-                        <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">狀態</th>
-                        <th class="col-seller" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">賣家</th>
-                        <th class="col-act text-end" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Items.Any())
-                    {
-                        int _ni = 0;
-                        @foreach (var item in Model.Items)
+        <div class="card-body p-2"> @* 減輕擁擠感 *@
+            <div id="batchActionArea" class="mb-2 d-none">
+                <span class="badge bg-label-info p-2 rounded-pill">
+                    已選取 <span id="selectedCountBadge">0</span> 筆活動
+                </span>
+            </div>
+            <div class="promo-table-wrap">
+                <table class="table table-hover align-middle mb-0" style="width:100%;">
+                    <thead style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                        <tr>
+                            <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">活動名稱</th>
+                            <th class="col-type" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">類型</th>
+                            <th class="col-time" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">時間區間</th>
+                            <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">狀態</th>
+                            <th class="col-seller" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">賣家</th>
+                            <th class="col-act text-end" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items.Any())
                         {
-                            <tr class="@(item.Status == 4 ? "resubmitted-row" : item.Status == 0 ? "pending-row" : "")" data-id="@item.Id">
-                                <td>
-                                    <div class="promo-name">@item.Name</div>
-                                    <div class="promo-desc">@item.ItemCount 個項目</div>
-                                </td>
-                                <td class="col-type">
-                                    <span class="badge @item.TypeBadgeClass">@item.TypeName</span>
-                                </td>
-                                <td class="col-time" style="font-size:.85rem; color:#64748b; white-space:nowrap;">
-                                    <div><i class="bx bx-calendar me-1"></i>@item.StartTime.ToString("yyyy/MM/dd HH:mm")</div>
-                                    <div class="text-muted">→ @item.EndTime.ToString("yyyy/MM/dd HH:mm")</div>
-                                </td>
-                                <td>
-                                    <span class="badge @item.StatusBadgeClass">@item.DisplayStatus</span>
-                                </td>
-                                <td class="col-seller" style="font-size:.875rem; color:#4a5568;">@item.SellerName</td>
-                                <td class="col-act text-end" onclick="event.stopPropagation()">
-                                    @if (item.Status == 2)
-                                    {
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-warning rounded-pill px-3"
-                                                title="模擬賣家修改後重新送審（展示用）"
-                                                onclick="simulateSellerResubmitPromo(@item.Id, '@Html.Raw(item.Name.Replace("'","\\'"  ))')">
-                                            <i class="bx bx-store-alt me-1"></i>模擬賣家送審
-                                        </button>
-                                    }
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr class="outline-none focus:outline-none @(item.Status == 4 ? "resubmitted-row" : item.Status == 0 ? "pending-row" : "")" data-id="@item.Id">
+                                    <td>
+                                        <div class="promo-name d-flex align-items-center gap-1">
+                                            @item.Name
+                                            @if (item.Status == 4)
+                                            {
+                                                <span class="badge bg-label-warning py-0 px-2" style="font-size:0.65rem; border:1px solid #ffab00;">重新送審</span>
+                                            }
+                                        </div>
+                                        <div class="promo-desc">@item.ItemCount 個項目</div>
+                                    </td>
+                                    <td class="col-type">
+                                        <span class="badge @item.TypeBadgeClass">@item.TypeName</span>
+                                    </td>
+                                    <td class="col-time" style="font-size:.85rem; color:#64748b; white-space:nowrap;">
+                                        <div><i class="bx bx-calendar me-1"></i>@item.StartTime.ToString("yyyy/MM/dd HH:mm")</div>
+                                        <div class="text-muted">→ @item.EndTime.ToString("yyyy/MM/dd HH:mm")</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge @item.StatusBadgeClass">@item.DisplayStatus</span>
+                                    </td>
+                                    <td class="col-seller" style="font-size:.875rem; color:#4a5568;">@item.SellerName</td>
+                                    <td class="col-act text-end" onclick="event.stopPropagation()">
+                                        @if (item.Status == 2)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-warning rounded-pill px-3"
+                                                    title="模擬賣家修改後重新送審（展示用）"
+                                                    onclick="simulateSellerResubmitPromo(@item.Id, '@Html.Raw(item.Name.Replace("'","\\'"  ))')">
+                                                <i class="bx bx-store-alt me-1"></i>模擬賣家送審
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div style="color:#a0aec0; font-size:2.5rem;"><i class="bx bx-purchase-tag"></i></div>
+                                    <h5 class="fw-normal mt-2" style="color:#718096;">找不到符合條件的活動</h5>
                                 </td>
                             </tr>
-                            _ni++;
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center py-5">
-                                <div style="color:#a0aec0; font-size:2.5rem;"><i class="bx bx-purchase-tag"></i></div>
-                                <h5 class="fw-normal mt-2" style="color:#718096;">找不到符合條件的活動</h5>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         @* 分頁 *@
@@ -390,6 +417,9 @@
 
 @section Scripts {
 <script>
+    // ── 全域選取狀態 (跨頁) ──
+    var selectedIds = new Set();
+
     // ── 促銷列表（供導覽用）──
     var _promoList = [
         @{ bool _pf = true; }
@@ -399,6 +429,85 @@
         }
     ];
     var _currentNavIdx = -1;
+
+    // ── 選取 UI 更新 ──
+    function updateSelectionUI() {
+        var count = selectedIds.size;
+        var badge = document.getElementById('selectedCountBadge');
+        var area  = document.getElementById('batchActionArea');
+        if (badge) badge.textContent = count;
+        if (area)  count > 0 ? area.classList.remove('d-none') : area.classList.add('d-none');
+
+        updateSelectAllCheckboxState();
+    }
+
+    // ── 動態判斷全選勾勾狀態 (僅限當前頁面) ──
+    function updateSelectAllCheckboxState() {
+        var selectAll = document.getElementById('selectAll');
+        if (!selectAll) return;
+
+        var currentPageCheckboxes = document.querySelectorAll('.row-check');
+        if (currentPageCheckboxes.length === 0) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+            return;
+        }
+
+        var checkedInPage = 0;
+        currentPageCheckboxes.forEach(cb => {
+            if (selectedIds.has(parseInt(cb.value))) {
+                cb.checked = true;
+                checkedInPage++;
+            } else {
+                cb.checked = false;
+            }
+        });
+
+        if (checkedInPage === currentPageCheckboxes.length) {
+            selectAll.checked = true;
+            selectAll.indeterminate = false;
+        } else if (checkedInPage === 0) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+        } else {
+            selectAll.checked = false;
+            selectAll.indeterminate = true;
+        }
+    }
+
+    // ── 全選事件 ──
+    var selectAllCb = document.getElementById('selectAll');
+    if (selectAllCb) {
+        selectAllCb.addEventListener('change', function () {
+            var checkboxes = document.querySelectorAll('.row-check');
+            checkboxes.forEach(cb => {
+                var id = parseInt(cb.value);
+                if (this.checked) {
+                    selectedIds.add(id);
+                } else {
+                    selectedIds.delete(id);
+                }
+                cb.checked = this.checked;
+            });
+            updateSelectionUI();
+        });
+    }
+
+    // ── 單選事件綁定 ──
+    function _bindPromoCheckboxEvents() {
+        document.querySelectorAll('.row-check').forEach(cb => {
+            cb.onclick = function(e) {
+                e.stopPropagation(); // 防止觸發行點擊開啟面板
+                var id = parseInt(this.value);
+                if (this.checked) {
+                    selectedIds.add(id);
+                } else {
+                    selectedIds.delete(id);
+                }
+                updateSelectionUI();
+            };
+        });
+    }
 
     // ── 開啟 Push-Pull 側邊詳情面板 ──
     var _promoDetailUrl = '@Url.Action("GetPromotionDetailsPartial", "Promotions")';
@@ -451,7 +560,7 @@
             _promoSwitchMode(true, null);
         }
 
-        fetch(_promoDetailUrl + '?id=' + id)
+        fetch(_promoDetailUrl + '?id=' + id + '&isReviewMode=true')
             .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
             .then(function (html) {
                 body.innerHTML = html;
@@ -533,7 +642,10 @@
             });
         });
     }
+    // 初始化
     _promoBindRows();
+    _bindPromoCheckboxEvents();
+    updateSelectionUI();
 
     // ── 導覽上/下一筆 ──
     function navigatePromotion(delta) {
@@ -679,7 +791,9 @@
                 // 重建列表並重綁
                 _rebuildPromoList();
                 _promoBindRows();
+                _bindPromoCheckboxEvents();
                 _updateNavButtons();
+                updateSelectionUI();
                 // 滾回頂部
                 if (listCol) listCol.scrollTop = 0;
                 // 恢復透明度

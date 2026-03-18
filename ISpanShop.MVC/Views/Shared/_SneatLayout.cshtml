@@ -1032,16 +1032,26 @@
             border-radius: 12px;
             box-shadow: 0 4px 24px rgba(0,0,0,.10);
             border: 1px solid rgba(226,232,240,.8);
+            transition: all .35s ease;
+        }
+        .split-layout.panel-open .split-list-col {
+            flex: 0 0 50%;
+            max-width: 50%;
         }
 
         /* 右側詳情面板 */
         .split-detail-panel {
             flex: 0 0 0%;
             width: 0;
+            max-width: 0;
             overflow: hidden;
-            transition: flex .35s cubic-bezier(.4,0,.2,1), width .35s cubic-bezier(.4,0,.2,1);
+            transition: all .35s cubic-bezier(.4,0,.2,1);
         }
-        .split-detail-panel.open { flex: 0 0 65%; width: 65%; }
+        .split-detail-panel.open { 
+            flex: 0 0 50%; 
+            width: 50%;
+            max-width: 50%;
+        }
 
         .split-detail-panel-inner {
             width: 100%;
@@ -1056,6 +1066,15 @@
             overflow: hidden;
         }
         .split-detail-panel-inner .panel-body { overflow-y: auto; flex: 1; }
+        .split-detail-panel-inner .panel-body img { 
+            max-height: 250px; 
+            object-fit: contain; 
+            width: auto;
+            max-width: 100%;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
 
         /* 返回完整列表按鈕（精簡模式時顯示） */
         .back-to-list-btn {

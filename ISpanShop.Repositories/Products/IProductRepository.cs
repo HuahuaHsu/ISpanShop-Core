@@ -166,6 +166,9 @@ namespace ISpanShop.Repositories.Products
         /// <summary>[Async] 隨機取得包含圖片的真實商品（用於生成測試商品時複製圖片）</summary>
         Task<List<Product>> GetRandomProductsWithImagesAsync(int count);
 
+        /// <summary>[Async] 依 ID 清單取得商品審核摘要（用於生成測試商品後回傳 DOM 插入所需資料）</summary>
+        Task<IEnumerable<ProductReviewDto>> GetProductsByIdsForReviewAsync(IEnumerable<int> ids);
+
         /// <summary>[Async] 模擬賣家修改後重新送審：將 ReviewStatus=2（已退回）的商品改為 ReviewStatus=3（待重新審核）。</summary>
         Task SimulateSellerResubmitAsync(int id);
     }

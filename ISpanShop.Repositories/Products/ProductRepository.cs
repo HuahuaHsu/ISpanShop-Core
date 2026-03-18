@@ -190,7 +190,10 @@ namespace ISpanShop.Repositories.Products
                 var kw = criteria.Keyword.Trim().ToLower();
                 query = query.Where(p =>
                     p.Name.ToLower().Contains(kw) ||
-                    (p.Description != null && p.Description.ToLower().Contains(kw)));
+                    (p.Description != null && p.Description.ToLower().Contains(kw)) ||
+                    (p.Store != null && p.Store.StoreName.ToLower().Contains(kw)) ||
+                    (p.Brand != null && p.Brand.Name.ToLower().Contains(kw)) ||
+                    (p.Category != null && p.Category.Name.ToLower().Contains(kw)));
             }
 
             if (criteria.StoreId.HasValue)
@@ -335,6 +338,9 @@ namespace ISpanShop.Repositories.Products
         {
             var query = _context.Products
                 .AsNoTracking()
+                .Include(p => p.Store)
+                .Include(p => p.Brand)
+                .Include(p => p.Category)
                 .Where(p => p.IsDeleted != true)
                 .AsQueryable();
 
@@ -348,7 +354,10 @@ namespace ISpanShop.Repositories.Products
                 var keyword = criteria.Keyword.Trim().ToLower();
                 query = query.Where(p =>
                     p.Name.ToLower().Contains(keyword) ||
-                    (p.Description != null && p.Description.ToLower().Contains(keyword)));
+                    (p.Description != null && p.Description.ToLower().Contains(keyword)) ||
+                    (p.Store != null && p.Store.StoreName.ToLower().Contains(keyword)) ||
+                    (p.Brand != null && p.Brand.Name.ToLower().Contains(keyword)) ||
+                    (p.Category != null && p.Category.Name.ToLower().Contains(keyword)));
             }
 
             if (criteria.StoreId.HasValue)
@@ -522,7 +531,8 @@ namespace ISpanShop.Repositories.Products
                     ReviewStatus = p.ReviewStatus,
                     ReviewedBy   = p.ReviewedBy,
                     ReviewDate   = p.ReviewDate,
-                    RejectReason = p.RejectReason,
+                    RejectReason        = p.RejectReason,
+                    ForceOffShelfReason = p.ForceOffShelfReason,
                     CreatedAt    = p.CreatedAt,
                     UpdatedAt    = p.UpdatedAt,
                     MainImageUrl = p.ProductImages
@@ -555,7 +565,8 @@ namespace ISpanShop.Repositories.Products
                     ReviewStatus = p.ReviewStatus,
                     ReviewedBy   = p.ReviewedBy,
                     ReviewDate   = p.ReviewDate,
-                    RejectReason = p.RejectReason,
+                    RejectReason        = p.RejectReason,
+                    ForceOffShelfReason = p.ForceOffShelfReason,
                     CreatedAt    = p.CreatedAt,
                     UpdatedAt    = p.UpdatedAt,
                     MainImageUrl = p.ProductImages
@@ -675,7 +686,7 @@ namespace ISpanShop.Repositories.Products
             product.ForceOffShelfReason = reason;
             product.ForceOffShelfDate   = DateTime.Now;
             product.ForceOffShelfBy     = adminBy;
-            product.ReviewStatus        = 0;              // 重設審核狀態，等待賣家重新申請
+            product.ReviewStatus        = 2;              // 進入退回紀錄，賣家可從此處模擬送審
             product.UpdatedAt           = DateTime.Now;
 
             await _context.SaveChangesAsync();
@@ -695,7 +706,7 @@ namespace ISpanShop.Repositories.Products
                 product.ForceOffShelfReason = reason;
                 product.ForceOffShelfDate   = now;
                 product.ForceOffShelfBy     = adminBy;
-                product.ReviewStatus        = 0;
+                product.ReviewStatus        = 2; // 2 = 已退回/拒絕
                 product.UpdatedAt           = now;
             }
 
@@ -895,6 +906,30 @@ namespace ISpanShop.Repositories.Products
                 .ToListAsync();
 
             return (items, total);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductReviewDto>> GetProductsByIdsForReviewAsync(IEnumerable<int> ids)
+        {
+            var idList = ids.ToList();
+            return await _context.Products
+                .AsNoTracking()
+                .Where(p => idList.Contains(p.Id))
+                .Select(p => new ProductReviewDto
+                {
+                    Id           = p.Id,
+                    StoreId      = p.StoreId,
+                    StoreName    = p.Store != null ? p.Store.StoreName : "未知商店",
+                    CategoryName = p.Category != null ? p.Category.Name : "未分類",
+                    BrandName    = p.Brand != null ? p.Brand.Name : "未設定",
+                    Name         = p.Name,
+                    ReviewStatus = p.ReviewStatus,
+                    CreatedAt    = p.CreatedAt,
+                    MainImageUrl = p.ProductImages
+                        .Where(img => img.IsMain == true)
+                        .Select(img => img.ImageUrl).FirstOrDefault()
+                })
+                .ToListAsync();
         }
 
         /// <inheritdoc/>

@@ -38,11 +38,14 @@ namespace ISpanShop.Repositories.Inventories
 
             if (!string.IsNullOrWhiteSpace(criteria.Keyword))
             {
-                var kw = criteria.Keyword.Trim();
+                var kw = criteria.Keyword.Trim().ToLower();
                 baseQuery = baseQuery.Where(v =>
-                    v.Product.Name.Contains(kw) ||
-                    v.VariantName.Contains(kw) ||
-                    v.SkuCode.Contains(kw));
+                    v.Product.Name.ToLower().Contains(kw) ||
+                    v.VariantName.ToLower().Contains(kw) ||
+                    v.SkuCode.ToLower().Contains(kw) ||
+                    (v.Product.Store != null && v.Product.Store.StoreName.ToLower().Contains(kw)) ||
+                    (v.Product.Brand != null && v.Product.Brand.Name.ToLower().Contains(kw)) ||
+                    (v.Product.Category != null && v.Product.Category.Name.ToLower().Contains(kw)));
             }
 
             if (criteria.ParentCategoryId.HasValue)
@@ -99,11 +102,14 @@ namespace ISpanShop.Repositories.Inventories
 
             if (!string.IsNullOrWhiteSpace(criteria.Keyword))
             {
-                var kw = criteria.Keyword.Trim();
+                var kw = criteria.Keyword.Trim().ToLower();
                 baseQuery = baseQuery.Where(v =>
-                    v.Product.Name.Contains(kw) ||
-                    v.VariantName.Contains(kw)  ||
-                    v.SkuCode.Contains(kw));
+                    v.Product.Name.ToLower().Contains(kw) ||
+                    v.VariantName.ToLower().Contains(kw) ||
+                    v.SkuCode.ToLower().Contains(kw) ||
+                    (v.Product.Store != null && v.Product.Store.StoreName.ToLower().Contains(kw)) ||
+                    (v.Product.Brand != null && v.Product.Brand.Name.ToLower().Contains(kw)) ||
+                    (v.Product.Category != null && v.Product.Category.Name.ToLower().Contains(kw)));
             }
 
             if (criteria.ParentCategoryId.HasValue)

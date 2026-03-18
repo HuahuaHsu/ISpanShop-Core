@@ -1,4 +1,10 @@
 @model ISpanShop.MVC.Models.Promotions.PromotionDetailVm
+@{
+    var _isReviewMode = ViewBag.IsReviewMode ?? false;  // 是否從審核中心開啟
+    
+    // 嚴格條件：必須同時滿足 (1) 從審核中心開啟 且 (2) 活動狀態為待審核(0)或重新送審(4)
+    var _shouldShowReviewButtons = _isReviewMode && Model.IsPending;
+}
 
 <style>
     .pd-info-row { display: flex; padding: .55rem 0; border-bottom: 1px solid #f1f5f9; }
@@ -39,6 +45,17 @@
     .btn-panel-reject:hover {
         background: #dc2626; color: #fff; border-color: #dc2626;
         box-shadow: 0 4px 12px rgba(220,38,38,.3);
+    }
+    .btn-panel-simulate {
+        flex: 1; min-width: 120px;
+        background: #fff; color: #d97706;
+        border: 2px solid #f59e0b; font-weight: 600;
+        padding: 0.6rem 1rem; border-radius: 10px; font-size: .95rem;
+        transition: all .2s;
+    }
+    .btn-panel-simulate:hover {
+        background: #fef3c7; color: #92400e; border-color: #fbbf24;
+        box-shadow: 0 4px 12px rgba(245,158,11,.3);
     }
     .panel-footer-info-box {
         width: 100%; display: flex; align-items: flex-start; gap: 8px;
@@ -255,7 +272,7 @@
                 {
                     <table class="table pd-items-table mb-0">
                         <thead style="background:#f8fafc;">
-                            <tr>
+                            <tr class="outline-none focus:outline-none">
                                 <th>規則類型</th>
                                 <th>門檻</th>
                                 <th>折扣方式</th>
@@ -265,7 +282,7 @@
                         <tbody>
                             @foreach (var rule in Model.Rules)
                             {
-                                <tr>
+                                <tr class="outline-none focus:outline-none">
                                     <td><span class="badge bg-label-info">@rule.RuleTypeName</span></td>
                                     <td class="fw-semibold">@rule.Threshold.ToString("N0") @(rule.RuleType == 1 ? "元" : "件")</td>
                                     <td>@rule.DiscountTypeName</td>
@@ -299,7 +316,7 @@
                 {
                     <table class="table pd-items-table mb-0">
                         <thead style="background:#f8fafc;">
-                            <tr>
+                            <tr class="outline-none focus:outline-none">
                                 <th>商品名稱</th>
                                 <th>原價</th>
                                 <th>活動價</th>
@@ -317,7 +334,7 @@
                                 var discount = item.DiscountPrice.HasValue
                                     ? (decimal)(item.OriginalPrice - item.DiscountPrice.Value) / item.OriginalPrice * 100
                                     : 0;
-                                <tr>
+                                <tr class="outline-none focus:outline-none">
                                     <td class="fw-semibold" style="word-break:break-word; max-width:160px;">@item.ProductName</td>
                                     <td style="color:#94a3b8; text-decoration:line-through;">NT$ @item.OriginalPrice.ToString("N0")</td>
                                     <td class="fw-bold" style="color:#ea5455;">
@@ -432,7 +449,7 @@
 
 @* ── Sticky 底部操作欄（與商品審核中心統一樣式）── *@
 <div class="panel-action-footer">
-    @if (Model.IsPending)
+    @if (_shouldShowReviewButtons)
     {
         <button type="button" class="btn btn-panel-approve"
                 onclick="pdApprovePromotion(@Model.Id)">
@@ -468,6 +485,10 @@
                 }
             </div>
         </div>
+        <button type="button" class="btn btn-panel-simulate"
+                onclick="pdSimulateSellerResubmit(@Model.Id, '@Html.Raw(Model.Name.Replace("'", "\\'"))')">
+            <i class="bx bx-store-alt me-2"></i>模擬賣家重新送審
+        </button>
     }
 </div>
 
@@ -483,6 +504,21 @@
         var fd = new FormData();
         fd.append('__RequestVerificationToken', token);
         var res = await fetch('/Promotions/Approve/' + id, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+        var result = await res.json();
+        showMsg(result.success ? 'success' : 'error', result.message);
+        if (result.success) setTimeout(function () { location.reload(); }, 1500);
+    }
+
+    async function pdSimulateSellerResubmit(id, name) {
+        var ok = await showConfirm(
+            '🛍️ 模擬賣家重新送審',
+            '模擬賣家修改後重新送審活動「' + name + '」？<br><small style="color:#718096;">活動將回到待審核列表，展示完整拒絕 → 修改 → 重新送審流程。</small>'
+        );
+        if (!ok) return;
+        var token = document.querySelector('#pdActionForm [name="__RequestVerificationToken"]').value;
+        var fd = new FormData();
+        fd.append('__RequestVerificationToken', token);
+        var res = await fetch('/Promotions/SimulateSellerResubmit/' + id, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
         var result = await res.json();
         showMsg(result.success ? 'success' : 'error', result.message);
         if (result.success) setTimeout(function () { location.reload(); }, 1500);

@@ -49,7 +49,7 @@ namespace ISpanShop.MVC.Controllers.Promotions
             new() {
                 Id = 1, Name = "iPhone 15 週年特賣", PromotionType = 1,
                 StartTime = DateTime.Now.AddDays(2), EndTime = DateTime.Now.AddDays(9),
-                Status = 0, SellerId = 1, SellerName = "Apple 台灣授權店",
+                Status = 1, SellerId = 1, SellerName = "Apple 台灣授權店",  // 改為已核准
                 CreatedAt = DateTime.Now.AddDays(-1),
                 Items = new() { new() { ProductId = 1, ProductName = "iPhone 15 Pro 128GB", OriginalPrice = 38900, DiscountPrice = 36900 } }
             },
@@ -88,14 +88,14 @@ namespace ISpanShop.MVC.Controllers.Promotions
             new() {
                 Id = 5, Name = "3C家電滿件優惠", PromotionType = 2,
                 StartTime = DateTime.Now.AddDays(3), EndTime = DateTime.Now.AddDays(10),
-                Status = 0, SellerId = 4, SellerName = "家電特賣城",
+                Status = 0, SellerId = 4, SellerName = "家電特賣城",  // 保留待審核（展示用）
                 CreatedAt = DateTime.Now.AddHours(-6),
                 Rules = new() { new() { RuleType = 2, Threshold = 3, DiscountType = 2, DiscountValue = 10 } }
             },
             new() {
-                Id = 6, Name = "低價傾銷活動（已拒絕）", PromotionType = 1,
+                Id = 6, Name = "低價傾銷活動", PromotionType = 1,
                 StartTime = DateTime.Now.AddDays(1), EndTime = DateTime.Now.AddDays(8),
-                Status = 2, SellerId = 2, SellerName = "Samsung 官方旗艦店",
+                Status = 2, SellerId = 2, SellerName = "Samsung 官方旗艦店",  // 保留已拒絕（展示用）
                 CreatedAt = DateTime.Now.AddDays(-3), ReviewedAt = DateTime.Now.AddDays(-1),
                 RejectReason = "活動折扣幅度超出規定範圍，請修正後重新申請",
                 Items = new() { new() { ProductId = 2, ProductName = "Samsung Galaxy S24", OriginalPrice = 32900, DiscountPrice = 15000 } }
@@ -118,14 +118,14 @@ namespace ISpanShop.MVC.Controllers.Promotions
             new() {
                 Id = 9, Name = "Samsung 旗艦機新春特賣", PromotionType = 1,
                 StartTime = DateTime.Now.AddDays(-1), EndTime = DateTime.Now.AddDays(6),
-                Status = 0, SellerId = 2, SellerName = "Samsung 官方旗艦店",
+                Status = 1, SellerId = 2, SellerName = "Samsung 官方旗艦店",  // 改為已核准
                 CreatedAt = DateTime.Now.AddHours(-3),
                 Items = new() { new() { ProductId = 2, ProductName = "Samsung Galaxy S24", OriginalPrice = 32900, DiscountPrice = 29900 } }
             },
             new() {
                 Id = 10, Name = "遊戲主機週年慶限量搶購", PromotionType = 3,
                 StartTime = DateTime.Now.AddDays(4), EndTime = DateTime.Now.AddDays(7),
-                Status = 0, SellerId = 5, SellerName = "遊戲天堂",
+                Status = 0, SellerId = 5, SellerName = "遊戲天堂",  // 保留待審核（展示用）
                 CreatedAt = DateTime.Now.AddHours(-12),
                 Items = new() { new() { ProductId = 7, ProductName = "Nintendo Switch OLED", OriginalPrice = 10980, DiscountPrice = 9480, QuantityLimit = 1, StockLimit = 30 } }
             },
@@ -157,17 +157,17 @@ namespace ISpanShop.MVC.Controllers.Promotions
                 Items = new() { new() { ProductId = 5, ProductName = "Sony WH-1000XM5", OriginalPrice = 10900, DiscountPrice = 9800 } }
             },
             new() {
-                Id = 14, Name = "超值周邊配件節（已拒絕）", PromotionType = 2,
+                Id = 14, Name = "超值周邊配件節", PromotionType = 2,
                 StartTime = DateTime.Now.AddDays(2), EndTime = DateTime.Now.AddDays(9),
-                Status = 2, SellerId = 4, SellerName = "家電特賣城",
+                Status = 2, SellerId = 4, SellerName = "家電特賣城",  // 保留已拒絕（展示用）
                 CreatedAt = DateTime.Now.AddDays(-4), ReviewedAt = DateTime.Now.AddDays(-2),
                 RejectReason = "折扣門檻設定不合理，滿 100 元折 200 元不符規範",
                 Rules = new() { new() { RuleType = 1, Threshold = 100, DiscountType = 1, DiscountValue = 200 } }
             },
             new() {
-                Id = 15, Name = "電競設備大促（待審）", PromotionType = 1,
+                Id = 15, Name = "電競設備大促", PromotionType = 1,
                 StartTime = DateTime.Now.AddDays(3), EndTime = DateTime.Now.AddDays(10),
-                Status = 0, SellerId = 5, SellerName = "遊戲天堂",
+                Status = 0, SellerId = 5, SellerName = "遊戲天堂",  // 保留待審核（展示用）
                 CreatedAt = DateTime.Now.AddMinutes(-30),
                 Items = new() { new() { ProductId = 7, ProductName = "Nintendo Switch OLED", OriginalPrice = 10980, DiscountPrice = 10480 } }
             },
@@ -195,7 +195,7 @@ namespace ISpanShop.MVC.Controllers.Promotions
 
             query = status switch
             {
-                "pending"     => query.Where(p => p.Status == 0),
+                "pending"     => query.Where(p => p.Status == 0 || p.Status == 4),
                 "resubmitted" => query.Where(p => p.Status == 4),
                 "active"      => query.Where(p => p.Status == 1 && p.StartTime <= now && p.EndTime >= now),
                 "upcoming"    => query.Where(p => p.Status == 1 && p.StartTime > now),
@@ -210,16 +210,18 @@ namespace ISpanShop.MVC.Controllers.Promotions
                 Keyword      = keyword,
                 StatusFilter = status,
                 TypeFilter   = type,
-                TotalCount   = totalCount,
+                TotalCount   = totalCount,  // 篩選後的筆數
                 CurrentPage  = page,
                 PageSize     = pageSize,
                 TotalPages   = (int)Math.Ceiling(totalCount / (double)pageSize),
 
+                AllCount          = all.Count(),  // 未經篩選的總筆數
                 PendingCount      = all.Count(p => p.Status == 0),
                 ActiveCount       = all.Count(p => p.Status == 1 && p.StartTime <= now && p.EndTime >= now),
                 UpcomingCount     = all.Count(p => p.Status == 1 && p.StartTime > now),
                 EndedCount        = all.Count(p => p.Status == 3 || (p.Status == 1 && p.EndTime < now)),
                 ReSubmittedCount  = all.Count(p => p.Status == 4),
+                RejectedCount     = all.Count(p => p.Status == 2),
 
                 Items = query
                     .OrderByDescending(p => p.CreatedAt)
@@ -451,7 +453,7 @@ namespace ISpanShop.MVC.Controllers.Promotions
         // GetPromotionDetailsPartial GET (AJAX Offcanvas)
         // ===================================================================
         [HttpGet("GetPromotionDetailsPartial")]
-        public IActionResult GetPromotionDetailsPartial(int id)
+        public IActionResult GetPromotionDetailsPartial(int id, bool isReviewMode = false)
         {
             var promo  = _store.FirstOrDefault(p => p.Id == id && !p.IsDeleted);
             if (promo == null) return NotFound();
@@ -479,6 +481,7 @@ namespace ISpanShop.MVC.Controllers.Promotions
                 SalesStats          = BuildSalesStats(promo)
             };
 
+            ViewBag.IsReviewMode = isReviewMode;
             return PartialView("_PromotionDetailsPartial", vm);
         }
 

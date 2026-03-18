@@ -24,11 +24,20 @@
 <div class="page-above-content">
 
     @* ── 頁首 ── *@
-    <div class="mb-4">
-        <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">
-            <i class="bx bx-bar-chart-alt-2 me-2" style="color:#3182ce;"></i>庫存監控
-        </h2>
-        <p class="mb-0 fs-7 text-muted">監控全站商品庫存狀況，庫存調整請由賣家自行操作</p>
+    <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">
+                <i class="bx bx-bar-chart-alt-2 me-2" style="color:#3182ce;"></i>庫存監控
+            </h2>
+            <p class="mb-0 fs-7 text-muted">監控全站商品庫存狀況，庫存調整請由賣家自行操作</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span id="batch-action-bar" class="batch-tag d-none">
+                <i class="bx bx-checkbox-checked"></i>
+                已選取 <span id="selected-count">0</span> 項
+                <button id="btn-clear-selection" type="button" class="batch-tag-close" aria-label="清除選取">×</button>
+            </span>
+        </div>
     </div>
 
     @* ── 統計卡片 ── *@
@@ -93,7 +102,7 @@
         <div class="collapse" id="invFilterBody">
             <form method="get" asp-action="Index" class="pt-3">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label">關鍵字搜尋</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0"><i class="bx bx-search"></i></span>
@@ -101,7 +110,7 @@
                                    placeholder="商品名稱、規格、SKU..." autocomplete="off">
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label">主分類</label>
                         <select id="parentCategoryId" name="parentCategoryId" class="form-select">
                             <option value="">全部主分類</option>
@@ -118,16 +127,6 @@
                             @foreach (var c in subCategories)
                             {
                                 <option value="@c.Id" selected="@(categoryId == c.Id)">@c.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">賣家</label>
-                        <select name="storeId" class="form-select">
-                            <option value="">全部賣家</option>
-                            @foreach (var s in stores)
-                            {
-                                <option value="@s.Id" selected="@(storeId == s.Id)">@s.Name</option>
                             }
                         </select>
                     </div>
@@ -218,7 +217,7 @@
                             <td class="col-inv-seller">
                                 @if (!string.IsNullOrEmpty(item.StoreName))
                                 {
-                                    <span class="store-badge">@item.StoreName</span>
+                                    <span style="color:#2d3748;">@item.StoreName</span>
                                 }
                             </td>
                             <td class="col-inv-cat">
@@ -466,8 +465,8 @@
     .table-inv tbody tr.row-active td:first-child { box-shadow: inset 3px 0 0 #3182ce; }
     /* 表格淡入淡出 */
     .inv-table-wrap { transition: opacity 0.18s ease; }
-    /* sticky thead */
-    #invListCol .table-inv thead th { position: sticky; top: 0; z-index: 2; background: #f8fafc; }
+    /* 庫存表格標題（已移除 sticky） */
+    #invListCol .table-inv thead th { position: relative; z-index: 2; background: #f8fafc; }
 
     .low-stock-row  td:first-child { border-left: 3px solid #fc8181 !important; }
     .zero-stock-row td:first-child { border-left: 3px solid #a0aec0 !important; }
@@ -497,6 +496,18 @@
     .stock-warn { background:#fff8e1; color:#e65100; border:1px solid #ffe082; }
     .stock-low  { background:#fde8e8; color:#c53030; border:1px solid #fed7d7; animation: pulse 2s infinite; }
     .stock-zero { background:#f0f0f0; color:#555;    border:1px solid #ccc; }
+
+    /* ── 批次選取 Tag ── */
+    .batch-tag {
+        display: inline-flex; align-items: center; gap: 4px; background: transparent;
+        color: #374151; border: 1.5px solid #d1d5db; border-radius: 20px;
+        padding: 0.3rem 0.75rem; font-size: 0.88rem; font-weight: 600; white-space: nowrap;
+    }
+    .batch-tag-close {
+        background: none; border: none; color: #6b7280; font-size: 1.1rem;
+        line-height: 1; padding: 0 2px; cursor: pointer; opacity: 0.75;
+    }
+    .batch-tag-close:hover { opacity: 1; color: #374151; }
 
     @@keyframes pulse {
         0%,100% { box-shadow: 0 0 0 0 rgba(197,48,48,.3); }
@@ -533,15 +544,113 @@
         background: transparent; border-bottom: 1px solid #e2e8f0; padding: .4rem .9rem !important;
     }
 
-    /* ── Toggle chevron animation ── */
+    /* Toggle chevron animation */
     .toggle-btn .bx-chevron-right { transition: transform .2s ease; display: inline-block; }
     .toggle-btn[aria-expanded="true"] .bx-chevron-right { transform: rotate(90deg); }
-    /* 面板展開時 6:4 比例（覆蓋共用 65%）*/
-    #invLayout #invDetailPanel.open { flex: 0 0 40%; width: 40%; }
-</style>
+    </style>
 
 @section Scripts {
 <script>
+    // ══════════════════════════════════════════════════════
+    //  跨分頁多選：使用 sessionStorage 記憶已勾選的商品 ID
+    // ══════════════════════════════════════════════════════
+    (function () {
+        var STORE_KEY = 'selectedInventoryIds';
+
+        function loadIds() {
+            try { return new Set(JSON.parse(sessionStorage.getItem(STORE_KEY) || '[]')); }
+            catch { return new Set(); }
+        }
+        function saveIds(set) {
+            sessionStorage.setItem(STORE_KEY, JSON.stringify(Array.from(set)));
+        }
+
+        var selectedIds = loadIds();
+
+        var bar         = document.getElementById('batch-action-bar');
+        var countBadge  = document.getElementById('selected-count');
+        var selectAllCb = document.getElementById('selectAll');
+        var clearBtn    = document.getElementById('btn-clear-selection');
+
+        window.updateSelectionUI = function() {
+            var n = selectedIds.size;
+            if (countBadge) countBadge.textContent = n;
+            if (bar) {
+                if (n > 0) bar.classList.remove('d-none');
+                else       bar.classList.add('d-none');
+            }
+
+            var pageBoxes = document.querySelectorAll('.row-checkbox');
+            if (pageBoxes.length === 0) {
+                if (selectAllCb) { selectAllCb.checked = false; selectAllCb.indeterminate = false; }
+                return;
+            }
+
+            var pageIds = Array.from(pageBoxes).map(cb => parseInt(cb.value, 10));
+            var selectedOnPage = pageIds.filter(id => selectedIds.has(id)).length;
+
+            pageBoxes.forEach(cb => {
+                cb.checked = selectedIds.has(parseInt(cb.value, 10));
+            });
+
+            if (selectAllCb) {
+                if (selectedOnPage === 0) {
+                    selectAllCb.checked = false;
+                    selectAllCb.indeterminate = false;
+                } else if (selectedOnPage === pageIds.length) {
+                    selectAllCb.checked = true;
+                    selectAllCb.indeterminate = false;
+                } else {
+                    selectAllCb.checked = false;
+                    selectAllCb.indeterminate = true;
+                }
+            }
+        }
+
+        function onRowCheckChange() {
+            var id = parseInt(this.value, 10);
+            if (this.checked) selectedIds.add(id);
+            else              selectedIds.delete(id);
+            saveIds(selectedIds);
+            updateSelectionUI();
+        }
+
+        function bindCheckboxEvents() {
+            document.querySelectorAll('.row-checkbox').forEach(function (cb) {
+                cb.removeEventListener('change', onRowCheckChange);
+                cb.addEventListener('change', onRowCheckChange);
+            });
+        }
+
+        if (selectAllCb) {
+            selectAllCb.addEventListener('change', function () {
+                var isChecked = this.checked;
+                document.querySelectorAll('.row-checkbox').forEach(function (cb) {
+                    cb.checked = isChecked;
+                    var id = parseInt(cb.value, 10);
+                    if (isChecked) selectedIds.add(id);
+                    else           selectedIds.delete(id);
+                });
+                saveIds(selectedIds);
+                updateSelectionUI();
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                selectedIds.clear();
+                saveIds(selectedIds);
+                updateSelectionUI();
+            });
+        }
+
+        window.initSelection = function() {
+            bindCheckboxEvents();
+            updateSelectionUI();
+        };
+        initSelection();
+    })();
+
     var urlGetProductDetailsPartial = '@Url.Action("GetProductDetailsPartial", "Products", new { area = "Admin" })';
     var urlGetSubCategories = '@Url.Action("GetSubCategories", "Inventory", new { area = "Admin" })';
 
@@ -650,7 +759,7 @@
         document.querySelectorAll('#invListCol .table-inv tbody tr.product-row[data-id]').forEach(function (tr) {
             tr.addEventListener('click', function (e) {
                 if (e.target.closest('.toggle-btn')) return;
-                if (e.target.closest('a, button')) return;
+                if (e.target.closest('a, button, input')) return;
                 openInvPanel(parseInt(this.dataset.id), this.dataset.name || '庫存詳情');
             });
         });
@@ -720,6 +829,10 @@
                 newStatCards.forEach(function(nc, i) {
                     if (curStatCards[i]) curStatCards[i].classList.toggle('stat-active', nc.classList.contains('stat-active'));
                 });
+                // 同步選取狀態
+                if (window.initSelection) {
+                    window.initSelection();
+                }
                 // 重綁
                 _invBindRows();
                 _invBindCollapse();

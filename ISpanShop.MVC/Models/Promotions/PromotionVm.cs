@@ -14,18 +14,20 @@ namespace ISpanShop.MVC.Models.Promotions
         public List<PromotionListItemVm> Items { get; set; } = new();
         public int CurrentPage   { get; set; } = 1;
         public int TotalPages    { get; set; }
-        public int TotalCount    { get; set; }
+        public int TotalCount    { get; set; }  // 篩選後的總筆數
         public int PageSize      { get; set; } = 10;
         public string? Keyword       { get; set; }
         public string? StatusFilter  { get; set; }
         public int?    TypeFilter    { get; set; }
 
-        // 統計卡片
+        // 統計卡片（未經篩選的總筆數）
+        public int AllCount          { get; set; }  // 資料庫真正的總筆數（未經篩選）
         public int PendingCount      { get; set; }
         public int ActiveCount       { get; set; }
         public int UpcomingCount     { get; set; }
         public int EndedCount        { get; set; }
         public int ReSubmittedCount  { get; set; }  // Status=4：重新申請審核
+        public int RejectedCount     { get; set; }  // Status=2：已拒絕
     }
 
     public class PromotionListItemVm

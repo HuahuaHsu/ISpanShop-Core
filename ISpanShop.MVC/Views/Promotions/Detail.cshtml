@@ -182,7 +182,7 @@
                         {
                             <table class="table items-table mb-0">
                                 <thead style="background:#f8fafc;">
-                                    <tr>
+                                    <tr class="outline-none focus:outline-none">
                                         <th>規則類型</th>
                                         <th>門檻</th>
                                         <th>折扣方式</th>
@@ -192,7 +192,7 @@
                                 <tbody>
                                     @foreach (var rule in Model.Rules)
                                     {
-                                        <tr>
+                                        <tr class="outline-none focus:outline-none">
                                             <td><span class="badge bg-label-info">@rule.RuleTypeName</span></td>
                                             <td class="fw-semibold">
                                                 @rule.Threshold.ToString("N0") @(rule.RuleType == 1 ? "元" : "件")
@@ -229,7 +229,7 @@
                         {
                             <table class="table items-table mb-0">
                                 <thead style="background:#f8fafc;">
-                                    <tr>
+                                    <tr class="outline-none focus:outline-none">
                                         <th>商品名稱</th>
                                         <th>原價</th>
                                         <th>活動價</th>
@@ -247,7 +247,7 @@
                                         var discount = item.DiscountPrice.HasValue
                                             ? (decimal)(item.OriginalPrice - item.DiscountPrice.Value) / item.OriginalPrice * 100
                                             : 0;
-                                        <tr>
+                                        <tr class="outline-none focus:outline-none">
                                             <td class="fw-semibold" style="font-size:.875rem; word-break: break-word; max-width: 200px;">@item.ProductName</td>
                                             <td style="color:#94a3b8; text-decoration:line-through; font-size:.875rem;">NT$ @item.OriginalPrice.ToString("N0")</td>
                                             <td class="fw-bold" style="color:#ea5455; font-size:.938rem;">

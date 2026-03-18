@@ -427,20 +427,35 @@ else
     var _isApproved     = Model.ReviewStatus == 1;
     var _isRejectedView = Model.ReviewStatus == 2 && Model.Status != 4;
     var _isForcedFinal  = Model.Status == 4 && Model.ReviewStatus != 3;
+    var _isReviewMode   = ViewBag.IsReviewMode ?? false;  // 是否從審核中心開啟
+    
+    // 嚴格條件：必須同時滿足 (1) 從審核中心開啟 且 (2) 商品狀態為待審核或重新申請
+    var _shouldShowReviewButtons = _isReviewMode && (_isPending || _isReApply);
+
+    // ── 全域優化：商品總覽專屬「強制下架」按鈕 ──
+    var _currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var _canShowForceOffBtn = _currentAction == "Index" && Model.Status == 1;
 }
 <div class="panel-action-footer">
-    @if (_isPending)
+    @if (_canShowForceOffBtn)
+    {
+        <button type="button" class="btn btn-panel-force-off w-100"
+                onclick="openForceUnpublish(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
+            <i class="bx bx-block me-2"></i>強制下架商品
+        </button>
+    }
+    else if (_shouldShowReviewButtons && _isPending)
     {
         <button type="button" class="btn btn-panel-approve"
-                data-id="@Model.Id" data-name="@Model.Name">
+                onclick="approveProduct(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
             <i class="bx bx-check-circle me-2"></i>核准上架
         </button>
         <button type="button" class="btn btn-panel-reject"
-                data-id="@Model.Id" data-name="@Model.Name">
+                onclick="openRejectModal(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
             <i class="bx bx-x-circle me-2"></i>退回
         </button>
     }
-    else if (_isReApply)
+    else if (_shouldShowReviewButtons && _isReApply)
     {
         @if (!string.IsNullOrWhiteSpace(Model.ForceOffShelfReason))
         {
@@ -449,11 +464,11 @@ else
             </div>
         }
         <button type="button" class="btn btn-panel-approve-forced"
-                data-id="@Model.Id" data-name="@Model.Name">
+                onclick="approveForcedProduct(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
             <i class="bx bx-check-circle me-2"></i>核准上架
         </button>
         <button type="button" class="btn btn-panel-reject-forced"
-                data-id="@Model.Id" data-name="@Model.Name">
+                onclick="openRejectForcedModal(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
             <i class="bx bx-x-circle me-2"></i>再次駁回
         </button>
     }
@@ -589,6 +604,15 @@ else
     .btn-panel-approve:hover, .btn-panel-approve-forced:hover {
         background: #059669; color: #fff; border-color: #059669;
         box-shadow: 0 4px 12px rgba(5,150,105,.3);
+    }
+    .btn-panel-force-off {
+        background: #fff; color: #dc2626; border: 1.5px solid #fca5a5;
+        font-weight: 700; padding: 0.75rem 1rem; border-radius: 12px; font-size: 1rem;
+        transition: all .2s;
+    }
+    .btn-panel-force-off:hover {
+        background: #dc2626; color: #fff; border-color: #dc2626;
+        box-shadow: 0 6px 15px rgba(220,38,38,0.3); transform: translateY(-1px);
     }
     .btn-panel-reject, .btn-panel-reject-forced {
         flex: 1; min-width: 120px;

@@ -574,12 +574,17 @@ namespace ISpanShop.Services.Products
 
             await _productRepository.AddProductsRangeAsync(products);
 
+            // 依 EF Core 自動填入的 ID 查回完整顯示資料（含商店名稱、圖片 URL）
+            var createdIds      = products.Select(p => p.Id);
+            var createdProducts = await _productRepository.GetProductsByIdsForReviewAsync(createdIds);
+
             return new GenerateTestProductsResult
             {
                 TotalCount      = products.Count,
                 CleanCount      = 5,
                 HighRiskCount   = 5,
-                BorderlineCount = 5
+                BorderlineCount = 5,
+                CreatedProducts = createdProducts
             };
         }
 
@@ -596,7 +601,7 @@ namespace ISpanShop.Services.Products
                 MinPrice     = source.MinPrice,
                 MaxPrice     = source.MaxPrice,
                 Status       = 2,   // 待審核
-                ReviewStatus = 0,
+                ReviewStatus = 0,   // 待審核
                 ReviewedBy   = null,
                 RejectReason = null,
                 ReviewDate   = null,
