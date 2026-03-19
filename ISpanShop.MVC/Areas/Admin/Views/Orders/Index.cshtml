@@ -420,7 +420,7 @@
                         <td><span class="fw-bold text-primary">${order.orderUuid}</span></td>
                         <td>${formatDateTime(order.orderDate)}</td>
                         <td>${order.memberName}</td>
-                        <td><span class="badge bg-label-dark">${order.storeName}</span></td>
+                        <td style="color:#2d3748;">${order.storeName}</td>
                         <td class="fw-bold">$${order.totalAmount.toLocaleString()}</td>
                         <td><span class="badge-soft ${statusStyles[order.statusId] || 'bg-label-dark'}">${order.statusName}</span></td>
                         <td class="text-center">

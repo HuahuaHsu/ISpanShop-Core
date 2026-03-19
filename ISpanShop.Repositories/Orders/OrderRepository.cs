@@ -276,9 +276,9 @@ namespace ISpanShop.Repositories.Orders
 			var currentItemsSold = currentOrderIds.Any() ? await _context.OrderDetails.Where(od => currentOrderIds.Contains(od.OrderId)).SumAsync(od => od.Quantity) : 0;
 			var prevItemsSold = prevOrderIds.Any() ? await _context.OrderDetails.Where(od => prevOrderIds.Contains(od.OrderId)).SumAsync(od => od.Quantity) : 0;
 
-			// 顧客行為 (新註冊會員)
-			var currentNewMembers = await _context.Users.CountAsync(u => u.CreatedAt >= startDate && u.CreatedAt <= endDate);
-			var prevNewMembers = await _context.Users.CountAsync(u => u.CreatedAt >= prevStartDate && u.CreatedAt <= prevEndDate);
+			// 顧客行為 (新註冊會員) - 排除管理員 (RoleId = 1)
+			var currentNewMembers = await _context.Users.CountAsync(u => u.CreatedAt >= startDate && u.CreatedAt <= endDate && u.RoleId != 1);
+			var prevNewMembers = await _context.Users.CountAsync(u => u.CreatedAt >= prevStartDate && u.CreatedAt <= prevEndDate && u.RoleId != 1);
 
 			// 本期下單過的不重複會員與回購會員
 			var curUserGroups = currentOrders.Where(o => o.Status > 0).GroupBy(o => o.UserId).Select(g => new { UserId = g.Key, Count = g.Count() }).ToList();
@@ -300,7 +300,11 @@ namespace ISpanShop.Repositories.Orders
 				PrevTotalItemsSold = prevItemsSold,
 				PendingShipmentCount = await query.CountAsync(o => o.Status == 1),
 				PendingRefundCount = await _context.ReturnRequests.CountAsync(rr => rr.Status == 0),
-				LowStockProductCount = await _context.ProductVariants.AsNoTracking().CountAsync(p => p.Stock < 10),
+				LowStockProductCount = await _context.ProductVariants.AsNoTracking().CountAsync(v => 
+					v.IsDeleted != true && 
+					v.Product != null && 
+					v.Product.IsDeleted != true && 
+					(v.Stock ?? 0) <= (v.SafetyStock ?? 0)),
 
 				NewMemberCount = currentNewMembers,
 				PrevNewMemberCount = prevNewMembers,

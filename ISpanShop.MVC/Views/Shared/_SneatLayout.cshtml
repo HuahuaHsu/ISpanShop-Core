@@ -578,7 +578,7 @@
                     var action = ViewContext.RouteData.Values["action"]?.ToString();
                     var isCatActive = ctrl == "CategoryManage" || ctrl == "CategoryAttributes";
                     var isInvActive = ctrl == "Inventory";
-                    var isOrderActive = ctrl == "Orders" || ctrl == "ShipmentWorkstation" || ctrl == "ReturnRequests" || ctrl == "OrderTracking";
+                    var isOrderActive = (ctrl == "Orders" && action != "Dashboard") || ctrl == "ShipmentWorkstation" || ctrl == "ReturnRequests" || ctrl == "OrderTracking";
                     var isContentSupportActive = ctrl == "SupportTickets" || ctrl == "SensitiveWords" || ctrl == "SensitiveWordCategories";
                     var isPaymentActive = ctrl == "PaymentManagement";
                     var isPointActive = ctrl == "Points";
