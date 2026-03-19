@@ -124,7 +124,8 @@ namespace ISpanShop.Repositories.Orders
 					o.OrderNumber.Contains(kw) ||
 					o.UserId.ToString() == kw ||
 					o.RecipientName.Contains(kw) ||
-					o.RecipientPhone.Contains(kw));
+					o.RecipientPhone.Contains(kw) ||
+					(o.User != null && o.User.MemberProfile != null && o.User.MemberProfile.FullName.Contains(kw)));
 			}
 
 			// A2. 訂單狀態

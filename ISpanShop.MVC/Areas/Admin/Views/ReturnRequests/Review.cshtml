@@ -318,7 +318,11 @@
                                     text: res.message,
                                     icon: 'success'
                                 }).then(() => {
-                                    window.location.reload();
+                                    if (action === 'Reject') {
+                                        window.location.href = '@Url.Action("Index", "ReturnRequests")';
+                                    } else {
+                                        window.location.reload();
+                                    }
                                 });
                             } else {
                                 Swal.fire('錯誤', res.message, 'error');
