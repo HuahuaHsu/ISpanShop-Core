@@ -166,53 +166,92 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Points
 
         [HttpPost("GenerateMockData")]
         [ValidateAntiForgeryToken] //防止跨站請求偽造攻擊
-		public async Task<IActionResult> GenerateMockData()//產生假資料 (開發專用)
+		public async Task<IActionResult> GenerateMockData()//依訂單產生假資料 (開發專用)
 		{
-            var random = new Random();
-            var users = await _context.Users
-                .Include(u => u.MemberProfile)
-                .Where(u => u.MemberProfile != null)
+            // 防呆：先確認訂單表有足夠資料
+            var orders = await _context.Orders
+                .Include(o => o.User)
+                    .ThenInclude(u => u.MemberProfile)
+                .Where(o => o.User.MemberProfile != null)
                 .ToListAsync();
 
-            if (!users.Any())
+            if (orders.Count < 5)
             {
-                TempData["Error"] = "資料庫中沒有會員資料，無法產生假資料。";
+                TempData["Error"] = $"訂單資料不足（目前僅 {orders.Count} 筆），請先在訂單管理中產生假資料後再操作。";
                 return RedirectToAction(nameof(Index));
             }
 
-            var descriptions = new[] { "訂單完成贈點", "每日登入獎勵", "活動補點", "退貨點數扣除", "商品評論獎勵", "首購禮包" };
-            
-            for (int i = 0; i < 50; i++)
-            {
-                var user = users[random.Next(users.Count)];
-                var changeAmount = random.Next(-100, 500);
-                if (changeAmount == 0) changeAmount = 50;
+            var random = new Random();
 
-                // 避免餘額變成負數
-                int currentBalance = user.MemberProfile.PointBalance ?? 0;
-                if (currentBalance + changeAmount < 0)
+            // 只取付款中/已付款/已完成/已取消的訂單（排除完全空的狀態）
+            var eligibleOrders = orders
+                .Where(o => o.Status != null)
+                .OrderBy(_ => random.Next())
+                .Take(50)
+                .ToList();
+
+            int generatedCount = 0;
+
+            foreach (var order in eligibleOrders)
+            {
+                var profile = order.User?.MemberProfile;
+                if (profile == null) continue;
+
+                int changeAmount;
+                string description;
+
+                if (order.Status == 4) // 已取消
                 {
-                    changeAmount = Math.Abs(changeAmount); // 轉正值
+                    if ((order.PointDiscount ?? 0) > 0)
+                    {
+                        // 訂單取消時退還原本折抵的點數
+                        changeAmount = order.PointDiscount.Value;
+                        description = "訂單取消退還折抵點數";
+                    }
+                    else
+                    {
+                        continue; // 已取消且無折抵點數，跳過
+                    }
+                }
+                else if (order.Status == 1 || order.Status == 2 || order.Status == 3)
+                {
+                    // 已付款或已完成：依訂單金額 1% 贈點（最少 10 點）
+                    changeAmount = Math.Max(10, (int)(order.FinalAmount * 0.01m));
+                    description = order.Status == 3 ? "訂單完成贈點" : "訂單付款贈點";
+                }
+                else
+                {
+                    continue; // 待付款等其他狀態不產生點數
                 }
 
-                user.MemberProfile.PointBalance = currentBalance + changeAmount;
-                user.MemberProfile.UpdatedAt = DateTime.Now;
+                int currentBalance = profile.PointBalance ?? 0;
+                if (currentBalance + changeAmount < 0)
+                    changeAmount = Math.Abs(changeAmount);
 
-                var history = new PointHistory
+                profile.PointBalance = currentBalance + changeAmount;
+                profile.UpdatedAt = DateTime.Now;
+
+                _context.PointHistories.Add(new PointHistory
                 {
-                    UserId = user.Id,
-                    OrderNumber = changeAmount > 0 && random.Next(2) == 0 ? null : "ORD" + DateTime.Now.ToString("yyyyMMdd") + random.Next(1000, 9999),
+                    UserId = order.UserId,
+                    OrderNumber = order.OrderNumber,
                     ChangeAmount = changeAmount,
-                    BalanceAfter = user.MemberProfile.PointBalance ?? 0,
-                    Description = descriptions[random.Next(descriptions.Length)],
-                    CreatedAt = DateTime.Now.AddMinutes(-random.Next(1, 10000))
-                };
+                    BalanceAfter = profile.PointBalance.Value,
+                    Description = description,
+                    CreatedAt = order.CreatedAt ?? DateTime.Now
+                });
 
-                _context.PointHistories.Add(history);
+                generatedCount++;
+            }
+
+            if (generatedCount == 0)
+            {
+                TempData["Error"] = "現有訂單均不符合產生點數紀錄的條件（訂單需為已付款、已完成，或已取消且有使用折抵點數）。";
+                return RedirectToAction(nameof(Index));
             }
 
             await _context.SaveChangesAsync();
-            TempData["Success"] = "成功產生 50 筆點數紀錄假資料！";
+            TempData["Success"] = $"成功依訂單資料產生 {generatedCount} 筆點數紀錄！";
 
             return RedirectToAction(nameof(Index));
         }
