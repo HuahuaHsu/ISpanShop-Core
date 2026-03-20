@@ -265,7 +265,7 @@
                         var isForcedOff = item.Status == 4;
                         var statusText  = item.Status switch { 1 => "已上架", 2 => "待審核", 3 => "已退回", 4 => "強制下架", _ => "未上架" };
                         var statusCss   = item.Status switch { 1 => "bg-success-soft text-success", 2 => "bg-warning-soft text-warning", 3 => "bg-danger-soft text-danger", 4 => "bg-forced-soft text-forced", _ => "bg-secondary-soft text-secondary" };
-                        <tr data-id="@item.Id">
+                        <tr data-id="@item.Id" data-status="@item.Status">
                             <td class="text-center cb-cell col-cb" style="width:44px;">
                                 @if (isPublished)
                                 {
@@ -686,6 +686,18 @@
         }
 
         // ══════════════════════════════════════════════════════
+        //  前端資料層：記錄各商品 ID 對應的狀態，供跨頁統計使用
+        // ══════════════════════════════════════════════════════
+        window._productStatusMap = window._productStatusMap || {};
+        window.populateProductStatusMap = function () {
+            document.querySelectorAll('#productIndexListCol .table-custom tbody tr[data-id][data-status]').forEach(function (row) {
+                var id     = parseInt(row.dataset.id, 10);
+                var status = parseInt(row.dataset.status, 10);
+                if (!isNaN(id) && !isNaN(status)) window._productStatusMap[id] = status;
+            });
+        };
+
+        // ══════════════════════════════════════════════════════
         //  跨分頁多選：使用 sessionStorage 記憶已勾選的商品 ID
         // ══════════════════════════════════════════════════════
         (function () {
@@ -819,7 +831,7 @@
                     try {
                         const res = await apiPost(urlBatchForce, { ids: ids, reason: reason });
                         if (res.success) {
-                            selectedIds.clear(); saveIds(selectedIds);
+                            selectedIds.clear(); saveIds(selectedIds); updateSelectionUI();
                             // 寫入倒數計時狀態
                             (function() {
                                 var states = {};
@@ -828,11 +840,19 @@
                                 ids.forEach(function(id) { states[String(id)] = { time: 15, savedAt: now }; });
                                 sessionStorage.setItem('rejectedCountdownStates', JSON.stringify(states));
                             })();
-                            // DOM：保留商品列，更新狀態為「強制下架」並禁用 checkbox
-                            var updatedCount = 0;
+                            // ── 從資料層計算各狀態的異動筆數（含跨頁商品）──────────────────
+                            var publishedDelta = 0, unpublishedDelta = 0;
+                            ids.forEach(function(id) {
+                                var prev = window._productStatusMap[id];
+                                if (prev === 1)      publishedDelta++;
+                                else if (prev === 0) unpublishedDelta++;
+                                window._productStatusMap[id] = 4; // 更新資料層
+                            });
+                            // ── DOM：僅更新當前頁面可見的商品列 ───────────────────────────
                             ids.forEach(function(id) {
                                 var srcRow = document.querySelector('tr[data-id="' + id + '"]');
                                 if (srcRow) {
+                                    srcRow.dataset.status = '4';
                                     var statusBadge = srcRow.querySelector('span.badge.rounded-pill.px-3');
                                     if (statusBadge) {
                                         statusBadge.className = 'badge rounded-pill px-3 py-2 bg-forced-soft text-forced fw-normal';
@@ -842,15 +862,18 @@
                                     if (cb) { cb.disabled = true; cb.checked = false; }
                                     var actBtn = srcRow.querySelector('.act-ban');
                                     if (actBtn) actBtn.remove();
-                                    updatedCount++;
                                 }
                             });
-                            if (updatedCount > 0) {
-                                var publishedEl = document.querySelector('.stat-published .stat-num');
-                                var forcedEl    = document.querySelector('.stat-forced .stat-num');
-                                if (publishedEl) publishedEl.textContent = Math.max(0, (parseInt(publishedEl.textContent)||0) - updatedCount);
-                                if (forcedEl)    forcedEl.textContent    = (parseInt(forcedEl.textContent)||0) + updatedCount;
-                            }
+                            // ── 統計卡片：依資料層計算正確增減量（不受當前頁可見列限制）──
+                            var publishedEl   = document.querySelector('.stat-published .stat-num');
+                            var unpublishedEl = document.querySelector('.stat-unpublished .stat-num');
+                            var forcedEl      = document.querySelector('.stat-forced .stat-num');
+                            if (publishedEl && publishedDelta > 0)
+                                publishedEl.textContent = Math.max(0, (parseInt(publishedEl.textContent) || 0) - publishedDelta);
+                            if (unpublishedEl && unpublishedDelta > 0)
+                                unpublishedEl.textContent = Math.max(0, (parseInt(unpublishedEl.textContent) || 0) - unpublishedDelta);
+                            if (forcedEl)
+                                forcedEl.textContent = (parseInt(forcedEl.textContent) || 0) + res.count;
                             Swal.fire({ title: '已強制下架', text: res.message, icon: 'success',
                                         timer: 1800, timerProgressBar: true, confirmButtonColor: '#1abb9c' });
                         } else {
@@ -864,6 +887,7 @@
             window.initSelection = function() {
                 bindCheckboxEvents();
                 updateSelectionUI();
+                populateProductStatusMap();
             };
             initSelection();
         })();
@@ -945,9 +969,12 @@
                         states[String(fpProductId)] = { time: 15, savedAt: Date.now() };
                         sessionStorage.setItem('rejectedCountdownStates', JSON.stringify(states));
                     })();
+                    // 更新資料層
+                    if (window._productStatusMap) window._productStatusMap[fpProductId] = 4;
                     // DOM：保留商品列，更新狀態為「強制下架」並禁用 checkbox
                     var srcRow = document.querySelector('tr[data-id="' + fpProductId + '"]');
                     if (srcRow) {
+                        srcRow.dataset.status = '4';
                         var statusBadge = srcRow.querySelector('span.badge.rounded-pill.px-3');
                         if (statusBadge) {
                             statusBadge.className = 'badge rounded-pill px-3 py-2 bg-forced-soft text-forced fw-normal';
@@ -1095,6 +1122,8 @@
                     var newTbody = doc.querySelector('#productIndexListCol .table-custom tbody');
                     var tbody    = document.querySelector('#productIndexListCol .table-custom tbody');
                     if (tbody && newTbody) tbody.innerHTML = newTbody.innerHTML;
+                    // 將新頁商品狀態合併至資料層
+                    if (window.populateProductStatusMap) populateProductStatusMap();
                     // 更新分頁導航
                     var newNav = doc.querySelector('#productIndexListCol nav');
                     var curNav = document.querySelector('#productIndexListCol nav');
