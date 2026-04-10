@@ -17,7 +17,6 @@ public partial class User
 
     public string Email { get; set; }
 
-	public string? Phone { get; set; }
 
 	public string Provider { get; set; }
 

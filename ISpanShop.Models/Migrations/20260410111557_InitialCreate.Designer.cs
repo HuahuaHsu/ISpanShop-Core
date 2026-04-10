@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ISpanShop.Models.Migrations
 {
     [DbContext(typeof(ISpanShopDBContext))]
-    [Migration("20260410064642_InitialCreate")]
+    [Migration("20260410111557_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

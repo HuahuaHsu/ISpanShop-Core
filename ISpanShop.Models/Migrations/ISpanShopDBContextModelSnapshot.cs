@@ -1499,9 +1499,6 @@ namespace ISpanShop.Models.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Provider")
                         .HasMaxLength(20)
                         .IsUnicode(false)
