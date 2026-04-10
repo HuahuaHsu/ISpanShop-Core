@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ISpanShop.Models.Migrations
 {
     [DbContext(typeof(ISpanShopDBContext))]
-    [Migration("20260410111557_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260410163027_CreateAllTables")]
+    partial class CreateAllTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
