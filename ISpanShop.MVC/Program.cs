@@ -56,8 +56,15 @@ namespace ISpanShop.MVC
 
 			//連線註冊
 			builder.Services.AddDbContext<ISpanShopDBContext>
-				(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-				);
+				(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+				sqlServerOptionsAction: sqlOptions =>
+				{
+					// 遇到連線失敗時，自動重試最多 5 次，最多等 30 秒
+					sqlOptions.EnableRetryOnFailure(
+						maxRetryCount: 5,
+						maxRetryDelay: TimeSpan.FromSeconds(30),
+						errorNumbersToAdd: null);
+				}));
 			builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 			builder.Services.AddScoped<IMemberService, MemberService>();
 			builder.Services.AddScoped<IAdminRepository, AdminRepository>();
