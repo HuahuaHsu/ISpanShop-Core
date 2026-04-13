@@ -8,8 +8,9 @@ namespace ISpanShop.Repositories.Brands
     {
         /// <summary>
         /// [Async] 取得有上架商品的品牌列表，含商品數。
-        /// categoryId 若為主分類則自動展開子分類；keyword 篩選品牌名稱。
+        /// subCategoryId 優先（直接篩）；categoryId 主分類自動展開子分類；keyword 篩選品牌名稱。
         /// </summary>
-        Task<IEnumerable<BrandWithCountDto>> GetBrandsAsync(int? categoryId, string? keyword);
+        Task<IEnumerable<BrandWithCountDto>> GetBrandsAsync(
+            int? categoryId, string? keyword, int? subCategoryId = null);
     }
 }

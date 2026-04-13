@@ -25,18 +25,20 @@ namespace ISpanShop.MVC.Controllers.Api.Brands
 
         /// <summary>
         /// 取得品牌列表，含各品牌的上架商品數。
-        /// 可傳入 categoryId（支援主分類自動展開）或 keyword 篩選品牌名稱。
+        /// subCategoryId 優先（直接篩）；categoryId 主分類自動展開子分類；keyword 篩選品牌名稱。
         /// </summary>
-        /// <param name="categoryId">分類篩選（可選，主分類自動展開子分類）</param>
+        /// <param name="categoryId">主分類篩選（可選，自動展開子分類）</param>
+        /// <param name="subCategoryId">子分類篩選（優先於 categoryId，直接篩）</param>
         /// <param name="keyword">品牌名稱關鍵字（可選）</param>
         [HttpGet]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetBrands(
-            [FromQuery] int?    categoryId = null,
-            [FromQuery] string? keyword    = null)
+            [FromQuery] int?    categoryId    = null,
+            [FromQuery] int?    subCategoryId = null,
+            [FromQuery] string? keyword       = null)
         {
-            var brands = await _brandSvc.GetBrandsAsync(categoryId, keyword);
+            var brands = await _brandSvc.GetBrandsAsync(categoryId, keyword, subCategoryId);
 
             var items = brands.Select(b => new BrandListItemDto
             {

@@ -35,5 +35,9 @@ export interface FetchProductsParams {
   pageSize?: number
   sortBy?: 'latest' | 'priceAsc' | 'priceDesc' | 'soldCount'
   categoryId?: number
+  subCategoryId?: number
+  brandIds?: number[]
+  minPrice?: number
+  maxPrice?: number
   keyword?: string
 }

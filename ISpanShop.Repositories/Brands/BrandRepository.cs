@@ -14,12 +14,18 @@ namespace ISpanShop.Repositories.Brands
         public BrandRepository(ISpanShopDBContext db) => _db = db;
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<BrandWithCountDto>> GetBrandsAsync(int? categoryId, string? keyword)
+        public async Task<IEnumerable<BrandWithCountDto>> GetBrandsAsync(
+            int? categoryId, string? keyword, int? subCategoryId = null)
         {
             // ── 分類展開（主分類 → 子分類 IDs）─────────────────────────
             List<int>? filterCategoryIds = null;
 
-            if (categoryId.HasValue)
+            if (subCategoryId.HasValue)
+            {
+                // 直接用子分類，不展開
+                filterCategoryIds = new List<int> { subCategoryId.Value };
+            }
+            else if (categoryId.HasValue)
             {
                 // SQL-1：取得目標分類本身 + 直接子分類
                 var categoryRows = await _db.Categories

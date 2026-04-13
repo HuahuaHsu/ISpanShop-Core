@@ -11,8 +11,10 @@ namespace ISpanShop.Services.Brands
 
         public BrandService(IBrandRepository repo) => _repo = repo;
 
-        /// <summary>取得有上架商品的品牌列表（含商品數）。categoryId 支援主分類展開；keyword 模糊篩選品牌名稱。</summary>
-        public Task<IEnumerable<BrandWithCountDto>> GetBrandsAsync(int? categoryId, string? keyword)
-            => _repo.GetBrandsAsync(categoryId, keyword);
+        /// <summary>取得有上架商品的品牌列表（含商品數）。
+        /// subCategoryId 優先（直接篩）；categoryId 主分類自動展開子分類；keyword 模糊篩選品牌名稱。</summary>
+        public Task<IEnumerable<BrandWithCountDto>> GetBrandsAsync(
+            int? categoryId, string? keyword, int? subCategoryId = null)
+            => _repo.GetBrandsAsync(categoryId, keyword, subCategoryId);
     }
 }
