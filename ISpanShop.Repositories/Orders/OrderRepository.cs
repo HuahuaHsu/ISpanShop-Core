@@ -128,6 +128,12 @@ namespace ISpanShop.Repositories.Orders
 					(o.User != null && o.User.MemberProfile != null && o.User.MemberProfile.FullName.Contains(kw)));
 			}
 
+			// A1.5 會員 ID 篩選 (前台個人中心需求)
+			if (criteria.UserId.HasValue)
+			{
+				query = query.Where(o => o.UserId == criteria.UserId.Value);
+			}
+
 			// A2. 訂單狀態
 			if (criteria.Statuses != null && criteria.Statuses.Any())
 			{
@@ -305,6 +311,7 @@ namespace ISpanShop.Repositories.Orders
 					v.IsDeleted != true && 
 					v.Product != null && 
 					v.Product.IsDeleted != true && 
+					(!storeId.HasValue || v.Product.StoreId == storeId.Value) &&
 					(v.Stock ?? 0) <= (v.SafetyStock ?? 0)),
 
 				NewMemberCount = currentNewMembers,
@@ -427,36 +434,27 @@ namespace ISpanShop.Repositories.Orders
 
 		public async Task<List<TopProductSalesDto>> GetTopSellingCategoriesAsync(int? storeId, DateTime startDate, DateTime endDate, string orderBy)
 		{
-			// 需求：改為抓取「熱銷類別」聚合統計 (初始顯示主類別)
+			// 修正：對個人賣家而言，排行應該以「商品」為單位才有意義
 			var query = _context.OrderDetails
 				.Include(od => od.Order)
 				.Include(od => od.Product)
-				.ThenInclude(p => p.Category)
-				.ThenInclude(c => c.Parent)
 				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
 
 			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
 
 			var groupedQuery = query
-				.Select(od => new
-				{
-					MainCategoryName = od.Product.Category.ParentId == null ? od.Product.Category.Name : od.Product.Category.Parent.Name,
-					Quantity = od.Quantity,
-					Revenue = (od.Price ?? 0) * od.Quantity
-				})
-				.GroupBy(x => x.MainCategoryName)
+				.GroupBy(od => new { od.ProductId, od.ProductName })
 				.Select(g => new TopProductSalesDto
 				{
-					ProductName = g.Key ?? "未分類", // 圖表端使用 ProductName 欄位顯示類別名稱
-					CategoryName = g.Key ?? "未分類",
-					SalesVolume = g.Sum(x => x.Quantity),
-					SalesRevenue = g.Sum(x => x.Revenue)
+					ProductName = g.Key.ProductName ?? "未命名商品",
+					CategoryName = "", // 暫不顯示類別
+					SalesVolume = g.Sum(od => od.Quantity),
+					SalesRevenue = g.Sum(od => (od.Price ?? 0) * od.Quantity)
 				});
 
-			// 移除 Take(10)，顯示所有主類別
 			return orderBy.ToLower() == "volume"
-				? await groupedQuery.OrderByDescending(x => x.SalesVolume).ToListAsync()
-				: await groupedQuery.OrderByDescending(x => x.SalesRevenue).ToListAsync();
+				? await groupedQuery.OrderByDescending(x => x.SalesVolume).Take(10).ToListAsync()
+				: await groupedQuery.OrderByDescending(x => x.SalesRevenue).Take(10).ToListAsync();
 		}
 
 		public async Task<ApexChartDataDto> GetCategoryContributionAsync(int? storeId, DateTime startDate, DateTime endDate)

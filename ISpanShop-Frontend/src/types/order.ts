@@ -30,3 +30,26 @@ export interface Order {
   createdAt: string;
   items: OrderItem[];
 }
+
+/**
+ * 訂單列表項目 (精簡版)
+ */
+export interface OrderListItem {
+  id: number;
+  orderNumber: string;
+  totalAmount: number;
+  status: number;
+  statusName: string;
+  createdAt: string;
+  storeName: string;
+}
+
+/**
+ * 訂單列表分頁回應
+ */
+export interface OrderListResponse {
+  items: OrderListItem[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+}

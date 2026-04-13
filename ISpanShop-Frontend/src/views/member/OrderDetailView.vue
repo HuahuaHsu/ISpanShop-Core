@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { getOrderDetail } from '@/api/order';
+import { getOrderDetail, cancelOrder, returnOrder } from '@/api/order';
 import type { Order } from '@/types/order';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { Loading } from '@element-plus/icons-vue';
 
 const route = useRoute();
 const order = ref<Order | null>(null);
 const isLoading = ref(true);
+const isOperating = ref(false); // 正在執行取消或退貨中
 
 // 訂單狀態文字對應
 const statusTexts: Record<number, string> = {
@@ -17,15 +18,23 @@ const statusTexts: Record<number, string> = {
   2: '待收貨',
   3: '已完成',
   4: '已取消',
+  5: '退貨中',
+  6: '已退貨',
 };
 
 // 計算進度條進行到哪一步 (對應 el-steps 的 active)
 // 0:待付款(Step 1), 1:待出貨(Step 2), 2:待收貨(Step 3), 3:已完成(Step 4)
 const currentStep = computed(() => {
   if (!order.value) return 0;
-  if (order.value.status === 4) return -1; // 已取消不顯示進度
+  if (order.value.status >= 4) return -1; // 已取消、退貨等不顯示進度
   return order.value.status + 1;
 });
+
+// 是否可以取消 (待付款 0 或 待出貨 1)
+const canCancel = computed(() => order.value && (order.value.status === 0 || order.value.status === 1));
+
+// 是否可以退貨 (已完成 3)
+const canReturn = computed(() => order.value && order.value.status === 3);
 
 // 抓取訂單詳情
 const fetchOrderDetail = async () => {
@@ -44,6 +53,54 @@ const fetchOrderDetail = async () => {
   }
 };
 
+// 處理取消訂單
+const handleCancelOrder = async () => {
+  if (!order.value) return;
+  try {
+    await ElMessageBox.confirm('確定要取消這筆訂單嗎？', '取消訂單', {
+      confirmButtonText: '確定取消',
+      cancelButtonText: '再想想',
+      type: 'warning',
+    });
+    
+    isOperating.value = true;
+    await cancelOrder(order.value.id);
+    ElMessage.success('訂單已成功取消');
+    await fetchOrderDetail(); // 重新整理資料
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('Cancel order failed:', error);
+      ElMessage.error('取消失敗，請稍後再試');
+    }
+  } finally {
+    isOperating.value = false;
+  }
+};
+
+// 處理申請退貨
+const handleReturnOrder = async () => {
+  if (!order.value) return;
+  try {
+    await ElMessageBox.confirm('確定要申請退貨嗎？商品需保持完整。', '申請退貨', {
+      confirmButtonText: '確定申請',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+    
+    isOperating.value = true;
+    await returnOrder(order.value.id);
+    ElMessage.success('已收到您的退貨申請');
+    await fetchOrderDetail(); // 重新整理資料
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('Return order failed:', error);
+      ElMessage.error('申請失敗，請稍後再試');
+    }
+  } finally {
+    isOperating.value = false;
+  }
+};
+
 onMounted(fetchOrderDetail);
 </script>
 
@@ -53,13 +110,13 @@ onMounted(fetchOrderDetail);
       <!-- 頂部標題與狀態 -->
       <div class="header">
         <h1>訂單詳情 #{{ order.orderNumber }}</h1>
-        <el-tag :type="order.status === 3 ? 'success' : order.status === 4 ? 'info' : 'warning'">
+        <el-tag :type="order.status === 3 ? 'success' : order.status >= 4 ? 'info' : 'warning'">
           {{ statusTexts[order.status] }}
         </el-tag>
       </div>
 
-      <!-- 進度條 (若未取消則顯示) -->
-      <div class="section progress-section" v-if="order.status !== 4">
+      <!-- 進度條 (若未取消/退貨則顯示) -->
+      <div class="section progress-section" v-if="order.status < 4">
         <el-steps :active="currentStep" finish-status="success" align-center>
           <el-step title="待付款" />
           <el-step title="待出貨" />
@@ -113,6 +170,27 @@ onMounted(fetchOrderDetail);
 
       <div class="actions">
         <el-button @click="$router.back()">返回訂單列表</el-button>
+        
+        <!-- 操作按鈕 -->
+        <el-button 
+          v-if="canCancel" 
+          type="danger" 
+          plain 
+          :loading="isOperating"
+          @click="handleCancelOrder"
+        >
+          取消訂單
+        </el-button>
+        
+        <el-button 
+          v-if="canReturn" 
+          type="warning" 
+          plain 
+          :loading="isOperating"
+          @click="handleReturnOrder"
+        >
+          申請退貨
+        </el-button>
       </div>
     </div>
 

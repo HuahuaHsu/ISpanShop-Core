@@ -12,6 +12,9 @@ namespace ISpanShop.Models.DTOs.Orders
 		// A1. 基礎資訊 (整合了 訂單號、用戶ID、收件人姓名/電話)
 		public string Keyword { get; set; } 
 
+		// 指定會員 ID 查詢 (前台需求)
+		public int? UserId { get; set; }
+
 		// A2. 訂單狀態 (支援多選)
 		public List<int> Statuses { get; set; } = new List<int>();
 

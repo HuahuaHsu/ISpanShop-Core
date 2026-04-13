@@ -34,6 +34,22 @@ const router = createRouter({
         title: '訂單詳情'
       }
     },
+    {
+      path: '/member/orders',
+      name: 'OrderList',
+      component: () => import('@/views/member/OrderListView.vue'),
+      meta: {
+        title: '我的訂單'
+      }
+    },
+    {
+      path: '/member/store-dashboard',
+      name: 'StoreDashboard',
+      component: () => import('@/views/member/StoreDashboardView.vue'),
+      meta: {
+        title: '賣場數據概覽'
+      }
+    },
   ],
 })
 

@@ -95,5 +95,35 @@ namespace ISpanShop.Services.Orders
 		{
 			await _orderRepository.UpdateStatusAsync(id, (byte)status);
 		}
+
+		public async Task<bool> CancelOrderAsync(long id)
+		{
+			var order = await _orderRepository.GetOrderByIdAsync(id);
+			if (order == null) return false;
+
+			// 僅在「待付款(0)」或「待出貨(1)」時允許取消
+			if (order.Status == 0 || order.Status == 1)
+			{
+				await _orderRepository.UpdateStatusAsync(id, (byte)OrderStatus.Cancelled);
+				return true;
+			}
+
+			return false;
+		}
+
+		public async Task<bool> ReturnOrderAsync(long id)
+		{
+			var order = await _orderRepository.GetOrderByIdAsync(id);
+			if (order == null) return false;
+
+			// 僅在「已完成(3)」時允許申請退貨
+			if (order.Status == 3)
+			{
+				await _orderRepository.UpdateStatusAsync(id, (byte)OrderStatus.Returning);
+				return true;
+			}
+
+			return false;
+		}
 	}
 }

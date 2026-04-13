@@ -2,8 +2,8 @@ import axios from 'axios';
 import { ElMessage } from 'element-plus';
 
 const instance = axios.create({
-  // 請根據您的 WebAPI 實際 Port 調整，例如 http://localhost:7001
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+  // 將 baseURL 設為 '/'，讓 Vite 的 Proxy 攔截 /api 並轉發到後端
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/',
   timeout: 10000,
 });
 
