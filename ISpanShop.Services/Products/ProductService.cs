@@ -635,5 +635,19 @@ namespace ISpanShop.Services.Products
             var (items, total) = await _productRepository.GetRecentlyApprovedProductsPagedAsync(page, pageSize, hours);
             return PagedResult<ProductReviewDto>.Create(items.ToList(), total, page, pageSize);
         }
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品列表
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductListDto>> GetFrontActiveProductsAsync(
+            int? categoryId, string? keyword, string sortBy, int page, int pageSize)
+        {
+            pageSize = Math.Clamp(pageSize, 1, 50);
+            var (items, total) = await _productRepository.GetFrontActiveProductsAsync(
+                categoryId, keyword, sortBy, page, pageSize);
+            return PagedResult<ProductListDto>.Create(items.ToList(), total, page, pageSize);
+        }
     }
 }

@@ -151,7 +151,7 @@
         </div>
       </div>
       <div class="footer-bottom">
-        © 2026 HowBuy. All rights reserved. | Made with 💚 in Taiwan
+        © 2026 HowBuy. All rights reserved. | Made with 🧡 in Taiwan
       </div>
     </footer>
   </div>
@@ -210,7 +210,7 @@ const categories = [
   gap: 4px;
   transition: color 0.2s;
 }
-.top-bar a:hover { color: #10b981; }
+.top-bar a:hover { color: #EE4D2D; }
 .divider { opacity: 0.3; margin: 0 5px; }
 .welcome { color: #fbbf24; margin-left: 10px; }
 
@@ -243,11 +243,11 @@ const categories = [
 .logo-text {
   font-size: 32px;
   font-weight: 800;
-  background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #6ee7b7 100%);
+  background: linear-gradient(135deg, #EE4D2D 0%, #F3826C 50%, #F7A696 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+  text-shadow: 0 0 30px rgba(238, 77, 45, 0.3);
   letter-spacing: 1px;
 }
 
@@ -260,12 +260,12 @@ const categories = [
   padding-left: 16px;
   height: 44px;
   background: white;
-  border: 2px solid #10b981;
+  border: 2px solid #EE4D2D;
   border-right: none;
 }
 .search-input :deep(.el-input__wrapper.is-focus) {
   box-shadow: none;
-  border-color: #10b981;
+  border-color: #EE4D2D;
 }
 .search-input :deep(.el-input-group__append) {
   padding: 0;
@@ -274,7 +274,7 @@ const categories = [
   box-shadow: none;
 }
 .search-btn {
-  background: #10b981 !important;
+  background: #EE4D2D !important;
   color: white !important;
   border: none !important;
   border-radius: 0 4px 4px 0 !important;
@@ -285,7 +285,7 @@ const categories = [
   margin: 0 !important;
 }
 .search-btn:hover {
-  background: #059669 !important;
+  background: #BE3E24 !important;
 }
 .hot-keywords {
   margin-top: 10px;
@@ -301,7 +301,7 @@ const categories = [
   margin-right: 12px;
   transition: color 0.2s;
 }
-.hot-keywords a:hover { color: #10b981; }
+.hot-keywords a:hover { color: #EE4D2D; }
 
 /* 右側 actions */
 .header-actions {
@@ -314,7 +314,7 @@ const categories = [
   text-align: center;
   transition: transform 0.2s;
 }
-.action-icon:hover { transform: translateY(-3px); color: #10b981; }
+.action-icon:hover { transform: translateY(-3px); color: #EE4D2D; }
 .action-label { font-size: 12px; margin-top: 4px; }
 
 /* 分類導覽 — 蝦皮風格,緊貼 Header */
@@ -332,7 +332,7 @@ const categories = [
   gap: 0;
 }
 .all-categories {
-  background: #10b981;
+  background: #EE4D2D;
   color: white;
   padding: 14px 28px;
   font-weight: 600;
@@ -347,7 +347,7 @@ const categories = [
 
 }
 .all-categories:hover {
-  background: #059669;
+  background: #BE3E24;
 }
 .category-list {
   display: flex;
@@ -372,8 +372,8 @@ const categories = [
   line-height: 1;
 }
 .category-list a:hover {
-  color: #10b981;
-  background: rgba(16,185,129,0.1);
+  color: #EE4D2D;
+  background: rgba(238,77,45,0.1);
 }
 .cat-icon { font-size: 16px; }
 
@@ -391,7 +391,7 @@ const categories = [
 .footer-top {
   background: #1e293b;
   padding: 30px 0;
-  border-top: 4px solid #10b981;
+  border-top: 4px solid #EE4D2D;
 }
 .footer-features {
   max-width: 1400px;
@@ -407,7 +407,7 @@ const categories = [
   gap: 16px;
   color: #cbd5e1;
 }
-.feature-item :deep(.el-icon) { color: #10b981; }
+.feature-item :deep(.el-icon) { color: #EE4D2D; }
 .feature-item h4 { color: white; font-size: 15px; margin: 0 0 4px; }
 .feature-item p { font-size: 13px; margin: 0; color: #94a3b8; }
 
@@ -422,7 +422,7 @@ const categories = [
 .footer-brand .footer-logo {
   font-size: 26px;
   font-weight: 800;
-  color: #10b981;
+  color: #EE4D2D;
   margin-bottom: 12px;
 }
 .footer-brand p {
@@ -438,16 +438,16 @@ const categories = [
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(238, 77, 45, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #10b981;
+  color: #EE4D2D;
   text-decoration: none;
   transition: all 0.3s;
 }
 .social-icons a:hover {
-  background: #10b981;
+  background: #EE4D2D;
   color: white;
   transform: translateY(-3px);
 }
@@ -465,7 +465,7 @@ const categories = [
   left: 0;
   width: 30px;
   height: 2px;
-  background: #10b981;
+  background: #EE4D2D;
 }
 .footer-col a {
   display: block;
@@ -476,7 +476,7 @@ const categories = [
   transition: all 0.2s;
 }
 .footer-col a:hover {
-  color: #10b981;
+  color: #EE4D2D;
   padding-left: 5px;
 }
 .footer-col p { color: #94a3b8; font-size: 13px; margin: 6px 0; }

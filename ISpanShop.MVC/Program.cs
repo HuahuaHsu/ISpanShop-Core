@@ -12,6 +12,7 @@ using ISpanShop.Repositories.Inventories;
 using ISpanShop.Repositories.ContentModeration;
 using ISpanShop.Repositories.Support;
 using ISpanShop.Repositories.Stores;
+using ISpanShop.Repositories.Promotions;
 
 // Service namespaces
 using ISpanShop.Services.Admins;
@@ -24,6 +25,7 @@ using ISpanShop.Services.ContentModeration;
 using ISpanShop.Services.Support;
 using ISpanShop.Services.Payments;
 using ISpanShop.Services.Stores;
+using ISpanShop.Services.Promotions;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -148,6 +150,10 @@ namespace ISpanShop.MVC
 			// 註冊商店管理的 Repo 與 Service
 			builder.Services.AddScoped<IStoreRepository, StoreRepository>();
 			builder.Services.AddScoped<IStoreService, StoreService>();
+
+			// 前台活動 API
+			builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
+			builder.Services.AddScoped<PromotionService>();
 			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.

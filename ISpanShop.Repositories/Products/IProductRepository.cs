@@ -171,5 +171,13 @@ namespace ISpanShop.Repositories.Products
 
         /// <summary>[Async] 模擬賣家修改後重新送審：將 ReviewStatus=2（已退回）的商品改為 ReviewStatus=3（待重新審核）。</summary>
         Task SimulateSellerResubmitAsync(int id);
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品列表（AllowAnonymous，只查 Status==1 上架中）
+        // ═══════════════════════════════════════════════════════════
+
+        /// <summary>[Async] 前台商品總覽：只查上架中商品，支援分類/關鍵字/排序/分頁</summary>
+        Task<(IEnumerable<ProductListDto> Items, int TotalCount)> GetFrontActiveProductsAsync(
+            int? categoryId, string? keyword, string sortBy, int page, int pageSize);
     }
 }

@@ -964,5 +964,67 @@ namespace ISpanShop.Repositories.Products
                 .Include(p => p.ProductImages)
                 .ToListAsync();
         }
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品列表（只查 Status==1 上架中）
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<(IEnumerable<ProductListDto> Items, int TotalCount)> GetFrontActiveProductsAsync(
+            int? categoryId, string? keyword, string sortBy, int page, int pageSize)
+        {
+            var query = _context.Products
+                .AsNoTracking()
+                .Where(p => p.IsDeleted != true && p.Status == 1)
+                .AsQueryable();
+
+            if (categoryId.HasValue)
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim().ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(kw));
+            }
+
+            query = sortBy switch
+            {
+                "priceAsc"  => query.OrderBy(p => p.MinPrice),
+                "priceDesc" => query.OrderByDescending(p => p.MinPrice),
+                "soldCount" => query.OrderByDescending(p => p.TotalSales ?? 0),
+                _           => query.OrderByDescending(p => p.CreatedAt) // latest（預設）
+            };
+
+            int totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new ProductListDto
+                {
+                    Id           = p.Id,
+                    CategoryId   = p.CategoryId,
+                    TotalSales   = p.TotalSales,
+                    Name         = p.Name,
+                    CategoryName = p.Category != null ? p.Category.Name : "未分類",
+                    StoreName    = p.Store != null ? p.Store.StoreName : string.Empty,
+                    MinPrice     = p.MinPrice,
+                    MaxPrice     = p.MaxPrice,
+                    Status       = p.Status,
+                    CreatedAt    = p.CreatedAt,
+                    ReviewStatus = p.ReviewStatus,
+                    ReviewedBy   = p.ReviewedBy,
+                    ReviewDate   = p.ReviewDate,
+                    RejectReason = p.RejectReason,
+                    MainImageUrl =
+                        p.ProductImages.Where(img => img.IsMain == true)
+                                       .Select(img => img.ImageUrl).FirstOrDefault()
+                        ?? p.ProductImages.Select(img => img.ImageUrl).FirstOrDefault()
+                        ?? string.Empty
+                })
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
     }
 }

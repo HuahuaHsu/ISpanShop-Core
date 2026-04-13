@@ -8,6 +8,8 @@ namespace ISpanShop.Models.DTOs.Products
     public class ProductListDto
     {
         public int Id { get; set; }
+        public int CategoryId { get; set; }
+        public int? TotalSales { get; set; }
         public string? StoreName { get; set; }
         public required string CategoryName { get; set; }
         public string? BrandName { get; set; }

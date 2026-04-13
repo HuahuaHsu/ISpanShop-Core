@@ -10,7 +10,7 @@
                 <div class="slide-tag">{{ banner.tag }}</div>
                 <h2>{{ banner.title }}</h2>
                 <p>{{ banner.subtitle }}</p>
-                <el-button type="success" round size="large">立即搶購</el-button>
+                <el-button type="primary" round size="large">立即搶購</el-button>
               </div>
               <div class="slide-emoji">{{ banner.emoji }}</div>
             </div>
@@ -46,32 +46,107 @@
       </div>
     </section>
 
-    <!-- 每日好物 -->
-    <section class="products-section">
-      <div class="section-title">⚡ 每日好物推薦</div>
-      <div class="product-grid">
-        <div v-for="i in 12" :key="i" class="product-card">
-          <div class="product-image">
-            <span class="discount-badge">-{{ 10 + i * 2 }}%</span>
-            <div class="image-placeholder">📦</div>
-          </div>
-          <div class="product-info">
-            <div class="product-name">熱銷商品 {{ i }} 號 - 優質精選好物</div>
-            <div class="product-price">
-              <span class="price">NT${{ (199 * i).toLocaleString() }}</span>
+    <!-- 每日新發現 -->
+    <section ref="sectionRef" class="products-section">
+      <div class="discovery-header">
+        <h2 class="discovery-title">每日新發現</h2>
+      </div>
+
+      <!-- 骨架屏：載入中 -->
+      <div v-if="loading" class="product-grid">
+        <el-skeleton
+          v-for="n in 20"
+          :key="n"
+          animated
+          class="skeleton-card"
+        >
+          <template #template>
+            <el-skeleton-item variant="image" class="skeleton-image" />
+            <div class="skeleton-body">
+              <el-skeleton-item variant="p" style="width: 90%" />
+              <el-skeleton-item variant="p" style="width: 70%" />
+              <el-skeleton-item variant="p" style="width: 50%" />
             </div>
-            <div class="product-meta">
-              <span>⭐ 4.{{ i % 9 + 1 }}</span>
-              <span>已售 {{ i * 123 }}</span>
-            </div>
-          </div>
-        </div>
+          </template>
+        </el-skeleton>
+      </div>
+
+      <!-- 商品牆 -->
+      <div v-else-if="products.length > 0" class="product-grid">
+        <ProductCard
+          v-for="product in products"
+          :key="product.id"
+          :product="product"
+        />
+      </div>
+
+      <!-- 沒資料 -->
+      <el-empty v-else description="目前沒有商品" :image-size="120" />
+
+      <!-- 分頁 -->
+      <div v-if="total > 0" class="pagination-wrap">
+        <el-pagination
+          background
+          layout="prev, pager, next, jumper, total"
+          :total="total"
+          :page-size="pageSize"
+          :current-page="currentPage"
+          :disabled="loading"
+          @current-change="onPageChange"
+        />
       </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import ProductCard from '@/components/product/ProductCard.vue'
+import { fetchProductList } from '@/api/product'
+import type { ProductListItem } from '@/types/product'
+
+// ── 每日新發現狀態 ────────────────────────────────────────────────
+const products = ref<ProductListItem[]>([])
+const loading = ref<boolean>(false)
+const currentPage = ref<number>(1)
+const pageSize = ref<number>(30)
+const total = ref<number>(0)
+const sectionRef = ref<HTMLElement | null>(null)
+
+async function loadProducts(): Promise<void> {
+  loading.value = true
+  try {
+    const res = await fetchProductList({
+      page: currentPage.value,
+      pageSize: pageSize.value,
+      sortBy: 'latest',
+    })
+    if (res.success) {
+      products.value = res.data.items
+      total.value = res.data.total
+    } else {
+      ElMessage.error(res.message || '載入失敗')
+    }
+  } catch {
+    ElMessage.error('載入失敗，請稍後再試')
+  } finally {
+    loading.value = false
+  }
+}
+
+function onPageChange(page: number): void {
+  currentPage.value = page
+  void loadProducts().then(() => {
+    sectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+}
+
+onMounted(() => {
+  void loadProducts()
+})
+
+// ── 輪播資料 ──────────────────────────────────────────────────────
 const banners = [
   { tag: '🎉 會員專屬', title: '購物節送 8 折券', subtitle: '全站 $49 起免運', bg: 'linear-gradient(135deg, #1e293b 0%, #1e1b4b 100%)', emoji: '🚚' },
   { tag: '🔥 限時搶購', title: '3C 家電季', subtitle: '滿萬折千 再送好禮', bg: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)', emoji: '📱' },
@@ -141,13 +216,13 @@ const categories = [
 .slide-content { z-index: 1; }
 .slide-tag {
   display: inline-block;
-  background: rgba(16,185,129,0.2);
-  color: #10b981;
+  background: rgba(238,77,45,0.2);
+  color: #EE4D2D;
   padding: 6px 16px;
   border-radius: 20px;
   font-size: 13px;
   margin-bottom: 16px;
-  border: 1px solid rgba(16,185,129,0.3);
+  border: 1px solid rgba(238,77,45,0.3);
 }
 .carousel-slide h2 {
   font-size: 42px;
@@ -161,7 +236,7 @@ const categories = [
 }
 .slide-emoji {
   font-size: 180px;
-  filter: drop-shadow(0 10px 30px rgba(16,185,129,0.3));
+  filter: drop-shadow(0 10px 30px rgba(238,77,45,0.3));
 }
 
 .side-banners {
@@ -183,7 +258,7 @@ const categories = [
 .side-banner:hover { transform: translateY(-3px); }
 .sb-tag {
   display: inline-block;
-  background: #10b981;
+  background: #EE4D2D;
   color: white;
   padding: 3px 10px;
   border-radius: 4px;
@@ -221,13 +296,13 @@ const categories = [
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  background: linear-gradient(135deg, #FFF0ED 0%, #FCDBD5 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
   margin: 0 auto 8px;
-  box-shadow: 0 2px 6px rgba(16,185,129,0.15);
+  box-shadow: 0 2px 6px rgba(238,77,45,0.15);
 }
 .quick-label { font-size: 12px; color: #475569; }
 
@@ -245,7 +320,7 @@ const categories = [
   color: #1e293b;
   margin-bottom: 20px;
   padding-left: 12px;
-  border-left: 4px solid #10b981;
+  border-left: 4px solid #EE4D2D;
 }
 .category-grid {
   display: grid;
@@ -260,7 +335,7 @@ const categories = [
   transition: all 0.2s;
 }
 .category-item:hover {
-  background: #f0fdf4;
+  background: #FFF5F3;
   transform: translateY(-3px);
 }
 .cat-image {
@@ -276,69 +351,79 @@ const categories = [
 }
 .cat-name { font-size: 13px; color: #334155; }
 
-/* 每日好物 */
+/* 每日新發現 */
 .products-section {
   background: white;
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
+
+/* 標題：橘紅底線樣式 */
+.discovery-header {
+  text-align: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+.discovery-title {
+  display: inline-block;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 3px solid #EE4D2D;
+}
+.discovery-header::before,
+.discovery-header::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 90px);
+  height: 1px;
+  background: #e2e8f0;
+  transform: translateY(-6px);
+}
+.discovery-header::before { left: 0; }
+.discovery-header::after  { right: 0; }
+
+/* 商品格線（響應式：大 6、中 4、手機 2） */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
-.product-card {
-  border-radius: 8px;
+@media (max-width: 1200px) {
+  .product-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 600px) {
+  .product-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* 分頁 */
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* 骨架屏卡片 */
+.skeleton-card {
+  border-radius: 4px;
   overflow: hidden;
   border: 1px solid #f1f5f9;
-  transition: all 0.3s;
-  cursor: pointer;
 }
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  border-color: #10b981;
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
 }
-.product-image {
-  height: 180px;
-  background: #f8fafc;
+.skeleton-body {
+  padding: 10px 12px 12px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-.image-placeholder { font-size: 60px; opacity: 0.4; }
-.discount-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: #10b981;
-  color: white;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 700;
-}
-.product-info { padding: 12px; }
-.product-name {
-  font-size: 13px;
-  color: #334155;
-  margin-bottom: 8px;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  height: 36px;
-}
-.product-price { margin-bottom: 6px; }
-.price { color: #ef4444; font-size: 18px; font-weight: 700; }
-.product-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: #94a3b8;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* 修正輪播圓點顏色 */
@@ -349,12 +434,12 @@ const categories = [
   border-radius: 2px;
 }
 :deep(.el-carousel__indicator--horizontal.is-active .el-carousel__button) {
-  background: #10b981;
+  background: #EE4D2D;
 }
 :deep(.el-carousel__arrow) {
   background: rgba(0,0,0,0.4);
 }
 :deep(.el-carousel__arrow:hover) {
-  background: #10b981;
+  background: #EE4D2D;
 }
 </style>

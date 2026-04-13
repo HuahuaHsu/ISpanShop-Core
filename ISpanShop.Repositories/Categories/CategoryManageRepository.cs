@@ -140,5 +140,66 @@ namespace ISpanShop.Repositories.Categories
             c.Sort = sortOrder;
             _db.SaveChanges();
         }
+
+        // ─── 前台 API ───────────────────────────────────────────────
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<CategoryManageDto>> GetMainCategoriesAsync()
+        {
+            // 1. 取啟用中的主分類
+            var mains = await _db.Categories
+                .AsNoTracking()
+                .Where(c => c.ParentId == null && (c.IsVisible ?? true))
+                .OrderBy(c => c.Sort ?? 0)
+                .ThenBy(c => c.Id)
+                .ToListAsync();
+
+            var mainIds = mains.Select(c => c.Id).ToList();
+
+            // 2. 取第一層子分類，建立 childId → parentId 映射
+            var childToParent = await _db.Categories
+                .AsNoTracking()
+                .Where(c => c.ParentId != null && mainIds.Contains(c.ParentId!.Value))
+                .Select(c => new { c.Id, c.ParentId })
+                .ToListAsync();
+
+            // 3. 統計子分類下的上架商品數，按父分類彙總
+            var childIds = childToParent.Select(c => c.Id).ToList();
+            var productGroups = await _db.Products
+                .AsNoTracking()
+                .Where(p => !p.IsDeleted && p.Status == 1 && childIds.Contains(p.CategoryId))
+                .GroupBy(p => p.CategoryId)
+                .Select(g => new { CategoryId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var countByParent = new Dictionary<int, int>();
+            foreach (var pg in productGroups)
+            {
+                var parentId = childToParent.FirstOrDefault(c => c.Id == pg.CategoryId)?.ParentId;
+                if (parentId.HasValue)
+                {
+                    countByParent.TryGetValue(parentId.Value, out int cur);
+                    countByParent[parentId.Value] = cur + pg.Count;
+                }
+            }
+
+            var childCount = childToParent
+                .GroupBy(c => c.ParentId!.Value)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            return mains.Select(c => new CategoryManageDto
+            {
+                Id           = c.Id,
+                Name         = c.Name,
+                NameEn       = c.NameEn,
+                ParentId     = c.ParentId,
+                SortOrder    = c.Sort ?? 0,
+                IsActive     = c.IsVisible ?? true,
+                ImageUrl     = c.IconUrl,
+                ProductCount = countByParent.TryGetValue(c.Id, out var cnt) ? cnt : 0,
+                ChildCount   = childCount.TryGetValue(c.Id, out var cc) ? cc : 0,
+                Children     = new System.Collections.Generic.List<CategoryManageDto>()
+            });
+        }
     }
 }

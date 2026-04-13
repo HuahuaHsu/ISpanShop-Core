@@ -27,7 +27,7 @@ const pageTitle = computed(() => {
 
 <style scoped>
 .layout { min-height: 100vh; display: flex; flex-direction: column; background: #f1f5f9; }
-.header { background: white; padding: 30px 0; border-bottom: 3px solid #10b981; }
+.header { background: white; padding: 30px 0; border-bottom: 3px solid #EE4D2D; }
 .header-inner {
   max-width: 1400px;
   margin: 0 auto;
@@ -36,7 +36,7 @@ const pageTitle = computed(() => {
   align-items: baseline;
   gap: 20px;
 }
-.logo { color: #10b981; font-size: 32px; font-weight: bold; cursor: pointer; }
+.logo { color: #EE4D2D; font-size: 32px; font-weight: bold; cursor: pointer; }
 .title { color: #475569; font-size: 20px; }
 .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
 .footer { text-align: center; padding: 20px; color: #94a3b8; font-size: 13px; }

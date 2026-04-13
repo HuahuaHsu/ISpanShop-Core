@@ -160,5 +160,13 @@ namespace ISpanShop.Services.Products
 
         /// <summary>[Async] 模擬賣家修改後重新送審：將 ReviewStatus=2（已退回）的商品改為 ReviewStatus=3（待重新審核），出現在重新申請審核列表。</summary>
         Task SimulateSellerResubmitAsync(int id);
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品列表
+        // ═══════════════════════════════════════════════════════════
+
+        /// <summary>[Async] 前台商品總覽：只查上架中商品，支援分類/關鍵字/排序/分頁。pageSize 上限 50。</summary>
+        Task<PagedResult<ProductListDto>> GetFrontActiveProductsAsync(
+            int? categoryId, string? keyword, string sortBy, int page, int pageSize);
     }
 }

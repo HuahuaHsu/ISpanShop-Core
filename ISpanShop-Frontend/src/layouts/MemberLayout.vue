@@ -75,7 +75,7 @@ function logout() {
   padding: 0 30px;
 }
 .logo {
-  color: #10b981;
+  color: #EE4D2D;
   font-size: 26px;
   font-weight: bold;
   cursor: pointer;
@@ -119,7 +119,7 @@ function logout() {
 
 /* 讓側邊欄選單 active 時是綠色 */
 :deep(.el-menu-item.is-active) {
-  color: #10b981 !important;
-  background: #ecfdf5 !important;
+  color: #EE4D2D !important;
+  background: #FDEDEA !important;
 }
 </style>

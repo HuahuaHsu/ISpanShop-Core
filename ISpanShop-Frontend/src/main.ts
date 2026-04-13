@@ -10,6 +10,7 @@ import router from './router'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import zhTw from 'element-plus/es/locale/lang/zh-tw'  // 繁體中文
+import './styles/theme.css' // 覆寫主色調為橘紅色 #EE4D2D
 
 const app = createApp(App)
 
