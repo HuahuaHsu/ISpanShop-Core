@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ISpanShop.Models.EfModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace ISpanShop.Models.Seeding
 {
@@ -185,12 +186,137 @@ namespace ISpanShop.Models.Seeding
 				int publishedCount = products.Count(p => p.Status == 1);
 				Console.WriteLine($"✅ 成功匯入 {products.Count} 筆商品 (含多規格變體) 到資料庫");
 				Console.WriteLine($"   └─ 已上架: {publishedCount} 筆 / 未上架: {unpublishCount} 筆");
+
+				// 5. 順便生成客服工單與評論 (若為空)
+				await EnsureSupportTicketsAsync(context);
+				await EnsureOrderReviewsAsync(context);
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine($"❌ 播種過程出錯：{ex.Message}");
 				throw;
 			}
+		}
+
+		// ====================================================================
+		// ★ 客服工單播種
+		// ====================================================================
+		public static async Task GenerateSupportTicketsAsync(ISpanShopDBContext context, int count = 20)
+		{
+			var users = context.Users.Take(10).ToList();
+			if (!users.Any()) return;
+
+			var subjects = new[] { "帳號無法登入", "商品收到有瑕疵", "想詢問退貨流程", "檢舉違規賣家", "購物車結帳失敗", "請問這款衣服還會補貨嗎？", "忘記密碼收不到驗證信", "買家提領申請", "檢舉違規商品" };
+			var descriptions = new[] { "使用者反應登入時出現 404 錯誤，請工程師檢查 Log", "商品收到時包裝破損，想申請退換貨", "請問退貨運費是由誰負擔？", "這個賣家好像在賣假貨，請查核", "一直跳轉失敗，無法完成付款", "我很喜歡這件，拜託快補貨", "點了好幾次都沒有收到信，垃圾信箱也沒有", "賣家反應無法提領款項", "這個商品描述與圖片不符" };
+			
+			var tickets = new List<SupportTicket>();
+			for (int i = 0; i < count; i++)
+			{
+				var user = users[_random.Next(users.Count)];
+				int status = _random.Next(0, 3); // 0:待處理, 1:處理中, 2:已結案
+				int category = _random.Next(0, 3); // 0:訂單, 1:帳號, 2:檢舉
+
+				tickets.Add(new SupportTicket
+				{
+					UserId = user.Id,
+					OrderId = category == 0 ? _random.Next(100, 500) : null,
+					Subject = subjects[_random.Next(subjects.Length)],
+					Category = (byte)category,
+					Description = descriptions[_random.Next(descriptions.Length)],
+					Status = (byte)status,
+					AdminReply = status == 2 ? "我們已經處理完畢，感謝您的回饋。" : (status == 1 ? "正在查詢相關 Log 中..." : null),
+					CreatedAt = DateTime.Now.AddDays(-_random.Next(0, 5)),
+					ResolvedAt = status == 2 ? DateTime.Now : null
+				});
+			}
+
+			context.SupportTickets.AddRange(tickets);
+			await context.SaveChangesAsync();
+		}
+
+		public static async Task EnsureSupportTicketsAsync(ISpanShopDBContext context)
+		{
+			if (context.SupportTickets.Any()) return;
+			await GenerateSupportTicketsAsync(context, 20);
+		}
+
+		// ====================================================================
+		// ★ 商品評論播種 (修復：確保 OrderId 存在)
+		// ====================================================================
+		public static async Task GenerateOrderReviewsAsync(ISpanShopDBContext context, int count = 30)
+		{
+			var users = context.Users.Take(10).ToList();
+			if (!users.Any()) return;
+
+			// 1. 取得真實存在的 Order ID
+			var orderIds = context.Orders.Select(o => o.Id).Take(20).ToList();
+
+			// 2. 如果完全沒訂單，先手動生幾筆基本的
+			if (!orderIds.Any())
+			{
+				var store = context.Stores.FirstOrDefault();
+				if (store != null)
+				{
+					for (int j = 0; j < 5; j++)
+					{
+						var newOrder = new Order
+						{
+							UserId = users.First().Id,
+							StoreId = store.Id,
+							OrderNumber = "SEED" + DateTime.Now.ToString("yyyyMMddHHmmss") + j,
+							Status = 1,
+							TotalAmount = 1000,
+							FinalAmount = 1000,
+							CreatedAt = DateTime.Now
+						};
+						context.Orders.Add(newOrder);
+					}
+					await context.SaveChangesAsync();
+					orderIds = context.Orders.Select(o => o.Id).ToList();
+				}
+			}
+
+			if (!orderIds.Any()) return;
+
+			var comments = new[] { 
+				"品質真的很棒，值得推薦！", 
+				"發貨速度很快，包裝也很細心。", 
+				"這款商品真的很好用，cp值很高。", 
+				"雖然有一點色差，但整體來說還不錯。", 
+				"這個商品真的很爛，根本是詐騙集團，退錢啦！", 
+				"客服態度很好，解決問題很迅速。",
+				"這個賣家寄錯東西了，真是差勁！",
+				"物超所值，下次還會再買。",
+				"外觀精美，手感也很好。",
+				"跟照片完全不一樣，感覺被騙了。"
+			};
+
+			var reviews = new List<OrderReview>();
+			for (int i = 0; i < count; i++)
+			{
+				var user = users[_random.Next(users.Count)];
+				var comment = comments[_random.Next(comments.Length)];
+				var orderId = orderIds[_random.Next(orderIds.Count)];
+
+				reviews.Add(new OrderReview
+				{
+					OrderId = orderId, // 使用真實的 OrderId
+					UserId = user.Id,
+					Rating = (byte)_random.Next(1, 6),
+					Comment = comment,
+					IsHidden = false,
+					CreatedAt = DateTime.Now.AddDays(-_random.Next(0, 10))
+				});
+			}
+
+			context.OrderReviews.AddRange(reviews);
+			await context.SaveChangesAsync();
+		}
+
+		public static async Task EnsureOrderReviewsAsync(ISpanShopDBContext context)
+		{
+			if (context.OrderReviews.Any()) return;
+			await GenerateOrderReviewsAsync(context, 30);
 		}
 
 		// ====================================================================
