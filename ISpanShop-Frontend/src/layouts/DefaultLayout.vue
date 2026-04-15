@@ -1,16 +1,13 @@
 <template>
   <div class="layout">
-    <!-- 頂部公告列 -->
     <div class="top-bar">
       <div class="top-bar-inner">
         <div class="top-left">
-          <!-- TODO: 賣家中心入口，路由待確認 -->
           <a href="#" @click.prevent="router.push('/seller')">賣家中心</a>
           <span class="divider">|</span>
           <span class="welcome">🎉 全站滿千免運中</span>
         </div>
         <div class="top-right">
-          <!-- 未登入：顯示會員中心 / 註冊 / 登入 -->
           <template v-if="!authStore.isLoggedIn">
             <a href="#" @click.prevent="router.push('/member')">會員中心</a>
             <span class="divider">|</span>
@@ -18,7 +15,6 @@
             <a href="#" @click.prevent="router.push('/login')">登入</a>
           </template>
 
-          <!-- 已登入：帳號下拉選單 -->
           <template v-else>
             <el-dropdown trigger="hover" @command="handleDropdownCommand">
               <span class="user-dropdown-trigger">
@@ -39,7 +35,6 @@
       </div>
     </div>
 
-    <!-- 主 Header -->
     <header class="main-header">
       <div class="main-header-inner">
         <div class="logo" @click="$router.push('/')">
@@ -48,24 +43,26 @@
         </div>
 
         <div class="search-box">
-          <div class="search-input-row">
+          <div class="search-bar-container">
             <el-autocomplete
               v-model="searchText"
               :fetch-suggestions="fetchSuggestions"
               :debounce="300"
               :trigger-on-focus="false"
               placeholder="搜尋商品、品牌或關鍵字..."
-              class="search-input"
+              class="seamless-input"
+              size="large"
               @select="handleAutoSelect"
               @keyup.enter="handleSearch"
             >
               <template #prefix>
                 <el-icon><Search /></el-icon>
               </template>
-              <template #append>
-                <el-button class="search-btn" @click="handleSearch">搜尋</el-button>
-              </template>
-          </el-autocomplete>
+            </el-autocomplete>
+
+            <button class="seamless-btn" @click="handleSearch">搜尋</button>
+          </div>
+
           <div class="hot-keywords">
             <span class="hot-label">🔥 熱搜:</span>
             <a href="#" @click.prevent="router.push({ path: '/products', query: { keyword: 'iPhone 16' } })">iPhone 16</a>
@@ -88,15 +85,12 @@
           </div>
         </div>
       </div>
-      </div>
     </header>
 
-    <!-- 主要內容區 -->
     <main class="main-content">
       <router-view />
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
       <div class="footer-top">
         <div class="footer-features">
@@ -307,40 +301,52 @@ function handleDropdownCommand(command: string) {
   letter-spacing: 1px;
 }
 
-/* 搜尋框 — 蝦皮風格無縫接合 */
+/* 搜尋框區塊 */
 .search-box { flex: 1; }
-.search-input :deep(.el-input__wrapper) {
-  border-radius: 4px 0 0 4px;
-  box-shadow: none;
-  padding-left: 16px;
-  height: 44px;
-  background: white;
+
+/* 1. 最外層的紅色畫框 (這才是決定高度和邊框的人) */
+.search-bar-container {
+  display: flex;
+  width: 100%;
+  height: 44px; /* 固定高度 */
   border: 2px solid #EE4D2D;
-  border-right: none;
+  border-radius: 4px;
+  background: white;
+  overflow: hidden; /* 讓邊角保持乾淨，不會被內部元素凸出去 */
 }
-.search-input :deep(.el-input__wrapper.is-focus) {
-  box-shadow: none;
-  border-color: #EE4D2D;
+
+/* 2. 讓 Autocomplete 佔滿剩餘空間，並完全拔掉 Element Plus 的預設樣式 */
+.seamless-input {
+  flex: 1;
 }
-.search-input :deep(.el-input-group__append) {
-  padding: 0;
+.seamless-input :deep(.el-input__wrapper) {
+  box-shadow: none !important; /* 絕對拔掉灰色內陰影 */
   background: transparent;
+  padding-left: 16px;
+  border-radius: 0;
+}
+.seamless-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: none !important; /* 點擊時也不要有藍色陰影 */
+}
+
+/* 3. 獨立的搜尋按鈕 */
+.seamless-btn {
+  background: #EE4D2D;
+  color: white;
   border: none;
-  box-shadow: none;
-}
-.search-btn {
-  background: #EE4D2D !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 0 4px 4px 0 !important;
-  padding: 0 40px !important;
-  height: 44px !important;
-  font-weight: 600;
+  padding: 0 40px;
   font-size: 16px;
-  margin: 0 !important;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  outline: none;
+
+  /* 👇 加上這兩行 👇 */
+  white-space: nowrap; /* 強制文字維持同一行，不換行 */
+  flex-shrink: 0;      /* 告訴 Flexbox 這個按鈕不允許被壓縮 */
 }
-.search-btn:hover {
-  background: #BE3E24 !important;
+.seamless-btn:hover {
+  background: #BE3E24;
 }
 .hot-keywords {
   margin-top: 10px;
