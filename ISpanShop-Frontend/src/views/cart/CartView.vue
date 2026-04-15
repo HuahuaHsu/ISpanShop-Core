@@ -68,7 +68,7 @@ function handleCheckout(): void {
           <el-icon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></el-icon>
         </el-button>
         <h1 class="cart-title">購物車</h1>
-        <span class="cart-count">（{{ cartStore.totalCount }} 件）</span>
+        <span class="cart-count">（{{ cartStore.totalQuantity }} 件）</span>
       </div>
 
       <!-- 空購物車 -->
@@ -149,7 +149,7 @@ function handleCheckout(): void {
             <span class="total-label">合計：</span>
             <span class="total-price">NT$ {{ formatPrice(cartStore.totalPrice) }}</span>
             <el-button type="primary" size="large" @click="handleCheckout">
-              結帳（{{ cartStore.totalCount }} 件）
+              結帳（{{ cartStore.totalQuantity }} 件）
             </el-button>
           </div>
         </div>

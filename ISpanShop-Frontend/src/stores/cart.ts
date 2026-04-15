@@ -25,7 +25,11 @@ export const useCartStore = defineStore('cart', () => {
     })(),
   )
 
-  const totalCount = computed(() =>
+  /** 商品種類數（幾種不同商品/規格），用於 Header 徽章 */
+  const totalCount = computed(() => items.value.length)
+
+  /** 所有商品數量加總，用於「共 X 件」文字 */
+  const totalQuantity = computed(() =>
     items.value.reduce((sum, item) => sum + item.quantity, 0),
   )
 
@@ -72,5 +76,5 @@ export const useCartStore = defineStore('cart', () => {
     localStorage.setItem(CART_KEY, JSON.stringify(val))
   }, { deep: true })
 
-  return { items, totalCount, totalPrice, addItem, removeItem, updateQty, clearCart }
+  return { items, totalCount, totalQuantity, totalPrice, addItem, removeItem, updateQty, clearCart }
 })

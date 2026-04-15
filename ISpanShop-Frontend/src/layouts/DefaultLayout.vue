@@ -4,9 +4,8 @@
     <div class="top-bar">
       <div class="top-bar-inner">
         <div class="top-left">
-          <a href="#"><el-icon><Cellphone /></el-icon> 下載 APP</a>
-          <span class="divider">|</span>
-          <a href="#"><el-icon><Promotion /></el-icon> 追蹤我們</a>
+          <!-- TODO: 賣家中心入口，路由待確認 -->
+          <a href="#" @click.prevent="router.push('/seller')">賣家中心</a>
           <span class="divider">|</span>
           <span class="welcome">🎉 全站滿千免運中</span>
         </div>
@@ -49,26 +48,30 @@
         </div>
 
         <div class="search-box">
-          <el-input
-            v-model="searchText"
-            placeholder="搜尋商品、品牌或關鍵字..."
-            size="large"
-            class="search-input"
-            @keyup.enter="handleSearch"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-            <template #append>
-              <el-button class="search-btn" @click="handleSearch">搜尋</el-button>
-            </template>
-          </el-input>
+          <div class="search-input-row">
+            <el-autocomplete
+              v-model="searchText"
+              :fetch-suggestions="fetchSuggestions"
+              :debounce="300"
+              :trigger-on-focus="false"
+              placeholder="搜尋商品、品牌或關鍵字..."
+              class="search-input"
+              @select="handleAutoSelect"
+              @keyup.enter="handleSearch"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+              <template #append>
+                <el-button class="search-btn" @click="handleSearch">搜尋</el-button>
+              </template>
+          </el-autocomplete>
           <div class="hot-keywords">
             <span class="hot-label">🔥 熱搜:</span>
-            <a href="#">iPhone 16</a>
-            <a href="#">無線耳機</a>
-            <a href="#">機械鍵盤</a>
-            <a href="#">運動鞋</a>
+            <a href="#" @click.prevent="router.push({ path: '/products', query: { keyword: 'iPhone 16' } })">iPhone 16</a>
+            <a href="#" @click.prevent="router.push({ path: '/products', query: { keyword: '無線耳機' } })">無線耳機</a>
+            <a href="#" @click.prevent="router.push({ path: '/products', query: { keyword: '機械鍵盤' } })">機械鍵盤</a>
+            <a href="#" @click.prevent="router.push({ path: '/products', query: { keyword: '運動鞋' } })">運動鞋</a>
           </div>
         </div>
 
@@ -84,6 +87,7 @@
             <div class="action-label">購物車</div>
           </div>
         </div>
+      </div>
       </div>
     </header>
 
@@ -168,7 +172,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import {
-  Search, ShoppingCart, Star, Cellphone, Promotion,
+  Search, ShoppingCart, Star, Promotion,
   Van, Lock, RefreshRight, Service, ChatDotRound, Share,
   User, ArrowDown
 } from '@element-plus/icons-vue'
@@ -176,19 +180,34 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
 import { useCartStore } from '../stores/cart'
+import { getProductSuggestions } from '../api/product'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
 const searchText = ref('')
 
+/** 導向搜尋結果頁 */
 function handleSearch(): void {
   const kw = searchText.value.trim()
-  if (kw) {
-    void router.push({ path: '/', query: { keyword: kw } })
-  } else {
-    void router.push('/')
-  }
+  void router.push(kw ? { path: '/products', query: { keyword: kw } } : { path: '/products' })
+}
+
+/** el-autocomplete 點選建議項目 */
+function handleAutoSelect(item: { value: string }): void {
+  searchText.value = item.value
+  void router.push({ path: '/products', query: { keyword: item.value } })
+}
+
+/** el-autocomplete fetch-suggestions callback（使用 debounce 由 el-autocomplete 內建處理） */
+function fetchSuggestions(
+  queryString: string,
+  cb: (results: { value: string }[]) => void,
+): void {
+  if (!queryString.trim()) { cb([]); return }
+  getProductSuggestions(queryString)
+    .then((names) => cb(names.map((n) => ({ value: n }))))
+    .catch(() => cb([]))
 }
 
 function handleDropdownCommand(command: string) {
@@ -288,7 +307,6 @@ function handleDropdownCommand(command: string) {
   letter-spacing: 1px;
 }
 
-/* 搜尋框 */
 /* 搜尋框 — 蝦皮風格無縫接合 */
 .search-box { flex: 1; }
 .search-input :deep(.el-input__wrapper) {
