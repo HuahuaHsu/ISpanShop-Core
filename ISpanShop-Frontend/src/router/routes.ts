@@ -1,12 +1,27 @@
 import type { RouteRecordRaw } from 'vue-router';
+import DefaultLayout from '../layouts/DefaultLayout.vue';
 
 export const routes: RouteRecordRaw[] = [
+  // 使用 DefaultLayout 的頁面（包含完整的蝦皮風格 header/footer）
   {
     path: '/',
-    name: 'home',
-    component: () => import('../views/HomeView.vue'),
-    meta: { requiresAuth: false }
+    component: DefaultLayout,
+    children: [
+      {
+        path: '',
+        name: 'home',
+        component: () => import('../views/HomeView.vue'),
+        meta: { requiresAuth: false }
+      },
+      {
+        path: 'product/:id',
+        name: 'ProductDetail',
+        component: () => import('../views/ProductDetailView.vue'),
+        meta: { requiresAuth: false }
+      }
+    ]
   },
+  // 登入/註冊頁面（不需要 header/footer）
   {
     path: '/login',
     name: 'login',
