@@ -25,7 +25,7 @@ namespace ISpanShop.Services.Auth
         public async Task<FrontLoginResponseDto?> LoginAsync(FrontLoginRequestDto request)
         {
             // 1. 查詢使用者 (透過 Repository)
-            var user = await _userRepository.GetByEmailOrAccountAsync(request.Email);
+            var user = await _userRepository.GetByEmailOrAccountAsync(request.Account);
 
             if (user == null || !SecurityHelper.Verify(request.Password, user.Password))
             {

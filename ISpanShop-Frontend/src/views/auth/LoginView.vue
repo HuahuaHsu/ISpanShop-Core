@@ -11,13 +11,13 @@ const authStore = useAuthStore();
 const loginFormRef = ref<FormInstance>();
 
 const loginForm = reactive({
-  email: '',
+  account: '',
   password: ''
 });
 
 const rules = reactive<FormRules>({
-  email: [
-    { required: true, message: '請輸入 Email', trigger: 'blur' },
+  account: [
+    { required: true, message: '請輸入帳號或 Email', trigger: 'blur' },
   ],
   password: [
     { required: true, message: '請輸入密碼', trigger: 'blur' },
@@ -48,7 +48,7 @@ const handleLogin = async (formEl: FormInstance | undefined) => {
 };
 
 const quickFill = () => {
-  loginForm.email = 'fuen49';
+  loginForm.account = 'fuen49';
   loginForm.password = 'Fuen49.02';
 };
 </script>
@@ -66,8 +66,8 @@ const quickFill = () => {
         label-width="0"
         @keyup.enter="handleLogin(loginFormRef)"
       >
-        <el-form-item prop="email">
-          <el-input v-model="loginForm.email" placeholder="Email (或帳號)" prefix-icon="User" />
+        <el-form-item prop="account">
+          <el-input v-model="loginForm.account" placeholder="帳號或 Email" prefix-icon="User" />
         </el-form-item>
         <el-form-item prop="password">
           <el-input
