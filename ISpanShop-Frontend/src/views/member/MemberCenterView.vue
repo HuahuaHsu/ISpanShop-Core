@@ -166,10 +166,16 @@ const services = [
   min-height: 100vh;
   background: #F5F5F5;
   font-family: 'Noto Sans TC', sans-serif;
-  max-width: 480px;
+  max-width: 1200px;
   margin: 0 auto;
   position: relative;
   overflow-x: hidden;
+}
+
+@media (max-width: 1200px) {
+  .page {
+    max-width: 100%;
+  }
 }
 
 /* ── Header ────────────────────────────────────── */
@@ -284,6 +290,11 @@ const services = [
   grid-template-columns: repeat(4, 1fr);
   padding: 4px 0 14px;
 }
+@media (min-width: 768px) {
+  .order-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
 .order-item {
   display: flex;
   flex-direction: column;
@@ -333,6 +344,11 @@ const services = [
   padding: 4px 10px 14px;
   gap: 8px;
 }
+@media (min-width: 768px) {
+  .wallet-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 .wallet-item {
   display: flex;
   flex-direction: column;
@@ -362,6 +378,11 @@ const services = [
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   padding: 4px 0 14px;
+}
+@media (min-width: 768px) {
+  .services-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
 }
 .service-item {
   display: flex;
@@ -395,8 +416,14 @@ const services = [
   z-index: 200;
   display: flex;
   flex-direction: column;
-  max-width: 480px;
+  max-width: 1200px;
   margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+  .overlay {
+    max-width: 100%;
+  }
 }
 .overlay-header {
   background: #EE4D2D;

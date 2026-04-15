@@ -136,7 +136,8 @@ const handleRegister = async (formEl: FormInstance | undefined) => {
   padding: 40px 0;
 }
 .register-card {
-  width: 450px;
+  width: 90%;
+  max-width: 450px;
 }
 .w-full {
   width: 100%;

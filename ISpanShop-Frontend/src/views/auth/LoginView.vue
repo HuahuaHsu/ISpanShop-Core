@@ -98,7 +98,8 @@ const quickFill = () => {
   min-height: 80vh;
 }
 .login-card {
-  width: 400px;
+  width: 90%;
+  max-width: 400px;
 }
 .w-full {
   width: 100%;
