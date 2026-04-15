@@ -44,7 +44,7 @@ request.interceptors.response.use(
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 401) {
         localStorage.removeItem('token')
-        void router.push('/auth/login')
+        void router.push('/login')
       } else {
         const msg =
           (error.response?.data as { message?: string } | undefined)?.message ??

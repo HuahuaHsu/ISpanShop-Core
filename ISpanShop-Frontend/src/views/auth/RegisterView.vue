@@ -70,18 +70,38 @@ const rules = reactive<FormRules>({
 
 const handleRegister = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
-  await formEl.validate(async (valid) => {
-    if (valid) {
-      try {
-        await registerApi(registerForm);
-        ElMessage.success('註冊成功，請重新登入');
-        router.push('/login');
-      } catch (error: unknown) {
-        const err = error as { response?: { data?: { message?: string } } }
-        ElMessage.error(err.response?.data?.message || '註冊失敗');
-      }
-    }
-  });
+
+  const valid = await formEl.validate().catch(() => false);
+  if (!valid) return;
+
+  const payload = {
+    account: registerForm.account,
+    password: registerForm.password,
+    email: registerForm.email,
+    fullName: registerForm.fullName,
+    phoneNumber: registerForm.phoneNumber || undefined,
+  };
+  console.log('準備註冊', payload);
+
+  try {
+    const response = await registerApi(payload);
+    console.log('註冊成功', response);
+    ElMessage.success('註冊成功，請登入');
+    await router.push('/login');
+  } catch (error: unknown) {
+    console.error('註冊失敗完整錯誤', error);
+    const err = error as {
+      response?: { data?: { message?: string } | string };
+      message?: string;
+    };
+    console.error('後端回應', err.response?.data);
+    const backendMsg =
+      (err.response?.data as { message?: string } | undefined)?.message ??
+      (typeof err.response?.data === 'string' ? err.response.data : undefined) ??
+      err.message ??
+      '註冊失敗，請稍後再試';
+    ElMessage.error(backendMsg);
+  }
 };
 </script>
 

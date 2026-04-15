@@ -11,10 +11,10 @@
           <span class="welcome">🎉 全站滿千免運中</span>
         </div>
         <div class="top-right">
-          <a href="#" @click.prevent="$router.push('/member/profile')">會員中心</a>
+          <a href="#" @click.prevent="$router.push('/member')">會員中心</a>
           <span class="divider">|</span>
-          <a href="#" @click.prevent="$router.push('/auth/register')">註冊</a>
-          <a href="#" @click.prevent="$router.push('/auth/login')">登入</a>
+          <a href="#" @click.prevent="$router.push('/register')">註冊</a>
+          <a href="#" @click.prevent="$router.push('/login')">登入</a>
         </div>
       </div>
     </div>

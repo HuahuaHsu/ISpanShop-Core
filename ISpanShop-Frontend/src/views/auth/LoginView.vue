@@ -27,20 +27,24 @@ const rules = reactive<FormRules>({
 
 const handleLogin = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
-  await formEl.validate(async (valid) => {
-    if (valid) {
-      try {
-        await authStore.login(loginForm);
-        ElMessage.success('登入成功');
-        const redirectPath = route.query.redirect as string || '/';
-        router.push(redirectPath);
-      }
-      catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } }
-      ElMessage.error(err.response?.data?.message || '登入失敗');
-      }
-    }
-  });
+
+  // Promise-based validate: resolves true if valid, rejects if invalid
+  const valid = await formEl.validate().catch(() => false);
+  if (!valid) return;
+
+  console.log('準備登入', loginForm);
+  try {
+    const result = await authStore.login(loginForm);
+    console.log('登入成功', result);
+    ElMessage.success('登入成功');
+    const redirectPath = (route.query.redirect as string) || '/';
+    await router.push(redirectPath);
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    console.error('登入失敗完整錯誤', error);
+    console.error('後端回應', err.response?.data);
+    ElMessage.error(err.response?.data?.message ?? err.message ?? '登入失敗');
+  }
 };
 
 const quickFill = () => {
