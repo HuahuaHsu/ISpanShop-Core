@@ -11,10 +11,31 @@
           <span class="welcome">🎉 全站滿千免運中</span>
         </div>
         <div class="top-right">
-          <a href="#" @click.prevent="$router.push('/member')">會員中心</a>
-          <span class="divider">|</span>
-          <a href="#" @click.prevent="$router.push('/register')">註冊</a>
-          <a href="#" @click.prevent="$router.push('/login')">登入</a>
+          <!-- 未登入：顯示會員中心 / 註冊 / 登入 -->
+          <template v-if="!authStore.isLoggedIn">
+            <a href="#" @click.prevent="router.push('/member')">會員中心</a>
+            <span class="divider">|</span>
+            <a href="#" @click.prevent="router.push('/register')">註冊</a>
+            <a href="#" @click.prevent="router.push('/login')">登入</a>
+          </template>
+
+          <!-- 已登入：帳號下拉選單 -->
+          <template v-else>
+            <el-dropdown trigger="hover" @command="handleDropdownCommand">
+              <span class="user-dropdown-trigger">
+                <el-icon><User /></el-icon>
+                {{ authStore.memberInfo.account }}
+                <el-icon class="dropdown-arrow"><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="member">我的帳戶</el-dropdown-item>
+                  <el-dropdown-item command="orders">購買清單</el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>登出</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
         </div>
       </div>
     </div>
@@ -147,11 +168,29 @@
 import { ref } from 'vue'
 import {
   Search, ShoppingCart, Star, Cellphone, Promotion,
-  Van, Lock, RefreshRight, Service, ChatDotRound, Share
+  Van, Lock, RefreshRight, Service, ChatDotRound, Share,
+  User, ArrowDown
 } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { useAuthStore } from '../stores/auth'
 
+const router = useRouter()
+const authStore = useAuthStore()
 const searchText = ref('')
 const cartCount = ref(3)
+
+function handleDropdownCommand(command: string) {
+  if (command === 'member') {
+    router.push('/member')
+  } else if (command === 'orders') {
+    router.push('/orders')
+  } else if (command === 'logout') {
+    authStore.logout()
+    ElMessage.success('已登出')
+    router.push('/login')
+  }
+}
 </script>
 
 <style scoped>
@@ -188,6 +227,18 @@ const cartCount = ref(3)
 .top-bar a:hover { color: #EE4D2D; }
 .divider { opacity: 0.3; margin: 0 5px; }
 .welcome { color: #fbbf24; margin-left: 10px; }
+.user-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin: 0 10px;
+  outline: none;
+}
+.user-dropdown-trigger:hover { color: #EE4D2D; }
+.dropdown-arrow { font-size: 12px; }
 
 /* 主 Header — 漸層背景 */
 .main-header {

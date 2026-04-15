@@ -342,7 +342,12 @@ async function loadCategories(): Promise<void> {
   try {
     const res = await fetchMainCategories()
     if (res.success) {
-      apiCategories.value = res.data
+      // 過濾髒資料：純數字或名稱長度 < 2 的分類
+      const dirty = res.data.filter(c => /^\d+$/.test(c.name) || c.name.length < 2)
+      if (dirty.length > 0) {
+        console.warn('⚠️ 偵測到髒分類資料，已過濾（請至後端清理）:', dirty.map(c => `[id:${c.id}] "${c.name}"`))
+      }
+      apiCategories.value = res.data.filter(c => !/^\d+$/.test(c.name) && c.name.length >= 2)
     } else {
       ElMessage.error(res.message || '分類載入失敗')
     }
