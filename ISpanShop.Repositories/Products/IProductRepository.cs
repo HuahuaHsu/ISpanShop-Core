@@ -171,5 +171,32 @@ namespace ISpanShop.Repositories.Products
 
         /// <summary>[Async] 模擬賣家修改後重新送審：將 ReviewStatus=2（已退回）的商品改為 ReviewStatus=3（待重新審核）。</summary>
         Task SimulateSellerResubmitAsync(int id);
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品列表（AllowAnonymous，只查 Status==1 上架中）
+        // ═══════════════════════════════════════════════════════════
+
+        /// <summary>[Async] 前台商品總覽：只查上架中商品，支援分類/關鍵字/品牌/價格區間/排序/分頁。
+        /// subCategoryId 優先於 categoryId（直接過濾，不展開）；brandIds 為空陣列時不篩選；price 以 MinPrice 比較。</summary>
+        Task<(IEnumerable<ProductListDto> Items, int TotalCount)> GetFrontActiveProductsAsync(
+            int? categoryId, string? keyword, string sortBy, int page, int pageSize,
+            int? subCategoryId = null, int[]? brandIds = null,
+            decimal? minPrice = null, decimal? maxPrice = null);
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品詳情頁
+        // ═══════════════════════════════════════════════════════════
+
+        /// <summary>[Async] 前台商品詳情：一次撈商品 + Brand + Store + Category(含父層) + ProductImages + ProductVariants(含圖)。</summary>
+        Task<Product?> GetProductDetailAsync(int id);
+
+        /// <summary>[Async] 計算商品評分與評論數（透過 OrderReview → Order → OrderDetail）。</summary>
+        Task<(decimal? Rating, int ReviewCount)> GetProductRatingAsync(int productId);
+
+        /// <summary>[Async] 計算指定商店上架中商品數。</summary>
+        Task<int> GetStoreActiveProductCountAsync(int storeId);
+
+        /// <summary>[Async] 取得同子分類相關商品（排除自身、只取上架中、依銷量排序）。</summary>
+        Task<IEnumerable<ProductListDto>> GetRelatedProductsAsync(int productId, int categoryId, int limit);
     }
 }

@@ -160,5 +160,27 @@ namespace ISpanShop.Services.Products
 
         /// <summary>[Async] 模擬賣家修改後重新送審：將 ReviewStatus=2（已退回）的商品改為 ReviewStatus=3（待重新審核），出現在重新申請審核列表。</summary>
         Task SimulateSellerResubmitAsync(int id);
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品列表
+        // ═══════════════════════════════════════════════════════════
+
+        /// <summary>[Async] 前台商品總覽：只查上架中商品，支援分類/關鍵字/品牌/價格/排序/分頁。pageSize 上限 50。</summary>
+        Task<PagedResult<ProductListDto>> GetFrontActiveProductsAsync(
+            int? categoryId, string? keyword, string sortBy, int page, int pageSize,
+            int? subCategoryId = null, int[]? brandIds = null,
+            decimal? minPrice = null, decimal? maxPrice = null);
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品詳情頁
+        // ═══════════════════════════════════════════════════════════
+
+        /// <summary>[Async] 前台商品詳情：載入所有關聯資料，連同評分統計與商店商品數一併回傳。
+        /// 回傳 null 代表找不到或已下架。</summary>
+        Task<(ISpanShop.Models.EfModels.Product? Product, decimal? Rating, int ReviewCount, int StoreProductCount)>
+            GetProductDetailAsync(int id);
+
+        /// <summary>[Async] 取得同子分類相關商品（排除自身、只取上架中、依銷量排序）。</summary>
+        Task<IEnumerable<ProductListDto>> GetRelatedProductsAsync(int productId, int categoryId, int limit);
     }
 }

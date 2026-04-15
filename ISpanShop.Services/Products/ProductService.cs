@@ -635,5 +635,50 @@ namespace ISpanShop.Services.Products
             var (items, total) = await _productRepository.GetRecentlyApprovedProductsPagedAsync(page, pageSize, hours);
             return PagedResult<ProductReviewDto>.Create(items.ToList(), total, page, pageSize);
         }
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品列表
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductListDto>> GetFrontActiveProductsAsync(
+            int? categoryId, string? keyword, string sortBy, int page, int pageSize,
+            int? subCategoryId = null, int[]? brandIds = null,
+            decimal? minPrice = null, decimal? maxPrice = null)
+        {
+            pageSize = Math.Clamp(pageSize, 1, 50);
+            var (items, total) = await _productRepository.GetFrontActiveProductsAsync(
+                categoryId, keyword, sortBy, page, pageSize,
+                subCategoryId, brandIds, minPrice, maxPrice);
+            return PagedResult<ProductListDto>.Create(items.ToList(), total, page, pageSize);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品詳情頁
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<(ISpanShop.Models.EfModels.Product? Product, decimal? Rating, int ReviewCount, int StoreProductCount)>
+            GetProductDetailAsync(int id)
+        {
+            var product = await _productRepository.GetProductDetailAsync(id);
+
+            // 找不到、已刪除、或非上架狀態 → 回傳 null
+            if (product == null || product.Status != 1)
+                return (null, null, 0, 0);
+
+            var (rating, reviewCount) = await _productRepository.GetProductRatingAsync(id);
+            var storeCount = await _productRepository.GetStoreActiveProductCountAsync(product.StoreId);
+
+            return (product, rating, reviewCount, storeCount);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductListDto>> GetRelatedProductsAsync(
+            int productId, int categoryId, int limit)
+        {
+            limit = Math.Clamp(limit, 1, 50);
+            return await _productRepository.GetRelatedProductsAsync(productId, categoryId, limit);
+        }
     }
 }

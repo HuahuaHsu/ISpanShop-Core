@@ -1,0 +1,24 @@
+/**
+ * Element Plus 主題覆寫 — 主色調 #EE4D2D（類蝦皮橘紅色）
+ *
+ * 變體計算（以 SCSS mix() 公式為基準）：
+ *   light-N = mix(white, #EE4D2D, N*10%)
+ *   dark-2  = mix(black, #EE4D2D, 20%)
+ */
+:root {
+  /* ── 主色 ── */
+  --el-color-primary: #EE4D2D;
+
+  /* ── Light 變體（越大越淺） ── */
+  --el-color-primary-light-3: #F3826C; /* hover 狀態 */
+  --el-color-primary-light-5: #F7A696; /* 中間過渡 */
+  --el-color-primary-light-7: #FACAC0; /* 淡色背景 */
+  --el-color-primary-light-8: #FCDBD5; /* 更淡 */
+  --el-color-primary-light-9: #FDEDEA; /* 最淺（tag 底色等） */
+
+  /* ── Dark 變體（按壓 / active 狀態） ── */
+  --el-color-primary-dark-2: #BE3E24;
+
+  /* ── 讓連結、focus ring 也跟著主色走 ── */
+  --el-color-primary-rgb: 238, 77, 45;
+}

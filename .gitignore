@@ -427,6 +427,7 @@ npm-debug.log
 yarn-error.log
 
 # 2. 環境設定 (防止資料庫連線字串互蓋)
+appsettings.json
 appsettings.Development.json
 
 # 3. 執行期檔案 (忽略 uploads 內容，但透過保留 .gitkeep 來保留資料夾)

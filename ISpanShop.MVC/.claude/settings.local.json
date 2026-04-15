@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(sqlcmd:*)",
+      "Bash(powershell.exe -NoProfile -File \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\diag_scope.ps1\" 2>&1)"
+    ]
+  }
+}

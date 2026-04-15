@@ -12,6 +12,8 @@ using ISpanShop.Repositories.Inventories;
 using ISpanShop.Repositories.ContentModeration;
 using ISpanShop.Repositories.Support;
 using ISpanShop.Repositories.Stores;
+using ISpanShop.Repositories.Promotions;
+using ISpanShop.Repositories.Brands;
 
 // Service namespaces
 using ISpanShop.Services.Admins;
@@ -24,11 +26,17 @@ using ISpanShop.Services.ContentModeration;
 using ISpanShop.Services.Support;
 using ISpanShop.Services.Payments;
 using ISpanShop.Services.Stores;
+using ISpanShop.Services.Promotions;
+using ISpanShop.Services.Brands;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 using ISpanShop.Repositories.Members.Implementations;
+using ISpanShop.Services.Auth;
 using ISpanShop.Services;
 
 namespace ISpanShop.MVC
@@ -41,6 +49,9 @@ namespace ISpanShop.MVC
 
 			// Add services to the container.
 			builder.Services.AddControllersWithViews();
+            
+            // ── 前台身份驗證服務 ──
+            builder.Services.AddScoped<IFrontAuthService, FrontAuthService>();
 
 			//註冊CORS服務
 			builder.Services.AddCors(options =>
@@ -56,9 +67,17 @@ namespace ISpanShop.MVC
 
 			//連線註冊
 			builder.Services.AddDbContext<ISpanShopDBContext>
-				(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-				);
+				(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+				sqlServerOptionsAction: sqlOptions =>
+				{
+					// 遇到連線失敗時，自動重試最多 5 次，最多等 30 秒
+					sqlOptions.EnableRetryOnFailure(
+						maxRetryCount: 5,
+						maxRetryDelay: TimeSpan.FromSeconds(30),
+						errorNumbersToAdd: null);
+				}));
 			builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+			builder.Services.AddScoped<IUserRepository, UserRepository>();
 			builder.Services.AddScoped<IMemberService, MemberService>();
 			builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 			builder.Services.AddScoped<IAdminRoleRepository, AdminRoleRepository>();
@@ -66,7 +85,8 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<ILoginHistoryRepository, LoginHistoryRepository>();
 			builder.Services.AddScoped<ILoginHistoryService, LoginHistoryService>();
 
-			// ── Cookie 身份驗證 ──
+			// ── 身份驗證 (Cookie + JWT) ──
+			var jwtSettings = builder.Configuration.GetSection("Jwt");
 			builder.Services.AddAuthentication("AdminCookieAuth")
 				.AddCookie("AdminCookieAuth", options =>
 				{
@@ -74,6 +94,19 @@ namespace ISpanShop.MVC
 					options.LoginPath = "/Admin/Auth/Login";
 					options.AccessDeniedPath = "/Admin/Auth/AccessDenied";
 					options.ExpireTimeSpan = TimeSpan.FromDays(7);
+				})
+				.AddJwtBearer("FrontendJwt", options =>
+				{
+					options.TokenValidationParameters = new TokenValidationParameters
+					{
+						ValidateIssuer = true,
+						ValidateAudience = true,
+						ValidateLifetime = true,
+						ValidateIssuerSigningKey = true,
+						ValidIssuer = jwtSettings["Issuer"],
+						ValidAudience = jwtSettings["Audience"],
+						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
+					};
 				});
 
 
@@ -148,6 +181,14 @@ namespace ISpanShop.MVC
 			// 註冊商店管理的 Repo 與 Service
 			builder.Services.AddScoped<IStoreRepository, StoreRepository>();
 			builder.Services.AddScoped<IStoreService, StoreService>();
+
+			// 前台活動 API
+			builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
+			builder.Services.AddScoped<PromotionService>();
+
+			// 前台品牌 API
+			builder.Services.AddScoped<IBrandRepository, BrandRepository>();
+			builder.Services.AddScoped<BrandService>();
 			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ISpanShop.Models.DTOs.Products;
 using ISpanShop.Models.DTOs.Common;
 using ISpanShop.Models.EfModels;
@@ -16,14 +17,15 @@ namespace ISpanShop.Repositories.Products
     public class ProductRepository : IProductRepository
     {
         private readonly ISpanShopDBContext _context;
+        private readonly ILogger<ProductRepository> _logger;
 
         /// <summary>
-        /// 建構子 - 注入 DbContext
+        /// 建構子 - 注入 DbContext 和 Logger
         /// </summary>
-        /// <param name="context">ISpanShop 資料庫上下文</param>
-        public ProductRepository(ISpanShopDBContext context)
+        public ProductRepository(ISpanShopDBContext context, ILogger<ProductRepository> logger)
         {
             _context = context;
+            _logger  = logger;
         }
 
         /// <summary>
@@ -962,6 +964,202 @@ namespace ISpanShop.Repositories.Products
                 .AsNoTracking()
                 .Where(p => selectedIds.Contains(p.Id))
                 .Include(p => p.ProductImages)
+                .ToListAsync();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品列表（只查 Status==1 上架中）
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<(IEnumerable<ProductListDto> Items, int TotalCount)> GetFrontActiveProductsAsync(
+            int? categoryId, string? keyword, string sortBy, int page, int pageSize,
+            int? subCategoryId = null, int[]? brandIds = null,
+            decimal? minPrice = null, decimal? maxPrice = null)
+        {
+            var query = _context.Products
+                .AsNoTracking()
+                .Where(p => p.IsDeleted != true && p.Status == 1)
+                .AsQueryable();
+
+            // ── 分類篩選 ───────────────────────────────────────────
+            // subCategoryId 優先（直接篩，不做展開）
+            if (subCategoryId.HasValue)
+            {
+                _logger.LogInformation(
+                    "[FrontProducts] 收到 subCategoryId={SubCategoryId}（直接篩）", subCategoryId.Value);
+                query = query.Where(p => p.CategoryId == subCategoryId.Value);
+            }
+            else if (categoryId.HasValue)
+            {
+                _logger.LogInformation(
+                    "[FrontProducts] 收到 categoryId={CategoryId}", categoryId.Value);
+
+                // SQL-1：一次撈出「該分類本身 + 它的所有直接子分類」
+                var categoryRows = await _context.Categories
+                    .AsNoTracking()
+                    .Where(c => c.Id == categoryId.Value || c.ParentId == categoryId.Value)
+                    .Select(c => new { c.Id, c.ParentId })
+                    .ToListAsync();
+
+                bool isMainCategory = categoryRows.Any(c => c.Id == categoryId.Value && c.ParentId == null);
+                var  subIds         = categoryRows.Where(c => c.ParentId == categoryId.Value)
+                                                  .Select(c => c.Id)
+                                                  .ToList();
+
+                _logger.LogInformation(
+                    "[FrontProducts] categoryId={CategoryId} → {Type}，subIds=[{SubIds}]",
+                    categoryId.Value,
+                    isMainCategory ? "主分類" : "子分類",
+                    string.Join(", ", subIds));
+
+                if (isMainCategory && subIds.Count > 0)
+                    query = query.Where(p => subIds.Contains(p.CategoryId));
+                else
+                    query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            // ── 品牌篩選 ───────────────────────────────────────────
+            if (brandIds != null && brandIds.Length > 0)
+                query = query.Where(p => p.BrandId != null && brandIds.Contains(p.BrandId!.Value));
+
+            // ── 價格區間（以 MinPrice 比較）────────────────────────
+            if (minPrice.HasValue)
+                query = query.Where(p => p.MinPrice >= minPrice.Value);
+            if (maxPrice.HasValue)
+                query = query.Where(p => p.MinPrice <= maxPrice.Value);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim().ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(kw));
+            }
+
+            query = sortBy switch
+            {
+                "priceAsc"  => query.OrderBy(p => p.MinPrice),
+                "priceDesc" => query.OrderByDescending(p => p.MinPrice),
+                "soldCount" => query.OrderByDescending(p => p.TotalSales ?? 0),
+                _           => query.OrderByDescending(p => p.CreatedAt)
+            };
+
+            // SQL-2：COUNT
+            int totalCount = await query.CountAsync();
+
+            _logger.LogInformation(
+                "[FrontProducts] categoryId={CategoryId} 最終 total={Total}",
+                categoryId, totalCount);
+
+            // SQL-3：分頁取資料
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new ProductListDto
+                {
+                    Id           = p.Id,
+                    CategoryId   = p.CategoryId,
+                    TotalSales   = p.TotalSales,
+                    Name         = p.Name,
+                    CategoryName = p.Category != null ? p.Category.Name : "未分類",
+                    StoreName    = p.Store != null ? p.Store.StoreName : string.Empty,
+                    MinPrice     = p.MinPrice,
+                    MaxPrice     = p.MaxPrice,
+                    Status       = p.Status,
+                    CreatedAt    = p.CreatedAt,
+                    ReviewStatus = p.ReviewStatus,
+                    ReviewedBy   = p.ReviewedBy,
+                    ReviewDate   = p.ReviewDate,
+                    RejectReason = p.RejectReason,
+                    MainImageUrl =
+                        p.ProductImages.Where(img => img.IsMain == true)
+                                       .Select(img => img.ImageUrl).FirstOrDefault()
+                        ?? p.ProductImages.Select(img => img.ImageUrl).FirstOrDefault()
+                        ?? string.Empty
+                })
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品詳情頁
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<Product?> GetProductDetailAsync(int id)
+        {
+            return await _context.Products
+                .AsNoTracking()
+                .Include(p => p.Brand)
+                .Include(p => p.Store)
+                .Include(p => p.Category)
+                    .ThenInclude(c => c.Parent)
+                        .ThenInclude(c2 => c2!.Parent)
+                .Include(p => p.ProductImages.OrderBy(img => img.SortOrder))
+                .Include(p => p.ProductVariants.Where(v => v.IsDeleted != true))
+                    .ThenInclude(v => v.ProductImages)
+                .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted != true);
+        }
+
+        /// <inheritdoc/>
+        public async Task<(decimal? Rating, int ReviewCount)> GetProductRatingAsync(int productId)
+        {
+            // OrderReview → Order → OrderDetail → ProductId
+            var ratings = await _context.OrderReviews
+                .AsNoTracking()
+                .Where(r => r.IsHidden != true
+                         && r.Order.OrderDetails.Any(d => d.ProductId == productId))
+                .Select(r => (decimal)r.Rating)
+                .ToListAsync();
+
+            if (!ratings.Any())
+                return (null, 0);
+
+            return (Math.Round((decimal)ratings.Average(), 1), ratings.Count);
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetStoreActiveProductCountAsync(int storeId)
+        {
+            return await _context.Products
+                .AsNoTracking()
+                .CountAsync(p => p.StoreId == storeId && p.Status == 1 && p.IsDeleted != true);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductListDto>> GetRelatedProductsAsync(
+            int productId, int categoryId, int limit)
+        {
+            return await _context.Products
+                .AsNoTracking()
+                .Where(p => p.IsDeleted != true
+                         && p.Status == 1
+                         && p.Id != productId
+                         && p.CategoryId == categoryId)
+                .OrderByDescending(p => p.TotalSales ?? 0)
+                .Take(limit)
+                .Select(p => new ProductListDto
+                {
+                    Id           = p.Id,
+                    CategoryId   = p.CategoryId,
+                    TotalSales   = p.TotalSales,
+                    Name         = p.Name,
+                    CategoryName = p.Category != null ? p.Category.Name : string.Empty,
+                    StoreName    = p.Store    != null ? p.Store.StoreName : string.Empty,
+                    MinPrice     = p.MinPrice,
+                    MaxPrice     = p.MaxPrice,
+                    Status       = p.Status,
+                    CreatedAt    = p.CreatedAt,
+                    ReviewStatus = p.ReviewStatus,
+                    ReviewedBy   = p.ReviewedBy,
+                    ReviewDate   = p.ReviewDate,
+                    RejectReason = p.RejectReason,
+                    MainImageUrl =
+                        p.ProductImages.Where(img => img.IsMain == true)
+                                       .Select(img => img.ImageUrl).FirstOrDefault()
+                        ?? p.ProductImages.Select(img => img.ImageUrl).FirstOrDefault()
+                        ?? string.Empty
+                })
                 .ToListAsync();
         }
     }

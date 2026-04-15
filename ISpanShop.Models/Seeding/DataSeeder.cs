@@ -285,43 +285,23 @@ namespace ISpanShop.Models.Seeding
 
 		private static Store EnsureStoreExists(ISpanShopDBContext context)
 		{
+			// ★ 防撞車修改：不再自動產生 Role, User, Store，而是檢查雲端有沒有你匯入的資料
 			var store = context.Stores.FirstOrDefault();
-			if (store != null) return store;
+			if (store == null)
+			{
+				throw new Exception("❌ 資料庫中找不到任何 Store。請先使用 SSMS 將本機的 Roles, Users, Stores 資料匯入 Azure，再執行播種。");
+			}
 
 			var role = context.Roles.FirstOrDefault();
 			if (role == null)
 			{
-				role = new Role { RoleName = "Seller", Description = "賣家角色" };
-				context.Roles.Add(role);
-				context.SaveChanges();
+				throw new Exception("❌ 資料庫中找不到任何 Role。請先匯入本機資料。");
 			}
 
-			var user = new User
-			{
-				RoleId = role.Id,
-				Account = "dataseed_seller",
-				Password = "hashed_password_placeholder",
-				Email = "dataseed@example.com",
-				IsConfirmed = true,
-				IsBlacklisted = false,
-				CreatedAt = DateTime.Now,
-				UpdatedAt = DateTime.Now
-			};
-			context.Users.Add(user);
-			context.SaveChanges();
-
-			store = new Store
-			{
-				UserId = user.Id,
-				StoreName = "原廠直營",
-				Description = "精選商品，品質保證",
-				IsVerified = true,
-				CreatedAt = DateTime.Now
-			};
-			context.Stores.Add(store);
-			context.SaveChanges();
+			// 只要找得到你匯入的 Store，就直接回傳給主程式繼續播種
 			return store;
 		}
+		
 
 		/// <summary>
 		/// 批次建立分類階層 (優化：先收集所有新分類，最後統一存檔)
@@ -451,38 +431,15 @@ namespace ISpanShop.Models.Seeding
 			Console.WriteLine($"✅ 審核資料補充：已修補 {products.Count} 筆商品的審核人 / 審核時間。");
 		}
 
-		/// <summary>
-		/// 確保資料庫中有預設管理員帳號（admin / Admin@1234）
-		/// </summary>
 		public static async Task EnsureAdminUserAsync(ISpanShopDBContext context)
 		{
-			var adminRole = context.Roles.FirstOrDefault(r => r.RoleName == "Admin");
-			if (adminRole == null)
-			{
-				adminRole = new Role { RoleName = "Admin", Description = "後台管理員" };
-				context.Roles.Add(adminRole);
-				await context.SaveChangesAsync();
-				Console.WriteLine("✅ 已建立 Admin 角色");
-			}
-
+			// ★ 防撞車修改：不再自動產生 Admin 角色和帳號
 			var adminUser = context.Users.FirstOrDefault(u => u.Account == "admin");
 			if (adminUser == null)
 			{
-				adminUser = new User
-				{
-					RoleId = adminRole.Id,
-					Account = "admin",
-					Password = "Test123456",
-					Email = "admin@ispanshop.com",
-					IsConfirmed = true,
-					IsBlacklisted = false,
-					CreatedAt = DateTime.Now,
-					UpdatedAt = DateTime.Now
-				};
-				context.Users.Add(adminUser);
-				await context.SaveChangesAsync();
-				Console.WriteLine("✅ 已建立預設管理員帳號：admin / Admin@1234");
+				Console.WriteLine("ℹ️  注意：資料庫中找不到預設的 admin 帳號。這沒關係，只要你後續有匯入本機的 User 資料即可。");
 			}
+			await Task.CompletedTask;
 		}
 
 		/// <summary>
