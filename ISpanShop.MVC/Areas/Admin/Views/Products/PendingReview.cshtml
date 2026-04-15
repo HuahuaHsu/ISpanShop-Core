@@ -1,42 +1,114 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_SneatLayout.cshtml";
 }
 @model ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>
 
+@using System.Text.Json
 @{
     ViewData["Title"] = "商品審核中心";
     var rejectedPaged = ViewBag.RejectedRecords as ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>;
-    var rejectedList  = rejectedPaged?.Data;
-    int rejectedPage  = ViewBag.RejectedPage ?? 1;
+    var reApplyPaged  = ViewBag.ReApplyRecords  as ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>;
+    var approvedPaged = ViewBag.ApprovedRecords as ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>;
+
+    // 序列化全量資料供前端 JS 資料陣列使用
+    var pendingJson = JsonSerializer.Serialize(
+        (Model?.Data ?? new List<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>())
+        .Select(p => new {
+            id       = p.Id,
+            name     = p.Name,
+            store    = p.StoreName ?? "N/A",
+            img      = p.MainImageUrl ?? "",
+            category = p.CategoryName ?? "",
+            brand    = p.BrandName ?? "",
+            created  = p.CreatedAt?.ToString("yyyy/MM/dd") ?? "-"
+        }));
+    var reApplyJson = JsonSerializer.Serialize(
+        (reApplyPaged?.Data ?? new List<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>())
+        .Select(p => new {
+            id     = p.Id,
+            name   = p.Name,
+            store  = p.StoreName ?? "",
+            img    = p.MainImageUrl ?? "",
+            reason = p.ForceOffShelfReason ?? p.RejectReason ?? ""
+        }));
+    var rejectedJson = JsonSerializer.Serialize(
+        (rejectedPaged?.Data ?? new List<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>())
+        .Select(p => new {
+            id         = p.Id,
+            name       = p.Name,
+            store      = p.StoreName ?? "",
+            img        = p.MainImageUrl ?? "",
+            reason     = p.RejectReason ?? p.ForceOffShelfReason ?? "",
+            rejectedAt = new DateTimeOffset(p.UpdatedAt?.ToUniversalTime() ?? DateTime.UtcNow).ToUnixTimeMilliseconds()
+        }));
+    var approvedJson = JsonSerializer.Serialize(
+        (approvedPaged?.Data ?? new List<ISpanShop.MVC.Areas.Admin.Models.Products.ProductReviewListVm>())
+        .Select(p => new {
+            id         = p.Id,
+            name       = p.Name,
+            store      = p.StoreName ?? "",
+            img        = p.MainImageUrl ?? "",
+            reviewDate = p.ReviewDate?.ToString("yyyy-MM-dd HH:mm") ?? ""
+        }));
 }
 
-<div class="container-fluid py-4 font-noto">
-
+<div class="page-fluid-root container-fluid font-noto">
+<div class="page-above-content">
     <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
             <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">商品審核中心</h2>
             <p class="mb-0 fs-7" style="color:#4a5a6a;">
-                待審核商品共 <span class="fw-bold text-warning" id="pendingCount">@(Model?.TotalCount ?? 0)</span> 筆
+                待審核商品共 <span class="fw-bold text-warning" id="pendingCount">0</span> 筆
             </p>
         </div>
-        <div class="d-flex justify-content-end gap-2 mb-3">
-            <button id="btnSimulateAutoReview" class="btn btn-warning rounded-pill px-4">
-                <i class="fas fa-robot me-1"></i> 模擬自動審核
+        <div class="d-flex justify-content-end align-items-center gap-2 mb-3 flex-wrap">
+            <span id="pending-batch-tag" class="batch-tag d-none">
+                <i class="bx bx-checkbox-checked"></i>
+                已選取 <span id="pending-selected-count">0</span> 項
+                <button id="btn-clear-pending" type="button" class="batch-tag-close" aria-label="清除選取">×</button>
+            </span>
+            @* 主要業務按鈕 *@
+            <button id="btnBatchApprove" class="btn btn-success rounded-pill px-4" disabled>
+                <i class="bx bx-check-circle me-1"></i> 批次審核通過
             </button>
-            <a href="@Url.Action("Index")" class="btn btn-back rounded-pill px-4">
+            <button id="btnBatchReject" class="btn btn-danger rounded-pill px-4" disabled>
+                <i class="bx bx-x-circle me-1"></i> 批次審核退回
+            </button>
+            <button id="btnBatchSimulate" class="btn btn-warning rounded-pill px-4 d-none" disabled onclick="batchSimulateResubmit()">
+                <i class="bx bx-repost me-1"></i> 批次模擬賣家送審
+            </button>
+            @* 退回紀錄批次操作 *@
+            <span id="rejected-batch-tag" class="batch-tag d-none">
+                <i class="bx bx-checkbox-checked"></i>
+                已選取 <span id="rejected-selected-count">0</span> 筆
+                <button id="btn-clear-rejected" type="button" class="batch-tag-close" aria-label="清除選取">×</button>
+            </span>
+            <button id="btnBatchRejectedSimulate" class="btn btn-warning rounded-pill px-4 d-none" disabled>
+                <i class="bx bx-store-alt me-1"></i> 批次模擬賣家送審
+            </button>
+            @* 測試展示工具：收納至 Dropdown *@
+            <div class="dropdown ms-2">
+                <button class="btn btn-outline-secondary rounded-pill px-3 dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    🛠️ 展示/測試工具
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li>
+                        <button type="button" class="dropdown-item" id="btnGenerateTestProducts">
+                            <i class="bx bx-data me-2 text-secondary"></i>生成測試商品
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item" id="btnSimulateAutoReview">
+                            <i class="bx bx-bot me-2 text-secondary"></i>模擬自動審核
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            @* 導覽按鈕：次要樣式 *@
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-4">
                 <i class="bx bx-arrow-back me-1"></i> 回商品總覽
             </a>
-        @*
-            手動清理按鈕已由前端 JS 自動觸發取代，暫時隱藏
-            <form asp-action="ForceCleanupExpiredProducts" method="post"
-                  onsubmit="return confirm('確認執行：將所有審核退回商品立即標記為已刪除（Demo 用）？');">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="expirationSeconds" value="60" />
-                <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">
-                    <i class="bx bx-trash me-1"></i> 手動清理過期退回商品
-                </button>
-            </form>
-        *@
         </div>
     </div>
 
@@ -48,8 +120,18 @@
                     type="button" role="tab">
                 <i class="bx bx-hourglass me-1 text-warning"></i>
                 待審核
-                <span class="badge rounded-pill ms-1"
-                      style="background:#fef3c7;color:#92400e;font-size:0.78rem;">@(Model?.TotalCount ?? 0)</span>
+                <span class="badge rounded-pill ms-1" id="pending-count-badge"
+                      style="background:#fef3c7;color:#92400e;font-size:0.78rem;">0</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link px-4 py-2 fw-semibold" id="reapply-tab"
+                    data-bs-toggle="tab" data-bs-target="#reApplyPanel"
+                    type="button" role="tab">
+                <i class="bx bx-revision me-1" style="color:#dc2626;"></i>
+                重新申請審核
+                <span class="badge rounded-pill ms-1" id="reapply-count-badge"
+                      style="background:#fde8e8;color:#dc2626;font-size:0.78rem;">0</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -59,593 +141,1071 @@
                 <i class="bx bx-x-circle me-1 text-danger"></i>
                 近期退回紀錄
                 <span class="badge rounded-pill ms-1" id="rejected-count-badge"
-                      style="background:#fee2e2;color:#991b1b;font-size:0.78rem;">@(rejectedPaged?.TotalCount ?? 0)</span>
+                      style="background:#fee2e2;color:#991b1b;font-size:0.78rem;">0</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link px-4 py-2 fw-semibold" id="approved-tab"
+                    data-bs-toggle="tab" data-bs-target="#approvedPanel"
+                    type="button" role="tab">
+                <i class="bx bx-check-circle me-1 text-success"></i>
+                近期審核通過
+                <span class="badge rounded-pill ms-1" id="approved-count-badge"
+                      style="background:#d1fae5;color:#065f46;font-size:0.78rem;">0</span>
             </button>
         </li>
     </ul>
 
-    <div class="tab-content" id="reviewTabsContent">
+</div><!-- /page-above-content -->
 
-        <div class="tab-pane fade show active" id="pendingPanel" role="tabpanel">
-            <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
-                @if (Model != null && Model.Data != null && Model.Data.Any())
-                {
-                    <div class="table-responsive">
-                        <table class="table table-custom align-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width:60px;">圖片</th>
-                                    <th>商品名稱</th>
-                                    <th>審核狀態</th>
-                                    <th>商店</th>
-                                    <th>分類 / 品牌</th>
-                                    <th style="min-width:260px;">商品描述摘要</th>
-                                    <th>建檔日期</th>
-                                    <th class="text-end" style="min-width:200px;">審核操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var product in Model.Data)
-                                {
-                                    <tr data-id="@product.Id">
-                                        <td>
-                                            @if (!string.IsNullOrEmpty(product.MainImageUrl))
-                                            {
-                                                <img src="@product.MainImageUrl" alt="@product.Name" loading="lazy"
-                                                     style="width:44px;height:44px;object-fit:cover;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);" />
-                                            }
-                                            else
-                                            {
-                                                <div style="width:44px;height:44px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🖼️</div>
-                                            }
-                                        </td>
-                                        <td>
-                                            <div class="fw-bold" style="color:#1e2d3d;">@product.Name</div>
-                                        </td>
-                                        <td>
-                                            @{
-                                                var (badgeClass, badgeText) = product.ReviewStatus switch
-                                                {
-                                                    1 => ("bg-success", "✅ 已通過"),
-                                                    2 => ("bg-danger",  "❌ 已退回"),
-                                                    _ => ("bg-warning text-dark", "⏳ 待審核")
-                                                };
-                                            }
-                                            <span class="badge @badgeClass">@badgeText</span>
-                                        </td>
-                                        <td class="fs-7" style="color:#5a6a7a;">@(product.StoreName ?? $"Store #{product.StoreId}")</td>
-                                        <td>
-                                            <span class="badge-soft bg-primary-soft text-primary me-1">@product.CategoryName</span>
-                                            <span class="badge-soft bg-info-soft text-info">@product.BrandName</span>
-                                        </td>
-                                        <td>
-                                            <span class="fs-7" style="color:#4a5a6a;">
-                                                @if (!string.IsNullOrWhiteSpace(product.Description))
-                                                {
-                                                    @(product.Description.Length > 60
-                                                                                            ? product.Description.Substring(0, 60) + "…"
-                                                                                            : product.Description)
-                                                                                }
-                                                else
-                                                {
-                                                    <span class="text-danger fw-bold">（無描述）</span>
-                                                }
-                                            </span>
-                                        </td>
-                                        <td class="fs-7" style="color:#4a5a6a;">@(product.CreatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
-                                        <td class="text-end">
-                                            <a href="@Url.Action("Details", "Products", new { area = "Admin", id = product.Id, returnUrl = Url.Action("PendingReview", "Products") })"
-                                               class="btn btn-sm btn-outline-secondary rounded-pill px-2 me-1" title="查看商品詳情">
-                                                <i class="bx bx-show"></i>
-                                            </a>
-                                            <button class="btn btn-sm btn-approve rounded-pill px-3 me-1"
-                                                    data-id="@product.Id" data-name="@product.Name">
-                                                <i class="bx bx-check-circle me-1"></i>核准上架
-                                            </button>
-                                            <button class="btn btn-sm btn-reject rounded-pill px-3"
-                                                    data-id="@product.Id" data-name="@product.Name">
-                                                <i class="bx bx-x-circle me-1"></i>退回
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-5">
-                        <div class="mb-3" style="color:#1abb9c;font-size:2.5rem;"><i class="bx bx-check-circle"></i></div>
-                        <h5 class="fw-bold mb-1" style="color:#1e2d3d;">目前沒有待審核的商品</h5>
-                        <p class="fs-7 mb-0" style="color:#718096;">所有商品均已完成審核，稍後再來查看。</p>
-                    </div>
-                }
+<div id="reviewLayout" class="split-layout d-flex w-100">
+    <div id="reviewListCol" class="split-list-col w-1/2 flex-grow-1" style="overflow-x: auto;">
 
-                @* ── 待審核分頁 ── *@
-                @if (Model != null)
-                {
-                    @await Html.PartialAsync("_Pagination", new ISpanShop.MVC.Areas.Admin.Models.Common.PaginationVm
-                    {
-                        CurrentPage = Model.CurrentPage,
-                        TotalPages  = Model.TotalPages,
-                        UrlForPage  = p => Url.Action("PendingReview", new { pendingPage = p, rejectedPage })!
-                    })
-                }
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="rejectedPanel" role="tabpanel">
-            <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
-                @if (rejectedList != null && rejectedList.Any())
-                {
-                    <div class="table-responsive">
-                        <table class="table table-custom align-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width:70px;">圖片</th>
-                                    <th>商品名稱</th>
-                                    <th>商家</th>
-                                    <th>退回原因</th>
-                                    <th>自動刪除倒數</th>
-                                    <th>審核人</th>
-                                    <th>審核時間</th>
-                                    <th class="text-end">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in rejectedList)
-                                {
-                                    <tr>
-                                        <td>
-                                            @if (!string.IsNullOrEmpty(item.MainImageUrl))
-                                            {
-                                                <img src="@item.MainImageUrl" alt="@item.Name" loading="lazy"
-                                                     style="width:54px;height:54px;object-fit:cover;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);" />
-                                            }
-                                            else
-                                            {
-                                                <div style="width:54px;height:54px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🖼️</div>
-                                            }
-                                        </td>
-                                        <td class="fw-semibold" style="color:#1e2d3d;">@item.Name</td>
-                                        <td class="fs-7" style="color:#5a6a7a;">@item.StoreName</td>
-                                        <td>
-                                            @if (!string.IsNullOrWhiteSpace(item.RejectReason))
-                                            {
-                                                <span style="background:#fff0f0;color:#c53030;border-radius:6px;font-size:0.82rem;font-weight:500;padding:0.3em 0.7em;display:inline-block;">
-                                                    @item.RejectReason
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="fs-7" style="color:#a0aec0;">（未填寫）</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (item.ReviewDate.HasValue)
-                                            {
-                                                var expireTime = item.ReviewDate.Value.AddSeconds(60).ToString("yyyy-MM-ddTHH:mm:ss");
-                                                <span class="live-countdown badge bg-warning text-dark"
-                                                      data-expire="@expireTime">
-                                                    ⏳ 計算中...
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="fs-7" style="color:#a0aec0;">—</span>
-                                            }
-                                        </td>
-                                        <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewedBy ?? "—")</td>
-                                        <td class="fs-7" style="color:#4a5a6a;">@(item.ReviewDate?.ToString("yyyy-MM-dd HH:mm") ?? item.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
-                                        <td class="text-end">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-primary rounded-pill px-3"
-                                                    onclick="undoReject(@item.Id, '@item.Name.Replace("'", "\\'")') ">
-                                                <i class="bx bx-revision me-1"></i>重新審核
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-5">
-                        <div class="mb-2" style="font-size:2rem;">📭</div>
-                        <p class="mb-0" style="color:#a0aec0;">近期無退回紀錄</p>
-                    </div>
-                }
-
-                @* ── 退回紀錄分頁 ── *@
-                @if (rejectedPaged != null)
-                {
-                    @await Html.PartialAsync("_Pagination", new ISpanShop.MVC.Areas.Admin.Models.Common.PaginationVm
-                    {
-                        CurrentPage = rejectedPaged.CurrentPage,
-                        TotalPages  = rejectedPaged.TotalPages,
-                        UrlForPage  = p => Url.Action("PendingReview", new { pendingPage = Model?.CurrentPage ?? 1, rejectedPage = p }) + "#rejectedTab"
-                    })
-                }
-            </div>
-        </div>
-
+    <div class="back-to-list-btn">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                onclick="closeProductDetailPanel()" title="返回完整列表">
+            <i class="bx bx-arrow-back me-1"></i>返回完整列表
+        </button>
     </div>
 
+    <div class="tab-content" id="reviewTabsContent">
+        <div class="tab-pane fade show active" id="pendingPanel" role="tabpanel">
+            <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
+                <table id="pendingTable" class="table table-custom align-middle d-none">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
+                            <th style="width:60px;" class="col-img">圖片</th>
+                            <th style="max-width:280px;">商品名稱</th>
+                            <th>審核狀態</th>
+                            <th class="col-store">商店</th>
+                            <th class="col-catbrand">分類 / 品牌</th>
+                            <th class="col-date">建檔日期</th>
+                            <th class="text-end col-rowact text-nowrap" style="min-width:200px;">審核操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-state-box" id="pendingEmpty">
+                    <div class="empty-state-icon"><i class="bx bx-check-circle" style="color:#1abb9c;"></i></div>
+                    <div class="empty-state-title">目前沒有待審核的商品</div>
+                    <div class="empty-state-sub">所有商品均已完成審核</div>
+                </div>
+                <div id="pendingPaginationWrapper"></div>
+            </div>
+        </div>
+
+        @* ── 重新申請審核 Tab Panel ── *@
+        <div class="tab-pane fade" id="reApplyPanel" role="tabpanel">
+            <div class="filter-card rounded-top-0" style="border-top-left-radius:0!important;border-top-right-radius:0!important;">
+                <table id="reApplyTable" class="table table-custom align-middle d-none">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="selectAllReApply" class="form-check-input selectAllReApply"></th>
+                            <th style="width:60px;" class="col-img">圖片</th>
+                            <th>商品名稱</th>
+                            <th class="col-store">商店</th>
+                            <th class="col-reapply-reason">原始下架原因</th>
+                            <th class="text-end">審核操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-state-box" id="reApplyEmpty">
+                    <div class="empty-state-icon"><i class="bx bx-revision" style="color:#dc2626;"></i></div>
+                    <div class="empty-state-title">目前沒有待重新審核的商品</div>
+                    <div class="empty-state-sub">無商品重新申請審核</div>
+                </div>
+                <div id="reApplyPaginationWrapper"></div>
+            </div>
+        </div>
+
+        @* ── 近期退回紀錄 ── *@
+        <div class="tab-pane fade" id="rejectedPanel" role="tabpanel">
+            <div class="filter-card rounded-top-0">
+                <table id="rejectedTable" class="table table-custom align-middle d-none">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="selectAllRejected" class="form-check-input selectAllRejected"></th>
+                            <th style="width:70px;" class="col-img">圖片</th>
+                            <th>商品名稱</th>
+                            <th class="col-store">商家</th>
+                            <th class="col-rej-reason reject-reason-col">退回原因</th>
+                            <th class="text-center">銷毀倒數</th>
+                            <th class="text-end">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-state-box" id="rejectedEmpty">
+                    <div class="empty-state-icon"><i class="bx bx-x-circle" style="color:#ef4444;"></i></div>
+                    <div class="empty-state-title">目前無近期退回紀錄</div>
+                    <div class="empty-state-sub">退回商品將在此顯示並自動倒數清除</div>
+                </div>
+                <div id="rejectedPaginationWrapper"></div>
+            </div>
+        </div>
+
+        @* ── 近期審核通過 ── *@
+        <div class="tab-pane fade" id="approvedPanel" role="tabpanel">
+            <div class="filter-card rounded-top-0">
+                <table id="approvedTable" class="table table-custom align-middle d-none">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;" class="col-img">圖片</th>
+                            <th>商品名稱</th>
+                            <th class="col-store">商店</th>
+                            <th>通過時間</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-state-box" id="approvedEmpty">
+                    <div class="empty-state-icon"><i class="bx bx-check-circle" style="color:#10b981;"></i></div>
+                    <div class="empty-state-title">過去 24 小時內無審核通過記錄</div>
+                    <div class="empty-state-sub">核准的商品將在此顯示</div>
+                </div>
+                <div id="approvedPaginationWrapper"></div>
+            </div>
+        </div>
+    </div>
+    </div><!-- /reviewListCol -->
+
+    <div id="productDetailPanel" class="split-detail-panel w-1/2" style="max-width: none;">
+        <div class="split-detail-panel-inner">
+            <div class="side-panel-header">
+                <div class="side-panel-title" id="productDetailPanelLabel">商品詳情</div>
+                <button type="button" class="side-panel-close" onclick="closeProductDetailPanel()"><i class="bx bx-x"></i></button>
+            </div>
+            <div class="panel-body" id="productDetailPanelBody">
+                <div class="text-center py-5 text-muted"><i class="bx bx-loader-alt bx-spin fs-1 d-block mb-2"></i>載入中…</div>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 
 <style>
-    @@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+    .split-layout.panel-open .col-img, .split-layout.panel-open .col-store, 
+    .split-layout.panel-open .col-catbrand, .split-layout.panel-open .col-date, 
+    .split-layout.panel-open .col-rowact { display: none; }
+    .split-detail-panel.open { flex: 0 0 50%; width: 50%; display: block; border-left: 1px solid #e2e8f0; }
+    .split-layout.panel-open .split-list-col { flex: 0 0 50%; width: 50%; }
+    .table-custom tr { cursor: pointer; }
+    .table-custom tr.row-active td { background: #ebf8ff !important; }
+    
+    /* 審核中心專屬美化 */
+    .table-custom { font-size: 0.875rem; } /* text-sm */
+    .product-name-text { font-weight: 600; color: #2d3748; }
+    .text-xs { font-size: 0.75rem; }
+    .btn-approve-soft { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 0.25rem 0.75rem; border-radius: 0.375rem; transition: all 0.2s; }
+    .btn-approve-soft:hover { background-color: #dcfce7; }
+    .btn-reject-soft { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 0.25rem 0.75rem; border-radius: 0.375rem; transition: all 0.2s; }
+    .btn-reject-soft:hover { background-color: #fee2e2; }
 
-    body {
-        background-color: #f4f6f8;
+    /* ── 批次選取 Tag（輕量樣式，有勾選才顯示） ── */
+    .batch-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: transparent;
+        color: #374151;
+        border: 1.5px solid #d1d5db;
+        border-radius: 20px;
+        padding: 0.3rem 0.75rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        white-space: nowrap;
     }
-
-    .font-noto {
-        font-family: 'Noto Sans TC', sans-serif;
-    }
-
-    .tracking-tight {
-        letter-spacing: -0.5px;
-    }
-
-    .fs-7 {
-        font-size: 0.9rem;
-    }
-
-    /* 回商品總覽按鈕 - 明顯青綠色 */
-    .btn-back {
-        background-color: #1abb9c;
-        color: #ffffff;
+    .batch-tag-close {
+        background: none;
         border: none;
-        font-weight: 600;
-        transition: all 0.2s;
-        box-shadow: 0 3px 10px rgba(26,187,156,0.3);
+        color: #6b7280;
+        font-size: 1.1rem;
+        line-height: 1;
+        padding: 0 2px;
+        cursor: pointer;
+        opacity: 0.75;
     }
+    .batch-tag-close:hover { opacity: 1; color: #374151; }
 
-        .btn-back:hover {
-            background-color: #0e8a72;
-            color: #ffffff;
-            box-shadow: 0 5px 16px rgba(14,138,114,0.4);
-            transform: translateY(-1px);
-        }
-
-    /* Tabs */
-    #reviewTabs .nav-link {
-        color: #718096;
-        border: 1px solid transparent;
-        border-bottom: none;
-        border-radius: 12px 12px 0 0;
-        background: rgba(255,255,255,0.5);
-        transition: all 0.2s;
+    /* ── 倒數計時 Widget ── */
+    .countdown-widget {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 68px;
+        gap: 3px;
     }
-
-        #reviewTabs .nav-link:hover {
-            color: #2d3748;
-            background: rgba(255,255,255,0.8);
-        }
-
-        #reviewTabs .nav-link.active {
-            color: #2d3748;
-            background: #fff;
-            border-color: rgba(226,232,240,0.8);
-            border-bottom-color: #fff;
-        }
-
-    /* 卡片 */
-    .filter-card {
-        background: #ffffff;
-        border-radius: 0 20px 20px 20px;
-        padding: 2rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-        border: 1px solid rgba(226,232,240,0.8);
+    .countdown-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #fff7ed;
+        border: 1.5px solid #fed7aa;
+        color: #c2410c;
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        line-height: 1.2;
+        transition: background 0.4s, border-color 0.4s, color 0.4s;
+        white-space: nowrap;
     }
-
-    /* 表格 */
-    .table-custom {
-        border-collapse: separate;
-        border-spacing: 0 10px;
+    .countdown-display.urgent {
+        background: #fff1f2;
+        border-color: #fca5a5;
+        color: #b91c1c;
+        animation: pulse-countdown 0.7s ease-in-out infinite;
     }
-
-        .table-custom th {
-            border: none;
-            color: #3d5166;
-            font-weight: 700;
-            letter-spacing: 1px;
-            font-size: 0.85rem;
-            padding: 0.4rem 1.2rem;
-            background: transparent;
-            text-transform: uppercase;
-        }
-
-        .table-custom td {
-            background: #fff;
-            border: none;
-            padding: 1rem 1.2rem;
-            font-size: 0.95rem;
-        }
-
-            .table-custom td:first-child {
-                border-top-left-radius: 12px;
-                border-bottom-left-radius: 12px;
-            }
-
-            .table-custom td:last-child {
-                border-top-right-radius: 12px;
-                border-bottom-right-radius: 12px;
-            }
-
-        .table-custom tbody tr {
-            box-shadow: 0 3px 12px rgba(0,0,0,0.03);
-            transition: all 0.25s ease;
-        }
-
-            .table-custom tbody tr:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 22px rgba(0,0,0,0.07);
-            }
-
-    .badge-soft {
-        padding: 0.35em 0.75em;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 600;
+    .countdown-icon { font-size: 0.85rem; }
+    .countdown-unit { font-size: 0.72rem; font-weight: 600; opacity: 0.85; }
+    .countdown-track {
+        width: 100%;
+        height: 3px;
+        background: #f3f4f6;
+        border-radius: 99px;
+        overflow: hidden;
     }
-
-    .bg-primary-soft {
-        background-color: #ebf8ff;
+    .countdown-fill {
+        height: 100%;
+        width: 100%;
+        background: #f97316;
+        border-radius: 99px;
+        transition: width 1s linear, background 0.4s;
     }
-
-    .text-primary {
-        color: #3182ce !important;
+    .countdown-fill.critical { background: #ef4444; }
+    .countdown-label {
+        font-size: 0.63rem;
+        color: #9ca3af;
+        letter-spacing: 0.03em;
     }
-
-    .bg-info-soft {
-        background-color: #e6fffa;
+    @@keyframes pulse-countdown {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.06); }
     }
-
-    .text-info {
-        color: #319795 !important;
+    /* 退回原因快捷標籤 */
+    .rj-chip {
+        display: inline-flex; align-items: center;
+        border: 1px solid #fca5a5; color: #dc2626;
+        background: #fff; border-radius: 20px;
+        padding: 3px 12px; font-size: .82rem; cursor: pointer;
+        transition: background .15s, color .15s;
     }
-
-    /* 審核按鈕 */
-    .btn-approve {
-        background-color: #c6f6d5;
-        color: #276749;
-        border: none;
-        font-weight: 600;
-        transition: all 0.2s;
+    .rj-chip:hover { background: #fef2f2; border-color: #dc2626; }
+    /* 統一空白提示樣式 */
+    .empty-state-box {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; padding: 3.5rem 1rem; text-align: center;
     }
-
-        .btn-approve:hover {
-            background-color: #1abb9c;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(26,187,156,0.35);
-        }
-
-    .btn-reject {
-        background-color: #fed7d7;
-        color: #9b2c2c;
-        border: none;
-        font-weight: 600;
-        transition: all 0.2s;
-    }
-
-        .btn-reject:hover {
-            background-color: #e53e3e;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(229,62,62,0.3);
-        }
+    .empty-state-icon { font-size: 2.8rem; margin-bottom: 0.75rem; color: #9ca3af; }
+    .empty-state-title { font-weight: 700; font-size: 1rem; color: #1e2d3d; margin-bottom: 0.25rem; }
+    .empty-state-sub { font-size: 0.82rem; color: #9ca3af; }
 </style>
+
+@* ── 單筆退回原因 Modal ── *@
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger" id="rejectModalLabel">
+                    <i class="bx bx-x-circle me-2"></i>退回審核
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="p-3 mb-3 rounded-3" style="background:#fef2f2;border:1px solid #fca5a5;">
+                    <i class="bx bx-error-circle me-1" style="color:#dc2626;"></i>
+                    確定要退回商品「<strong id="rjProductName"></strong>」？
+                </div>
+                <label class="form-label fw-bold mb-2">退回原因 <span class="text-danger">*</span></label>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <button type="button" class="rj-chip" onclick="rjSetChip(this)">商品描述不實</button>
+                    <button type="button" class="rj-chip" onclick="rjSetChip(this)">圖片侵權/盜圖</button>
+                    <button type="button" class="rj-chip" onclick="rjSetChip(this)">違反平台規範</button>
+                    <button type="button" class="rj-chip" onclick="rjSetChip(this)">標題含禁止詞彙</button>
+                    <button type="button" class="rj-chip" onclick="rjSetChip(this)">商品分類錯誤</button>
+                </div>
+                <textarea id="rjReasonInput" class="form-control rounded-3" rows="3"
+                          placeholder="請說明退回原因（賣家將可看到此說明）..."></textarea>
+                <div id="rjReasonError" class="text-danger small mt-1 d-none">請填寫退回原因。</div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger rounded-pill px-5 fw-bold" id="rjConfirmBtn">
+                    <i class="bx bx-x-circle me-1"></i>確認退回
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── 批次退回原因 Modal ── *@
+<div class="modal fade" id="batchRejectModal" tabindex="-1" aria-labelledby="batchRejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger" id="batchRejectModalLabel">
+                    <i class="bx bx-x-circle me-2"></i>批次退回審核
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="p-3 mb-3 rounded-3" style="background:#fef2f2;border:1px solid #fca5a5;">
+                    <i class="bx bx-error-circle me-1" style="color:#dc2626;"></i>
+                    即將退回已選取的 <strong id="brjProductCount">0</strong> 筆商品，請填寫統一退回原因：
+                </div>
+                <label class="form-label fw-bold mb-2">退回原因 <span class="text-danger">*</span></label>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <button type="button" class="rj-chip" onclick="brjSetChip(this)">商品描述不實</button>
+                    <button type="button" class="rj-chip" onclick="brjSetChip(this)">圖片侵權/盜圖</button>
+                    <button type="button" class="rj-chip" onclick="brjSetChip(this)">違反平台規範</button>
+                    <button type="button" class="rj-chip" onclick="brjSetChip(this)">標題含禁止詞彙</button>
+                    <button type="button" class="rj-chip" onclick="brjSetChip(this)">商品分類錯誤</button>
+                </div>
+                <textarea id="brjReasonInput" class="form-control rounded-3" rows="3"
+                          placeholder="請說明退回原因（賣家將可看到此說明）..."></textarea>
+                <div id="brjReasonError" class="text-danger small mt-1 d-none">請填寫退回原因。</div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger rounded-pill px-5 fw-bold" id="brjConfirmBtn">
+                    <i class="bx bx-x-circle me-1"></i>確認批次退回
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        (function () {
-            var urlUndoReject        = '@Url.Action("UndoReject", "Products")';
-            var urlApprove           = '@Url.Action("ApproveProduct", "Products")';
-            var urlReject            = '@Url.Action("RejectProduct", "Products")';
-            var urlSimulateAutoReview = '@Url.Action("SimulateAutoReview", "Products")';
-            var urlProductIndex      = '@Url.Action("Index", "Products")';
+    // ═══════════════════════════════════════════════
+    // 商品審核中心 — 資料陣列架構 (完整重寫)
+    // ═══════════════════════════════════════════════
+    'use strict';
 
-            // ── 模擬自動審核 ──
-            var btnSimulate = document.getElementById('btnSimulateAutoReview');
-            if (btnSimulate) {
-                btnSimulate.addEventListener('click', function () {
-                    Swal.fire({
-                        title: '模擬系統自動審核',
-                        html: '將新增 <strong>9</strong> 筆測試商品（安全 / 違規 / 灰色疑慮各 3 筆），<br>並對所有<strong>待審核商品</strong>執行三階段自動比對。<br>確定繼續？',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#f59e0b',
-                        cancelButtonColor: '#a0aec0',
-                        confirmButtonText: '<i class="fas fa-robot me-1"></i> 開始模擬',
-                        cancelButtonText: '取消'
-                    }).then(async function (result) {
-                        if (!result.isConfirmed) return;
-                        Swal.fire({ title: '模擬執行中…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                        try {
-                            const res = await apiPost(urlSimulateAutoReview, {});
-                            if (res.success) {
-                                Swal.fire({
-                                    title: '模擬審核完畢！',
-                                    html:  '✅ 自動上架：<strong>' + res.approved     + '</strong> 筆<br>' +
-                                           '❌ 自動攔截：<strong>' + res.rejected     + '</strong> 筆<br>' +
-                                           '⚠️ 需人工複審：<strong>' + res.manualReview + '</strong> 筆',
-                                    icon: 'success',
-                                    confirmButtonColor: '#1abb9c',
-                                    confirmButtonText: 'OK'
-                                }).then(() => location.reload());
-                            } else {
-                                Swal.fire({ title: '模擬失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
-                            }
-                        } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
-                    });
+    // ── URL 路由 ──
+    var _urls = {
+        approve:              '@Url.Action("ApproveProduct", "Products")',
+        reject:               '@Url.Action("RejectProduct", "Products")',
+        batchApprove:         '@Url.Action("BatchApprove", "Products")',
+        batchReject:          '@Url.Action("BatchReject", "Products")',
+        simulateAutoReview:   '@Url.Action("SimulateAutoReview", "Products")',
+        simulateSellerResubmit: '@Url.Action("SimulateSellerResubmit", "Products")',
+        batchSimulateResubmit: '@Url.Action("BatchSimulateResubmit", "Products")',
+        approveForced:        '@Url.Action("ApproveForcedProduct", "Products")',
+        rejectForced:         '@Url.Action("RejectForcedProduct", "Products")',
+        forceCleanupExpired:  '@Url.Action("ForceCleanupExpiredProducts", "Products")',
+        generateTestProducts: '@Url.Action("GenerateTestProducts", "Products")'
+    };
+
+    // ── 常數 ──
+    var PAGE_SIZE       = 10;
+    var COUNTDOWN_SECS  = 30;
+
+    // ── 資料陣列（唯一真實來源） ──
+    var pendingData  = @Html.Raw(pendingJson);   // [{id,name,store,img,category,brand,created}]
+    var reApplyData  = @Html.Raw(reApplyJson);   // [{id,name,store,img,reason}]
+    var rejectedData = @Html.Raw(rejectedJson);  // [{id,name,store,img,reason,rejectedAt}]
+    var approvedData = @Html.Raw(approvedJson);  // [{id,name,store,img,reviewDate}]
+
+    // ── 分頁狀態 ──
+    var pages = { pending: 1, reApply: 1, rejected: 1, approved: 1 };
+
+    // ── 選取狀態（跨頁持久化） ──
+    var SEL_PENDING_KEY  = 'selPendingReApply';
+    var SEL_REJECTED_KEY = 'selRejected';
+    function _loadSet(key) {
+        try { return new Set(JSON.parse(sessionStorage.getItem(key) || '[]')); } catch { return new Set(); }
+    }
+    function _saveSet(key, set) {
+        sessionStorage.setItem(key, JSON.stringify(Array.from(set)));
+    }
+    var selPending  = _loadSet(SEL_PENDING_KEY);   // pending + reApply 共用
+    var selRejected = _loadSet(SEL_REJECTED_KEY);
+
+    // ── 側邊面板狀態 ──
+    var _activePanelId = null;
+
+    // ════════════════════════════════════════════════
+    // 工具函式
+    // ════════════════════════════════════════════════
+    function escHtml(s) {
+        return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function escAttr(s) { return escHtml(s); }
+
+    async function apiPost(url, data) {
+        var r = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        return r.json();
+    }
+
+    function nowDateStr() {
+        var d = new Date(), pad = n => String(n).padStart(2,'0');
+        return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+    }
+
+    // ── 取得指定 tab 的資料陣列 ──
+    function getArr(tab) {
+        return tab === 'pending' ? pendingData :
+               tab === 'reApply' ? reApplyData :
+               tab === 'rejected' ? rejectedData : approvedData;
+    }
+
+    // ── 依 ID 從陣列移除，回傳被移除的項目（或 null） ──
+    function removeById(arr, id) {
+        var idx = arr.findIndex(x => x.id === id);
+        if (idx === -1) return null;
+        return arr.splice(idx, 1)[0];
+    }
+
+    // ════════════════════════════════════════════════
+    // 渲染引擎
+    // ════════════════════════════════════════════════
+    var _tabMeta = {
+        pending:  { table: 'pendingTable',  empty: 'pendingEmpty',  pag: 'pendingPaginationWrapper',  badge: 'pending-count-badge'  },
+        reApply:  { table: 'reApplyTable',  empty: 'reApplyEmpty',  pag: 'reApplyPaginationWrapper',  badge: 'reapply-count-badge'  },
+        rejected: { table: 'rejectedTable', empty: 'rejectedEmpty', pag: 'rejectedPaginationWrapper', badge: 'rejected-count-badge' },
+        approved: { table: 'approvedTable', empty: 'approvedEmpty', pag: 'approvedPaginationWrapper', badge: 'approved-count-badge' }
+    };
+
+    function renderTab(tab) {
+        var m    = _tabMeta[tab];
+        var arr  = getArr(tab);
+        var total = arr.length;
+        var tbl   = document.getElementById(m.table);
+        var empty = document.getElementById(m.empty);
+        var pag   = document.getElementById(m.pag);
+        var tbody = tbl ? tbl.querySelector('tbody') : null;
+        if (!tbody) return;
+
+        // 修正頁碼
+        var totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
+        if (pages[tab] > totalPages) pages[tab] = totalPages;
+        if (pages[tab] < 1)          pages[tab] = 1;
+
+        // 渲染當前頁資料
+        var start    = (pages[tab] - 1) * PAGE_SIZE;
+        var pageItems = arr.slice(start, start + PAGE_SIZE);
+        tbody.innerHTML = '';
+        pageItems.forEach(function(item) {
+            var tr = buildRow(tab, item);
+            tbody.appendChild(tr);
+        });
+
+        // 空白狀態
+        if (tbl)   tbl.classList.toggle('d-none', total === 0);
+        if (empty) empty.classList.toggle('d-none', total > 0);
+
+        // 徽章（= 完整陣列 length）
+        var badgeEl = document.getElementById(m.badge);
+        if (badgeEl) badgeEl.textContent = total;
+        if (tab === 'pending') {
+            var pcEl = document.getElementById('pendingCount');
+            if (pcEl) pcEl.textContent = total;
+        }
+
+        // 分頁器（>10 才顯示）
+        if (pag) pag.innerHTML = total > PAGE_SIZE ? buildPagHtml(tab, pages[tab], totalPages) : '';
+
+        // 同步 checkbox 選取狀態
+        syncCheckboxes(tab);
+    }
+
+    function buildPagHtml(tab, cur, total) {
+        if (total <= 1) return '';
+        var items = '';
+        var nav = function(p, label, dis, active) {
+            var cls  = 'page-item' + (dis ? ' disabled' : '') + (active ? ' active' : '');
+            var lcls = 'page-link' + (active ? ' rounded-circle fw-bold' : ' rounded-pill px-3');
+            var sty  = active ? ' style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;"' : '';
+            return '<li class="' + cls + '"><a class="' + lcls + '"' + sty + ' href="#" onclick="goPage(\'' + tab + '\',' + p + ');return false;">' + label + '</a></li>';
+        };
+        items += nav(cur - 1, '<i class="bx bx-chevron-left"></i> 上一頁', cur === 1, false);
+        for (var i = 1; i <= total; i++) {
+            if (i === 1 || i === total || (i >= cur - 2 && i <= cur + 2))
+                items += nav(i, i, false, i === cur);
+            else if (i === cur - 3 || i === cur + 3)
+                items += '<li class="page-item disabled"><span class="page-link border-0 bg-transparent">…</span></li>';
+        }
+        items += nav(cur + 1, '下一頁 <i class="bx bx-chevron-right"></i>', cur === total, false);
+        return '<nav class="mt-4"><ul class="pagination justify-content-center gap-2">' + items + '</ul></nav>';
+    }
+
+    window.goPage = function(tab, p) {
+        var arr = getArr(tab);
+        var max = Math.max(1, Math.ceil(arr.length / PAGE_SIZE));
+        pages[tab] = Math.min(Math.max(1, p), max);
+        renderTab(tab);
+        // 換頁不清除選取，不關閉面板
+    };
+
+    // ════════════════════════════════════════════════
+    // Row 建構函式
+    // ════════════════════════════════════════════════
+    function imgTag(src, size, radius) {
+        return src
+            ? '<img src="' + escAttr(src) + '" loading="lazy" style="width:' + size + 'px;height:' + size + 'px;object-fit:cover;border-radius:' + radius + 'px;" />'
+            : '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:' + radius + 'px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font-size:1rem;">🖼️</div>';
+    }
+
+    function buildRow(tab, d) {
+        var tr = document.createElement('tr');
+        tr.dataset.id    = d.id;
+        tr.dataset.name  = d.name;
+        tr.dataset.store = d.store || '';
+        tr.dataset.img   = d.img   || '';
+
+        if (tab === 'pending') {
+            var sid = d.id, sn = escAttr(d.name);
+            tr.innerHTML =
+                '<td><input type="checkbox" class="form-check-input item-checkbox" value="' + sid + '"></td>'
+                + '<td class="col-img">' + imgTag(d.img, 50, 6) + '</td>'
+                + '<td><div class="product-name-text text-truncate" style="max-width:240px;" title="' + sn + '">' + escHtml(d.name) + '</div>'
+                +     '<div class="text-xs text-muted">ID: ' + sid + '</div></td>'
+                + '<td><span class="badge bg-label-warning">待審核</span></td>'
+                + '<td class="col-store text-muted text-xs">' + escHtml(d.store || 'N/A') + '</td>'
+                + '<td class="col-catbrand text-xs"><span class="text-primary">' + escHtml(d.category || '') + '</span> / <span class="text-info">' + escHtml(d.brand || '') + '</span></td>'
+                + '<td class="col-date text-muted text-xs">' + escHtml(d.created || '-') + '</td>'
+                + '<td class="text-end col-rowact text-nowrap"><div class="d-flex gap-2 justify-content-end">'
+                + '<button class="btn-approve-soft fw-bold" onclick="approveProduct(' + sid + ',\'' + sn + '\')">核准上架</button>'
+                + '<button class="btn-reject-soft fw-bold" onclick="openRejectModal(' + sid + ',\'' + sn + '\')">退回</button>'
+                + '</div></td>';
+        } else if (tab === 'reApply') {
+            var sid = d.id, sn = escAttr(d.name);
+            tr.innerHTML =
+                '<td><input type="checkbox" class="form-check-input item-checkbox" value="' + sid + '"></td>'
+                + '<td class="col-img">' + imgTag(d.img, 50, 10) + '</td>'
+                + '<td class="product-name-cell"><div class="product-name-text text-truncate" style="max-width:200px;">' + escHtml(d.name) + '</div></td>'
+                + '<td class="text-xs col-store text-muted">' + escHtml(d.store) + '</td>'
+                + '<td class="col-reapply-reason"><span class="badge bg-label-danger text-xs">' + escHtml(d.reason || '') + '</span></td>'
+                + '<td class="text-end text-nowrap"><div class="d-flex gap-2 justify-content-end">'
+                + '<button class="btn btn-sm btn-success rounded-pill px-3" onclick="approveForcedProduct(' + sid + ',\'' + sn + '\')">核准上架</button>'
+                + '<button class="btn btn-sm btn-danger rounded-pill px-3" onclick="openRejectForcedModal(' + sid + ',\'' + sn + '\')">駁回</button>'
+                + '</div></td>';
+        } else if (tab === 'rejected') {
+            var sid = d.id, sn = escAttr(d.name);
+            var remaining = Math.max(0, Math.ceil(COUNTDOWN_SECS - (Date.now() - d.rejectedAt) / 1000));
+            tr.innerHTML =
+                '<td><input type="checkbox" class="form-check-input item-checkbox" value="' + sid + '"></td>'
+                + '<td class="col-img">' + imgTag(d.img, 50, 10) + '</td>'
+                + '<td class="fw-semibold product-name-cell">' + escHtml(d.name) + '</td>'
+                + '<td class="fs-7 col-store">' + escHtml(d.store) + '</td>'
+                + '<td class="col-rej-reason reject-reason-col">' + escHtml(d.reason || '') + '</td>'
+                + '<td class="text-center"><div class="countdown-widget" data-initial="' + COUNTDOWN_SECS + '">'
+                +   '<div class="countdown-display"><i class="bx bx-time-five countdown-icon"></i>'
+                +   '<span class="countdown-timer" data-id="' + sid + '">' + remaining + '</span>'
+                +   '<span class="countdown-unit">s</span></div>'
+                +   '<div class="countdown-track"><div class="countdown-fill" style="width:' + Math.max(0,(remaining/COUNTDOWN_SECS)*100) + '%;"></div></div>'
+                +   '<div class="countdown-label">自動清除</div></div></td>'
+                + '<td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-warning rounded-pill px-3" onclick="simulateResubmit(' + sid + ',\'' + sn + '\')"><i class="bx bx-store-alt me-1"></i>模擬賣家送審</button></td>';
+        } else { // approved
+            tr.innerHTML =
+                '<td class="col-img">' + imgTag(d.img, 54, 10) + '</td>'
+                + '<td class="fw-semibold product-name-cell">' + escHtml(d.name) + '</td>'
+                + '<td class="fs-7 col-store">' + escHtml(d.store) + '</td>'
+                + '<td class="fs-7">' + escHtml(d.reviewDate || '') + '</td>';
+        }
+
+        // checkbox 事件
+        var cb = tr.querySelector('.item-checkbox');
+        if (cb) {
+            cb.addEventListener('click', function(e) { e.stopPropagation(); });
+            cb.addEventListener('change', function() {
+                var pid = parseInt(this.value);
+                var set = (tab === 'rejected') ? selRejected : selPending;
+                var key = (tab === 'rejected') ? SEL_REJECTED_KEY : SEL_PENDING_KEY;
+                if (this.checked) set.add(pid); else set.delete(pid);
+                _saveSet(key, set);
+                updateSelUI();
+            });
+        }
+
+        // 列點擊
+        tr.addEventListener('click', function(e) {
+            if (e.target.closest('button, input, a')) return;
+            openDetailPanel(d.id, d.name);
+        });
+
+        return tr;
+    }
+
+    // ════════════════════════════════════════════════
+    // Checkbox / 選取 UI
+    // ════════════════════════════════════════════════
+    function syncCheckboxes(tab) {
+        var panelId = tab + 'Panel';
+        var panel   = document.getElementById(panelId);
+        if (!panel) return;
+        var set = (tab === 'rejected') ? selRejected : selPending;
+        panel.querySelectorAll('.item-checkbox').forEach(cb => {
+            cb.checked = set.has(parseInt(cb.value));
+        });
+        // 全選框
+        var allCbs = panel.querySelectorAll('.item-checkbox');
+        var selectAllEl = panel.querySelector('#selectAll, .selectAllReApply, .selectAllRejected');
+        if (selectAllEl && allCbs.length > 0) {
+            var checkedN = Array.from(allCbs).filter(c => c.checked).length;
+            selectAllEl.checked = checkedN === allCbs.length;
+            selectAllEl.indeterminate = checkedN > 0 && checkedN < allCbs.length;
+        }
+    }
+
+    function updateSelUI() {
+        var pc = selPending.size, rc = selRejected.size;
+
+        // pending/reApply 批次標籤
+        var tag   = document.getElementById('pending-batch-tag');
+        var badge = document.getElementById('pending-selected-count');
+        if (badge) badge.textContent = pc;
+        if (tag)   tag.classList.toggle('d-none', pc === 0);
+
+        ['btnBatchApprove','btnBatchReject'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.disabled = (pc === 0);
+        });
+
+        // rejected 批次標籤
+        var rtag   = document.getElementById('rejected-batch-tag');
+        var rbadge = document.getElementById('rejected-selected-count');
+        var rsimEl = document.getElementById('btnBatchRejectedSimulate');
+        if (rbadge) rbadge.textContent = rc;
+        if (rtag)   rtag.classList.toggle('d-none', rc === 0);
+        if (rsimEl) rsimEl.disabled = (rc === 0);
+
+        // 同步所有可見頁面的 checkbox 顯示
+        ['pending','reApply','rejected'].forEach(syncCheckboxes);
+    }
+
+    // 全選框事件（統一綁定）
+    function bindSelectAllEvents() {
+        [
+            { id: 'selectAll',         tab: 'pending'  },
+            { id: 'selectAllReApply',  tab: 'reApply'  },
+            { id: 'selectAllRejected', tab: 'rejected' }
+        ].forEach(function(cfg) {
+            var el = document.getElementById(cfg.id);
+            if (!el) return;
+            el.addEventListener('change', function() {
+                var panel = document.getElementById(cfg.tab + 'Panel');
+                if (!panel) return;
+                var set = (cfg.tab === 'rejected') ? selRejected : selPending;
+                var key = (cfg.tab === 'rejected') ? SEL_REJECTED_KEY : SEL_PENDING_KEY;
+                panel.querySelectorAll('.item-checkbox').forEach(cb => {
+                    cb.checked = this.checked;
+                    var pid = parseInt(cb.value);
+                    if (this.checked) set.add(pid); else set.delete(pid);
                 });
+                _saveSet(key, set);
+                updateSelUI();
+            });
+        });
+    }
+
+    // ── 清除選取按鈕 ──
+    document.getElementById('btn-clear-pending').onclick = function() {
+        selPending.clear(); _saveSet(SEL_PENDING_KEY, selPending); updateSelUI();
+    };
+    document.getElementById('btn-clear-rejected').onclick = function() {
+        selRejected.clear(); _saveSet(SEL_REJECTED_KEY, selRejected); updateSelUI();
+    };
+
+    // ════════════════════════════════════════════════
+    // 側邊詳情面板
+    // ════════════════════════════════════════════════
+    function openDetailPanel(id, name) {
+        document.querySelectorAll('tr.row-active').forEach(r => r.classList.remove('row-active'));
+        var row = document.querySelector('tr[data-id="' + id + '"]');
+        if (row) row.classList.add('row-active');
+        _activePanelId = id;
+        document.getElementById('productDetailPanel').classList.add('open');
+        document.getElementById('reviewLayout').classList.add('panel-open');
+        $('.reject-reason-col').hide();
+        sessionStorage.setItem('isReviewDetailOpen', 'true');
+        fetch('@Url.Action("GetProductDetailsPartial", "Products")?id=' + id + '&isReviewMode=true')
+            .then(r => r.text()).then(html => {
+                document.getElementById('productDetailPanelBody').innerHTML = html;
+            });
+    }
+    window.closeProductDetailPanel = function() {
+        document.getElementById('productDetailPanel').classList.remove('open');
+        document.getElementById('reviewLayout').classList.remove('panel-open');
+        document.querySelectorAll('tr.row-active').forEach(r => r.classList.remove('row-active'));
+        $('.reject-reason-col').show();
+        sessionStorage.setItem('isReviewDetailOpen', 'false');
+    };
+    document.getElementById('reviewLayout').addEventListener('click', function(e) {
+        if (e.target === this) {
+            var panel = document.getElementById('productDetailPanel');
+            if (panel && panel.classList.contains('open')) closeProductDetailPanel();
+        }
+    });
+    document.getElementById('reviewListCol').addEventListener('click', function(e) {
+        var panel = document.getElementById('productDetailPanel');
+        if (!panel || !panel.classList.contains('open')) return;
+        if (e.target.closest('tr, button, a, input, select, label, .filter-card, .nav-tabs, .page-above-content, .back-to-list-btn')) return;
+        closeProductDetailPanel();
+    });
+
+    // ════════════════════════════════════════════════
+    // Tab 切換
+    // ════════════════════════════════════════════════
+    function showBatchButtons(tabId) {
+        var isPendingOrReApply = (tabId === 'pending-tab' || tabId === 'reapply-tab');
+        var isRejected         = (tabId === 'rejected-tab');
+        ['btnBatchApprove','btnBatchReject'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.toggle('d-none', !isPendingOrReApply);
+        });
+        var simEl = document.getElementById('btnBatchSimulate');
+        if (simEl) simEl.classList.add('d-none');
+        var rejEl = document.getElementById('btnBatchRejectedSimulate');
+        if (rejEl) rejEl.classList.toggle('d-none', !isRejected);
+    }
+
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tabEl => {
+        tabEl.addEventListener('shown.bs.tab', function(e) {
+            var tid = e.target.id;
+            sessionStorage.setItem('activeTab', tid);
+            showBatchButtons(tid);
+            var isOpen = sessionStorage.getItem('isReviewDetailOpen') === 'true';
+            if (isOpen) {
+                var target = document.querySelector(e.target.getAttribute('data-bs-target'));
+                var firstRow = target && target.querySelector('tbody tr[data-id]');
+                if (firstRow) firstRow.click(); else closeProductDetailPanel();
             }
+        });
+    });
 
-            window.undoReject = function (id, name) {
-                Swal.fire({
-                    title: '移回待審核',
-                    html: '確定要將商品<br><strong>「' + name + '」</strong><br>移回待審核佇列嗎？',
-                    icon: 'question', showCancelButton: true,
-                    confirmButtonColor: '#3182ce', cancelButtonColor: '#a0aec0',
-                    confirmButtonText: '確認', cancelButtonText: '取消'
-                }).then(async function (result) {
-                    if (!result.isConfirmed) return;
-                    try {
-                        const res = await apiPost(urlUndoReject, { id: parseInt(id) });
-                        if (res.success) {
-                            Swal.fire({ title: '已移回待審核', text: res.message, icon: 'success',
-                                        confirmButtonColor: '#1abb9c', timer: 2000, timerProgressBar: true })
-                                .then(() => location.reload());
-                        } else {
-                            Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
-                        }
-                    } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
+    // ════════════════════════════════════════════════
+    // 審核操作
+    // ════════════════════════════════════════════════
+    // 共用：從 pending 或 reApply 陣列取出並移至 approved
+    function _doApprove(id) {
+        var item = removeById(pendingData, id) || removeById(reApplyData, id);
+        if (!item) return;
+        selPending.delete(id);
+        _saveSet(SEL_PENDING_KEY, selPending);
+        approvedData.unshift(Object.assign({}, item, { reviewDate: nowDateStr() }));
+        pages.pending = 1; pages.reApply = 1; pages.approved = 1;
+        renderTab('pending'); renderTab('reApply'); renderTab('approved');
+        updateSelUI();
+    }
+
+    window.approveProduct = function(id, name) {
+        Swal.fire({ title: '確認核准上架', html: '確定要核准商品「<strong>' + escHtml(name) + '</strong>」上架嗎？',
+            icon: 'question', showCancelButton: true, confirmButtonColor: '#1abb9c' })
+        .then(async r => {
+            if (!r.isConfirmed) return;
+            Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
+            var res = await apiPost(_urls.approve, { id: id });
+            if (res.success) {
+                _doApprove(id);
+                Swal.fire({ icon: 'success', title: '成功', text: res.message, timer: 1500, showConfirmButton: false });
+            } else Swal.fire('錯誤', res.message, 'error');
+        });
+    };
+    window.approveForcedProduct = (id, name) => approveProduct(id, name);
+
+    // 單筆退回
+    var _rjId = null;
+    window.rjSetChip  = btn => { document.getElementById('rjReasonInput').value  = btn.textContent.trim(); };
+    window.brjSetChip = btn => { document.getElementById('brjReasonInput').value = btn.textContent.trim(); };
+
+    window.openRejectModal = function(id, name) {
+        _rjId = id;
+        document.getElementById('rjProductName').textContent = name;
+        document.getElementById('rjReasonInput').value = '';
+        document.getElementById('rjReasonError').classList.add('d-none');
+        new bootstrap.Modal(document.getElementById('rejectModal')).show();
+    };
+    window.openRejectForcedModal = (id, name) => openRejectModal(id, name);
+
+    document.getElementById('rjConfirmBtn').addEventListener('click', async function() {
+        var reason = document.getElementById('rjReasonInput').value.trim();
+        var errEl  = document.getElementById('rjReasonError');
+        if (!reason) { errEl.classList.remove('d-none'); return; }
+        errEl.classList.add('d-none');
+        bootstrap.Modal.getInstance(document.getElementById('rejectModal'))?.hide();
+        Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
+        var res = await apiPost(_urls.reject, { id: _rjId, reason: reason });
+        if (res.success) {
+            var item = removeById(pendingData, _rjId) || removeById(reApplyData, _rjId);
+            if (item) {
+                selPending.delete(_rjId);
+                _saveSet(SEL_PENDING_KEY, selPending);
+                rejectedData.unshift(Object.assign({}, item, { reason: reason, rejectedAt: Date.now() }));
+                pages.pending = 1; pages.reApply = 1; pages.rejected = 1;
+                renderTab('pending'); renderTab('reApply'); renderTab('rejected');
+                updateSelUI();
+                switchTab('rejected-tab');
+            }
+            Swal.fire({ icon: 'success', title: '已退回', text: res.message, timer: 1500, showConfirmButton: false });
+        } else Swal.fire('錯誤', res.message, 'error');
+    });
+
+    // 批次核准
+    document.getElementById('btnBatchApprove').onclick = function() {
+        var ids = Array.from(selPending);
+        if (!ids.length) return Swal.fire('請先選擇商品', '', 'warning');
+        Swal.fire({ title: '批次核准上架', text: '確定要核准這 ' + ids.length + ' 項商品嗎？',
+            icon: 'question', showCancelButton: true, confirmButtonColor: '#1abb9c' })
+        .then(async r => {
+            if (!r.isConfirmed) return;
+            Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
+            var res = await apiPost(_urls.batchApprove, { ids: ids });
+            if (res.success) {
+                var now = nowDateStr();
+                ids.forEach(function(id) {
+                    var item = removeById(pendingData, id) || removeById(reApplyData, id);
+                    if (item) approvedData.unshift(Object.assign({}, item, { reviewDate: now }));
                 });
-            };
+                selPending.clear(); _saveSet(SEL_PENDING_KEY, selPending);
+                pages.pending = 1; pages.reApply = 1; pages.approved = 1;
+                renderTab('pending'); renderTab('reApply'); renderTab('approved');
+                updateSelUI();
+                Swal.fire({ icon: 'success', title: '完成', text: res.message, timer: 1500, showConfirmButton: false });
+            } else Swal.fire('錯誤', res.message, 'error');
+        });
+    };
 
-            document.addEventListener('DOMContentLoaded', function () {
-                if (window.location.hash === '#rejectedTab') {
-                    var tabEl = document.querySelector('#rejected-tab');
-                    if (tabEl && typeof bootstrap !== 'undefined') {
-                        new bootstrap.Tab(tabEl).show();
-                    }
-                    history.replaceState(null, '', window.location.pathname + window.location.search);
+    // 批次退回
+    document.getElementById('btnBatchReject').onclick = function() {
+        var ids = Array.from(selPending);
+        if (!ids.length) return Swal.fire('請先選擇商品', '', 'warning');
+        document.getElementById('brjProductCount').textContent = ids.length;
+        document.getElementById('brjReasonInput').value = '';
+        document.getElementById('brjReasonError').classList.add('d-none');
+        new bootstrap.Modal(document.getElementById('batchRejectModal')).show();
+    };
+    document.getElementById('brjConfirmBtn').addEventListener('click', async function() {
+        var ids    = Array.from(selPending);
+        var reason = document.getElementById('brjReasonInput').value.trim();
+        var errEl  = document.getElementById('brjReasonError');
+        if (!reason) { errEl.classList.remove('d-none'); return; }
+        errEl.classList.add('d-none');
+        bootstrap.Modal.getInstance(document.getElementById('batchRejectModal'))?.hide();
+        Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
+        var res = await apiPost(_urls.batchReject, { ids: ids, reason: reason });
+        if (res.success) {
+            var now = Date.now();
+            ids.forEach(function(id) {
+                var item = removeById(pendingData, id) || removeById(reApplyData, id);
+                if (item) rejectedData.unshift(Object.assign({}, item, { reason: reason, rejectedAt: now }));
+            });
+            selPending.clear(); _saveSet(SEL_PENDING_KEY, selPending);
+            pages.pending = 1; pages.reApply = 1; pages.rejected = 1;
+            renderTab('pending'); renderTab('reApply'); renderTab('rejected');
+            updateSelUI();
+            switchTab('rejected-tab');
+            Swal.fire({ icon: 'success', title: '完成', text: res.message, timer: 1500, showConfirmButton: false });
+        } else Swal.fire('錯誤', res.message, 'error');
+    });
+
+    // ── 模擬賣家送審（單筆）──
+    window.simulateResubmit = function(id, name) {
+        Swal.fire({ title: '模擬賣家送審',
+            html: '確定要模擬賣家重新送審商品「<strong>' + escHtml(name) + '</strong>」嗎？',
+            icon: 'info', showCancelButton: true, confirmButtonColor: '#F59E0B' })
+        .then(async r => {
+            if (!r.isConfirmed) return;
+            Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
+            var res = await apiPost(_urls.simulateSellerResubmit, { id: id });
+            if (res.success) {
+                var item = removeById(rejectedData, id);
+                if (item) {
+                    selRejected.delete(id);
+                    _saveSet(SEL_REJECTED_KEY, selRejected);
+                    reApplyData.unshift(Object.assign({}, item));
+                    pages.rejected = 1; pages.reApply = 1;
+                    renderTab('rejected'); renderTab('reApply');
+                    updateSelUI();
+                    switchTab('reapply-tab');
                 }
-            });
+                Swal.fire({ icon: 'success', title: '成功', text: res.message, timer: 1500, showConfirmButton: false });
+            } else Swal.fire('錯誤', res.message, 'error');
+        });
+    };
 
-            function removeRow(id) {
-                var row = document.querySelector('tr[data-id="' + id + '"]');
-                if (row) row.remove();
-                var remaining = document.querySelectorAll('#pendingPanel tbody tr').length;
-                document.querySelectorAll('#pendingCount, .text-warning.fw-bold').forEach(function(el) { el.textContent = remaining; });
-                var badge = document.querySelector('#pending-tab .badge');
-                if (badge) badge.textContent = remaining;
-                if (remaining === 0) location.reload();
-            }
-
-            document.querySelectorAll('.btn-approve').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var id = this.dataset.id; var name = this.dataset.name;
-                    Swal.fire({
-                        title: '確認核准上架',
-                        html: '確定要核准商品<br><strong>「' + name + '」</strong>上架嗎？',
-                        icon: 'question', showCancelButton: true,
-                        confirmButtonColor: '#1abb9c', cancelButtonColor: '#a0aec0',
-                        confirmButtonText: '確認核准', cancelButtonText: '取消'
-                    }).then(async function (result) {
-                        if (!result.isConfirmed) return;
-                        try {
-                            const res = await apiPost(urlApprove, { id: parseInt(id) });
-                            if (res.success) {
-                                removeRow(id);
-                                var gotoUrl = urlProductIndex + '?keyword=' + encodeURIComponent(name) + '&sort=review_desc';
-                                Swal.fire({
-                                    title: '核准成功！',
-                                    html: res.message + '<br><a href="' + gotoUrl + '" style="color:#1abb9c;font-weight:600;font-size:0.92rem;">前往查看 →</a>',
-                                    icon: 'success', confirmButtonColor: '#1abb9c', timer: 4000, timerProgressBar: true
-                                });
-                            } else {
-                                Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
-                            }
-                        } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
-                    });
+    // ── 批次模擬賣家送審（退回紀錄） ──
+    window.batchRejectedSimulate = function() {
+        var ids = Array.from(selRejected);
+        if (!ids.length) return Swal.fire('請先選擇商品', '', 'warning');
+        Swal.fire({ title: '批次模擬賣家送審',
+            text: '確定要將選取的 ' + ids.length + ' 項退回商品模擬重新送審嗎？',
+            icon: 'info', showCancelButton: true, confirmButtonColor: '#F59E0B' })
+        .then(async r => {
+            if (!r.isConfirmed) return;
+            Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
+            var res = await apiPost(_urls.batchSimulateResubmit, { ids: ids });
+            if (res.success) {
+                ids.forEach(function(id) {
+                    var item = removeById(rejectedData, id);
+                    if (item) reApplyData.unshift(Object.assign({}, item));
                 });
-            });
+                selRejected.clear(); _saveSet(SEL_REJECTED_KEY, selRejected);
+                pages.rejected = 1; pages.reApply = 1;
+                renderTab('rejected'); renderTab('reApply');
+                updateSelUI();
+                switchTab('reapply-tab');
+                Swal.fire({ icon: 'success', title: '完成', text: res.message, timer: 1500, showConfirmButton: false });
+            } else Swal.fire('錯誤', res.message, 'error');
+        });
+    };
+    document.getElementById('btnBatchRejectedSimulate').onclick = batchRejectedSimulate;
 
-            document.querySelectorAll('.btn-reject').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var id = this.dataset.id; var name = this.dataset.name;
-                    Swal.fire({
-                        title: '退回商品審核',
-                        html: '商品：<strong>「' + name + '」</strong>',
-                        input: 'textarea', inputLabel: '退回原因（必填）',
-                        inputPlaceholder: '請填寫退回原因...',
-                        inputAttributes: { rows: 3 },
-                        icon: 'warning', showCancelButton: true,
-                        confirmButtonColor: '#e53e3e', cancelButtonColor: '#a0aec0',
-                        confirmButtonText: '確認退回', cancelButtonText: '取消',
-                        inputValidator: function(value) { if (!value || !value.trim()) return '退回原因為必填欄位'; }
-                    }).then(async function (result) {
-                        if (!result.isConfirmed) return;
-                        try {
-                            const res = await apiPost(urlReject, { id: parseInt(id), reason: result.value.trim() });
-                            if (res.success) {
-                                removeRow(id);
-                                var gotoUrl = urlProductIndex + '?keyword=' + encodeURIComponent(name) + '&sort=review_desc';
-                                Swal.fire({
-                                    title: '已退回！',
-                                    html: res.message + '<br><a href="' + gotoUrl + '" style="color:#1abb9c;font-weight:600;font-size:0.92rem;">前往查看 →</a>',
-                                    icon: 'success', confirmButtonColor: '#1abb9c', timer: 4000, timerProgressBar: true
-                                })
-                                .then(() => { window.location.hash = '#rejectedTab'; window.location.reload(); });
-                            } else {
-                                Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
-                            }
-                        } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
+    // ════════════════════════════════════════════════
+    // 展示工具
+    // ════════════════════════════════════════════════
+    document.getElementById('btnGenerateTestProducts').onclick = function() {
+        Swal.fire({ title: '執行開發工具', text: '確定要自動生成測試用商品資料嗎？',
+            icon: 'info', showCancelButton: true })
+        .then(async r => {
+            if (!r.isConfirmed) return;
+            Swal.fire({ title: '生成中...', didOpen: () => Swal.showLoading() });
+            var res = await apiPost(_urls.generateTestProducts, {});
+            if (res.success) {
+                if (res.products && res.products.length) {
+                    res.products.forEach(function(p) {
+                        pendingData.push({ id: p.id, name: p.name, store: p.store, img: p.img, category: p.category, brand: p.brand, created: p.created });
                     });
-                });
-            });
-        })();
-    </script>
+                    renderTab('pending');
+                }
+                Swal.fire({ icon: 'success', title: '生成完成',
+                    html: res.message + '<br><small class="text-muted">已加入待審核列表</small>',
+                    timer: 2500, showConfirmButton: false });
+            } else Swal.fire('錯誤', res.message || '生成失敗', 'error');
+        });
+    };
 
-    <script>
-        // ── 即時倒數計時 + 自動觸發軟刪除並淡出 ──────────────────────
-        (function () {
-            var urlCleanup = '@Url.Action("ForceCleanupExpiredProducts", "Products", new { area = "Admin" })';
-
-            function updateCountdowns() {
-                // :not(.is-processing) 防止重複觸發同一列
-                document.querySelectorAll('.live-countdown:not(.is-processing)').forEach(function (el) {
-                    var expire      = new Date(el.dataset.expire);
-                    var secondsLeft = Math.floor((expire - Date.now()) / 1000);
-
-                    if (secondsLeft > 0) {
-                        el.className  = 'live-countdown badge bg-warning text-dark';
-                        el.textContent = '⏳ 剩餘 ' + secondsLeft + ' 秒';
-                    } else {
-                        // 標記為處理中，避免 setInterval 下一輪重複呼叫
-                        el.classList.add('is-processing');
-                        el.classList.remove('bg-warning', 'text-dark');
-                        el.classList.add('bg-secondary');
-                        el.textContent = '🗑️ 清除中...';
-
-                        var $row = $(el).closest('tr');
-                        $.post(urlCleanup, { expirationSeconds: 60 })
-                            .done(function (res) {
-                                if (res.success) {
-                                    $row.fadeOut(800, function () {
-                                        $(this).remove();
-                                        var $badge = $('#rejected-count-badge');
-                                        var current = parseInt($badge.text(), 10) || 0;
-                                        if (current > 0) $badge.text(current - 1);
-                                    });
-                                } else {
-                                    // 後端回傳失敗（例如已被清除）：直接移除列
-                                    $row.fadeOut(400, function () {
-                                        $(this).remove();
-                                        var $badge = $('#rejected-count-badge');
-                                        var current = parseInt($badge.text(), 10) || 0;
-                                        if (current > 0) $badge.text(current - 1);
-                                    });
-                                }
-                            })
-                            .fail(function () {
-                                // 網路錯誤：還原 badge，讓使用者可重試
-                                el.classList.remove('is-processing', 'bg-secondary');
-                                el.classList.add('bg-danger');
-                                el.textContent = '可立即清理';
-                            });
+    document.getElementById('btnSimulateAutoReview').onclick = function() {
+        Swal.fire({ title: '模擬自動審核',
+            text: '系統將自動掃描並退回包含敏感字的商品，確定要開始嗎？',
+            icon: 'warning', showCancelButton: true })
+        .then(async r => {
+            if (!r.isConfirmed) return;
+            Swal.fire({ title: '審核中...', didOpen: () => Swal.showLoading() });
+            var res = await apiPost(_urls.simulateAutoReview, {});
+            if (res.success && res.items) {
+                var now = nowDateStr(), nowMs = Date.now();
+                res.items.forEach(function(item) {
+                    if (item.outcome === 'Uncertain') return;
+                    var d = removeById(pendingData, item.productId);
+                    if (!d) return;
+                    if (item.outcome === 'Approved') {
+                        approvedData.unshift(Object.assign({}, d, { reviewDate: now }));
+                    } else if (item.outcome === 'Rejected') {
+                        var reason = '系統自動攔截：內容含違規詞彙【' + (item.matchedWords || []).join('、') + '】';
+                        rejectedData.unshift(Object.assign({}, d, { reason: reason, rejectedAt: nowMs }));
                     }
                 });
-            }
+                pages.pending = 1; pages.approved = 1; pages.rejected = 1;
+                renderTab('pending'); renderTab('approved'); renderTab('rejected');
+                updateSelUI();
+                var msg = '已通過 ' + (res.approved||0) + ' 筆，退回 ' + (res.rejected||0) + ' 筆，待人工複審 ' + (res.manualReview||0) + ' 筆';
+                Swal.fire({ icon: 'success', title: '自動審核完成', text: msg, timer: 2500, showConfirmButton: false });
+            } else Swal.fire('錯誤', res.message || '模擬失敗', 'error');
+        });
+    };
 
-            updateCountdowns();                    // 頁面載入立即執行一次，避免短暫顯示「計算中...」
-            setInterval(updateCountdowns, 1000);   // 每秒更新
-        })();
+    // ════════════════════════════════════════════════
+    // 退回紀錄倒數計時（背景，與頁面渲染無關）
+    // ════════════════════════════════════════════════
+    setInterval(function() {
+        var now  = Date.now();
+        var dead = rejectedData.filter(function(x) {
+            return (now - x.rejectedAt) / 1000 >= COUNTDOWN_SECS;
+        });
+        if (dead.length > 0) {
+            dead.forEach(function(x) {
+                removeById(rejectedData, x.id);
+                selRejected.delete(x.id);
+                if (_activePanelId == x.id) closeProductDetailPanel();
+            });
+            _saveSet(SEL_REJECTED_KEY, selRejected);
+            // 頁碼修正（如果當前頁已無資料）
+            var totalPages = Math.max(1, Math.ceil(rejectedData.length / PAGE_SIZE));
+            if (pages.rejected > totalPages) pages.rejected = totalPages;
+            renderTab('rejected');
+            updateSelUI();
+            // 通知後端軟刪除已過期記錄
+            fetch(_urls.forceCleanupExpired + '?expirationSeconds=' + COUNTDOWN_SECS, { method: 'POST' }).catch(() => {});
+        }
+
+        // 更新當前頁可見倒數顯示
+        document.querySelectorAll('#rejectedTable .countdown-timer[data-id]').forEach(function(el) {
+            var id   = parseInt(el.dataset.id);
+            var item = rejectedData.find(x => x.id === id);
+            if (!item) return;
+            var rem  = Math.max(0, Math.ceil(COUNTDOWN_SECS - (now - item.rejectedAt) / 1000));
+            el.textContent = rem;
+            var widget   = el.closest('.countdown-widget');
+            var fill     = widget && widget.querySelector('.countdown-fill');
+            var display  = widget && widget.querySelector('.countdown-display');
+            var urgentAt = Math.ceil(COUNTDOWN_SECS * 0.3);
+            if (fill) {
+                fill.style.width = Math.max(0, (rem / COUNTDOWN_SECS) * 100) + '%';
+                fill.classList.toggle('critical', rem <= urgentAt);
+            }
+            if (display) display.classList.toggle('urgent', rem <= urgentAt);
+        });
+    }, 1000);
+
+    // ════════════════════════════════════════════════
+    // 工具：切換 Tab
+    // ════════════════════════════════════════════════
+    function switchTab(tabId) {
+        var el = document.getElementById(tabId);
+        if (el) bootstrap.Tab.getOrCreateInstance(el).show();
+    }
+
+    // ════════════════════════════════════════════════
+    // 初始化
+    // ════════════════════════════════════════════════
+    (function init() {
+        // 渲染全部 Tab
+        renderTab('pending');
+        renderTab('reApply');
+        renderTab('rejected');
+        renderTab('approved');
+
+        // 綁定全選框
+        bindSelectAllEvents();
+
+        // 更新選取 UI
+        updateSelUI();
+
+        // 還原上次活動 Tab
+        var savedTab = sessionStorage.getItem('activeTab');
+        if (savedTab) {
+            var tabEl = document.getElementById(savedTab.replace('#', ''));
+            if (tabEl) tabEl.click();
+        }
+        showBatchButtons(savedTab ? savedTab.replace('#','') : 'pending-tab');
+
+        // 還原面板開啟狀態
+        if (sessionStorage.getItem('isReviewDetailOpen') === 'true') {
+            var activePane = document.querySelector('.tab-pane.active');
+            var firstRow   = activePane && activePane.querySelector('tbody tr[data-id]');
+            if (firstRow) firstRow.click(); else closeProductDetailPanel();
+        }
+    })();
+
+
+
+
+
+
+
+
+
+
+
+
     </script>
 }

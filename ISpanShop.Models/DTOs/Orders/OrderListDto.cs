@@ -25,5 +25,9 @@ namespace ISpanShop.Models.DTOs.Orders
 		public string ItemsSummary { get; set; }
 		// 出貨等待時長 (毫秒或 TimeSpan 字串)
 		public string WaitingTime { get; set; }
+
+		// 退貨相關
+		public DateTime? ReturnRequestCreatedAt { get; set; }
+		public DateTime? RefundDate { get; set; }
 	}
 }

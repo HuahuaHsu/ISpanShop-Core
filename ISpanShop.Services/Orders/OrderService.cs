@@ -56,16 +56,37 @@ namespace ISpanShop.Services.Orders
 					.SelectMany(rr => rr.ReturnRequestImages)
 					.Select(rri => rri.ImageUrl)
 					.ToList(),
-				Details = o.OrderDetails.Select(od => new OrderDetailDto
-				{
-					Id = od.Id,
-					ProductId = od.ProductId,
-					ProductName = od.ProductName,
-					VariantName = od.VariantName,
-					SkuCode = od.SkuCode,
-					CoverImage = od.CoverImage,
-					Price = od.Price ?? 0,
-					Quantity = od.Quantity
+				ReturnReason = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.ReasonCategory,
+				ReturnDescription = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.ReasonDescription,
+				ReturnRequestCreatedAt = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).FirstOrDefault()?.CreatedAt,
+				RefundDate = o.ReturnRequests.OrderByDescending(r => r.UpdatedAt).FirstOrDefault()?.UpdatedAt,
+				Details = o.OrderDetails.Select(od => {
+					// 優先順序：1. 明細快照圖 2. 變體專屬圖 3. 產品主圖 4. 產品任意第一張圖
+					string finalCover = od.CoverImage;
+					if (string.IsNullOrEmpty(finalCover))
+					{
+						var variantImage = od.Product?.ProductVariants?
+							.FirstOrDefault(v => v.Id == od.VariantId)?
+							.ProductImages?.FirstOrDefault()?.ImageUrl;
+							
+						finalCover = variantImage 
+							?? od.Product?.ProductImages?.FirstOrDefault(pi => pi.IsMain == true)?.ImageUrl
+							?? od.Product?.ProductImages?.FirstOrDefault()?.ImageUrl;
+					}
+
+					return new OrderDetailDto
+					{
+						Id = od.Id,
+						ProductId = od.ProductId,
+						VariantId = od.VariantId,
+						ProductName = od.ProductName,
+						VariantName = od.VariantName,
+						SkuCode = od.SkuCode,
+						CoverImage = finalCover,
+						Price = od.Price ?? 0,
+						Quantity = od.Quantity,
+						Stock = od.Product?.ProductVariants?.FirstOrDefault(v => v.Id == od.VariantId)?.Stock ?? 0
+					};
 				}).ToList()
 			};
 		}

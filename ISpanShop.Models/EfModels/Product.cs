@@ -45,9 +45,15 @@ public partial class Product
 
     public string ReviewedBy { get; set; }
 
-    public DateTime? RejectDate { get; set; }
-
     public DateTime? ReviewDate { get; set; }
+
+    public string ForceOffShelfReason { get; set; }
+
+    public DateTime? ForceOffShelfDate { get; set; }
+
+    public int? ForceOffShelfBy { get; set; }
+
+    public DateTime? ReApplyDate { get; set; }
 
     public virtual Brand Brand { get; set; }
 
@@ -55,11 +61,15 @@ public partial class Product
 
     public virtual Category Category { get; set; }
 
+    public virtual User ForceOffShelfByNavigation { get; set; }
+
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
     public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 
     public virtual ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
+
+    public virtual ICollection<PromotionItem> PromotionItems { get; set; } = new List<PromotionItem>();
 
     public virtual Store Store { get; set; }
 }

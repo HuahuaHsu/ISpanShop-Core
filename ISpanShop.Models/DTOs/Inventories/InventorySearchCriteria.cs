@@ -8,6 +8,7 @@ namespace ISpanShop.Models.DTOs.Inventories
         public bool ZeroStockOnly   => StockStatus == "zero";
         public bool NormalStockOnly => StockStatus == "normal";
         public string? Keyword { get; set; }
+        public int? ParentCategoryId { get; set; }
         public int? CategoryId { get; set; }
         public int? StoreId { get; set; }
         public int? MinStock { get; set; }

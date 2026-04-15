@@ -71,5 +71,17 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Products
         /// 主圖 URL
         /// </summary>
         public string? MainImageUrl { get; set; }
+
+        /// <summary>強制下架原因（Status==4 時）</summary>
+        public string? ForceOffShelfReason { get; set; }
+
+        /// <summary>強制下架時間</summary>
+        public DateTime? ForceOffShelfDate { get; set; }
+
+        /// <summary>執行強制下架的管理員</summary>
+        public int? ForceOffShelfBy { get; set; }
+
+        /// <summary>賣家申請重新上架的時間</summary>
+        public DateTime? ReApplyDate { get; set; }
     }
 }

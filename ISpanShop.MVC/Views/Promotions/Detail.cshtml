@@ -1,0 +1,333 @@
+@model ISpanShop.MVC.Models.Promotions.PromotionDetailVm
+
+@{
+    Layout = "~/Views/Shared/_SneatLayout.cshtml";
+    ViewData["Title"] = "活動詳情";
+}
+
+<style>
+    .font-noto { font-family: 'Public Sans', sans-serif; }
+    .info-row { display: flex; padding: .6rem 0; border-bottom: 1px solid #f1f5f9; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { width: 120px; font-size: .85rem; color: #94a3b8; flex-shrink: 0; padding-right: .5rem; }
+    .info-value { font-size: .9rem; color: #1e2d3d; font-weight: 500; }
+    .progress-time { height: 8px; border-radius: 4px; }
+    .items-table th, .items-table td { font-size: .875rem; vertical-align: middle; }
+    .review-panel { border-radius: 12px; border: 2px solid #e2e8f0; padding: 1.5rem; }
+    .review-panel.pending { border-color: #f59e0b; background: #fffbeb; }
+    .card > .card-header { background: #fff; border-radius: inherit; }
+    .badge { font-size: .813rem !important; padding: 5px 10px !important; white-space: nowrap; }
+</style>
+
+<div class="container-fluid py-4 font-noto">
+
+    @* 頁首 *@
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-2" style="color:#1e2d3d; letter-spacing:-.02em;">
+                <i class="bx bx-detail me-2" style="color:#3182ce;"></i>活動詳情
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index")" style="color:#3182ce;">促銷管理</a></li>
+                    <li class="breadcrumb-item active">@Model.Name</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="d-flex gap-2">
+            @if (Model.CanEdit || Model.IsActiveOnly)
+            {
+                <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-label-primary">
+                    <i class="bx bx-edit me-1"></i>編輯
+                </a>
+            }
+            <a href="@Url.Action("Index")" class="btn btn-label-secondary">
+                <i class="bx bx-arrow-back me-1"></i>返回列表
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        @* 左欄：基本資訊 *@
+        <div class="col-lg-5">
+
+            @* 活動資訊卡 *@
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                        <i class="bx bx-info-circle me-2" style="color:#3182ce;"></i>活動資訊
+                    </h5>
+                    <div>
+                        <span class="badge @Model.TypeBadgeClass me-1">@Model.TypeName</span>
+                        <span class="badge @Model.StatusBadgeClass">@Model.DisplayStatus</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3" style="color:#1e2d3d; word-break: break-word; overflow-wrap: break-word;">@Model.Name</h5>
+                    @if (!string.IsNullOrWhiteSpace(Model.Description))
+                    {
+                        <p class="text-muted mb-3" style="font-size:.875rem; line-height:1.7;">@Model.Description</p>
+                    }
+
+                    <div class="info-row">
+                        <span class="info-label">賣家</span>
+                        <span class="info-value">@Model.SellerName</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">開始時間</span>
+                        <span class="info-value">@Model.StartTime.ToString("yyyy/MM/dd HH:mm")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">結束時間</span>
+                        <span class="info-value">@Model.EndTime.ToString("yyyy/MM/dd HH:mm")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">建立時間</span>
+                        <span class="info-value">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span>
+                    </div>
+                    @if (Model.ReviewedAt.HasValue)
+                    {
+                        <div class="info-row">
+                            <span class="info-label">審核時間</span>
+                            <span class="info-value">@Model.ReviewedAt.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                        </div>
+                    }
+                    @if (Model.Status == 2 && !string.IsNullOrWhiteSpace(Model.RejectReason))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">拒絕理由</span>
+                            <span class="info-value text-danger">@Model.RejectReason</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* 時間進度條 *@
+            @{
+                var now = DateTime.Now;
+                var isActive = Model.Status == 1 && now >= Model.StartTime && now <= Model.EndTime;
+                var totalDays = (int)(Model.EndTime - Model.StartTime).TotalDays;
+                var elapsed   = isActive ? (int)(now - Model.StartTime).TotalDays : 0;
+            }
+            @if (Model.Status == 1)
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2" style="font-size:.85rem; color:#64748b;">
+                            <span><i class="bx bx-calendar me-1"></i>@Model.StartTime.ToString("MM/dd")</span>
+                            <span class="fw-semibold" style="color:#3182ce;">@Model.ProgressPercent%</span>
+                            <span>@Model.EndTime.ToString("MM/dd")<i class="bx bx-calendar-check ms-1"></i></span>
+                        </div>
+                        <div class="progress progress-time">
+                            <div class="progress-bar @(isActive ? "bg-success" : "bg-primary")"
+                                 style="width:@Model.ProgressPercent%"></div>
+                        </div>
+                        <div class="text-center mt-2" style="font-size:.813rem; color:#94a3b8;">
+                            @if (!isActive && now < Model.StartTime)
+                            {
+                                <span>距開始 @((int)(Model.StartTime - now).TotalDays) 天</span>
+                            }
+                            else if (isActive)
+                            {
+                                <span>距結束 @((int)(Model.EndTime - now).TotalDays) 天</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @* 審核區域（待審核時顯示）*@
+            @if (Model.IsPending)
+            {
+                <div class="review-panel pending">
+                    <h6 class="fw-bold mb-3" style="color:#92400e;">
+                        <i class="bx bx-check-shield me-2"></i>審核此活動
+                    </h6>
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="button" class="btn btn-success flex-fill" onclick="approvePromotion()">
+                            <i class="bx bx-check me-1"></i>核准
+                        </button>
+                        <button type="button" class="btn btn-danger flex-fill" onclick="toggleRejectPanel()">
+                            <i class="bx bx-x me-1"></i>拒絕
+                        </button>
+                    </div>
+                    <div id="rejectPanel" style="display:none;">
+                        <label class="form-label fw-semibold text-danger" style="font-size:.875rem;">
+                            <i class="bx bx-error-circle me-1"></i>拒絕理由 <span class="text-danger">*</span>
+                        </label>
+                        <textarea id="rejectReason" class="form-control mb-2" rows="3"
+                                  placeholder="請說明拒絕原因，此訊息將通知賣家..."></textarea>
+                        <button type="button" class="btn btn-danger w-100" onclick="rejectPromotion()">
+                            <i class="bx bx-send me-1"></i>送出拒絕
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* 右欄：商品/規則 *@
+        <div class="col-lg-7">
+            @if (Model.PromotionType == 2)
+            {
+                @* 折扣規則 *@
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-receipt me-2" style="color:#0ea5e9;"></i>折扣規則
+                            <span class="badge bg-label-secondary ms-2">@Model.Rules.Count 條</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (Model.Rules.Any())
+                        {
+                            <table class="table items-table mb-0">
+                                <thead style="background:#f8fafc;">
+                                    <tr class="outline-none focus:outline-none">
+                                        <th>規則類型</th>
+                                        <th>門檻</th>
+                                        <th>折扣方式</th>
+                                        <th>折扣值</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var rule in Model.Rules)
+                                    {
+                                        <tr class="outline-none focus:outline-none">
+                                            <td><span class="badge bg-label-info">@rule.RuleTypeName</span></td>
+                                            <td class="fw-semibold">
+                                                @rule.Threshold.ToString("N0") @(rule.RuleType == 1 ? "元" : "件")
+                                            </td>
+                                            <td>@rule.DiscountTypeName</td>
+                                            <td class="fw-semibold" style="color:#10b981;">
+                                                @(rule.DiscountType == 1 ? $"折抵 {rule.DiscountValue:N0} 元" : $"打 {rule.DiscountValue}% 折")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted" style="font-size:.875rem;">尚無規則</div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                @* 活動商品 *@
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-package me-2" style="color:#f59e0b;"></i>
+                            @(Model.PromotionType == 3 ? "搶購商品" : "活動商品")
+                            <span class="badge bg-label-secondary ms-2">@Model.Items.Count 件</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (Model.Items.Any())
+                        {
+                            <table class="table items-table mb-0">
+                                <thead style="background:#f8fafc;">
+                                    <tr class="outline-none focus:outline-none">
+                                        <th>商品名稱</th>
+                                        <th>原價</th>
+                                        <th>活動價</th>
+                                        <th>折扣</th>
+                                        @if (Model.PromotionType == 3)
+                                        {
+                                            <th>每人限購</th>
+                                            <th>庫存/已售</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        var discount = item.DiscountPrice.HasValue
+                                            ? (decimal)(item.OriginalPrice - item.DiscountPrice.Value) / item.OriginalPrice * 100
+                                            : 0;
+                                        <tr class="outline-none focus:outline-none">
+                                            <td class="fw-semibold" style="font-size:.875rem; word-break: break-word; max-width: 200px;">@item.ProductName</td>
+                                            <td style="color:#94a3b8; text-decoration:line-through; font-size:.875rem;">NT$ @item.OriginalPrice.ToString("N0")</td>
+                                            <td class="fw-bold" style="color:#ea5455; font-size:.938rem;">
+                                                @(item.DiscountPrice.HasValue ? $"NT$ {item.DiscountPrice.Value:N0}" : "-")
+                                            </td>
+                                            <td>
+                                                @if (discount > 0)
+                                                {
+                                                    <span class="badge bg-label-danger">-@discount.ToString("N0")%</span>
+                                                }
+                                            </td>
+                                            @if (Model.PromotionType == 3)
+                                            {
+                                                <td>@(item.QuantityLimit.HasValue ? $"{item.QuantityLimit} 件" : "不限")</td>
+                                                <td>
+                                                    @(item.StockLimit.HasValue ? item.StockLimit.ToString() : "∞")
+                                                    / @item.SoldCount 件
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted" style="font-size:.875rem;">尚無商品</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@* 隱藏的 antiforgery form *@
+<form id="actionForm" method="post" style="display:none;">@Html.AntiForgeryToken()</form>
+
+@section Scripts {
+<script>
+    const promotionId = @Model.Id;
+
+    function toggleRejectPanel() {
+        const panel = document.getElementById('rejectPanel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function approvePromotion() {
+        const ok = await showConfirm('確認核准', `確定要核准活動「@Html.Raw(Model.Name.Replace("'", "\\'"))」嗎？`);
+        if (!ok) return;
+        const token = document.querySelector('[name="__RequestVerificationToken"]').value;
+        const fd = new FormData();
+        fd.append('__RequestVerificationToken', token);
+        const res    = await fetch(`/Promotions/Approve/${promotionId}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+        const result = await res.json();
+        if (result.success) {
+            showMsg('success', result.message);
+            setTimeout(() => location.href = '/Promotions', 1500);
+        } else {
+            showMsg('error', result.message);
+        }
+    }
+
+    async function rejectPromotion() {
+        const reason = document.getElementById('rejectReason').value.trim();
+        if (!reason) { showMsg('error', '請填寫拒絕理由'); return; }
+        const token = document.querySelector('[name="__RequestVerificationToken"]').value;
+        const fd = new FormData();
+        fd.append('__RequestVerificationToken', token);
+        fd.append('reason', reason);
+        const res    = await fetch(`/Promotions/Reject/${promotionId}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+        const result = await res.json();
+        if (result.success) {
+            showMsg('success', result.message);
+            setTimeout(() => location.href = '/Promotions', 1500);
+        } else {
+            showMsg('error', result.message);
+        }
+    }
+
+    // showConfirm / showMsg 使用全域版本（由 _SneatLayout 提供）
+</script>
+}

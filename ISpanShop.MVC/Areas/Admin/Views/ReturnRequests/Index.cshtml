@@ -98,7 +98,8 @@
     <!-- 篩選卡片 -->
     <div class="filter-card">
         <form id="filterForm" class="row g-3 align-items-end">
-            <div class="col-md-4">
+            <!-- 基礎資訊 -->
+            <div class="col-md-3">
                 <label class="form-label">關鍵字搜尋 (訂單號/姓名/電話)</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bx bx-search"></i></span>
@@ -106,6 +107,7 @@
                 </div>
             </div>
             
+            <!-- 退貨狀態 -->
             <div class="col-md-3">
                 <label class="form-label">退貨進度</label>
                 <select class="form-select" name="Statuses" id="statusSelect">
@@ -117,7 +119,44 @@
                 </select>
             </div>
 
-            <div class="col-md-5 d-flex justify-content-end gap-2">
+            <!-- 日期維度 -->
+            <div class="col-md-3">
+                <label class="form-label">日期篩選維度</label>
+                <select class="form-select" name="DateDimension">
+                    @foreach (var item in Model.DateDimensionOptions)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            </div>
+
+            <!-- 排序方式 -->
+            <div class="col-md-3">
+                <label class="form-label">排序方式</label>
+                <select class="form-select" name="SortBy" id="sortSelect">
+                    <option value="ReturnRequestDate_desc">申請時間 (新→舊)</option>
+                    <option value="ReturnRequestDate_asc">申請時間 (舊→新)</option>
+                    <option value="RefundDate_desc">結案日期 (新→舊)</option>
+                    <option value="RefundDate_asc">結案日期 (舊→新)</option>
+                    <option value="OrderDate_desc">下單時間 (新→舊)</option>
+                    <option value="OrderDate_asc">下單時間 (舊→新)</option>
+                    <option value="TotalAmount_desc">退款金額 (高→低)</option>
+                    <option value="TotalAmount_asc">退款金額 (低→高)</option>
+                </select>
+            </div>
+
+            <!-- 日期區間 -->
+            <div class="col-md-5 mt-3">
+                <label class="form-label">日期範圍</label>
+                <div class="input-group">
+                    <span class="input-group-text">從</span>
+                    <input type="date" name="StartDate" class="form-control">
+                    <span class="input-group-text">至</span>
+                    <input type="date" name="EndDate" class="form-control">
+                </div>
+            </div>
+
+            <div class="col-md-7 d-flex justify-content-end gap-2 mt-3">
                 <button type="button" class="btn btn-danger rounded-pill px-4" onclick="loadReturnData(1)">
                     <i class="bx bx-filter-alt me-1"></i> 執行篩選
                 </button>
@@ -137,6 +176,8 @@
                         <th>買家名稱</th>
                         <th>申請退款金額</th>
                         <th>下單日期</th>
+                        <th>申請日期</th>
+                        <th>結案日期</th>
                         <th>當前狀態</th>
                         <th class="text-center">操作</th>
                     </tr>
@@ -158,12 +199,37 @@
 
 @section Scripts {
     <script>
-        let currentSort = { SortBy: 'OrderDate', IsDescending: true };
+        let currentSort = { SortBy: 'ReturnRequestDate', IsDescending: true };
         let currentPage = 1;
         const pageSize = 10;
 
         $(document).ready(function() {
-            loadReturnData(1);
+            // 嘗試還原狀態
+            const savedState = sessionStorage.getItem('returns_list_state');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                
+                // 還原表單
+                const form = $('#filterForm');
+                if (state.Keyword) form.find('[name="Keyword"]').val(state.Keyword);
+                if (state.DateDimension) form.find('[name="DateDimension"]').val(state.DateDimension);
+                if (state.StartDate) form.find('[name="StartDate"]').val(state.StartDate);
+                if (state.EndDate) form.find('[name="EndDate"]').val(state.EndDate);
+                
+                if (state.Statuses && state.Statuses.length > 0) {
+                    $('#statusSelect').val(state.Statuses[0].toString());
+                }
+
+                // 還原分頁與排序
+                currentPage = state.PageNumber || 1;
+                currentSort.SortBy = state.SortBy || 'ReturnRequestDate';
+                currentSort.IsDescending = state.IsDescending !== undefined ? state.IsDescending : true;
+                $('#sortSelect').val(`${currentSort.SortBy}_${currentSort.IsDescending ? 'desc' : 'asc'}`);
+
+                updateCardActiveStatus(state.Statuses && state.Statuses.length === 1 ? state.Statuses[0] : null);
+            }
+
+            loadReturnData(currentPage);
         });
 
         function filterByStatus(statusId) {
@@ -178,18 +244,29 @@
 
         function updateCardActiveStatus(statusId) {
             $('.stat-card').removeClass('stat-active');
-            if (statusId === null) $('#card-all').addClass('stat-active');
+            if (statusId === null || statusId === undefined) $('#card-all').addClass('stat-active');
             else $(`#card-${statusId}`).addClass('stat-active');
         }
 
         function resetForm() {
+            sessionStorage.removeItem('returns_list_state');
             $('#filterForm')[0].reset();
             updateCardActiveStatus(null);
+            currentPage = 1;
             loadReturnData(1);
         }
 
         function loadReturnData(page) {
             currentPage = page;
+
+            // 從下拉選單讀取排序設定
+            const sortVal = $('#sortSelect').val();
+            if (sortVal) {
+                const parts = sortVal.split('_');
+                currentSort.SortBy = parts[0];
+                currentSort.IsDescending = parts[1] === 'desc';
+            }
+
             const formData = $('#filterForm').serializeArray();
             let searchParams = { Statuses: [] };
 
@@ -200,6 +277,9 @@
             });
             
             const requestData = { ...searchParams, ...currentSort, PageNumber: page, PageSize: pageSize };
+
+            // 儲存狀態
+            sessionStorage.setItem('returns_list_state', JSON.stringify(requestData));
 
             $.ajax({
                 url: '@Url.Action("GetReturnListAjax", "ReturnRequests")',
@@ -219,23 +299,34 @@
             const tbody = $('#returnsTableBody');
             tbody.empty();
             if(!data || data.length === 0) {
-                tbody.append('<tr><td colspan="6" class="text-center py-5">目前沒有待處理的退貨申請</td></tr>');
+                tbody.append('<tr><td colspan="8" class="text-center py-5">目前沒有待處理的退貨申請</td></tr>');
                 return;
             }
 
             const statusStyles = { 5: 'bg-label-warning', 6: 'bg-label-success' };
 
             data.forEach(order => {
+                const isPending = order.statusId === 5;
+                const btnClass = isPending ? 'btn-outline-danger' : 'btn-outline-secondary';
+                const btnText = isPending ? '審核退款' : '查看詳情';
+                const btnIcon = isPending ? 'bx-edit-alt' : 'bx-show';
+
+                const orderDate = new Date(order.orderDate).toLocaleDateString();
+                const reqDate = order.returnRequestCreatedAt ? new Date(order.returnRequestCreatedAt).toLocaleDateString() : '-';
+                const refDate = order.refundDate ? new Date(order.refundDate).toLocaleDateString() : '-';
+
                 tbody.append(`
                     <tr>
                         <td><span class="fw-bold text-danger">${order.orderUuid}</span></td>
                         <td>${order.memberName}</td>
                         <td class="fw-bold text-dark">$${order.totalAmount.toLocaleString()}</td>
-                        <td class="small">${new Date(order.orderDate).toLocaleDateString()}</td>
+                        <td class="small">${orderDate}</td>
+                        <td class="small text-primary">${reqDate}</td>
+                        <td class="small text-success">${refDate}</td>
                         <td><span class="badge-soft ${statusStyles[order.statusId] || 'bg-label-secondary'}">${order.statusName}</span></td>
                         <td class="text-center">
-                            <a href="@Url.Action("Review", "ReturnRequests")/${order.orderId}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                <i class="bx bx-edit-alt me-1"></i>審核退款
+                            <a href="@Url.Action("Review", "ReturnRequests")/${order.orderId}" class="btn btn-sm ${btnClass} rounded-pill px-3">
+                                <i class="bx ${btnIcon} me-1"></i>${btnText}
                             </a>
                         </td>
                     </tr>
@@ -253,10 +344,14 @@
             info.text(`顯示第 ${startIdx} 到 ${endIdx} 筆，共 ${data.totalCount} 筆`);
 
             list.append(`<li class="page-item ${data.pageNumber === 1 ? 'disabled' : ''}"><a class="page-link" href="javascript:loadReturnData(${data.pageNumber - 1})"><i class="bx bx-chevron-left"></i></a></li>`);
-            for (let i = 1; i <= data.totalPages; i++) {
-                if (i == 1 || i == data.totalPages || (i >= data.pageNumber - 2 && i <= data.pageNumber + 2)) {
-                    list.append(`<li class="page-item ${i === data.pageNumber ? 'active' : ''}"><a class="page-link" href="javascript:loadReturnData(${i})">${i}</a></li>`);
-                }
+            let startPage = Math.max(1, data.pageNumber - 2);
+            let endPage = Math.min(data.totalPages, startPage + 4);
+            if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                list.append(`<li class="page-item ${i === data.pageNumber ? 'active' : ''}">
+                    <a class="page-link" href="javascript:loadReturnData(${i})">${i}</a>
+                </li>`);
             }
             list.append(`<li class="page-item ${data.pageNumber === data.totalPages ? 'disabled' : ''}"><a class="page-link" href="javascript:loadReturnData(${data.pageNumber + 1})"><i class="bx bx-chevron-right"></i></a></li>`);
         }

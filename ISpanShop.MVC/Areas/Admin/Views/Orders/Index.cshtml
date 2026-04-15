@@ -113,6 +113,13 @@
             </div>
         </div>
         <div class="col-6 col-md-3">
+            <div id="card-3" class="stat-card stat-completed" onclick="filterByStatus(3)">
+                <div class="stat-icon"><i class="bx bx-check-circle"></i></div>
+                <div class="stat-num">@Model.CountCompleted</div>
+                <div class="stat-label">已完成</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
             <div id="card-0" class="stat-card stat-pending" onclick="filterByStatus(0)">
                 <div class="stat-icon"><i class="bx bx-time"></i></div>
                 <div class="stat-num">@Model.CountPendingPayment</div>
@@ -120,17 +127,10 @@
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div id="card-1" class="stat-card stat-processing" onclick="filterByStatus(1)">
+            <div id="card-1" class="stat-card stat-processing" onclick="window.location.href='@Url.Action("Index", "ShipmentWorkstation", new { area = "Admin" })'">
                 <div class="stat-icon"><i class="bx bx-package"></i></div>
                 <div class="stat-num">@Model.CountPendingShipment</div>
                 <div class="stat-label">待出貨</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div id="card-3" class="stat-card stat-completed" onclick="filterByStatus(3)">
-                <div class="stat-icon"><i class="bx bx-check-circle"></i></div>
-                <div class="stat-num">@Model.CountCompleted</div>
-                <div class="stat-label">已完成</div>
             </div>
         </div>
     </div>
@@ -261,15 +261,43 @@
         $(document).ready(function() {
             $('.select2').select2({ placeholder: '選擇狀態', allowClear: true, width: '100%' });
 
-            // 處理 URL 參數 (如果有)
-            const urlParams = new URLSearchParams(window.location.search);
-            if(urlParams.get('Statuses')) {
-                const status = urlParams.get('Statuses');
-                $('#statusSelect').val([status]).trigger('change');
-                updateCardActiveStatus(status);
+            // 嘗試還原狀態
+            const savedState = sessionStorage.getItem('orders_list_state');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                
+                // 還原表單欄位
+                const form = $('#filterForm');
+                if (state.Keyword) form.find('[name="Keyword"]').val(state.Keyword);
+                if (state.MinAmount) form.find('[name="MinAmount"]').val(state.MinAmount);
+                if (state.MaxAmount) form.find('[name="MaxAmount"]').val(state.MaxAmount);
+                if (state.StartDate) form.find('[name="StartDate"]').val(state.StartDate);
+                if (state.EndDate) form.find('[name="EndDate"]').val(state.EndDate);
+                if (state.DateDimension) form.find('[name="DateDimension"]').val(state.DateDimension);
+                
+                // 還原 Select2
+                if (state.Statuses && state.Statuses.length > 0) {
+                    $('#statusSelect').val(state.Statuses.map(String)).trigger('change');
+                }
+
+                // 還原分頁與排序變數
+                currentPage = state.PageNumber || 1;
+                currentSort.SortBy = state.SortBy || 'OrderDate';
+                currentSort.IsDescending = state.IsDescending !== undefined ? state.IsDescending : true;
+                $('#sortSelect').val(`${currentSort.SortBy}_${currentSort.IsDescending ? 'desc' : 'asc'}`);
+
+                updateCardActiveStatus(state.Statuses && state.Statuses.length === 1 ? state.Statuses[0] : null);
+            } else {
+                // 處理 URL 參數 (僅在無 Session 紀錄時)
+                const urlParams = new URLSearchParams(window.location.search);
+                if(urlParams.get('Statuses')) {
+                    const status = urlParams.get('Statuses');
+                    $('#statusSelect').val([status]).trigger('change');
+                    updateCardActiveStatus(status);
+                }
             }
 
-            loadOrderData(1);
+            loadOrderData(currentPage);
         });
 
         function filterByStatus(statusId) {
@@ -284,7 +312,7 @@
 
         function updateCardActiveStatus(statusId) {
             $('.stat-card').removeClass('stat-active');
-            if (statusId === null) {
+            if (statusId === null || statusId === undefined) {
                 $('#card-all').addClass('stat-active');
             } else {
                 $(`#card-${statusId}`).addClass('stat-active');
@@ -292,9 +320,11 @@
         }
 
         function resetForm() {
+            sessionStorage.removeItem('orders_list_state');
             $('#filterForm')[0].reset();
             $('.select2').val(null).trigger('change');
             updateCardActiveStatus(null);
+            currentPage = 1;
             loadOrderData(1);
         }
 
@@ -345,6 +375,9 @@
                 PageNumber: page, PageSize: pageSize 
             };
 
+            // 儲存狀態到 SessionStorage
+            sessionStorage.setItem('orders_list_state', JSON.stringify(requestData));
+
             $.ajax({
                 url: '@Url.Action("GetOrderListAjax", "Orders")',
                 type: 'POST',
@@ -387,12 +420,12 @@
                         <td><span class="fw-bold text-primary">${order.orderUuid}</span></td>
                         <td>${formatDateTime(order.orderDate)}</td>
                         <td>${order.memberName}</td>
-                        <td><span class="badge bg-label-dark">${order.storeName}</span></td>
+                        <td style="color:#2d3748;">${order.storeName}</td>
                         <td class="fw-bold">$${order.totalAmount.toLocaleString()}</td>
                         <td><span class="badge-soft ${statusStyles[order.statusId] || 'bg-label-dark'}">${order.statusName}</span></td>
                         <td class="text-center">
-                            <a href="@Url.Content("~/Admin/Orders/Details/")${order.orderId}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                <i class="bx bx-show me-1"></i>詳情
+                            <a href="@Url.Content("~/Admin/Orders/Details/")${order.orderId}" class="btn btn-sm btn-icon btn-outline-primary" title="詳情">
+                                <i class="bx bx-show"></i>
                             </a>
                         </td>
                     </tr>

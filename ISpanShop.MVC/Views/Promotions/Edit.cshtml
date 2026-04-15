@@ -1,0 +1,611 @@
+@model ISpanShop.MVC.Models.Promotions.PromotionFormVm
+
+@{
+    Layout = "~/Views/Shared/_SneatLayout.cshtml";
+    ViewData["Title"] = "編輯促銷活動";
+    bool isEdit        = Model.Id > 0;
+    bool onlyEndTime   = ViewBag.OnlyEndTime == true;
+    int  promoStatus   = (int)(ViewBag.PromotionStatus ?? 0);
+    string rejectReason = (string)(ViewBag.RejectReason ?? "");
+
+    // 序列化現有 items / rules 給 JS
+    var itemsJson = System.Text.Json.JsonSerializer.Serialize(Model.Items.Select(i => new {
+        productId = i.ProductId, productName = i.ProductName, originalPrice = i.OriginalPrice,
+        discountPrice = i.DiscountPrice, quantityLimit = i.QuantityLimit, stockLimit = i.StockLimit
+    }));
+    var rulesJson = System.Text.Json.JsonSerializer.Serialize(Model.Rules.Select(r => new {
+        ruleType = r.RuleType, threshold = r.Threshold, discountType = r.DiscountType, discountValue = r.DiscountValue
+    }));
+}
+
+<style>
+    .font-noto { font-family: 'Public Sans', sans-serif; }
+    /* 類型卡片 */
+    .type-card {
+        border: 2px solid #e2e8f0; border-radius: 12px; padding: 1.4rem 1rem 1.2rem;
+        cursor: pointer; transition: all .2s; position: relative; text-align: center; min-height: 115px;
+    }
+    .type-card:not(.disabled-card):hover { border-color: #93c5fd; background: #f0f7ff; transform: translateY(-2px); }
+    .type-card.selected { border-color: #3182ce; background: #eff6ff; box-shadow: 0 0 0 3px rgba(49,130,206,.18); }
+    .type-card .check-badge {
+        display: none; position: absolute; top: 8px; right: 8px;
+        width: 22px; height: 22px; background: #3182ce; color: #fff;
+        border-radius: 50%; font-size: .75rem; line-height: 22px; text-align: center;
+    }
+    .type-card.selected .check-badge { display: block; }
+    .type-icon-wrap { font-size: 2.2rem; line-height: 1; margin-bottom: .5rem; }
+    .disabled-card { opacity: .6; cursor: not-allowed; pointer-events: none; }
+    /* 商品/規則區域 */
+    .section-panel { display: none; }
+    .section-panel.active { display: block; }
+    .items-table th, .items-table td { font-size: .875rem; vertical-align: middle; }
+    .empty-state-wrap { padding: 2rem 1rem; text-align: center; }
+    .empty-state-wrap .empty-icon { font-size: 2.8rem; color: #cbd5e1; margin-bottom: .5rem; }
+    .empty-state-wrap p { color: #94a3b8; font-size: .875rem; margin-bottom: 1rem; }
+</style>
+
+<div class="container-fluid py-4 font-noto">
+
+    <div class="mb-4">
+        <h2 class="fw-bold mb-2" style="color:#1e2d3d; letter-spacing:-.02em;">
+            <i class="bx bx-edit-alt me-2" style="color:#3182ce;"></i>編輯促銷活動
+        </h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index")" style="color:#3182ce;">促銷管理</a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action("Detail", new { id = Model.Id })" style="color:#3182ce;">活動詳情</a></li>
+                <li class="breadcrumb-item active">編輯</li>
+            </ol>
+        </nav>
+    </div>
+
+    <form id="promotionForm" action="@Url.Action("Edit", new { id = Model.Id })" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-4">
+            @* ── 左欄 ── *@
+            <div class="col-lg-8">
+
+                @* 基本資訊（注意：整張卡不加 readonly-cover，讓 endTime 保持可編輯）*@
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-info-circle me-2" style="color:#3182ce;"></i>基本資訊
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">活動名稱 <span class="text-danger">*</span></label>
+                                <input type="text" id="name" class="form-control" value="@Model.Name"
+                                       maxlength="100" @(onlyEndTime ? "readonly" : "") required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">活動說明</label>
+                                <textarea id="description" class="form-control" rows="3"
+                                          @(onlyEndTime ? "readonly" : "")>@Model.Description</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">開始時間</label>
+                                <input type="datetime-local" id="startTime" class="form-control"
+                                       value="@Model.StartTime.ToString("yyyy-MM-ddTHH:mm")"
+                                       @(onlyEndTime ? "readonly" : "") />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    結束時間 <span class="text-danger">*</span>
+                                    @if (onlyEndTime)
+                                    {
+                                        <span class="badge bg-label-success ms-1" style="font-size:.75rem;">可修改</span>
+                                    }
+                                </label>
+                                <input type="datetime-local" id="endTime" class="form-control"
+                                       value="@Model.EndTime.ToString("yyyy-MM-ddTHH:mm")" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    適用賣家
+                                    @if (isEdit)
+                                    {
+                                        <small class="text-danger ms-1" style="font-size:.75rem;">
+                                            <i class="bx bx-lock me-1"></i>建立後不可更改
+                                        </small>
+                                    }
+                                </label>
+                                @if (isEdit)
+                                {
+                                    <div class="form-control bg-light d-flex align-items-center gap-2"
+                                         style="cursor:default; color:#4a5568;">
+                                        <i class="bx bx-store text-muted"></i>
+                                        <span>@(Model.Sellers.FirstOrDefault(s => s.Id == Model.SellerId)?.Name ?? "—")</span>
+                                    </div>
+                                    <input type="hidden" id="sellerId" name="SellerId" value="@Model.SellerId" />
+                                }
+                                else
+                                {
+                                    <select id="sellerId" class="form-select">
+                                        @foreach (var s in Model.Sellers)
+                                        {
+                                            <option value="@s.Id" selected="@(s.Id == Model.SellerId)">@s.Name</option>
+                                        }
+                                    </select>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* 活動類型 *@
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-category me-2" style="color:#3182ce;"></i>活動類型
+                            @if (isEdit)
+                            {
+                                <span class="badge bg-label-danger ms-2" style="font-size:.75rem;">
+                                    <i class="bx bx-lock me-1"></i>建立後無法修改
+                                </span>
+                            }
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (!isEdit)
+                        {
+                            <p class="text-muted mb-3" style="font-size:.85rem;">
+                                <i class="bx bx-info-circle me-1"></i>
+                                請選擇活動類型（選擇後下方會顯示對應的設定區域）
+                            </p>
+                        }
+                        <div class="row g-3">
+                            @foreach (var (t, icon, label, desc) in new[] {
+                                (1,"⚡","限時特賣","指定商品設定活動價"),
+                                (2,"🎁","滿額折扣","設定滿額/滿件折扣規則"),
+                                (3,"🔥","限量搶購","設定限購數量與活動庫存")
+                            })
+                            {
+                                bool isSelected = t == Model.PromotionType;
+                                <div class="col-md-4"@(isEdit && !isSelected ? Html.Raw(" style=\"opacity:.4;pointer-events:none\"") : Html.Raw(""))>
+                                    <div class="type-card @(isSelected ? "selected" : "") @(!isEdit && onlyEndTime ? "disabled-card" : "")"
+                                         onclick="selectType(@t)" id="typeCard@t">
+                                        <span class="check-badge">
+                                            @if (isEdit && isSelected)
+                                            {
+                                                <i class="bx bx-lock"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bx bx-check"></i>
+                                            }
+                                        </span>
+                                        <div class="type-icon-wrap">@icon</div>
+                                        <div class="fw-semibold" style="font-size:.95rem;">@label</div>
+                                        <div class="text-muted" style="font-size:.8rem; margin-top:.25rem;">@desc</div>
+                                        @if (isEdit && isSelected)
+                                        {
+                                            <small class="text-danger d-block mt-1" style="font-size:.75rem;">建立後無法修改</small>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @* 限時特賣 *@
+                <div id="section1" class="section-panel @(Model.PromotionType == 1 ? "active" : "") card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-store me-2" style="color:#f59e0b;"></i>活動商品
+                        </h5>
+                        @if (!onlyEndTime)
+                        {
+                            <button type="button" class="btn btn-sm btn-success" onclick="openProductModal()">
+                                <i class="bx bx-plus me-1"></i>新增商品
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table items-table mb-0">
+                            <thead style="background:#f8fafc;">
+                                <tr class="outline-none focus:outline-none"><th>商品名稱</th><th>原價</th><th>活動價</th><th></th></tr>
+                            </thead>
+                            <tbody id="itemsBody1"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @* 滿額折扣 *@
+                <div id="section2" class="section-panel @(Model.PromotionType == 2 ? "active" : "") card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-receipt me-2" style="color:#0ea5e9;"></i>折扣規則
+                        </h5>
+                        @if (!onlyEndTime)
+                        {
+                            <button type="button" class="btn btn-sm btn-primary" onclick="addRule()">
+                                <i class="bx bx-plus me-1"></i>新增規則
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table items-table mb-0">
+                            <thead style="background:#f8fafc;">
+                                <tr class="outline-none focus:outline-none"><th>類型</th><th>門檻</th><th>折扣方式</th><th>折扣值</th><th></th></tr>
+                            </thead>
+                            <tbody id="rulesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @* 限量搶購 *@
+                <div id="section3" class="section-panel @(Model.PromotionType == 3 ? "active" : "") card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-flame me-2" style="color:#ea5455;"></i>搶購商品
+                        </h5>
+                        @if (!onlyEndTime)
+                        {
+                            <button type="button" class="btn btn-sm btn-success" onclick="openProductModal()">
+                                <i class="bx bx-plus me-1"></i>新增商品
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table items-table mb-0">
+                            <thead style="background:#f8fafc;">
+                                <tr class="outline-none focus:outline-none"><th>商品名稱</th><th>原價</th><th>活動價</th><th>每人限購</th><th>活動庫存</th><th></th></tr>
+                            </thead>
+                            <tbody id="itemsBody3"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            @* ── 右欄 ── *@
+            <div class="col-lg-4">
+                @* 操作按鈕 *@
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="button" id="saveBtn" class="btn btn-primary" onclick="submitForm()">
+                                <i class="bx bx-save me-1"></i>儲存變更
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-label-secondary">
+                                <i class="bx bx-arrow-back me-1"></i>返回列表
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                @* 狀態說明面板 *@
+                @if (promoStatus == 0)
+                {
+                    <div class="card shadow-sm mb-4" style="border-left:4px solid #f59e0b; background:#fffbeb;">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-2" style="color:#92400e;">
+                                <i class="bx bx-time me-2"></i>待審核狀態
+                            </h6>
+                            <ul class="mb-0" style="font-size:.85rem; color:#78350f; padding-left:1.2rem; line-height:1.9;">
+                                <li>此活動<strong>尚未審核</strong>，所有欄位皆可編輯</li>
+                                <li>儲存後需等待管理員審核</li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+                else if (promoStatus == 1 && !onlyEndTime)
+                {
+                    <div class="card shadow-sm mb-4" style="border-left:4px solid #3182ce; background:#eff6ff;">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-2" style="color:#1e3a5f;">
+                                <i class="bx bx-calendar me-2"></i>已核准（即將開始）
+                            </h6>
+                            <ul class="mb-0" style="font-size:.85rem; color:#1e40af; padding-left:1.2rem; line-height:1.9;">
+                                <li>此活動<strong>已核准</strong>但尚未開始</li>
+                                <li>現在可修改<strong>所有活動內容</strong></li>
+                                <li>活動開始後僅能修改結束時間</li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+                else if (promoStatus == 1 && onlyEndTime)
+                {
+                    <div class="card shadow-sm mb-4" style="border-left:4px solid #0ea5e9; background:#f0f9ff;">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-2" style="color:#0c4a6e;">
+                                <i class="bx bx-play-circle me-2"></i>活動進行中
+                            </h6>
+                            <ul class="mb-0" style="font-size:.85rem; color:#0369a1; padding-left:1.2rem; line-height:1.9;">
+                                <li>此活動<strong>正在進行中</strong></li>
+                                <li>僅能延長或縮短<strong>結束時間</strong></li>
+                                <li>其他欄位已鎖定，無法修改</li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+                else if (promoStatus == 2)
+                {
+                    <div class="card shadow-sm mb-4" style="border-left:4px solid #ea5455; background:#fff5f5;">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-2" style="color:#991b1b;">
+                                <i class="bx bx-x-circle me-2"></i>已拒絕
+                            </h6>
+                            @if (!string.IsNullOrWhiteSpace(rejectReason))
+                            {
+                                <div class="mb-2 p-2 rounded" style="background:#fee2e2; font-size:.85rem; color:#b91c1c; line-height:1.6;">
+                                    <strong>拒絕原因：</strong>@rejectReason
+                                </div>
+                            }
+                            <ul class="mb-0" style="font-size:.85rem; color:#991b1b; padding-left:1.2rem; line-height:1.9;">
+                                <li>所有欄位皆可修改</li>
+                                <li>儲存後將<strong>重新送審</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </form>
+</div>
+
+@* 商品 Modal *@
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bx bx-package me-2"></i>選擇商品</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="p-3 border-bottom">
+                    <div class="input-group">
+                        <input type="text" id="productSearch" class="form-control" placeholder="搜尋商品名稱或分類..." />
+                        <button class="btn btn-primary" onclick="searchProducts(1)"><i class="bx bx-search"></i></button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead style="background:#f8fafc;">
+                            <tr>
+                                <th style="width:40px;"></th>
+                                <th>商品名稱</th><th>分類</th><th>定價</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productModalBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="productPagination" class="px-3 pt-1 pb-0"></div>
+            <div class="modal-footer">
+                <span class="text-muted me-auto" style="font-size:.875rem;" id="selectedCount">已選 0 個商品</span>
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmProducts()">確認加入</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const _onlyEndTime = @(onlyEndTime ? "true" : "false");
+    const _isEdit      = @(isEdit ? "true" : "false");
+    let currentType   = @Model.PromotionType;
+    let selectedItems = @Html.Raw(itemsJson);
+    let selectedRules = @Html.Raw(rulesJson);
+
+    // 初始化渲染
+    renderItems();
+    renderRules();
+
+    function selectType(t) {
+        if (_onlyEndTime || _isEdit) return;
+        currentType = t;
+        [1,2,3].forEach(i => {
+            document.getElementById(`typeCard${i}`).classList.toggle('selected', i === t);
+            document.getElementById(`section${i}`).classList.toggle('active', i === t);
+        });
+        renderItems();
+    }
+
+    function renderItems() {
+        const bodyId  = currentType === 1 ? 'itemsBody1' : 'itemsBody3';
+        const colSpan = currentType === 1 ? 4 : 6;
+        const tbody   = document.getElementById(bodyId);
+        if (!selectedItems.length) {
+            tbody.innerHTML = _onlyEndTime
+                ? `<tr><td colspan="${colSpan}" style="padding:1.5rem; text-align:center; color:#a1acb8;">尚未選擇商品</td></tr>`
+                : `<tr><td colspan="${colSpan}">
+                    <div class="empty-state-wrap">
+                        <div class="empty-icon"><i class="bx bx-package"></i></div>
+                        <p>尚未選擇商品<br>請加入要參加此活動的商品並設定活動價格</p>
+                        <button type="button" class="btn btn-success px-4" onclick="openProductModal()">
+                            <i class="bx bx-plus me-1"></i>新增商品
+                        </button>
+                    </div>
+                   </td></tr>`;
+            return;
+        }
+        tbody.innerHTML = selectedItems.map((item, i) => {
+            const ro = _onlyEndTime ? 'readonly' : '';
+            let extra = '';
+            if (currentType === 1) {
+                extra = `<td><input type="number" class="form-control form-control-sm" style="width:120px;" ${ro}
+                            value="${item.discountPrice ?? ''}" onchange="selectedItems[${i}].discountPrice = +this.value || null" /></td>`;
+            } else {
+                extra = `
+                    <td><input type="number" class="form-control form-control-sm" style="width:110px;" ${ro}
+                            value="${item.discountPrice ?? ''}" onchange="selectedItems[${i}].discountPrice = +this.value || null" /></td>
+                    <td><input type="number" class="form-control form-control-sm" style="width:90px;" ${ro}
+                            value="${item.quantityLimit ?? ''}" onchange="selectedItems[${i}].quantityLimit = +this.value || null" /></td>
+                    <td><input type="number" class="form-control form-control-sm" style="width:90px;" ${ro}
+                            value="${item.stockLimit ?? ''}" onchange="selectedItems[${i}].stockLimit = +this.value || null" /></td>`;
+            }
+            const delBtn = _onlyEndTime ? '<td></td>' : `<td><button type="button" class="btn btn-sm btn-label-danger" onclick="removeItem(${i})"><i class="bx bx-x"></i></button></td>`;
+            return `<tr>
+                <td style="font-size:.875rem; font-weight:600;">${item.productName}</td>
+                <td style="font-size:.875rem; color:#64748b;">NT$ ${item.originalPrice.toLocaleString()}</td>
+                ${extra}${delBtn}
+            </tr>`;
+        }).join('');
+    }
+    function removeItem(i) { selectedItems.splice(i,1); renderItems(); }
+
+    function renderRules() {
+        const tbody = document.getElementById('rulesBody');
+        if (!selectedRules.length) {
+            tbody.innerHTML = _onlyEndTime
+                ? '<tr><td colspan="5" style="padding:1.5rem; text-align:center; color:#a1acb8;">尚未新增規則</td></tr>'
+                : `<tr><td colspan="5">
+                    <div class="empty-state-wrap">
+                        <div class="empty-icon"><i class="bx bx-receipt"></i></div>
+                        <p>尚未設定折扣規則<br>請設定滿額或滿件的折扣門檻與優惠</p>
+                        <button type="button" class="btn btn-primary px-4" onclick="addRule()">
+                            <i class="bx bx-plus me-1"></i>新增規則
+                        </button>
+                    </div>
+                   </td></tr>`;
+            return;
+        }
+        const ro = _onlyEndTime ? 'disabled' : '';
+        tbody.innerHTML = selectedRules.map((r, i) => `
+            <tr>
+                <td><select class="form-select form-select-sm" style="width:90px;" ${ro} onchange="selectedRules[${i}].ruleType=+this.value">
+                    <option value="1" ${r.ruleType===1?'selected':''}>滿額</option>
+                    <option value="2" ${r.ruleType===2?'selected':''}>滿件</option></select></td>
+                <td><input type="number" class="form-control form-control-sm" style="width:110px;" ${ro} value="${r.threshold}" onchange="selectedRules[${i}].threshold=+this.value||0"/></td>
+                <td><select class="form-select form-select-sm" style="width:110px;" ${ro} onchange="selectedRules[${i}].discountType=+this.value">
+                    <option value="1" ${r.discountType===1?'selected':''}>折抵金額</option>
+                    <option value="2" ${r.discountType===2?'selected':''}>折扣百分比</option></select></td>
+                <td><input type="number" class="form-control form-control-sm" style="width:100px;" ${ro} value="${r.discountValue}" onchange="selectedRules[${i}].discountValue=+this.value||0"/></td>
+                ${_onlyEndTime ? '<td></td>' : `<td><button type="button" class="btn btn-sm btn-label-danger" onclick="removeRule(${i})"><i class="bx bx-x"></i></button></td>`}
+            </tr>`).join('');
+    }
+    function addRule() { selectedRules.push({ruleType:1,threshold:1000,discountType:1,discountValue:100}); renderRules(); }
+    function removeRule(i) { selectedRules.splice(i,1); renderRules(); }
+
+    function openProductModal() {
+        searchProducts(1);
+        new bootstrap.Modal(document.getElementById('productModal')).show();
+    }
+    async function searchProducts(page) {
+        page = page || 1;
+        const kw    = document.getElementById('productSearch')?.value ?? '';
+        const tbody = document.getElementById('productModalBody');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">搜尋中...</td></tr>';
+        const res  = await fetch(`/Promotions/SearchProducts?keyword=${encodeURIComponent(kw)}&page=${page}&pageSize=5`);
+        const data = await res.json();
+        if (!data.items.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">找不到商品</td></tr>';
+            document.getElementById('productPagination').innerHTML = '';
+            return;
+        }
+        tbody.innerHTML = data.items.map(p => {
+            const chk = selectedItems.some(x => x.productId === p.id) ? 'checked' : '';
+            return `<tr><td><input type="checkbox" class="form-check-input product-cb" value="${p.id}"
+                data-name="${p.name}" data-price="${p.price}" ${chk}/></td>
+                <td style="font-weight:600;font-size:.875rem;">${p.name}</td>
+                <td><span class="badge bg-label-secondary">${p.categoryName}</span></td>
+                <td style="font-weight:600;">NT$ ${p.price.toLocaleString()}</td></tr>`;
+        }).join('');
+        updateSelectedCount();
+        document.querySelectorAll('.product-cb').forEach(cb => cb.addEventListener('change', updateSelectedCount));
+        _renderProductPagination(data.currentPage, data.totalPages, data.totalCount);
+    }
+
+    function _renderProductPagination(page, totalPages, totalCount) {
+        const container = document.getElementById('productPagination');
+        if (totalPages <= 1) { container.innerHTML = ''; return; }
+        let html = '<nav class="d-flex align-items-center justify-content-between py-1">';
+        html += `<small class="text-muted">共 ${totalCount} 筆商品</small>`;
+        html += '<ul class="pagination pagination-sm mb-0">';
+        html += `<li class="page-item ${page <= 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="searchProducts(${page - 1}); return false;">&laquo;</a></li>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="searchProducts(${i}); return false;">${i}</a></li>`;
+        }
+        html += `<li class="page-item ${page >= totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="searchProducts(${page + 1}); return false;">&raquo;</a></li>`;
+        html += '</ul></nav>';
+        container.innerHTML = html;
+    }
+
+    function updateSelectedCount() {
+        const selectedIds = new Set(selectedItems.map(x => x.productId));
+        document.querySelectorAll('.product-cb').forEach(cb => {
+            if (cb.checked) selectedIds.add(+cb.value);
+            else            selectedIds.delete(+cb.value);
+        });
+        document.getElementById('selectedCount').textContent = `已選 ${selectedIds.size} 個商品`;
+    }
+    function confirmProducts() {
+        const checkedIds = Array.from(document.querySelectorAll('.product-cb:checked')).map(cb => +cb.value);
+        document.querySelectorAll('.product-cb:checked').forEach(cb => {
+            const pid = +cb.value;
+            if (!selectedItems.some(x => x.productId === pid))
+                selectedItems.push({ productId: pid, productName: cb.dataset.name, originalPrice: +cb.dataset.price, discountPrice: null, quantityLimit: null, stockLimit: null });
+        });
+        selectedItems = selectedItems.filter(x => {
+            const inModal = document.querySelector(`.product-cb[value="${x.productId}"]`);
+            return !inModal || checkedIds.includes(x.productId);
+        });
+        renderItems();
+        bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+    }
+
+    async function submitForm() {
+        const endTime = document.getElementById('endTime').value;
+        if (!endTime) { showMsg('error', '請填寫結束時間'); return; }
+
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>儲存中...';
+
+        const fd = new FormData();
+        fd.append('__RequestVerificationToken', document.querySelector('[name="__RequestVerificationToken"]').value);
+        fd.append('Id',            @Model.Id);
+        fd.append('Name',          document.getElementById('name').value);
+        fd.append('Description',   document.getElementById('description').value);
+        fd.append('PromotionType', currentType);
+        fd.append('StartTime',     document.getElementById('startTime').value);
+        fd.append('EndTime',       endTime);
+        fd.append('SellerId',      document.getElementById('sellerId')?.value ?? '@Model.SellerId');
+
+        if (currentType !== 2) {
+            selectedItems.forEach((item, i) => {
+                fd.append(`Items[${i}].ProductId`,     item.productId);
+                fd.append(`Items[${i}].ProductName`,   item.productName);
+                fd.append(`Items[${i}].OriginalPrice`, item.originalPrice);
+                if (item.discountPrice != null) fd.append(`Items[${i}].DiscountPrice`, item.discountPrice);
+                if (currentType === 3) {
+                    if (item.quantityLimit != null) fd.append(`Items[${i}].QuantityLimit`, item.quantityLimit);
+                    if (item.stockLimit    != null) fd.append(`Items[${i}].StockLimit`,    item.stockLimit);
+                }
+            });
+        } else {
+            selectedRules.forEach((r, i) => {
+                fd.append(`Rules[${i}].RuleType`,      r.ruleType);
+                fd.append(`Rules[${i}].Threshold`,     r.threshold);
+                fd.append(`Rules[${i}].DiscountType`,  r.discountType);
+                fd.append(`Rules[${i}].DiscountValue`, r.discountValue);
+            });
+        }
+
+        try {
+            const res = await fetch(document.getElementById('promotionForm').action, {
+                method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+            });
+            const result = await res.json();
+            if (result.success) {
+                window.location.href = '/Promotions';
+            } else {
+                showMsg('error', result.message || '儲存失敗');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bx bx-save me-1"></i>儲存變更';
+            }
+        } catch {
+            showMsg('error', '發生錯誤，請重試');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bx bx-save me-1"></i>儲存變更';
+        }
+    }
+
+    // showMsg 使用全域 window.showMsg（由 _SneatLayout 提供）
+</script>
+}

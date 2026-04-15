@@ -1,0 +1,34 @@
+using ISpanShop.Models.EfModels;
+using Microsoft.EntityFrameworkCore;
+
+namespace ISpanShop.Repositories.Members
+{
+    public class UserRepository : IUserRepository
+    {
+        private readonly ISpanShopDBContext _db;
+
+        public UserRepository(ISpanShopDBContext db)
+        {
+            _db = db;
+        }
+
+        public async Task<User?> GetByEmailOrAccountAsync(string emailOrAccount)
+        {
+            return await _db.Users
+                .Include(u => u.MemberProfile)
+                    .ThenInclude(mp => mp.Level)
+                .FirstOrDefaultAsync(u => u.Email == emailOrAccount || u.Account == emailOrAccount);
+        }
+
+        public async Task<bool> ExistsAsync(string email, string account)
+        {
+            return await _db.Users.AnyAsync(u => u.Email == email || u.Account == account);
+        }
+
+        public async Task CreateAsync(User user)
+        {
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+        }
+    }
+}

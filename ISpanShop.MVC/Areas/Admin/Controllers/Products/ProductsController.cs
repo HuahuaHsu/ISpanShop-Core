@@ -102,7 +102,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                     MaxPrice = dto.MaxPrice,
                     Status = dto.Status,
                     MainImageUrl = dto.MainImageUrl,
-                    CreatedAt = dto.CreatedAt
+                    CreatedAt = dto.CreatedAt,
+                    ReviewStatus = dto.ReviewStatus,
+                    ReviewedBy = dto.ReviewedBy,
+                    ReviewDate = dto.ReviewDate
                 }).ToList(),
                 pagedDtos.TotalCount,
                 pagedDtos.CurrentPage,
@@ -134,10 +137,11 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
 
             // 統計摘要卡片（全站，不受篩選影響）
             var counts = await _productService.GetProductStatusCountsAsync();
-            ViewBag.CountTotal      = counts.Total;
-            ViewBag.CountPublished  = counts.Published;
-            ViewBag.CountUnpublished= counts.Unpublished;
-            ViewBag.CountPending    = counts.Pending;
+            ViewBag.CountTotal          = counts.Total;
+            ViewBag.CountPublished      = counts.Published;
+            ViewBag.CountUnpublished    = counts.Unpublished;
+            ViewBag.CountPending        = counts.Pending;
+            ViewBag.CountForcedOffShelf = counts.ForcedOffShelf;
 
             return View(pagedVm);
         }
@@ -145,13 +149,12 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         /// <summary>
         /// 待審核商品列表
         /// </summary>
-        /// <returns>待審核商品列表 View</returns>
-        public async Task<IActionResult> PendingReview(int pendingPage = 1, int rejectedPage = 1)
+        public async Task<IActionResult> PendingReview()
         {
-            const int pageSize = 10;
+            const int pageSize = 999; // 前端自行分頁，伺服器一次載入全量資料
 
-            // 分頁取待審核 (ReviewStatus == 0)
-            var pendingPaged = await _productService.GetPendingProductsPagedAsync(pendingPage, pageSize);
+            // 全量取待審核 (ReviewStatus == 0)
+            var pendingPaged = await _productService.GetPendingProductsPagedAsync(1, pageSize);
             var pendingVm = PagedResult<ProductReviewListVm>.Create(
                 pendingPaged.Data.Select(dto => new ProductReviewListVm
                 {
@@ -170,10 +173,10 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                     UpdatedAt    = dto.UpdatedAt,
                     MainImageUrl = dto.MainImageUrl
                 }).ToList(),
-                pendingPaged.TotalCount, pendingPage, pageSize);
+                pendingPaged.TotalCount, 1, pageSize);
 
-            // 分頁取已退回 (ReviewStatus == 2)
-            var rejectedPaged = await _productService.GetRejectedProductsPagedAsync(rejectedPage, pageSize);
+            // 全量取已退回 (ReviewStatus == 2)
+            var rejectedPaged = await _productService.GetRejectedProductsPagedAsync(1, pageSize);
             ViewBag.RejectedRecords = PagedResult<ProductReviewListVm>.Create(
                 rejectedPaged.Data.Select(dto => new ProductReviewListVm
                 {
@@ -186,13 +189,59 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                     ReviewStatus = dto.ReviewStatus,
                     ReviewedBy   = dto.ReviewedBy,
                     ReviewDate   = dto.ReviewDate,
-                    RejectReason = dto.RejectReason,
+                    RejectReason        = dto.RejectReason,
+                    ForceOffShelfReason = dto.ForceOffShelfReason,
                     UpdatedAt    = dto.UpdatedAt,
                     MainImageUrl = dto.MainImageUrl
                 }).ToList(),
-                rejectedPaged.TotalCount, rejectedPage, pageSize);
+                rejectedPaged.TotalCount, 1, pageSize);
 
-            ViewBag.RejectedPage = rejectedPage;
+            // 重新申請審核 (ReviewStatus == 3)
+            var reApplyPaged = await _productService.GetReApplyProductsPagedAsync(1, pageSize);
+            ViewBag.ReApplyRecords = PagedResult<ProductReviewListVm>.Create(
+                reApplyPaged.Data.Select(dto => new ProductReviewListVm
+                {
+                    Id                  = dto.Id,
+                    StoreId             = dto.StoreId,
+                    StoreName           = dto.StoreName,
+                    CategoryName        = dto.CategoryName,
+                    BrandName           = dto.BrandName ?? string.Empty,
+                    Name                = dto.Name,
+                    Description         = dto.Description,
+                    Status              = dto.Status,
+                    ReviewStatus        = dto.ReviewStatus,
+                    ReviewedBy          = dto.ReviewedBy,
+                    ReviewDate          = dto.ReviewDate,
+                    RejectReason        = dto.RejectReason,
+                    ForceOffShelfReason = dto.ForceOffShelfReason,
+                    ForceOffShelfDate   = dto.ForceOffShelfDate,
+                    ForceOffShelfBy     = dto.ForceOffShelfBy,
+                    ReApplyDate         = dto.ReApplyDate,
+                    CreatedAt           = dto.CreatedAt,
+                    UpdatedAt           = dto.UpdatedAt,
+                    MainImageUrl        = dto.MainImageUrl
+                }).ToList(),
+                reApplyPaged.TotalCount, 1, pageSize);
+
+            // 近期審核通過（24 小時內 ReviewStatus == 1）全量
+            var approvedPaged = await _productService.GetRecentlyApprovedPagedAsync(1, pageSize, 24);
+            ViewBag.ApprovedRecords = PagedResult<ProductReviewListVm>.Create(
+                approvedPaged.Data.Select(dto => new ProductReviewListVm
+                {
+                    Id           = dto.Id,
+                    StoreId      = dto.StoreId,
+                    StoreName    = dto.StoreName,
+                    CategoryName = dto.CategoryName,
+                    BrandName    = dto.BrandName ?? string.Empty,
+                    Name         = dto.Name,
+                    Status       = dto.Status,
+                    ReviewStatus = dto.ReviewStatus,
+                    ReviewedBy   = dto.ReviewedBy,
+                    ReviewDate   = dto.ReviewDate,
+                    CreatedAt    = dto.CreatedAt,
+                    MainImageUrl = dto.MainImageUrl
+                }).ToList(),
+                approvedPaged.TotalCount, 1, pageSize);
 
             return View(pendingVm);
         }
@@ -251,6 +300,106 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         }
 
         /// <summary>
+        /// [AJAX] 批次審核通過 - 批次核准商品上架
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> BatchApprove([FromBody] BatchReviewDto dto)
+        {
+            if (dto == null || dto.Ids == null || dto.Ids.Count == 0)
+                return Json(new { success = false, message = "請至少選擇一筆商品。" });
+            try
+            {
+                var adminId = User.Identity?.Name ?? "Admin";
+                int count = 0;
+                foreach (var id in dto.Ids)
+                {
+                    await _productService.ApproveProductAsync(id, adminId);
+                    count++;
+                }
+                return Json(new { success = true, message = $"成功核准 {count} 筆商品上架。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 批次審核退回 - 批次退回商品並記錄原因
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> BatchReject([FromBody] BatchRejectDto dto)
+        {
+            if (dto == null || dto.Ids == null || dto.Ids.Count == 0)
+                return Json(new { success = false, message = "請至少選擇一筆商品。" });
+            if (string.IsNullOrWhiteSpace(dto.Reason))
+                return Json(new { success = false, message = "退回原因不可為空。" });
+            try
+            {
+                var adminId = User.Identity?.Name ?? "Admin";
+                int count = 0;
+                foreach (var id in dto.Ids)
+                {
+                    await _productService.RejectProductAsync(id, adminId, dto.Reason);
+                    count++;
+                }
+                return Json(new { success = true, message = $"成功退回 {count} 筆商品。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 批次重新審核 - 批次將退回商品移回待審核
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> BatchUndoReject([FromBody] BatchReviewDto dto)
+        {
+            if (dto == null || dto.Ids == null || dto.Ids.Count == 0)
+                return Json(new { success = false, message = "未選取任何商品。" });
+            try
+            {
+                int count = 0;
+                foreach (var id in dto.Ids)
+                {
+                    await _productService.ResetToPendingAsync(id);
+                    count++;
+                }
+                return Json(new { success = true, message = $"已將 {count} 筆商品移回待審核。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 批次模擬賣家送審 - 將多筆 ReviewStatus=2（已退回）的商品移至 ReviewStatus=3（待重新審核）
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> BatchSimulateResubmit([FromBody] BatchReviewDto dto)
+        {
+            if (dto == null || dto.Ids == null || dto.Ids.Count == 0)
+                return Json(new { success = false, message = "未選取任何商品。" });
+            try
+            {
+                int count = 0;
+                foreach (var id in dto.Ids)
+                {
+                    await _productService.SimulateSellerResubmitAsync(id);
+                    count++;
+                }
+                return Json(new { success = true, message = $"已模擬賣家重新送審 {count} 筆商品，商品已移至「重新申請審核」列表。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
         /// [AJAX] 重新審核 - 將已退回商品重設為待審核（清空審核結果欄位）
         /// </summary>
         [HttpPost]
@@ -262,6 +411,26 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
             {
                 await _productService.ResetToPendingAsync(dto.Id);
                 return Json(new { success = true, message = "商品已移回待審核佇列。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 模擬賣家修改後重新送審 — 將 ReviewStatus=2（已退回）的商品移至 ReviewStatus=3（待重新審核）。
+        /// 商品將出現在「重新申請審核」頁籤，展示完整的退回→修改→重新送審流程。
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SimulateSellerResubmit([FromBody] RejectDto dto)
+        {
+            if (dto == null || dto.Id <= 0)
+                return Json(new { success = false, message = "無效的請求資料。" });
+            try
+            {
+                await _productService.SimulateSellerResubmitAsync(dto.Id);
+                return Json(new { success = true, message = "已模擬賣家重新送審，商品已移至「重新申請審核」列表。" });
             }
             catch (Exception ex)
             {
@@ -332,7 +501,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         }
 
         /// <summary>
-        /// [AJAX] 管理員強制下架商品（違規處理）
+        /// [AJAX] 管理員強制下架商品（違規處理，Status→4）
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> ForceUnpublish([FromBody] RejectDto dto)
@@ -341,8 +510,92 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
                 return Json(new { success = false, message = "無效的請求資料。" });
             try
             {
-                await _productService.ForceUnpublishAsync(dto.Id, dto.Reason);
+                var adminBy = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : (int?)null;
+                await _productService.ForceUnpublishAsync(dto.Id, dto.Reason, adminBy);
                 return Json(new { success = true, message = "商品已強制下架。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 批次強制下架
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> BatchForceOffShelf([FromBody] BatchRejectDto dto)
+        {
+            if (dto == null || dto.Ids == null || dto.Ids.Count == 0)
+                return Json(new { success = false, message = "請至少選擇一筆商品。" });
+            if (string.IsNullOrWhiteSpace(dto.Reason))
+                return Json(new { success = false, message = "下架原因不可為空。" });
+            try
+            {
+                var adminBy = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid2) ? uid2 : (int?)null;
+                int count = await _productService.BatchForceOffShelfAsync(dto.Ids, dto.Reason, adminBy);
+                return Json(new { success = true, message = $"成功強制下架 {count} 筆商品。", count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 賣家申請重新上架（ReviewStatus→3）
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> ReApply([FromBody] RejectDto dto)
+        {
+            if (dto == null || dto.Id <= 0)
+                return Json(new { success = false, message = "無效的請求資料。" });
+            try
+            {
+                await _productService.ReApplyAsync(dto.Id);
+                return Json(new { success = true, message = "已申請重新上架，等待管理員審核。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 管理員核准強制下架商品重新上架
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> ApproveForcedProduct([FromBody] RejectDto dto)
+        {
+            if (dto == null || dto.Id <= 0)
+                return Json(new { success = false, message = "無效的請求資料。" });
+            try
+            {
+                var adminId = User.Identity?.Name ?? "Admin";
+                await _productService.ApproveForcedProductAsync(dto.Id, adminId);
+                return Json(new { success = true, message = "商品已核准重新上架。" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"操作失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 管理員駁回重新申請
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> RejectForcedProduct([FromBody] RejectDto dto)
+        {
+            if (dto == null || dto.Id <= 0)
+                return Json(new { success = false, message = "無效的請求資料。" });
+            if (string.IsNullOrWhiteSpace(dto.Reason))
+                return Json(new { success = false, message = "駁回原因不可為空。" });
+            try
+            {
+                var adminId = User.Identity?.Name ?? "Admin";
+                await _productService.RejectForcedProductAsync(dto.Id, adminId, dto.Reason);
+                return Json(new { success = true, message = "重新申請已駁回。" });
             }
             catch (Exception ex)
             {
@@ -431,7 +684,97 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
         }
 
         /// <summary>
-        /// [AJAX] 模擬系統自動審核 - 新增測試商品並執行違禁詞批次審核
+        /// [AJAX] 取得商品詳情 Partial View（供 Offcanvas 側邊欄使用）
+        /// </summary>
+        public IActionResult GetProductDetailsPartial(int id, bool isReviewMode = false)
+        {
+            var productDto = _productService.GetProductDetail(id);
+            if (productDto == null)
+                return NotFound();
+
+            var vm = new ProductDetailVm
+            {
+                Id                  = productDto.Id,
+                Name                = productDto.Name,
+                StoreName           = productDto.StoreName,
+                CategoryName        = productDto.CategoryName,
+                BrandName           = productDto.BrandName,
+                Description         = productDto.Description,
+                Status              = productDto.Status,
+                MinPrice            = productDto.MinPrice,
+                MaxPrice            = productDto.MaxPrice,
+                TotalSales          = productDto.TotalSales,
+                ViewCount           = productDto.ViewCount,
+                RejectReason        = productDto.RejectReason,
+                SpecDefinitionJson  = productDto.SpecDefinitionJson,
+                CreatedAt           = productDto.CreatedAt,
+                UpdatedAt           = productDto.UpdatedAt,
+                ReviewStatus        = productDto.ReviewStatus,
+                ReviewedBy          = productDto.ReviewedBy,
+                ReviewDate          = productDto.ReviewDate,
+                ForceOffShelfReason = productDto.ForceOffShelfReason,
+                ForceOffShelfDate   = productDto.ForceOffShelfDate,
+                ForceOffShelfBy     = productDto.ForceOffShelfBy,
+                ReApplyDate         = productDto.ReApplyDate,
+                Images              = productDto.Images,
+                Variants = productDto.Variants.Select(v => new ProductVariantDetailVm
+                {
+                    Id            = v.Id,
+                    ProductId     = v.ProductId,
+                    SkuCode       = v.SkuCode,
+                    VariantName   = v.VariantName,
+                    Price         = v.Price,
+                    Stock         = v.Stock,
+                    SafetyStock   = v.SafetyStock,
+                    SpecValueJson = v.SpecValueJson,
+                    IsDeleted     = v.IsDeleted ?? false
+                }).ToList()
+            };
+
+            ViewBag.IsReviewMode = isReviewMode;
+            return PartialView("_ProductDetailsPartial", vm);
+        }
+
+        /// <summary>
+        /// [AJAX] 生成 15 筆測試用待審核商品（乾淨 / 高風險 / 邊緣 各 5 筆）
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> GenerateTestProducts()
+        {
+            try
+            {
+                var result = await _productService.GenerateTestProductsAsync();
+                // 生成後取最新待審核總筆數，供前端動態更新分頁器
+                var pendingPaged = await _productService.GetPendingProductsPagedAsync(1, 1);
+                return Json(new
+                {
+                    success          = true,
+                    count            = result.TotalCount,
+                    clean            = result.CleanCount,
+                    highRisk         = result.HighRiskCount,
+                    borderline       = result.BorderlineCount,
+                    pendingTotalCount = pendingPaged.TotalCount,
+                    message          = $"已生成 {result.TotalCount} 筆測試商品（乾淨 {result.CleanCount} 筆 ／ 高風險 {result.HighRiskCount} 筆 ／ 邊緣 {result.BorderlineCount} 筆），全部設為待審核。",
+                    products         = result.CreatedProducts.Select(p => new
+                    {
+                        id       = p.Id,
+                        name     = p.Name,
+                        store    = p.StoreName,
+                        img      = p.MainImageUrl ?? "",
+                        category = p.CategoryName,
+                        brand    = p.BrandName,
+                        created  = p.CreatedAt?.ToString("yyyy/MM/dd") ?? "-"
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"生成失敗：{ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// [AJAX] 對目前所有待審核商品執行敏感字自動比對（敏感字從資料庫讀取）
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> SimulateAutoReview()
@@ -439,7 +782,20 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Products
             try
             {
                 var result = await _productService.SimulateAutoReviewAsync();
-                return Json(new { success = true, approved = result.ApprovedCount, rejected = result.RejectedCount, manualReview = result.ManualReviewCount });
+                return Json(new
+                {
+                    success      = true,
+                    approved     = result.ApprovedCount,
+                    rejected     = result.RejectedCount,
+                    manualReview = result.ManualReviewCount,
+                    items        = result.Items.Select(i => new
+                    {
+                        productId    = i.ProductId,
+                        productName  = i.ProductName,
+                        outcome      = i.Outcome,
+                        matchedWords = i.MatchedWords
+                    })
+                });
             }
             catch (Exception ex)
             {

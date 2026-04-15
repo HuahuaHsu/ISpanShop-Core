@@ -1,256 +1,283 @@
-@model IEnumerable<ISpanShop.Models.EfModels.Order>
+@model IEnumerable<ISpanShop.Models.EfModels.PaymentLog>
 
 @{
-    ViewData["Title"] = "金流與付款紀錄";
+    ViewData["Title"] = "金流管理中心";
     Layout = "_SneatLayout";
+}
+
+@section Styles {
+    <style>
+        .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 1rem; }
+        .cursor-pointer { cursor: pointer; }
+        .bg-label-warning { background: #FFFBE6 !important; color: #D48806 !important; }
+        .bg-label-success { background: #F6FFED !important; color: #52C41A !important; }
+        .bg-label-danger { background: #FFF1F0 !important; color: #F5222D !important; }
+    </style>
 }
 
 <div class="container-xxl flex-grow-1 container-p-y">
     <!-- 頁面標題 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="fw-bold mb-0">
-            <i class="bx bx-dollar-circle text-primary me-2"></i>金流與付款紀錄
+            <i class="bx bx-dollar-circle text-primary me-2"></i>金流管理中心 (Payment Logs)
         </h4>
         <div>
-            <span class="badge bg-label-info">
-                <i class="bx bx-list-ul me-1"></i>共 @Model.Count() 筆訂單
-            </span>
+            <form asp-action="SyncPaymentLogs" method="post" class="d-inline" onsubmit="return confirm('確定要掃描缺失的紀錄嗎？');">
+                <button type="submit" class="btn btn-outline-primary shadow-sm">
+                    <i class="bx bx-refresh me-1"></i>同步/生成缺失紀錄
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 篩選器 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="filterForm" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">關鍵字搜尋 (訂單號/交易序號)</label>
+                    <div class="input-group input-group-merge">
+                        <span class="input-group-text"><i class="bx bx-search"></i></span>
+                        <input type="text" id="Keyword" name="Keyword" class="form-control" placeholder="輸入關鍵字..." />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">交易狀態</label>
+                    <select id="Status" name="Status" class="form-select">
+                        <option value="">全部狀態</option>
+                        <option value="1">付款成功</option>
+                        <option value="0">等待付款中</option>
+                        <option value="1022">訂單已取消</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-primary" onclick="loadData(1)">
+                        <i class="bx bx-filter-alt me-1"></i> 執行篩選
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary ms-2" onclick="resetFilter()">
+                        清除
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- 金流紀錄卡片 -->
     <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bx bx-credit-card me-2"></i>付款交易紀錄
+        <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom">
+            <h5 class="mb-0 text-dark fw-bold">
+                <i class="bx bx-credit-card me-2 text-primary"></i>所有交易流水帳
             </h5>
-        </div>
-
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="text-center" style="width: 8%;">訂單編號</th>
-                            <th style="width: 15%;">綠界交易序號</th>
-                            <th class="text-center" style="width: 10%;">付款方式</th>
-                            <th class="text-end" style="width: 12%;">付款金額</th>
-                            <th class="text-center" style="width: 10%;">付款狀態</th>
-                            <th class="text-center" style="width: 15%;">付款時間</th>
-                            <th class="text-center" style="width: 15%;">訂單建立時間</th>
-                            <th class="text-center" style="width: 10%;">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model != null && Model.Any())
-                        {
-                            foreach (var order in Model)
-                            {
-                                // 取得第一筆付款紀錄（如果有）
-                                var payment = order.PaymentLogs?.FirstOrDefault();
-                                
-                                // 判斷付款狀態
-                                string statusBadgeClass = "bg-label-warning";
-                                string statusText = "未付款";
-                                
-                                if (order.Status == 1 || (payment != null && payment.RtnCode == 1))
-                                {
-                                    statusBadgeClass = "bg-label-success";
-                                    statusText = "已付款";
-                                }
-                                else if (order.Status == 0)
-                                {
-                                    statusBadgeClass = "bg-label-warning";
-                                    statusText = "待付款";
-                                }
-                                else if (order.Status == 4)
-                                {
-                                    statusBadgeClass = "bg-label-danger";
-                                    statusText = "已取消";
-                                }
-
-                                <tr>
-                                    <!-- 訂單編號 -->
-                                    <td class="text-center">
-                                        <span class="fw-semibold text-primary">
-                                            #@order.OrderNumber
-                                        </span>
-                                    </td>
-
-                                    <!-- 綠界交易序號 -->
-                                    <td>
-                                        @if (payment != null && !string.IsNullOrEmpty(payment.TradeNo))
-                                        {
-                                            <small class="text-muted d-block">
-                                                <i class="bx bx-barcode me-1"></i>@payment.TradeNo
-                                            </small>
-                                            @if (!string.IsNullOrEmpty(payment.MerchantTradeNo))
-                                            {
-                                                <small class="text-muted d-block mt-1">
-                                                    商店訂單號: @payment.MerchantTradeNo
-                                                </small>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </td>
-
-                                    <!-- 付款方式 -->
-                                    <td class="text-center">
-                                        @if (payment != null && !string.IsNullOrEmpty(payment.PaymentType))
-                                        {
-                                            var paymentIcon = payment.PaymentType switch
-                                            {
-                                                "Credit" or "信用卡" => "bx-credit-card",
-                                                "ATM" or "ATM轉帳" => "bx-bank",
-                                                "CVS" or "超商代碼" => "bx-store",
-                                                _ => "bx-wallet"
-                                            };
-                                            var paymentLabel = payment.PaymentType switch
-                                            {
-                                                "Credit" => "信用卡",
-                                                "ATM" => "ATM轉帳",
-                                                "CVS" => "超商代碼",
-                                                _ => payment.PaymentType
-                                            };
-                                            <i class="bx @paymentIcon me-1"></i>
-                                            <span>@paymentLabel</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </td>
-
-                                    <!-- 付款金額 -->
-                                    <td class="text-end">
-                                        <span class="fw-bold text-dark" style="font-size: 1.05rem;">
-                                            $ @order.FinalAmount.ToString("N0")
-                                        </span>
-                                        @if (order.DiscountAmount > 0 || order.PointDiscount > 0)
-                                        {
-                                            <br />
-                                            <small class="text-success">
-                                                <i class="bx bx-down-arrow-circle"></i>
-                                                折扣 $@((order.DiscountAmount ?? 0) + (order.PointDiscount ?? 0))
-                                            </small>
-                                        }
-                                    </td>
-
-                                    <!-- 付款狀態 -->
-                                    <td class="text-center">
-                                        <span class="badge @statusBadgeClass">
-                                            @statusText
-                                        </span>
-                                        @if (payment?.RtnMsg != null && payment.RtnCode != 1)
-                                        {
-                                            <br />
-                                            <small class="text-danger mt-1" style="font-size: 0.7rem;">
-                                                @payment.RtnMsg
-                                            </small>
-                                        }
-                                    </td>
-
-                                    <!-- 付款時間 -->
-                                    <td class="text-center">
-                                        @if (order.PaymentDate.HasValue)
-                                        {
-                                            <span>@order.PaymentDate.Value.ToString("yyyy/MM/dd")</span>
-                                            <br />
-                                            <small class="text-muted">@order.PaymentDate.Value.ToString("HH:mm:ss")</small>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </td>
-
-                                    <!-- 訂單建立時間 -->
-                                    <td class="text-center">
-                                        @if (order.CreatedAt.HasValue)
-                                        {
-                                            <span>@order.CreatedAt.Value.ToString("yyyy/MM/dd")</span>
-                                            <br />
-                                            <small class="text-muted">@order.CreatedAt.Value.ToString("HH:mm:ss")</small>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </td>
-
-                                    <!-- 操作 -->
-                                    <td class="text-center">
-                                        <div class="dropdown">
-                                            <button type="button" class="btn btn-sm btn-icon btn-text-secondary rounded-pill dropdown-toggle hide-arrow" 
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="bx bx-dots-vertical-rounded"></i>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                <li>
-                                                    <a class="dropdown-item" href="@Url.Action("Details", "Orders", new { area = "Admin", id = order.Id })">
-                                                        <i class="bx bx-show me-2"></i>查看訂單明細
-                                                    </a>
-                                                </li>
-                                                @if (payment != null)
-                                                {
-                                                    <li>
-                                                        <a class="dropdown-item" href="javascript:void(0);" 
-                                                           onclick="showPaymentDetails(@order.Id, '@payment.TradeNo')">
-                                                            <i class="bx bx-receipt me-2"></i>查看金流紀錄
-                                                        </a>
-                                                    </li>
-                                                }
-                                            </ul>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="8" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="bx bx-info-circle fs-1 mb-2 d-block"></i>
-                                        <p class="mb-0">目前沒有任何金流紀錄</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+            <div id="totalCountInfo" class="badge bg-label-info">
+                載入中...
             </div>
         </div>
 
-        @if (Model != null && Model.Any())
-        {
-            <div class="card-footer bg-light border-top">
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">
-                        <i class="bx bx-time-five me-1"></i>最後更新：@DateTime.Now.ToString("yyyy/MM/dd HH:mm")
-                    </small>
-                    <small class="text-muted">
-                        共 @Model.Count() 筆紀錄
-                    </small>
-                </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light text-nowrap">
+                    <tr>
+                        <th class="text-center" style="width: 10%;">訂單編號</th>
+                        <th style="width: 18%;">交易序號 (TradeNo)</th>
+                        <th class="text-center" style="width: 12%;">付款方式</th>
+                        <th class="text-end" style="width: 12%;">交易金額</th>
+                        <th class="text-center" style="width: 12%;">交易狀態</th>
+                        <th class="text-center" style="width: 15%;">付款時間</th>
+                        <th class="text-center" style="width: 15%;">紀錄建立時間</th>
+                        <th class="text-center" style="width: 6%;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentTableBody">
+                    <!-- JS 動態渲染 -->
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分頁 UI -->
+        <div class="pagination-container border-top">
+            <div id="paginationInfo" class="text-muted small">
+                顯示第 0 到 0 筆，共 0 筆
             </div>
-        }
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0" id="paginationList">
+                    <!-- JS 動態渲染 -->
+                </ul>
+            </nav>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        function showPaymentDetails(orderId, tradeNo) {
-            // 顯示金流明細的 Modal 或導向詳細頁面
-            showAlert('金流明細功能\n\n訂單 ID: ' + orderId + '\n交易序號: ' + tradeNo + '\n\n此功能可在未來擴充顯示完整的綠界回傳參數。');
+        let currentPage = 1;
+        const pageSize = 10;
+
+        $(document).ready(function() {
+            loadData(1);
+
+            // 支援 Enter 搜尋
+            $('#Keyword').on('keypress', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    loadData(1);
+                }
+            });
+        });
+
+        function resetFilter() {
+            $('#filterForm')[0].reset();
+            loadData(1);
         }
 
-        // 表格列 hover 效果優化
-        document.querySelectorAll('.table-hover tbody tr').forEach(function(row) {
-            row.style.cursor = 'pointer';
-        });
+        function loadData(page) {
+            currentPage = page;
+            const keyword = $('#Keyword').val();
+            const status = $('#Status').val();
+
+            const requestData = {
+                Keyword: keyword,
+                Status: status ? parseInt(status) : null,
+                PageNumber: page,
+                PageSize: pageSize
+            };
+
+            $.ajax({
+                url: '@Url.Action("GetPaymentListAjax", "PaymentManagement")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                success: function(res) {
+                    renderTable(res.items);
+                    renderPagination(res);
+                    $('#totalCountInfo').text('共 ' + res.totalCount + ' 筆紀錄');
+                },
+                error: function() {
+                    $('#paymentTableBody').html('<tr><td colspan="8" class="text-center text-danger">載入資料失敗</td></tr>');
+                }
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = $('#paymentTableBody');
+            tbody.empty();
+
+            if (!data || data.length === 0) {
+                tbody.append('<tr><td colspan="8" class="text-center py-5 text-muted">找不到符合條件的紀錄</td></tr>');
+                return;
+            }
+
+            data.forEach(log => {
+                let statusClass = "bg-label-warning";
+                let statusText = log.rtnMsg || "處理中";
+
+                if (log.rtnCode === 1 || statusText === "付款成功" || statusText === "Succeeded") {
+                    statusClass = "bg-label-success";
+                    statusText = "付款成功";
+                } else if (log.rtnCode === 1022 || statusText.includes("取消")) {
+                    statusClass = "bg-label-danger";
+                    statusText = "訂單已取消";
+                } else if (statusText === "Pending Payment" || statusText === "等待付款中") {
+                    statusText = "等待付款中";
+                }
+
+                const pType = log.paymentType || "None";
+                const icons = {
+                    "Credit": "bx-credit-card", "信用卡": "bx-credit-card",
+                    "ATM": "bx-bank", "ATM轉帳": "bx-bank",
+                    "CVS": "bx-store", "超商代碼": "bx-store"
+                };
+                const labels = {
+                    "Credit": "信用卡", "ATM": "ATM轉帳", "CVS": "超商代碼", "None": "尚未選擇"
+                };
+
+                const icon = icons[pType] || "bx-wallet";
+                const label = labels[pType] || pType;
+
+                tbody.append(`
+                    <tr>
+                        <td class="text-center">
+                            <span class="fw-semibold text-primary">#${log.orderNumber}</span>
+                        </td>
+                        <td>
+                            <small class="text-dark fw-bold d-block">
+                                <i class="bx bx-barcode me-1"></i>${log.tradeNo || '待生成'}
+                            </small>
+                            <small class="text-muted d-block mt-1">商店單號: ${log.merchantTradeNo}</small>
+                        </td>
+                        <td class="text-center">
+                            <i class="bx ${icon} me-1"></i><span>${label}</span>
+                        </td>
+                        <td class="text-end">
+                            <span class="fw-bold text-dark">$ ${log.tradeAmt?.toLocaleString() || 0}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge ${statusClass}">${statusText}</span>
+                        </td>
+                        <td class="text-center">
+                            ${formatDate(log.paymentDate)}
+                        </td>
+                        <td class="text-center">
+                            ${formatDate(log.createdAt)}
+                        </td>
+                        <td class="text-center">
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-sm btn-icon btn-text-secondary rounded-pill dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                    <i class="bx bx-dots-vertical-rounded"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="/Admin/Orders/Details/${log.orderId}"><i class="bx bx-show me-2"></i>查看訂單</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '<span class="text-muted">-</span>';
+            const d = new Date(dateStr);
+            return `<span>${d.toLocaleDateString()}</span><br/><small class="text-muted">${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit', hour12: false})}</small>`;
+        }
+
+        function renderPagination(data) {
+            const list = $('#paginationList');
+            list.empty();
+            const info = $('#paginationInfo');
+            
+            if (data.totalCount === 0) {
+                info.text('無資料');
+                return;
+            }
+
+            const startIdx = (data.pageNumber - 1) * data.pageSize + 1;
+            const endIdx = Math.min(data.pageNumber * data.pageSize, data.totalCount);
+            info.text(`顯示第 ${startIdx} 到 ${endIdx} 筆，共 ${data.totalCount} 筆`);
+
+            list.append(`<li class="page-item ${data.pageNumber === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:loadData(${data.pageNumber - 1})"><i class="bx bx-chevron-left"></i></a>
+            </li>`);
+
+            for (let i = 1; i <= data.totalPages; i++) {
+                if (i === 1 || i === data.totalPages || (i >= data.pageNumber - 2 && i <= data.pageNumber + 2)) {
+                    list.append(`<li class="page-item ${i === data.pageNumber ? 'active' : ''}">
+                        <a class="page-link" href="javascript:loadData(${i})">${i}</a>
+                    </li>`);
+                } else if (i === data.pageNumber - 3 || i === data.pageNumber + 3) {
+                    list.append(`<li class="page-item disabled"><a class="page-link">...</a></li>`);
+                }
+            }
+
+            list.append(`<li class="page-item ${data.pageNumber === data.totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:loadData(${data.pageNumber + 1})"><i class="bx bx-chevron-right"></i></a>
+            </li>`);
+        }
     </script>
 }

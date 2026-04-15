@@ -18,4 +18,6 @@ public partial class LoginHistory
     public DateTime LoginTime { get; set; }
 
     public bool IsSuccess { get; set; }
+
+    public virtual User User { get; set; }
 }

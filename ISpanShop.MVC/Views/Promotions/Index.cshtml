@@ -1,0 +1,876 @@
+@model ISpanShop.MVC.Models.Promotions.PromotionIndexVm
+
+@{
+    Layout = "~/Views/Shared/_SneatLayout.cshtml";
+    ViewData["Title"] = "促銷活動管理";
+}
+
+<style>
+    .font-noto { font-family: 'Public Sans', 'Noto Sans TC', sans-serif; }
+    .stat-card { border-radius: 12px; border: none; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+    .status-tabs { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 2px; }
+    .status-tabs::-webkit-scrollbar { display: none; }
+    .status-tabs .nav-link { color: #64748b; font-size: .813rem; padding: .3rem .6rem; border-radius: 6px; white-space: nowrap; }
+    .status-tabs .nav-link.active { color: #fff; background: #3182ce; }
+    .table > :not(caption) > * > * { padding: .75rem .6rem; font-size: 0.875rem; }
+    .promo-name { font-weight: 600; color: #1e2d3d; font-size: 0.875rem; }
+    .promo-desc { font-size: .75rem; color: #a1acb8; }
+    .pending-row { border-left: 3px solid #f59e0b; }
+    .act-icon {
+        width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+        border-radius: .375rem; border: 1px solid #e2e8f0; background: #fff; color: #64748b;
+        cursor: pointer; transition: all .2s; text-decoration: none; font-size: 0.875rem;
+    }
+    .act-icon:hover { background: #f8fafc; color: #3182ce; border-color: #cbd5e1; }
+    .act-icon.danger:hover { background: #fff5f5; color: #ea5455; border-color: #feb2b2; }
+    /* 統計卡片可點擊 */
+    a.stat-card { text-decoration: none; color: inherit; display: block; transition: transform .15s, box-shadow .15s; }
+    a.stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(0,0,0,.13) !important; cursor: pointer; }
+    a.stat-card.stat-active { border: 2px solid #3182ce !important; background: #eff6ff; }
+    /* Badge 放大 */
+    .badge { font-size: .75rem !important; padding: 4px 8px !important; white-space: nowrap; }
+    /* ── Promotions/Index 頁面專屬 ── */
+    /* 促銷表格標題（已移除 sticky） */
+    #promoListCol .table thead th { position: relative; z-index: 2; background: #f8fafc; font-size: 0.813rem; }
+    /* 選中列高亮 */
+    .table tbody tr.row-active td { background: #eff6ff !important; }
+    .table tbody tr.row-active td:first-child { box-shadow: inset 3px 0 0 #3182ce; }
+    /* 表格淡入淡出 */
+    #promoListCol .promo-table-wrap { transition: opacity 0.18s ease; }
+    /* 精簡模式 */
+    #promoLayout.panel-open .col-type,
+    #promoLayout.panel-open .col-time,
+    #promoLayout.panel-open .col-seller,
+    #promoLayout.panel-open .col-act { display: none; }
+    #promoLayout.panel-open .table > :not(caption) > * > * { padding: .55rem .75rem; }
+    #promoLayout.panel-open .promo-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+    #promoLayout.panel-open .promo-desc { display: none; }
+    .table tbody tr { cursor: pointer; }
+    /* 面板展開時 5:5 比例（強制各佔一半）*/
+    #promoLayout #promotionDetailPanel.open { flex: 0 0 50%; width: 50%; max-width: none; border-left: 1px solid #e2e8f0; }
+    #promoLayout.panel-open #promoListCol { flex: 0 0 50%; width: 50%; }
+    /* 重新送審列：藍色左框 */
+    .resubmitted-row { border-left: 3px solid #0ea5e9; }
+    /* 詳細面板內文字縮小 */
+    #promotionDetailOffcanvasBody { font-size: 0.875rem; }
+</style>
+
+<div class="page-fluid-root container-fluid font-noto">
+<div class="page-above-content">
+    @* 頁首 *@
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1" style="color:#1e2d3d; letter-spacing:-.02em;">
+                <i class="bx bx-purchase-tag-alt me-2" style="color:#3182ce;"></i>促銷活動管理
+            </h2>
+            <p class="mb-0 text-muted" style="font-size:.875rem;">審核賣家申請的促銷活動，或直接建立平台活動</p>
+        </div>
+    </div>
+
+    @* TempData 訊息 *@
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="bx bx-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bx bx-error-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @* 統計卡片（可點擊篩選）*@
+    <div class="row g-2 mb-3">
+        <div class="col-sm-6 col-xl-3">
+            <a href="@Url.Action("Index", new { status = "pending", keyword = Model.Keyword, type = Model.TypeFilter })"
+               class="card stat-card shadow-sm h-100 @(Model.StatusFilter == "pending" ? "stat-active" : "")">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <div class="stat-icon" style="background:#fff3cd; width:40px; height:40px; font-size:1.2rem;">
+                        <i class="bx bx-time-five" style="color:#f59e0b;"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="font-size:.75rem;">待審核 (含重新送審)</div>
+                        <h5 class="mb-0 fw-bold" style="color:#1e2d3d;">@(Model.PendingCount + Model.ReSubmittedCount)</h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <a href="@Url.Action("Index", new { status = "active", keyword = Model.Keyword, type = Model.TypeFilter })"
+               class="card stat-card shadow-sm h-100 @(Model.StatusFilter == "active" ? "stat-active" : "")">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <div class="stat-icon" style="background:#d1fae5; width:40px; height:40px; font-size:1.2rem;">
+                        <i class="bx bx-play-circle" style="color:#10b981;"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="font-size:.75rem;">進行中</div>
+                        <h5 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.ActiveCount</h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <a href="@Url.Action("Index", new { status = "upcoming", keyword = Model.Keyword, type = Model.TypeFilter })"
+               class="card stat-card shadow-sm h-100 @(Model.StatusFilter == "upcoming" ? "stat-active" : "")">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <div class="stat-icon" style="background:#dbeafe; width:40px; height:40px; font-size:1.2rem;">
+                        <i class="bx bx-calendar-check" style="color:#3b82f6;"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="font-size:.75rem;">即將開始</div>
+                        <h5 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.UpcomingCount</h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <a href="@Url.Action("Index", new { status = "all", keyword = Model.Keyword, type = Model.TypeFilter })"
+               class="card stat-card shadow-sm h-100 @(Model.StatusFilter == "all" || Model.StatusFilter == null ? "stat-active" : "")">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <div class="stat-icon" style="background:#f1f5f9; width:40px; height:40px; font-size:1.2rem;">
+                        <i class="bx bx-list-ul" style="color:#94a3b8;"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="font-size:.75rem;">所有活動</div>
+                        <h5 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.AllCount</h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+</div><!-- /page-above-content -->
+
+    <div id="promoLayout" class="split-layout">
+    <div id="promoListCol" class="split-list-col">
+
+    @* ── 返回完整列表（精簡模式按鈕）── *@
+    <div class="back-to-list-btn">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                onclick="closePromoDetailPanel()" title="返回完整列表">
+            <i class="bx bx-arrow-back me-1"></i>返回完整列表
+        </button>
+    </div>
+
+    @* 篩選列 *@
+    <div class="card shadow-sm mb-0" style="border-radius:12px 12px 0 0; border-bottom:none;">
+        <div class="card-body py-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                @* 狀態 Tabs (精簡版) *@
+                <ul class="nav status-tabs gap-1 mb-0">
+                    @{
+                        var tabs = new[] {
+                            ("all","全部", ""),
+                            ("pending","待審核",""),
+                            ("active","進行中",""),
+                            ("upcoming","即將開始",""),
+                        };
+                    }
+                    @foreach (var (val, label, icon) in tabs)
+                    {
+                        var isActive = (Model.StatusFilter ?? "all") == val;
+                        var (badgeStyle, count) = val switch
+                        {
+                            "all"         => ("background:#e0e7ff;color:#3730a3", Model.AllCount),
+                            "pending"     => ("background:#fef3c7;color:#92400e", Model.PendingCount + Model.ReSubmittedCount),
+                            "active"      => ("background:#d1fae5;color:#065f46", Model.ActiveCount),
+                            "upcoming"    => ("background:#dbeafe;color:#1e3a8a", Model.UpcomingCount),
+                            _             => ("background:#f3f4f6;color:#374151", 0)
+                        };
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", new { keyword = Model.Keyword, status = val == "all" ? null : val, type = Model.TypeFilter })"
+                               class="nav-link @(isActive ? "active" : "")">
+                                @label
+                                <span class="badge rounded-pill ms-1" style="@badgeStyle;font-size:0.78rem;">@count</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+                @* 右側：狀態 + 類型 + 搜尋 *@
+                <form method="get" asp-action="Index" asp-controller="Promotions" class="d-flex gap-2 align-items-center">
+                    <select name="status" class="form-select form-select-sm" style="width:110px;" onchange="this.form.submit()">
+                        <option value="" selected="@(string.IsNullOrEmpty(Model.StatusFilter) || Model.StatusFilter == "all" ? "selected" : null)">所有狀態</option>
+                        <option value="pending" selected="@(Model.StatusFilter == "pending" ? "selected" : null)">待審核</option>
+                        <option value="resubmitted" selected="@(Model.StatusFilter == "resubmitted" ? "selected" : null)">重新送審</option>
+                        <option value="active" selected="@(Model.StatusFilter == "active" ? "selected" : null)">進行中</option>
+                        <option value="upcoming" selected="@(Model.StatusFilter == "upcoming" ? "selected" : null)">即將開始</option>
+                        <option value="rejected" selected="@(Model.StatusFilter == "rejected" ? "selected" : null)">已拒絕</option>
+                        <option value="ended" selected="@(Model.StatusFilter == "ended" ? "selected" : null)">已結束</option>
+                    </select>
+                    <select name="type" class="form-select form-select-sm" style="width:110px;">
+                        <option value="" selected="@(Model.TypeFilter == null ? "selected" : null)">所有類型</option>
+                        <option value="1" selected="@(Model.TypeFilter == 1 ? "selected" : null)">限時特賣</option>
+                        <option value="2" selected="@(Model.TypeFilter == 2 ? "selected" : null)">滿額折扣</option>
+                        <option value="3" selected="@(Model.TypeFilter == 3 ? "selected" : null)">限量搶購</option>
+                    </select>
+                    <div class="input-group input-group-sm" style="width:200px;">
+                        <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="搜尋..." />
+                        <button class="btn btn-primary" type="submit"><i class="bx bx-search"></i></button>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.Keyword) || Model.TypeFilter.HasValue || (!string.IsNullOrEmpty(Model.StatusFilter) && Model.StatusFilter != "all"))
+                    {
+                        <a href="@Url.Action("Index")" class="btn btn-sm btn-label-secondary">清除</a>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @* 主表格 *@
+    <div class="card shadow-sm" style="border-radius:0 0 12px 12px;">
+        <div class="card-body p-2"> @* 減輕擁擠感 *@
+            <div id="batchActionArea" class="mb-2 d-none">
+                <span class="badge bg-label-info p-2 rounded-pill">
+                    已選取 <span id="selectedCountBadge">0</span> 筆活動
+                </span>
+            </div>
+            <div class="promo-table-wrap">
+                <table class="table table-hover align-middle mb-0" style="width:100%;">
+                    <thead style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                        <tr>
+                            <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">活動名稱</th>
+                            <th class="col-type" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">類型</th>
+                            <th class="col-time" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">時間區間</th>
+                            <th style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">狀態</th>
+                            <th class="col-seller" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">賣家</th>
+                            <th class="col-act text-end" style="color:#64748b;font-weight:600;font-size:.813rem;text-transform:uppercase;letter-spacing:.05em;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items.Any())
+                        {
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr class="outline-none focus:outline-none @(item.Status == 4 ? "resubmitted-row" : item.Status == 0 ? "pending-row" : "")" data-id="@item.Id">
+                                    <td>
+                                        <div class="promo-name d-flex align-items-center gap-1">
+                                            @item.Name
+                                        </div>
+                                        <div class="promo-desc">@item.ItemCount 個項目</div>
+                                    </td>
+                                    <td class="col-type">
+                                        <span class="badge @item.TypeBadgeClass">@item.TypeName</span>
+                                    </td>
+                                    <td class="col-time" style="font-size:.85rem; color:#64748b; white-space:nowrap;">
+                                        <div><i class="bx bx-calendar me-1"></i>@item.StartTime.ToString("yyyy/MM/dd HH:mm")</div>
+                                        <div class="text-muted">→ @item.EndTime.ToString("yyyy/MM/dd HH:mm")</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge @item.StatusBadgeClass">@item.DisplayStatus</span>
+                                    </td>
+                                    <td class="col-seller" style="font-size:.875rem; color:#4a5568;">@item.SellerName</td>
+                                    <td class="col-act text-end" onclick="event.stopPropagation()">
+                                        @if (item.Status == 2)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-warning rounded-pill px-3"
+                                                    title="模擬賣家修改後重新送審（展示用）"
+                                                    onclick="simulateSellerResubmitPromo(@item.Id, '@Html.Raw(item.Name.Replace("'","\\'"  ))')">
+                                                <i class="bx bx-store-alt me-1"></i>模擬賣家送審
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div style="color:#a0aec0; font-size:2.5rem;"><i class="bx bx-purchase-tag"></i></div>
+                                    <h5 class="fw-normal mt-2" style="color:#718096;">找不到符合條件的活動</h5>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* 分頁 *@
+        @if (Model.TotalPages > 1)
+        {
+            <div class="card-footer bg-white border-top">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="text-muted mb-0" style="font-size:.875rem;">
+                            顯示第 @((Model.CurrentPage - 1) * Model.PageSize + 1)–@Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount)
+                            筆，共 @Model.TotalCount 筆
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <nav>
+                            <ul class="pagination justify-content-end mb-0">
+                                <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.StatusFilter, type = Model.TypeFilter, page = Model.CurrentPage - 1 })">
+                                        <i class="bx bx-chevron-left"></i>
+                                    </a>
+                                </li>
+                                @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.StatusFilter, type = Model.TypeFilter, page = i })">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, status = Model.StatusFilter, type = Model.TypeFilter, page = Model.CurrentPage + 1 })">
+                                        <i class="bx bx-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    </div><!-- /promoListCol -->
+
+    <div id="promotionDetailPanel" class="split-detail-panel">
+        <div class="split-detail-panel-inner">
+            <div class="side-panel-header" style="flex-wrap:wrap;">
+                <div class="side-panel-title" id="promotionOffcanvasTitle" title="促銷活動詳情">
+                    <i class="bx bx-purchase-tag-alt me-1" style="color:#3182ce; font-size:1rem; vertical-align:middle;"></i>促銷活動詳情
+                </div>
+                <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                    <span id="promoNavCounter" style="font-size:.78rem; color:#64748b; min-width:42px; text-align:center;"></span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" id="promoNavPrev"
+                            onclick="navigatePromotion(-1)" title="上一筆" disabled>
+                        <i class="bx bx-chevron-left" style="font-size:1rem;"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" id="promoNavNext"
+                            onclick="navigatePromotion(1)" title="下一筆" disabled>
+                        <i class="bx bx-chevron-right" style="font-size:1rem;"></i>
+                    </button>
+                    <button type="button" class="side-panel-close ms-1" onclick="closePromoDetailPanel()" aria-label="關閉" title="關閉">
+                        <i class="bx bx-x"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="panel-body p-0 overflow-auto" id="promotionDetailOffcanvasBody">
+                <div class="d-flex align-items-center justify-content-center" style="height:200px;">
+                    <div class="text-center text-muted">
+                        <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
+                        <div>載入中…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div><!-- /promoLayout -->
+</div>
+
+@* 拒絕原因 Modal *@
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" style="color:#1e2d3d;">
+                    <i class="bx bx-x-circle me-2 text-danger"></i>拒絕活動
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3" style="font-size:.875rem;">
+                    活動：<strong id="rejectModalName"></strong>
+                </p>
+                <div class="mb-2">
+                    <div style="font-size:.8rem; color:#64748b; margin-bottom:.4rem;">常用原因快選：</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var qr in new[]{"圖片不符規範","折扣幅度異常","活動描述不清","時間區間有誤","商品資訊不完整"})
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    style="font-size:.78rem; padding:3px 10px;"
+                                    onclick="setRejectReason('@qr')">@qr</button>
+                        }
+                    </div>
+                </div>
+                <label class="form-label fw-semibold">拒絕原因 <span class="text-danger">*</span></label>
+                <textarea id="rejectReasonInput" class="form-control" rows="4"
+                          placeholder="請說明拒絕原因，此訊息將通知賣家..."></textarea>
+                <div id="rejectReasonError" class="text-danger mt-1" style="font-size:.813rem; display:none;">請填寫拒絕原因</div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="rejectConfirmBtn" onclick="submitReject()">
+                    <i class="bx bx-send me-1"></i>送出拒絕
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* AJAX 用 antiforgery form *@
+<form id="actionForm" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+<script>
+    // ── 全域選取狀態 (跨頁) ──
+    var selectedIds = new Set();
+
+    // ── 促銷列表（供導覽用）──
+    var _promoList = [
+        @{ bool _pf = true; }
+        @foreach (var it in Model.Items) {
+            if (!_pf){<text>,</text>} _pf = false;
+            <text>{ id: @it.Id, name: '@Html.Raw(it.Name.Replace("\\","\\\\").Replace("'","\\'").Replace("\n","").Replace("\r",""))' }</text>
+        }
+    ];
+    var _currentNavIdx = -1;
+
+    // ── 選取 UI 更新 ──
+    function updateSelectionUI() {
+        var count = selectedIds.size;
+        var badge = document.getElementById('selectedCountBadge');
+        var area  = document.getElementById('batchActionArea');
+        if (badge) badge.textContent = count;
+        if (area)  count > 0 ? area.classList.remove('d-none') : area.classList.add('d-none');
+
+        updateSelectAllCheckboxState();
+    }
+
+    // ── 動態判斷全選勾勾狀態 (僅限當前頁面) ──
+    function updateSelectAllCheckboxState() {
+        var selectAll = document.getElementById('selectAll');
+        if (!selectAll) return;
+
+        var currentPageCheckboxes = document.querySelectorAll('.row-check');
+        if (currentPageCheckboxes.length === 0) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+            return;
+        }
+
+        var checkedInPage = 0;
+        currentPageCheckboxes.forEach(cb => {
+            if (selectedIds.has(parseInt(cb.value))) {
+                cb.checked = true;
+                checkedInPage++;
+            } else {
+                cb.checked = false;
+            }
+        });
+
+        if (checkedInPage === currentPageCheckboxes.length) {
+            selectAll.checked = true;
+            selectAll.indeterminate = false;
+        } else if (checkedInPage === 0) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+        } else {
+            selectAll.checked = false;
+            selectAll.indeterminate = true;
+        }
+    }
+
+    // ── 全選事件 ──
+    var selectAllCb = document.getElementById('selectAll');
+    if (selectAllCb) {
+        selectAllCb.addEventListener('change', function () {
+            var checkboxes = document.querySelectorAll('.row-check');
+            checkboxes.forEach(cb => {
+                var id = parseInt(cb.value);
+                if (this.checked) {
+                    selectedIds.add(id);
+                } else {
+                    selectedIds.delete(id);
+                }
+                cb.checked = this.checked;
+            });
+            updateSelectionUI();
+        });
+    }
+
+    // ── 單選事件綁定 ──
+    function _bindPromoCheckboxEvents() {
+        document.querySelectorAll('.row-check').forEach(cb => {
+            cb.onclick = function(e) {
+                e.stopPropagation(); // 防止觸發行點擊開啟面板
+                var id = parseInt(this.value);
+                if (this.checked) {
+                    selectedIds.add(id);
+                } else {
+                    selectedIds.delete(id);
+                }
+                updateSelectionUI();
+            };
+        });
+    }
+
+    // ── 開啟 Push-Pull 側邊詳情面板 ──
+    var _promoDetailUrl = '@Url.Action("GetPromotionDetailsPartial", "Promotions")';
+    var _activePromoRowId = null;
+
+    function _promoSwitchMode(toOpen, callback) {
+        var tbl = document.querySelector('#promoListCol .promo-table-wrap');
+        var panel  = document.getElementById('promotionDetailPanel');
+        var layout = document.getElementById('promoLayout');
+        if (tbl) tbl.style.opacity = '0';
+        setTimeout(function () {
+            if (toOpen) {
+                if (panel  && !panel.classList.contains('open'))        panel.classList.add('open');
+                if (layout && !layout.classList.contains('panel-open')) layout.classList.add('panel-open');
+            } else {
+                if (panel)  panel.classList.remove('open');
+                if (layout) layout.classList.remove('panel-open');
+            }
+            if (tbl) tbl.style.opacity = '1';
+            if (callback) callback();
+        }, 180);
+    }
+
+    function openPromotionOffcanvas(id, name, idx) {
+        _currentNavIdx = (idx !== undefined) ? idx : -1;
+        _updateNavButtons();
+
+        // 高亮選中列
+        if (_activePromoRowId !== null) {
+            var prevRow = document.querySelector('tr[data-id="' + _activePromoRowId + '"]');
+            if (prevRow) prevRow.classList.remove('row-active');
+        }
+        _activePromoRowId = id;
+        var activeRow = document.querySelector('tr[data-id="' + id + '"]');
+        if (activeRow) activeRow.classList.add('row-active');
+
+        var body    = document.getElementById('promotionDetailOffcanvasBody');
+        var titleEl = document.getElementById('promotionOffcanvasTitle');
+        if (titleEl) { titleEl.textContent = name || '促銷活動詳情'; titleEl.title = name || '促銷活動詳情'; }
+        body.innerHTML =
+            '<div class="d-flex align-items-center justify-content-center" style="height:200px;">' +
+            '<div class="text-center text-muted">' +
+            '<div class="spinner-border spinner-border-sm mb-2" role="status"></div>' +
+            '<div>載入中…</div></div></div>';
+
+        var alreadyOpen = document.getElementById('promotionDetailPanel').classList.contains('open');
+        if (alreadyOpen) {
+            // 已是精簡模式，直接切換內容，不需重新 fade
+        } else {
+            _promoSwitchMode(true, null);
+        }
+
+        fetch(_promoDetailUrl + '?id=' + id + '&isReviewMode=true')
+            .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
+            .then(function (html) {
+                body.innerHTML = html;
+                body.querySelectorAll('script').forEach(function (oldScript) {
+                    var newScript = document.createElement('script');
+                    newScript.textContent = oldScript.textContent;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+            })
+            .catch(function () {
+                body.innerHTML =
+                    '<div class="text-center py-5 text-danger">' +
+                    '<i class="bx bx-error-circle" style="font-size:2.5rem;"></i>' +
+                    '<div class="mt-2">載入失敗，請稍後再試</div></div>';
+            });
+    }
+
+    function closePromoDetailPanel() {
+        if (_activePromoRowId !== null) {
+            var row = document.querySelector('tr[data-id="' + _activePromoRowId + '"]');
+            if (row) row.classList.remove('row-active');
+            _activePromoRowId = null;
+        }
+        _promoSwitchMode(false, null);
+    }
+
+    // Way 1：ESC 鍵關閉面板
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            var panel = document.getElementById('promotionDetailPanel');
+            if (panel && panel.classList.contains('open')) {
+                console.log('[PanelClose] ESC key');
+                closePromoDetailPanel();
+            }
+        }
+    });
+    console.log('[Panel] ESC listener bound ✓');
+
+    // Way 3a：點擊兩卡片間的 gap 區域關閉面板
+    document.getElementById('promoLayout').addEventListener('click', function (e) {
+        if (e.target === this) {
+            var panel = document.getElementById('promotionDetailPanel');
+            if (panel && panel.classList.contains('open')) {
+                console.log('[PanelClose] gap click');
+                closePromoDetailPanel();
+            }
+        }
+    });
+
+    // Way 3b：點擊列表內空白區域（非列、非互動元素）關閉面板
+    document.getElementById('promoListCol').addEventListener('click', function (e) {
+        var panel = document.getElementById('promotionDetailPanel');
+        if (!panel || !panel.classList.contains('open')) return;
+        if (e.target.closest('tr, button, a, input, select, label, .card, .back-to-list-btn')) return;
+        console.log('[PanelClose] list col empty area click');
+        closePromoDetailPanel();
+    });
+
+    // ── 從 DOM 重建 _promoList（AJAX 換頁後呼叫）──
+    function _rebuildPromoList() {
+        _promoList = [];
+        document.querySelectorAll('#promoListCol .table tbody tr[data-id]').forEach(function (tr) {
+            _promoList.push({
+                id:   parseInt(tr.dataset.id),
+                name: tr.querySelector('.promo-name') ? tr.querySelector('.promo-name').textContent.trim() : ''
+            });
+        });
+    }
+
+    // ── 點擊整行開啟面板（封裝為可重呼叫函式，供 AJAX 分頁後重綁）──
+    function _promoBindRows() {
+        document.querySelectorAll('#promoListCol .table tbody tr[data-id]').forEach(function (tr) {
+            tr.addEventListener('click', function (e) {
+                if (e.target.closest('a, button, input')) return;
+                var id   = parseInt(this.dataset.id);
+                var item = _promoList.find(function (p) { return p.id === id; });
+                var idx  = _promoList.findIndex(function (p) { return p.id === id; });
+                if (item) openPromotionOffcanvas(item.id, item.name, idx);
+            });
+        });
+    }
+    // 初始化
+    _promoBindRows();
+    _bindPromoCheckboxEvents();
+    updateSelectionUI();
+
+    // ── 導覽上/下一筆 ──
+    function navigatePromotion(delta) {
+        var next = _currentNavIdx + delta;
+        if (next < 0 || next >= _promoList.length) return;
+        var p = _promoList[next];
+        openPromotionOffcanvas(p.id, p.name, next);
+    }
+
+    function _updateNavButtons() {
+        var prev    = document.getElementById('promoNavPrev');
+        var next    = document.getElementById('promoNavNext');
+        var counter = document.getElementById('promoNavCounter');
+        var total   = _promoList.length;
+        if (prev)    prev.disabled    = _currentNavIdx <= 0;
+        if (next)    next.disabled    = _currentNavIdx < 0 || _currentNavIdx >= total - 1;
+        if (counter) counter.textContent = total > 0 && _currentNavIdx >= 0
+            ? (_currentNavIdx + 1) + ' / ' + total : '';
+    }
+
+    // ── 核准 ──
+    async function approvePromotion(id, name) {
+        const ok = await showConfirm('確認核准', `確定要核准活動「${name}」嗎？`);
+        if (!ok) return;
+        const token = document.querySelector('#actionForm [name="__RequestVerificationToken"]').value;
+        const fd = new FormData();
+        fd.append('__RequestVerificationToken', token);
+        const res = await fetch(`/Promotions/Approve/${id}`, {
+            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+        });
+        const result = await res.json();
+        showMsg(result.success ? 'success' : 'error', result.message);
+        if (result.success) setTimeout(() => location.reload(), 1500);
+    }
+
+    // ── 拒絕 Modal ──
+    var _rejectTargetId = null;
+
+    function openRejectModal(id, name) {
+        _rejectTargetId = id;
+        document.getElementById('rejectModalName').textContent = name;
+        document.getElementById('rejectReasonInput').value = '';
+        document.getElementById('rejectReasonError').style.display = 'none';
+        new bootstrap.Modal(document.getElementById('rejectModal')).show();
+    }
+
+    async function submitReject() {
+        const reason = document.getElementById('rejectReasonInput').value.trim();
+        if (!reason) {
+            document.getElementById('rejectReasonError').style.display = 'block';
+            return;
+        }
+        document.getElementById('rejectReasonError').style.display = 'none';
+
+        const btn = document.getElementById('rejectConfirmBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>送出中...';
+
+        const token = document.querySelector('#actionForm [name="__RequestVerificationToken"]').value;
+        const fd = new FormData();
+        fd.append('__RequestVerificationToken', token);
+        fd.append('reason', reason);
+
+        const res = await fetch(`/Promotions/Reject/${_rejectTargetId}`, {
+            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+        });
+        const result = await res.json();
+
+        bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bx bx-send me-1"></i>送出拒絕';
+
+        if (result.success) {
+            showMsg('success', result.message);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showMsg('error', result.message);
+        }
+    }
+
+    // showMsg 使用全域 window.showMsg（由 _SneatLayout 提供）
+
+    // ── 拒絕 Modal 快速原因填入 ──
+    function setRejectReason(text) {
+        document.getElementById('rejectReasonInput').value = text;
+        document.getElementById('rejectReasonError').style.display = 'none';
+        document.getElementById('rejectReasonInput').focus();
+    }
+
+    // ── 模擬賣家修改後重新送審（展示用）──
+    async function simulateSellerResubmitPromo(id, name) {
+        const ok = await showConfirm(
+            '🛍️ 模擬賣家重新送審',
+            `模擬賣家修改後重新送審活動「${name}」？<br><small style="color:#718096;">活動將回到待審核列表，展示完整拒絕 → 修改 → 重新送審流程。</small>`
+        );
+        if (!ok) return;
+        const token = document.querySelector('#actionForm [name="__RequestVerificationToken"]').value;
+        const fd = new FormData();
+        fd.append('__RequestVerificationToken', token);
+        const res = await fetch(`/Promotions/SimulateSellerResubmit/${id}`, {
+            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+        });
+        const result = await res.json();
+        showMsg(result.success ? 'success' : 'error', result.message);
+        if (result.success) setTimeout(() => location.reload(), 1500);
+    }
+</script>
+<script>
+// ── AJAX 分頁：面板展開時換頁不重整、自動載入第一筆 ──
+(function () {
+    function ajaxLoadPromoPage(href) {
+        var wrap    = document.querySelector('#promoListCol .promo-table-wrap');
+        var listCol = document.getElementById('promoListCol');
+        if (wrap) wrap.style.opacity = '0.4';
+        fetch(href)
+            .then(function (res) { if (!res.ok) throw new Error(); return res.text(); })
+            .then(function (html) {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                // 更新表格 tbody
+                var newTbody = doc.querySelector('#promoListCol .table tbody');
+                var tbody    = document.querySelector('#promoListCol .table tbody');
+                if (tbody && newTbody) tbody.innerHTML = newTbody.innerHTML;
+                // 更新分頁（card-footer）
+                var newFooter = doc.querySelector('#promoListCol .card-footer');
+                var curFooter = document.querySelector('#promoListCol .card-footer');
+                if (newFooter && curFooter)        curFooter.outerHTML = newFooter.outerHTML;
+                else if (newFooter && !curFooter)  { var card = document.querySelector('#promoListCol .card:last-child'); if (card) card.insertAdjacentHTML('beforeend', newFooter.outerHTML); }
+                else if (!newFooter && curFooter)  curFooter.remove();
+                // 更新狀態 Tabs 活躍狀態
+                var newTabs = doc.querySelector('#promoListCol .status-tabs');
+                var curTabs = document.querySelector('#promoListCol .status-tabs');
+                if (newTabs && curTabs) curTabs.innerHTML = newTabs.innerHTML;
+                // 更新 filter form 的 hidden status input
+                var newStatusInput = doc.querySelector('#promoListCol form input[name="status"]');
+                var curStatusInput = document.querySelector('#promoListCol form input[name="status"]');
+                if (newStatusInput && curStatusInput) curStatusInput.value = newStatusInput.value;
+                // 更新統計卡片選中狀態
+                var newStatCards = doc.querySelectorAll('.page-above-content a.stat-card');
+                var curStatCards = document.querySelectorAll('.page-above-content a.stat-card');
+                newStatCards.forEach(function(nc, i) {
+                    if (curStatCards[i]) curStatCards[i].classList.toggle('stat-active', nc.classList.contains('stat-active'));
+                });
+                // 重建列表並重綁
+                _rebuildPromoList();
+                _promoBindRows();
+                _bindPromoCheckboxEvents();
+                _updateNavButtons();
+                updateSelectionUI();
+                // 滾回頂部
+                if (listCol) listCol.scrollTop = 0;
+                // 恢復透明度
+                wrap = document.querySelector('#promoListCol .promo-table-wrap');
+                if (wrap) wrap.style.opacity = '1';
+                // 自動開啟第一筆
+                _activePromoRowId = null;
+                _currentNavIdx = -1;
+                var first = _promoList[0];
+                if (first) openPromotionOffcanvas(first.id, first.name, 0);
+                // 同步網址列
+                history.pushState(null, '', href);
+            })
+            .catch(function () { window.location.href = href; });
+    }
+
+    // ── 面板開啟時：統計卡片 / 狀態 Tab / 篩選表單 / 分頁 → AJAX，不跳頁 ──
+
+    // 統計卡片連結（在 page-above-content 內）
+    var above = document.querySelector('.page-above-content');
+    if (above) {
+        above.addEventListener('click', function (e) {
+            var panel = document.getElementById('promotionDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            var link = e.target.closest('a.stat-card');
+            if (!link) return;
+            var href = link.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadPromoPage(href);
+        });
+    }
+
+    // 狀態 Tab 連結 + 分頁（在 promoListCol 內）
+    document.getElementById('promoListCol').addEventListener('click', function (e) {
+        var panel = document.getElementById('promotionDetailPanel');
+        if (!panel || !panel.classList.contains('open')) return;
+        // 狀態 Tab
+        var tabLink = e.target.closest('.status-tabs a.nav-link');
+        if (tabLink) {
+            var href = tabLink.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadPromoPage(href);
+            return;
+        }
+        // 分頁
+        var pageLink = e.target.closest('.page-link');
+        if (pageLink) {
+            var pageItem = pageLink.closest('.page-item');
+            if (!pageItem || pageItem.classList.contains('disabled') || pageItem.classList.contains('active')) return;
+            var href = pageLink.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadPromoPage(href);
+        }
+    });
+
+    // 篩選表單（keyword 搜尋 submit + type 下拉 change）
+    var filterForm = document.querySelector('#promoListCol form[method="get"]');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function (e) {
+            var panel = document.getElementById('promotionDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            e.preventDefault();
+            var params = new URLSearchParams(new FormData(filterForm)).toString();
+            ajaxLoadPromoPage(filterForm.action + '?' + params);
+        });
+        var typeSelect = filterForm.querySelector('select[name="type"]');
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function () {
+                var panel = document.getElementById('promotionDetailPanel');
+                if (panel && panel.classList.contains('open')) {
+                    var params = new URLSearchParams(new FormData(filterForm)).toString();
+                    ajaxLoadPromoPage(filterForm.action + '?' + params);
+                } else {
+                    filterForm.submit();
+                }
+            });
+        }
+    }
+})();
+</script>
+}

@@ -13,3 +13,4 @@ public class PointUpdateDTO
 	public required string OrderNumber { get; set; }
 	public required string Description { get; set; }
 }
+

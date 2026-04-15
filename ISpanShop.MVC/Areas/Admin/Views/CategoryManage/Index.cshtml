@@ -22,6 +22,22 @@
 .cat-group { border-bottom:1px solid #f5f5f5; }
 .cat-group:last-child { border-bottom:none; }
 
+/* 拖曳效果 */
+.drag-handle { 
+    cursor: grab !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+.drag-handle:active {
+    cursor: grabbing !important;
+}
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f0f5ff;
+}
+
 /* 父分類列 */
 .parent-row {
     display:flex; align-items:center; gap:10px; flex-wrap:wrap;
@@ -38,9 +54,10 @@
 /* 子分類列 */
 .children-wrap { display:none; }
 .children-wrap.open { display:block; }
+.sortable-children { /* 子分類拖曳容器 */ }
 .child-row {
     display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-    padding:10px 20px 10px 44px;
+    padding:10px 20px 10px 20px;
     border-bottom:1px solid #f8f8f8;
     transition:background .12s;
 }
@@ -140,11 +157,6 @@
                         選擇上層分類則建立為子分類，不選則為頂層分類
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">排序數字</label>
-                    <input type="number" class="form-control" id="catSort" value="0" min="0" style="width:120px">
-                    <div style="font-size:.78rem;color:#aaa;margin-top:4px">數字越小排越前面</div>
-                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
@@ -194,14 +206,15 @@ else
     <div class="mg-card">
         <div class="mg-head">
             <h5>📂 分類樹狀列表</h5>
-            <small class="text-muted">共 @tree.Count 個頂層分類</small>
+            <small class="text-muted">共 @tree.Count 個頂層分類 <span style="color:#1a73e8;">· 拖曳 ☰ 圖示即可排序（主分類與子分類皆可拖曳）</span></small>
         </div>
-        <div>
+        <div id="sortable-list">
             @foreach (var parent in tree)
             {
-                <div class="cat-group">
+                <div class="cat-group" data-id="@parent.Id">
                     @* 父分類列 *@
                     <div class="parent-row" onclick="toggleChildren(@parent.Id, this)">
+                        <span class="drag-handle" style="cursor: grab; font-size: 20px; color: #adb5bd; margin-right: 8px; user-select: none;" title="拖曳排序">☰</span>
                         <span class="toggle-icon @(parent.Children.Any() ? "" : "invisible")">▶</span>
                         <span class="parent-name">@parent.Name</span>
                         @if (parent.Children.Any())
@@ -223,13 +236,13 @@ else
                                    onchange="toggleActive(this)">
                             <span class="toggle-track"></span>
                         </label>
-                        @* 修改二：排序加標籤 *@
-                        <div style="display:flex;align-items:center;gap:4px;font-size:.8rem;color:#888" onclick="event.stopPropagation()">
+                        @* 修改：隱藏舊的排序輸入框，改用拖曳排序 *@
+                        @* <div style="display:flex;align-items:center;gap:4px;font-size:.8rem;color:#888" onclick="event.stopPropagation()">
                             <span>排序↕</span>
                             <input class="sort-input" type="number" value="@parent.SortOrder"
                                    onchange="updateSort(@parent.Id, this.value)"
                                    title="數字越小排越前面">
-                        </div>
+                        </div> *@
                         <button class="act-btn act-add"
                                 onclick="event.stopPropagation(); openAdd(@parent.Id, '@Html.Raw(parent.Name.Replace("'", "\\'"))')">
                             ＋ 子分類
@@ -259,56 +272,52 @@ else
                         }
                     </div>
 
-                    @* 子分類列 *@
+                    @* 子分類列（可拖曳排序）*@
                     @if (parent.Children.Any())
                     {
                         <div class="children-wrap" id="children-@parent.Id">
-                            @foreach (var child in parent.Children)
-                            {
-                                <div class="child-row">
-                                    <span style="color:#bbb;font-size:.8rem;width:16px">└</span>
-                                    <span class="child-name">@child.Name</span>
-                                    @if (child.ProductCount > 0)
-                                    {
-                                        <span class="child-count" style="background:#f0fdfa;color:#0D9488">@child.ProductCount 件商品</span>
-                                    }
-                                    <span class="st-badge @(child.IsActive ? "st-on" : "st-off")" id="badge-@child.Id">
-                                        @(child.IsActive ? "啟用" : "停用")
-                                    </span>
-                                    @* 修改三：tooltip 說明加強 *@
-                                    <label class="toggle-switch"
-                                           title="@(child.IsActive ? "點擊停用：賣家上架時將看不到此分類，已上架商品不受影響" : "點擊啟用：恢復前台顯示")">
-                                        <input type="checkbox" @(child.IsActive ? "checked" : "")
-                                               data-id="@child.Id"
-                                               onchange="toggleActive(this)">
-                                        <span class="toggle-track"></span>
-                                    </label>
-                                    @* 修改二：排序加標籤 *@
-                                    <div style="display:flex;align-items:center;gap:4px;font-size:.8rem;color:#888">
-                                        <span>排序↕</span>
-                                        <input class="sort-input" type="number" value="@child.SortOrder"
-                                               onchange="updateSort(@child.Id, this.value)"
-                                               title="數字越小排越前面">
+                            <div class="sortable-children" data-parent-id="@parent.Id">
+                                @foreach (var child in parent.Children)
+                                {
+                                    <div class="child-row" data-id="@child.Id">
+                                        <span class="drag-handle" style="cursor: grab; font-size: 18px; color: #ccc; margin-left: 24px; margin-right: 8px; user-select: none;" title="拖曳排序子分類">☰</span>
+                                        <span style="color:#bbb;font-size:.8rem;width:16px">└</span>
+                                        <span class="child-name">@child.Name</span>
+                                        @if (child.ProductCount > 0)
+                                        {
+                                            <span class="child-count" style="background:#f0fdfa;color:#0D9488">@child.ProductCount 件商品</span>
+                                        }
+                                        <span class="st-badge @(child.IsActive ? "st-on" : "st-off")" id="badge-@child.Id">
+                                            @(child.IsActive ? "啟用" : "停用")
+                                        </span>
+                                        @* 修改三：tooltip 說明加強 *@
+                                        <label class="toggle-switch"
+                                               title="@(child.IsActive ? "點擊停用：賣家上架時將看不到此分類，已上架商品不受影響" : "點擊啟用：恢復前台顯示")">
+                                            <input type="checkbox" @(child.IsActive ? "checked" : "")
+                                                   data-id="@child.Id"
+                                                   onchange="toggleActive(this)">
+                                            <span class="toggle-track"></span>
+                                        </label>
+                                        <button class="act-btn act-edit" onclick="openEdit(@child.Id)">編輯</button>
+                                        @* 依 ProductCount / ChildCount 決定刪除按鈕是否可用 *@
+                                        @if (child.ProductCount == 0 && child.ChildCount == 0)
+                                        {
+                                            <button class="act-btn act-del"
+                                                    onclick="deleteCategory(@child.Id, '@Html.Raw(child.Name.Replace("'", "\\'"))')">
+                                                刪除
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="act-btn act-del" disabled
+                                                    style="opacity:.45;cursor:not-allowed;"
+                                                    title="該分類尚有 @(child.ProductCount > 0 ? $"{child.ProductCount} 筆商品" : "子分類")，無法刪除">
+                                                刪除
+                                            </button>
+                                        }
                                     </div>
-                                    <button class="act-btn act-edit" onclick="openEdit(@child.Id)">編輯</button>
-                                    @* 依 ProductCount / ChildCount 決定刪除按鈕是否可用 *@
-                                    @if (child.ProductCount == 0 && child.ChildCount == 0)
-                                    {
-                                        <button class="act-btn act-del"
-                                                onclick="deleteCategory(@child.Id, '@Html.Raw(child.Name.Replace("'", "\\'"))')">
-                                            刪除
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button class="act-btn act-del" disabled
-                                                style="opacity:.45;cursor:not-allowed;"
-                                                title="該分類尚有 @(child.ProductCount > 0 ? $"{child.ProductCount} 筆商品" : "子分類")，無法刪除">
-                                            刪除
-                                        </button>
-                                    }
-                                </div>
-                            }
+                                }
+                            </div>
                         </div>
                     }
                 </div>
@@ -318,7 +327,101 @@ else
 }
 
 @section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
+// ── 初始化拖曳排序 ──
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. 主分類拖曳排序
+    const parentContainer = document.getElementById('sortable-list');
+    if (parentContainer) {
+        console.log('初始化主分類拖曳排序...');
+        
+        Sortable.create(parentContainer, {
+            animation: 150,
+            handle: '.drag-handle',
+            draggable: '.cat-group',
+            ghostClass: 'sortable-ghost',
+            filter: '.children-wrap', // 不拖曳子分類容器
+            onStart: function() {
+                console.log('開始拖曳主分類');
+            },
+            onEnd: async function(evt) {
+                console.log('主分類拖曳結束，舊位置:', evt.oldIndex, '新位置:', evt.newIndex);
+                
+                const rows = [...parentContainer.querySelectorAll('.cat-group')];
+                const newOrders = rows.map((row, index) => ({
+                    Id: parseInt(row.dataset.id),
+                    Sort: index + 1
+                }));
+
+                console.log('主分類新排序:', newOrders);
+                await saveSortOrder(newOrders, '主分類');
+            }
+        });
+        
+        console.log('主分類拖曳排序初始化完成');
+    }
+    
+    // 2. 子分類拖曳排序（多群組）
+    const childContainers = document.querySelectorAll('.sortable-children');
+    console.log('找到', childContainers.length, '個子分類群組');
+    
+    childContainers.forEach(function(container) {
+        const parentId = container.dataset.parentId;
+        console.log('初始化子分類拖曳排序 (父分類 ID:', parentId, ')');
+        
+        Sortable.create(container, {
+            animation: 150,
+            handle: '.drag-handle',
+            draggable: '.child-row',
+            ghostClass: 'sortable-ghost',
+            onStart: function() {
+                console.log('開始拖曳子分類 (父分類 ID:', parentId, ')');
+            },
+            onEnd: async function(evt) {
+                console.log('子分類拖曳結束，舊位置:', evt.oldIndex, '新位置:', evt.newIndex);
+                
+                // 只抓取當前容器內的子分類
+                const rows = [...container.querySelectorAll('.child-row[data-id]')];
+                const newOrders = rows.map((row, index) => ({
+                    Id: parseInt(row.dataset.id),
+                    Sort: index + 1
+                }));
+
+                console.log('子分類新排序 (父分類 ID:', parentId, '):', newOrders);
+                await saveSortOrder(newOrders, '子分類');
+            }
+        });
+    });
+    
+    console.log('所有拖曳排序初始化完成');
+});
+
+// ── 共用：儲存排序函數 ──
+async function saveSortOrder(newOrders, type) {
+    try {
+        const response = await fetch('/Admin/CategoryManage/UpdateSortOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newOrders)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            console.log('✅', type, '排序儲存成功');
+            showToast('✅ ' + type + '排序已更新');
+        } else {
+            console.error('❌', type, '排序儲存失敗:', data.message);
+            alert('系統發生錯誤：' + (data.message || '未知錯誤'));
+        }
+    } catch (error) {
+        console.error('❌', type, '排序儲存錯誤:', error);
+        alert('系統發生錯誤');
+    }
+}
+
 // ── 展開/收合子分類 ──
 function toggleChildren(parentId, row) {
     const wrap = document.getElementById('children-' + parentId);
@@ -334,7 +437,6 @@ function openAdd(parentId, parentName) {
         parentId ? '新增子分類（' + parentName + '）' : '新增頂層分類';
     document.getElementById('catName').value = '';
     document.getElementById('catParent').value = parentId || '';
-    document.getElementById('catSort').value = '0';
     new bootstrap.Modal(document.getElementById('catModal')).show();
 }
 
@@ -346,7 +448,6 @@ async function openEdit(id) {
         document.getElementById('modalTitle').textContent = '編輯分類';
         document.getElementById('catName').value = d.name;
         document.getElementById('catParent').value = d.parentId || '';
-        document.getElementById('catSort').value = d.sortOrder;
         new bootstrap.Modal(document.getElementById('catModal')).show();
     } catch { showToast('❌ 載入失敗，請重試'); }
 }
@@ -357,14 +458,13 @@ async function saveCategory() {
     const name     = document.getElementById('catName').value.trim();
     const parentId = document.getElementById('catParent').value
         ? parseInt(document.getElementById('catParent').value) : null;
-    const sortOrder = parseInt(document.getElementById('catSort').value) || 0;
 
     if (!name) { showToast('❌ 分類名稱不能空白'); return; }
 
     const url  = id === 0 ? '/Admin/CategoryManage/Create' : '/Admin/CategoryManage/Update';
     const body = id === 0
-        ? { name, parentId, sortOrder, imageUrl: null }
-        : { id, name, parentId, sortOrder, imageUrl: null };
+        ? { name, parentId, sortOrder: 0, imageUrl: null }
+        : { id, name, parentId, sortOrder: 0, imageUrl: null };
 
     try {
         const d = await apiPost(url, body);

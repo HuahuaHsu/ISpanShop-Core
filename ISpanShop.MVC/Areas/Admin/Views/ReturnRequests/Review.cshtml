@@ -96,6 +96,50 @@
                                 <div class="info-value">@Model.CreatedAt?.ToString("yyyy-MM-dd HH:mm:ss")</div>
                             </div>
                             <div class="mb-3">
+                                <div class="info-label">付款時間</div>
+                                <div class="info-value">
+                                    @if (Model.PaymentDate.HasValue)
+                                    {
+                                        <span class="text-dark">@Model.PaymentDate.Value.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">尚未付款</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="info-label">完成時間</div>
+                                <div class="info-value">
+                                    @if (Model.CompletedAt.HasValue)
+                                    {
+                                        <span class="text-dark">@Model.CompletedAt.Value.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">尚未完成</span>
+                                    }
+                                </div>
+                            </div>
+                            @if (Model.ReturnRequestCreatedAt.HasValue)
+                            {
+                                <div class="mb-3">
+                                    <div class="info-label">申請退款時間</div>
+                                    <div class="info-value text-danger">
+                                        @Model.ReturnRequestCreatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.Status == OrderStatus.Refunded && Model.RefundDate.HasValue)
+                            {
+                                <div class="mb-3">
+                                    <div class="info-label">審核退款時間</div>
+                                    <div class="info-value text-success fw-bold">
+                                        @Model.RefundDate.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                                    </div>
+                                </div>
+                            }
+                            <div class="mb-3">
                                 <div class="info-label">當前狀態</div>
                                 <div><span class="badge-soft @statusCss">@Model.Status.GetDisplayName()</span></div>
                             </div>
@@ -274,7 +318,11 @@
                                     text: res.message,
                                     icon: 'success'
                                 }).then(() => {
-                                    window.location.href = '@Url.Action("Index", "ReturnRequests")';
+                                    if (action === 'Reject') {
+                                        window.location.href = '@Url.Action("Index", "ReturnRequests")';
+                                    } else {
+                                        window.location.reload();
+                                    }
                                 });
                             } else {
                                 Swal.fire('錯誤', res.message, 'error');

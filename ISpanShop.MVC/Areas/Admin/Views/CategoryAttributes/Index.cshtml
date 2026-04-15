@@ -1,0 +1,921 @@
+﻿@model ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.Models.DTOs.Categories.CategorySpecDto>
+@using System.Text.Json
+
+@{
+    Layout = "~/Views/Shared/_SneatLayout.cshtml";
+    ViewData["Title"] = "分類屬性管理";
+
+    var allSpecsJs = ((IEnumerable<ISpanShop.Models.DTOs.Categories.CategorySpecDto>)ViewBag.AllSpecsForJs).ToList();
+    var catDtos    = (IEnumerable<ISpanShop.Models.DTOs.Categories.CategoryDto>)ViewBag.Categories;
+    var parents    = catDtos.Where(c => c.ParentId == null).OrderBy(c => c.Id).ToList();
+    var children   = catDtos.Where(c => c.ParentId != null).OrderBy(c => c.Name).ToList();
+
+    string InputTypeLabel(string t) => t switch
+    {
+        "text"     => "文字",
+        "select"   => "單選",
+        "checkbox" => "多選",
+        "radio"    => "單選按鈕",
+        "number"   => "數字",
+        _ => t
+    };
+    string InputTypeBadgeCls(string t) => t switch
+    {
+        "text"     => "bg-secondary-subtle text-secondary",
+        "select"   => "bg-primary-subtle text-primary",
+        "checkbox" => "bg-info-subtle text-info",
+        "radio"    => "bg-warning-subtle text-warning",
+        "number"   => "bg-success-subtle text-success",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+}
+
+@* ─── 頁面標題 ─────────────────────────────────────── *@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1" style="color:#1e2d3d;">分類屬性管理</h4>
+        <p class="text-muted mb-0 small">設定各分類對應的屬性，前台賣家建立商品時將自動帶出</p>
+    </div>
+    <button class="btn btn-primary rounded-pill px-4" onclick="openCreateAttrModal()">
+        <i class="bx bx-plus me-1"></i>新增屬性
+    </button>
+</div>
+
+@* ─── 主體：左右分欄 ──────────────────────────────── *@
+<div class="row g-3 w-100" style="margin-left:0;margin-right:0;">
+
+    @* 左欄：分類樹 *@
+    <div class="col-lg-3">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white border-0 pt-3 pb-2 px-3">
+                <h6 class="fw-bold mb-2" style="color:#566a7f;">
+                    <i class="bx bx-category me-1 text-primary"></i>分類列表
+                </h6>
+                <input id="catSearch" class="form-control form-control-sm rounded-pill"
+                       placeholder="搜尋分類...">
+            </div>
+            <div class="card-body p-2 overflow-auto" style="max-height:68vh;" id="catTree">
+                @foreach (var parent in parents)
+                {
+                    var subs = children.Where(c => c.ParentId == parent.Id).ToList();
+                    if (!subs.Any()) continue;
+                    <div class="cat-group mb-1" data-parent-id="@parent.Id">
+                        <div class="cat-parent-row" onclick="toggleParent(this)">
+                            <span class="cat-parent-arrow"><i class="bx bx-chevron-right"></i></span>
+                            <span class="cat-parent-name fw-semibold">@parent.Name</span>
+                            <span class="badge rounded-pill bg-secondary-subtle text-secondary ms-auto"
+                                  id="pcnt-@parent.Id" style="display:none;font-size:.7rem;"></span>
+                        </div>
+                        <div class="cat-children" style="display:none;">
+                            @foreach (var sub in subs)
+                            {
+                                <div class="cat-item" data-id="@sub.Id" data-name="@sub.Name"
+                                     data-parent-id="@parent.Id" onclick="selectCategory(this)">
+                                    <span class="cat-item-name small fw-medium">@sub.Name</span>
+                                    <span class="badge rounded-pill bg-primary-subtle text-primary"
+                                          id="cnt-@sub.Id" style="display:none;"></span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* 右欄 *@
+    <div class="col-lg-9">
+
+        @* 未選擇時的提示 *@
+        <div id="noSelection" class="card shadow-sm border-0 rounded-4 text-center py-5 mb-4">
+            <i class="bx bx-left-arrow-circle fs-1 d-block mb-2" style="color:#adb5bd;"></i>
+            <p class="text-muted mb-0">請點選左側分類來管理其屬性</p>
+        </div>
+
+        @* 綁定面板 *@
+        <div id="bindingPanel" class="d-none mb-4">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0" style="color:#1e2d3d;">
+                        <i class="bx bx-link me-2 text-primary"></i>
+                        <span id="selCatName">—</span> 的屬性設定
+                    </h5>
+                    <button class="btn btn-sm btn-primary rounded-pill px-3" onclick="openBindModal()">
+                        <i class="bx bx-link-alt me-1"></i>綁定屬性
+                    </button>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <p class="text-muted small mb-3">
+                        <i class="bx bx-info-circle me-1"></i>
+                        拖拉左側 <i class="bx bx-grid-vertical"></i> 可調整順序；切換「可篩選」決定前台是否提供篩選條件。
+                    </p>
+                    <div id="boundEmpty" class="text-center py-5 text-muted d-none">
+                        <i class="bx bx-unlink fs-1 d-block mb-2 opacity-50"></i>
+                        此分類尚未綁定任何屬性，點擊「綁定屬性」開始設定
+                    </div>
+                    <div id="boundTableWrap" class="d-none" style="max-height:400px;overflow-y:auto;overflow-x:auto;width:100%;">
+                        <table class="table table-hover align-middle bound-table mb-0" style="width:100%;">
+                            <colgroup>
+                                <col style="width:40px;">
+                                <col style="width:20%;">
+                                <col style="width:11%;">
+                                <col style="width:8%;">
+                                <col style="width:9%;">
+                                <col>
+                                <col style="width:90px;">
+                            </colgroup>
+                            <thead style="position:relative; z-index:2;">
+                                <tr>
+                                    <th style="width:40px;"></th>
+                                    <th style="width:20%;min-width:120px;">屬性名稱</th>
+                                    <th style="width:10%;min-width:80px;">輸入類型</th>
+                                    <th class="text-center" style="width:8%;min-width:60px;">必填</th>
+                                    <th class="text-center" style="width:8%;min-width:70px;">可篩選</th>
+                                    <th style="min-width:80px;">選項預覽</th>
+                                    <th class="text-end" style="width:90px;min-width:90px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="boundTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* 屬性庫 *@
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-0" style="color:#1e2d3d;">
+                    <i class="bx bx-library me-2 text-secondary"></i>屬性庫
+                    <span class="badge bg-secondary-subtle text-secondary rounded-pill ms-1 fw-normal" style="font-size:.78rem;">@Model.TotalCount</span>
+                </h5>
+                <input id="libSearch" class="form-control form-control-sm rounded-pill"
+                       style="max-width:220px;" placeholder="搜尋屬性...">
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (Model.TotalCount == 0)
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bx bx-category-alt fs-1 d-block mb-2 opacity-50"></i>
+                        <p>尚未建立任何屬性，點擊右上角「新增屬性」開始</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive mt-3" style="width:100%;">
+                        <table class="table table-hover align-middle lib-table mb-0" id="libTable" style="width:100%;">
+                            <colgroup>
+                                <col style="width:18%;min-width:120px;">
+                                <col style="width:10%;min-width:80px;">
+                                <col style="width:8%;min-width:60px;">
+                                <col style="min-width:100px;">
+                                <col style="width:22%;min-width:120px;">
+                                <col style="width:20%;min-width:160px;">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>屬性名稱</th>
+                                    <th>輸入類型</th>
+                                    <th class="text-center">必填</th>
+                                    <th>選項</th>
+                                    <th>已綁分類</th>
+                                    <th class="text-end">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var spec in Model.Data)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@spec.Name</td>
+                                        <td>
+                                            <span class="badge rounded-pill @InputTypeBadgeCls(spec.InputType)">
+                                                @InputTypeLabel(spec.InputType)
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (spec.IsRequired)
+                                            {
+                                                <span class="badge rounded-pill bg-danger-subtle text-danger">必填</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        <td class="text-muted small">
+                                            @if (spec.Options.Any())
+                                            {
+                                                @string.Join("、", spec.Options.Take(4))
+                                                @if (spec.Options.Count > 4)
+                                                {
+                                                    <span class="opacity-50"> +@(spec.Options.Count - 4)</span>
+                                                }
+                                            }
+                                            else { <text>—</text> }
+                                        </td>
+                                        <td>
+                                            @if (spec.BoundCategoryNames.Any())
+                                            {
+                                                @foreach (var cn in spec.BoundCategoryNames.Take(3))
+                                                {
+                                                    <span class="badge rounded-pill bg-success-subtle text-success me-1">@cn</span>
+                                                }
+                                                @if (spec.BoundCategoryNames.Count > 3)
+                                                {
+                                                    <span class="text-muted small">+@(spec.BoundCategoryNames.Count - 3)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">未綁定</span>
+                                            }
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            <div class="d-flex gap-2 justify-content-end flex-nowrap">
+                                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-2"
+                                                        onclick="openEditAttrModal(@spec.Id)">
+                                                    <i class="bx bx-edit me-1"></i>編輯
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger rounded-pill px-2"
+                                                        onclick="deleteSpec(@spec.Id, '@Html.Raw(spec.Name.Replace("'", "\\'"))')">
+                                                    <i class="bx bx-trash me-1"></i>刪除
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @* 分頁導覽 *@
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav class="mt-4 mb-2">
+                            <ul class="pagination justify-content-center gap-2">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link shadow-sm rounded-pill px-3"
+                                       href="@Url.Action("Index", new { page = Model.CurrentPage - 1 })">
+                                        <i class="bx bx-chevron-left me-1"></i> 上一頁
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    if (i == 1 || i == Model.TotalPages ||
+                                        (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
+                                    {
+                                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                            <a class="page-link shadow-sm rounded-circle fw-bold"
+                                               style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;"
+                                               href="@Url.Action("Index", new { page = i })">@i</a>
+                                        </li>
+                                    }
+                                    else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
+                                    {
+                                        <li class="page-item disabled">
+                                            <span class="page-link border-0 bg-transparent fw-bold"
+                                                  style="color:#a0aec0;">...</span>
+                                        </li>
+                                    }
+                                }
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link shadow-sm rounded-pill px-3"
+                                       href="@Url.Action("Index", new { page = Model.CurrentPage + 1 })">
+                                        下一頁 <i class="bx bx-chevron-right ms-1"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                        <p class="text-center mb-0 text-muted small">
+                            共 <span class="fw-bold text-primary">@Model.TotalCount</span> 筆，
+                            第 <span class="fw-bold text-primary">@Model.CurrentPage</span> / @Model.TotalPages 頁
+                        </p>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ══ Modal 1：新增屬性 ════════════════════════════════ *@
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bx bx-plus-circle text-primary me-2"></i>新增屬性
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">屬性名稱 <span class="text-danger">*</span></label>
+                    <input id="createAttrName" type="text" class="form-control" placeholder="例如：顏色、尺寸、材質">
+                    <div class="invalid-feedback">請填寫屬性名稱</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">輸入類型</label>
+                    <select id="createInputType" class="form-select" onchange="onCreateTypeChange()">
+                        <option value="text">文字輸入</option>
+                        <option value="select">單選（下拉）</option>
+                        <option value="checkbox">多選（核取方塊）</option>
+                        <option value="radio">單選按鈕</option>
+                        <option value="number">數字輸入</option>
+                    </select>
+                </div>
+                <div class="mb-3 d-none" id="createOptionsSection">
+                    <label class="form-label fw-medium">選項清單</label>
+                    <div id="createOptions"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-1"
+                            onclick="addOption('createOptions')">
+                        <i class="bx bx-plus me-1"></i>新增選項
+                    </button>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="createIsRequired">
+                        <label class="form-check-label fw-medium" for="createIsRequired">此屬性為必填</label>
+                    </div>
+                    <div class="form-check mt-2 d-none" id="createAllowCustomSection">
+                        <input class="form-check-input" type="checkbox" id="createAllowCustomInput">
+                        <label class="form-check-label fw-medium" for="createAllowCustomInput">
+                            允許使用者自填選項
+                            <span class="text-muted small fw-normal ms-1">（賣家可輸入不在清單中的選項）</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveCreateAttr()">
+                    <i class="bx bx-save me-1"></i>儲存屬性
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ══ Modal 2：綁定屬性 ════════════════════════════════ *@
+<div class="modal fade" id="bindModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bx bx-link-alt text-primary me-2"></i>
+                    綁定屬性到「<span id="bindModalCatName"></span>」
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <p class="text-muted small mb-3">
+                    勾選要綁定的屬性。若屬性庫中沒有所需屬性，請先在屬性庫新增後再回來綁定。
+                </p>
+                <input id="bindSearch" class="form-control form-control-sm rounded-pill mb-3"
+                       placeholder="搜尋屬性庫..." oninput="filterBindList()">
+                <div id="bindSpecList" style="max-height:340px;overflow-y:auto;"></div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmBind()">
+                    <i class="bx bx-link me-1"></i>確認綁定
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ══ Modal 3：編輯屬性 ════════════════════════════════ *@
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bx bx-edit text-warning me-2"></i>編輯屬性
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <input type="hidden" id="editAttrId">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">屬性名稱 <span class="text-danger">*</span></label>
+                    <input id="editAttrName" type="text" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">輸入類型</label>
+                    <select id="editInputType" class="form-select" onchange="onEditTypeChange()">
+                        <option value="text">文字輸入</option>
+                        <option value="select">單選（下拉）</option>
+                        <option value="checkbox">多選（核取方塊）</option>
+                        <option value="radio">單選按鈕</option>
+                        <option value="number">數字輸入</option>
+                    </select>
+                </div>
+                <div class="mb-3 d-none" id="editOptionsSection">
+                    <label class="form-label fw-medium">選項清單</label>
+                    <div id="editOptions"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-1"
+                            onclick="addOption('editOptions')">
+                        <i class="bx bx-plus me-1"></i>新增選項
+                    </button>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editIsRequired">
+                        <label class="form-check-label fw-medium" for="editIsRequired">此屬性為必填</label>
+                    </div>
+                    <div class="form-check mt-2 d-none" id="editAllowCustomSection">
+                        <input class="form-check-input" type="checkbox" id="editAllowCustomInput">
+                        <label class="form-check-label fw-medium" for="editAllowCustomInput">
+                            允許使用者自填選項
+                            <span class="text-muted small fw-normal ms-1">（賣家可輸入不在清單中的選項）</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" onclick="saveEditAttr()">
+                    <i class="bx bx-save me-1"></i>更新屬性
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ════════════════════════════════════════
+   Scripts
+════════════════════════════════════════ *@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+<script>
+// ── 初始資料（Server 序列化）─────────────────────
+const allSpecsData = @Html.Raw(JsonSerializer.Serialize(allSpecsJs.Select(s => new {
+    id               = s.Id,
+    name             = s.Name,
+    inputType        = s.InputType,
+    isRequired       = s.IsRequired,
+    allowCustomInput = s.AllowCustomInput,
+    options          = s.Options
+})));
+
+// ── 狀態 ─────────────────────────────────────────
+let selectedCatId   = null;
+let selectedCatName = '';
+let boundSpecs      = [];
+let sortableInst    = null;
+
+// ── 初始化 ────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    initBoundCountBadges();
+    initCatSearch();
+    initLibSearch();
+    restoreSelection();
+});
+
+function initBoundCountBadges() {
+    const pairs = @Html.Raw(JsonSerializer.Serialize(
+        ViewBag.BindingPairs != null
+            ? (List<object>)ViewBag.BindingPairs
+            : new List<object>()));
+
+    // 計算每個子分類的綁定數
+    const counts = {};
+    pairs.forEach(p => {
+        const id = p.categoryId;
+        if (id != null) counts[id] = (counts[id] || 0) + 1;
+    });
+
+    // 套用到子分類 badge
+    Object.entries(counts).forEach(([id, cnt]) => {
+        const el = document.getElementById('cnt-' + id);
+        if (el) { el.textContent = cnt; el.style.display = ''; }
+    });
+
+    // 計算並套用主分類總計 badge
+    document.querySelectorAll('.cat-group[data-parent-id]').forEach(group => {
+        const pid = group.dataset.parentId;
+        let total = 0;
+        group.querySelectorAll('.cat-item[data-id]').forEach(item => {
+            total += counts[item.dataset.id] || 0;
+        });
+        const pel = document.getElementById('pcnt-' + pid);
+        if (pel) { pel.textContent = total; if (total > 0) pel.style.display = ''; }
+    });
+}
+
+// ── 主分類折疊/展開 ────────────────────────────────
+function toggleParent(row) {
+    const group    = row.closest('.cat-group');
+    const children = group.querySelector('.cat-children');
+    const icon     = row.querySelector('.cat-parent-arrow i');
+    const open     = children.style.display !== 'none';
+    children.style.display = open ? 'none' : '';
+    icon.className = open ? 'bx bx-chevron-right' : 'bx bx-chevron-down';
+}
+
+function restoreSelection() {
+    const savedId = sessionStorage.getItem('catAttrSelectedId');
+    if (!savedId) return;
+    const el = document.querySelector(`.cat-item[data-id="${savedId}"]`);
+    if (!el) return;
+    // 展開所屬主分類
+    const group    = el.closest('.cat-group');
+    const children = group?.querySelector('.cat-children');
+    const icon     = group?.querySelector('.cat-parent-arrow i');
+    if (children) { children.style.display = ''; }
+    if (icon)     { icon.className = 'bx bx-chevron-down'; }
+    el.click();
+}
+
+// ── 分類選擇 ──────────────────────────────────────
+function selectCategory(el) {
+    document.querySelectorAll('.cat-item').forEach(e => e.classList.remove('cat-active'));
+    el.classList.add('cat-active');
+
+    selectedCatId   = parseInt(el.dataset.id);
+    selectedCatName = el.dataset.name;
+    sessionStorage.setItem('catAttrSelectedId', selectedCatId);
+
+    document.getElementById('noSelection').classList.add('d-none');
+    document.getElementById('bindingPanel').classList.remove('d-none');
+    document.getElementById('selCatName').textContent      = selectedCatName;
+    document.getElementById('bindModalCatName').textContent = selectedCatName;
+
+    loadBoundSpecs();
+}
+
+// ── 載入已綁定屬性 ────────────────────────────────
+async function loadBoundSpecs() {
+    try {
+        boundSpecs = await apiGet(`/Admin/CategoryAttributes/GetBoundSpecs?categoryId=${selectedCatId}`);
+        renderBoundTable();
+    } catch { boundSpecs = []; renderBoundTable(); }
+}
+
+function renderBoundTable() {
+    const tbody     = document.getElementById('boundTbody');
+    const emptyDiv  = document.getElementById('boundEmpty');
+    const tableWrap = document.getElementById('boundTableWrap');
+    const cntEl     = document.getElementById('cnt-' + selectedCatId);
+
+    // 更新子分類 badge
+    if (cntEl) {
+        cntEl.textContent = boundSpecs.length;
+        cntEl.style.display = boundSpecs.length > 0 ? '' : 'none';
+    }
+    // 更新主分類總計 badge
+    const catItem = document.querySelector(`.cat-item[data-id="${selectedCatId}"]`);
+    if (catItem) {
+        const group = catItem.closest('.cat-group');
+        const pid   = group?.dataset.parentId;
+        if (pid) {
+            let total = 0;
+            group.querySelectorAll('.cat-item[data-id]').forEach(item => {
+                const el = document.getElementById('cnt-' + item.dataset.id);
+                total += el ? (parseInt(el.textContent) || 0) : 0;
+            });
+            const pel = document.getElementById('pcnt-' + pid);
+            if (pel) { pel.textContent = total; pel.style.display = total > 0 ? '' : 'none'; }
+        }
+    }
+
+    if (boundSpecs.length === 0) {
+        emptyDiv.classList.remove('d-none');
+        tableWrap.classList.add('d-none');
+        return;
+    }
+    emptyDiv.classList.add('d-none');
+    tableWrap.classList.remove('d-none');
+
+    tbody.innerHTML = boundSpecs.map(s => `
+        <tr data-spec-id="${s.specId}">
+            <td class="text-center drag-handle" style="cursor:grab;color:#adb5bd;" title="拖拉排序">
+                <i class="bx bx-grid-vertical fs-5"></i>
+            </td>
+            <td class="fw-semibold">${esc(s.name)}</td>
+            <td>${typeBadge(s.inputType)}</td>
+            <td class="text-center">
+                <span class="badge rounded-pill ${s.isRequired ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary'}">
+                    ${s.isRequired ? '必填' : '選填'}
+                </span>
+            </td>
+            <td class="text-center">
+                <div class="form-check form-switch d-flex justify-content-center mb-0">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           ${s.isFilterable ? 'checked' : ''}
+                           onchange="toggleFilterable(${s.specId}, this.checked)">
+                </div>
+            </td>
+            <td class="text-muted small">
+                ${s.options.length ? s.options.slice(0,4).map(esc).join('、') + (s.options.length > 4 ? ` +${s.options.length-4}` : '') : '—'}
+            </td>
+            <td class="text-end text-nowrap">
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-2"
+                        onclick="unbindSpec(${s.specId}, '${escJs(s.name)}')">
+                    <i class="bx bx-unlink me-1"></i>解除
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    if (sortableInst) sortableInst.destroy();
+    sortableInst = new Sortable(tbody, {
+        animation: 150,
+        handle: '.drag-handle',
+        onEnd: async () => {
+            const ids = [...tbody.querySelectorAll('tr')].map(r => parseInt(r.dataset.specId));
+            await post('/Admin/CategoryAttributes/UpdateBindingSort', { categoryId: selectedCatId, orderedSpecIds: ids });
+        }
+    });
+}
+
+// ── 切換可篩選 ────────────────────────────────────
+async function toggleFilterable(specId, isFilterable) {
+    await post('/Admin/CategoryAttributes/ToggleFilterable', { categoryId: selectedCatId, specId, isFilterable });
+}
+
+// ── 解除綁定 ──────────────────────────────────────
+async function unbindSpec(specId, name) {
+    const r = await Swal.fire({
+        title:'解除綁定', html:`確定要解除「<strong>${esc(name)}</strong>」與此分類的綁定？`,
+        icon:'warning', showCancelButton:true,
+        confirmButtonColor:'#e53e3e', confirmButtonText:'確認解除', cancelButtonText:'取消'
+    });
+    if (!r.isConfirmed) return;
+    await post('/Admin/CategoryAttributes/UnbindSpec', { categoryId: selectedCatId, specId });
+    toast('已解除綁定', 'success');
+    await loadBoundSpecs();
+}
+
+// ── 綁定屬性 Modal ────────────────────────────────
+function openBindModal() {
+    if (!selectedCatId) return;
+    document.getElementById('bindSearch').value = '';
+    renderBindList('');
+    new bootstrap.Modal(document.getElementById('bindModal')).show();
+}
+
+function renderBindList(q) {
+    const boundIds  = new Set(boundSpecs.map(s => s.specId));
+    const available = allSpecsData.filter(s =>
+        !boundIds.has(s.id) && (!q || s.name.toLowerCase().includes(q.toLowerCase())));
+    const list = document.getElementById('bindSpecList');
+    if (!available.length) {
+        list.innerHTML = '<p class="text-muted text-center py-4">所有屬性皆已綁定至此分類</p>';
+        return;
+    }
+    list.innerHTML = available.map(s => `
+        <div class="form-check d-flex align-items-center gap-2 py-2 border-bottom">
+            <input class="form-check-input bind-chk flex-shrink-0" type="checkbox" value="${s.id}" id="bc${s.id}">
+            <label class="form-check-label d-flex align-items-center justify-content-between w-100 mb-0"
+                   for="bc${s.id}" style="cursor:pointer;">
+                <span class="fw-medium">${esc(s.name)}</span>
+                ${typeBadge(s.inputType)}
+            </label>
+        </div>
+    `).join('');
+}
+
+function filterBindList() {
+    renderBindList(document.getElementById('bindSearch').value);
+}
+
+async function confirmBind() {
+    const ids = [...document.querySelectorAll('.bind-chk:checked')].map(e => +e.value);
+    if (!ids.length) { toast('請勾選至少一個屬性', 'warning'); return; }
+    for (const id of ids) await post('/Admin/CategoryAttributes/BindSpec', { categoryId: selectedCatId, specId: id });
+    bootstrap.Modal.getInstance(document.getElementById('bindModal'))?.hide();
+    toast(`已綁定 ${ids.length} 個屬性`, 'success');
+    await loadBoundSpecs();
+}
+
+// ── 新增屬性 Modal ────────────────────────────────
+function openCreateAttrModal() {
+    document.getElementById('createAttrName').value          = '';
+    document.getElementById('createInputType').value         = 'text';
+    document.getElementById('createIsRequired').checked      = false;
+    document.getElementById('createAllowCustomInput').checked = false;
+    document.getElementById('createOptions').innerHTML       = '';
+    document.getElementById('createOptionsSection').classList.add('d-none');
+    document.getElementById('createAllowCustomSection').classList.add('d-none');
+    document.getElementById('createAttrName').classList.remove('is-invalid');
+    new bootstrap.Modal(document.getElementById('createModal')).show();
+}
+
+function onCreateTypeChange() {
+    const needs = needsOptions(document.getElementById('createInputType').value);
+    document.getElementById('createOptionsSection').classList.toggle('d-none', !needs);
+    document.getElementById('createAllowCustomSection').classList.toggle('d-none', !needs);
+}
+
+async function saveCreateAttr() {
+    const name = document.getElementById('createAttrName').value.trim();
+    if (!name) { document.getElementById('createAttrName').classList.add('is-invalid'); return; }
+    document.getElementById('createAttrName').classList.remove('is-invalid');
+
+    const payload = {
+        name,
+        inputType       : document.getElementById('createInputType').value,
+        isRequired      : document.getElementById('createIsRequired').checked,
+        allowCustomInput: document.getElementById('createAllowCustomInput').checked,
+        options         : getOpts('createOptions')
+    };
+    const data = await post('/Admin/CategoryAttributes/CreateAjax', payload);
+    if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('createModal'))?.hide();
+        toast('屬性新增成功', 'success');
+        setTimeout(() => location.reload(), 900);
+    } else { toast(data.message || '新增失敗', 'error'); }
+}
+
+// ── 編輯屬性 Modal ────────────────────────────────
+function openEditAttrModal(id) {
+    const s = allSpecsData.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('editAttrId').value              = id;
+    document.getElementById('editAttrName').value            = s.name;
+    document.getElementById('editInputType').value           = s.inputType;
+    document.getElementById('editIsRequired').checked        = s.isRequired;
+    document.getElementById('editAllowCustomInput').checked  = s.allowCustomInput;
+    const needs = needsOptions(s.inputType);
+    document.getElementById('editOptionsSection').classList.toggle('d-none', !needs);
+    document.getElementById('editAllowCustomSection').classList.toggle('d-none', !needs);
+    document.getElementById('editOptions').innerHTML =
+        (s.options || []).map(o => optRow(o, 'editOptions')).join('');
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+function onEditTypeChange() {
+    const needs = needsOptions(document.getElementById('editInputType').value);
+    document.getElementById('editOptionsSection').classList.toggle('d-none', !needs);
+    document.getElementById('editAllowCustomSection').classList.toggle('d-none', !needs);
+}
+
+async function saveEditAttr() {
+    const name = document.getElementById('editAttrName').value.trim();
+    if (!name) return;
+    const data = await post('/Admin/CategoryAttributes/EditAjax', {
+        id              : +document.getElementById('editAttrId').value,
+        name,
+        inputType       : document.getElementById('editInputType').value,
+        isRequired      : document.getElementById('editIsRequired').checked,
+        allowCustomInput: document.getElementById('editAllowCustomInput').checked,
+        options         : getOpts('editOptions')
+    });
+    if (data.success) {
+        bootstrap.Modal.getInstance(document.getElementById('editModal'))?.hide();
+        toast('屬性更新成功', 'success');
+        setTimeout(() => location.reload(), 900);
+    }
+}
+
+// ── 刪除屬性 ──────────────────────────────────────
+async function deleteSpec(id, name) {
+    const r = await Swal.fire({
+        title:'確認刪除屬性',
+        html:`確定要刪除「<strong>${esc(name)}</strong>」？<br>
+              <span class="text-muted small">若已綁定至分類，系統將拒絕刪除。</span>`,
+        icon:'warning', showCancelButton:true,
+        confirmButtonColor:'#e53e3e', confirmButtonText:'確認刪除', cancelButtonText:'取消'
+    });
+    if (!r.isConfirmed) return;
+    const data = await post('/Admin/CategoryAttributes/DeleteAjax', { id });
+    if (data.success) {
+        toast('屬性已刪除', 'success');
+        setTimeout(() => location.reload(), 900);
+    } else { Swal.fire({ title:'無法刪除', text:data.message, icon:'error' }); }
+}
+
+// ── 搜尋 ──────────────────────────────────────────
+function initLibSearch() {
+    document.getElementById('libSearch').addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#libTable tbody tr').forEach(tr => {
+            tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    });
+}
+
+function initCatSearch() {
+    document.getElementById('catSearch').addEventListener('input', function() {
+        const q = this.value.trim().toLowerCase();
+        document.querySelectorAll('.cat-group').forEach(group => {
+            const items    = group.querySelectorAll('.cat-item');
+            const children = group.querySelector('.cat-children');
+            const icon     = group.querySelector('.cat-parent-arrow i');
+            let anyVisible = false;
+
+            items.forEach(item => {
+                const match = !q || item.dataset.name.toLowerCase().includes(q);
+                item.style.display = match ? '' : 'none';
+                if (match) anyVisible = true;
+            });
+
+            // 搜尋中：有匹配則自動展開，無匹配則隱藏整組
+            if (q) {
+                group.style.display    = anyVisible ? '' : 'none';
+                if (anyVisible && children) children.style.display = '';
+                if (anyVisible && icon)     icon.className = 'bx bx-chevron-down';
+            } else {
+                // 清空搜尋後回復預設（收合）
+                group.style.display = '';
+                if (children) children.style.display = 'none';
+                if (icon)     icon.className = 'bx bx-chevron-right';
+                // 若有已選中分類則維持其父層展開
+                const active = group.querySelector('.cat-item.cat-active');
+                if (active) {
+                    if (children) children.style.display = '';
+                    if (icon)     icon.className = 'bx bx-chevron-down';
+                }
+            }
+        });
+    });
+}
+
+// ── 工具 ──────────────────────────────────────────
+function needsOptions(t) { return ['select','checkbox','radio'].includes(t); }
+
+function getOpts(id) {
+    return [...document.querySelectorAll(`#${id} .opt-inp`)].map(i => i.value.trim()).filter(Boolean);
+}
+
+function addOption(id) {
+    const c = document.getElementById(id);
+    const d = document.createElement('div');
+    d.className = 'd-flex gap-2 mb-2';
+    d.innerHTML = `<input type="text" class="form-control form-control-sm opt-inp" placeholder="選項名稱">
+        <button type="button" class="btn btn-sm btn-outline-danger px-2" onclick="this.parentElement.remove()">
+            <i class="bx bx-x"></i></button>`;
+    c.appendChild(d);
+    d.querySelector('.opt-inp').focus();
+}
+
+function optRow(v, _) {
+    return `<div class="d-flex gap-2 mb-2">
+        <input type="text" class="form-control form-control-sm opt-inp" value="${esc(v)}">
+        <button type="button" class="btn btn-sm btn-outline-danger px-2" onclick="this.parentElement.remove()">
+            <i class="bx bx-x"></i></button>
+    </div>`;
+}
+
+function typeBadge(t) {
+    const l = {text:'文字',select:'單選',checkbox:'多選',radio:'單選按鈕',number:'數字'};
+    const c = {text:'secondary',select:'primary',checkbox:'info',radio:'warning',number:'success'};
+    return `<span class="badge rounded-pill bg-${c[t]||'secondary'}-subtle text-${c[t]||'secondary'}">${l[t]||t}</span>`;
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escJs(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+async function post(url, body) {
+    return apiPost(url, body);
+}
+
+function toast(msg, icon) {
+    Swal.fire({ toast:true, position:'top-end', icon, title:msg, showConfirmButton:false, timer:1800 });
+}
+</script>
+
+@* ─── 樣式 ────────────────────────────────────────── *@
+<style>
+/* 主分類行 */
+.cat-parent-row {
+    display:flex; align-items:center; gap:.35rem;
+    padding:.45rem .75rem; border-radius:8px; cursor:pointer;
+    transition:background .12s; user-select:none;
+}
+.cat-parent-row:hover { background:#f0f3ff; }
+.cat-parent-arrow { color:#8592a3; line-height:1; flex-shrink:0; }
+.cat-parent-name  { font-size:.82rem; font-weight:600; color:#566a7f; }
+
+/* 子分類行（縮排） */
+.cat-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.4rem .75rem .4rem 2rem; border-radius:8px; cursor:pointer; transition:background .12s;
+}
+.cat-item:hover  { background:#f0f3ff; }
+.cat-active      { background:#e8eeff !important; }
+.cat-active .cat-item-name { color:#3d5afe; font-weight:600; }
+
+.bound-table th, .lib-table th {
+    font-size:.77rem; font-weight:600; color:#8592a3;
+    text-transform:uppercase; letter-spacing:.5px;
+    background:#f8f9fa; border-bottom:none; white-space:nowrap;
+}
+.bound-table td, .lib-table td { padding:.6rem .75rem; border-bottom:1px solid #f0f2f5; vertical-align:middle; }
+.bound-table tbody tr:last-child td, .lib-table tbody tr:last-child td { border-bottom:none; }
+.drag-handle:hover { color:#566a7f !important; }
+
+/* 屬性名稱欄不換行 */
+.lib-table td:first-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:0; }
+.bound-table td:nth-child(2) { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:0; }
+
+/* 操作欄不換行，確保按鈕有足夠顯示空間 */
+.lib-table td:last-child,
+.bound-table td:last-child { white-space:nowrap; }
+
+/* 確保表格撐滿容器 */
+.lib-table, .bound-table { width:100%; table-layout:fixed; }
+</style>

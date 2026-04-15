@@ -22,11 +22,14 @@ namespace ISpanShop.Models.DTOs.Orders
 		// A4 & A5. 日期篩選
 		public DateTime? StartDate { get; set; }
 		public DateTime? EndDate { get; set; }
-		public int DateDimension { get; set; } = 1; // 1=下單, 2=付款, 3=完成
+		public int DateDimension { get; set; } = 1; // 1=下單, 2=付款, 3=完成, 4=退貨申請, 5=退款完成
 
 		// A6. 商店屬性
 		public int? StoreId { get; set; }
 		public string StoreName { get; set; }
+
+		// C. 庫存狀態篩選 (1=充足, 2=不足)
+		public int? StockStatus { get; set; }
 
 		// B. 動態排序與分頁
 		public string SortBy { get; set; } 

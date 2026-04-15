@@ -18,6 +18,7 @@ namespace ISpanShop.Models.DTOs.Orders
 		public string CoverImage { get; set; }
 		public decimal Price { get; set; }
 		public int Quantity { get; set; }
+		public int Stock { get; set; }
 		public decimal SubTotal => Price * Quantity; // 小計
 	}
 }

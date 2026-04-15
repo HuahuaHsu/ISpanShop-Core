@@ -20,5 +20,6 @@
 
 	<ItemGroup>
 	  <Folder Include="DTOs\Stores\" />
+	  <Folder Include="EfModels\" />
 	</ItemGroup>
 </Project>

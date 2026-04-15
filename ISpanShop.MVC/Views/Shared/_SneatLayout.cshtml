@@ -40,7 +40,7 @@
             box-sizing: border-box;
         }
 
-        html, body {
+                html, body {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -57,15 +57,18 @@
             --transition: 0.25s ease;
         }
 
-        #app-layout {
+                #app-layout {
             display: flex;
             min-height: 100vh;
         }
 
-        /* SIDEBAR */
+                /* SIDEBAR */
         #layout-menu {
             width: var(--sidebar-w);
-            min-height: 100vh;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            align-self: flex-start;
             background-color: #2a3f54;
             display: flex;
             flex-direction: column;
@@ -302,7 +305,7 @@
                 background: rgba(255,255,255,0.08);
             }
 
-        /* MAIN */
+                /* MAIN */
         #main-wrapper {
             flex: 1;
             min-width: 0;
@@ -350,18 +353,18 @@
             align-items: center;
         }
 
-        .content-wrapper {
+                .content-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
         }
 
-        .content-body {
+                .content-body {
             flex: 1;
             padding: 1.5rem;
         }
 
-        .content-footer {
+                .content-footer {
             padding: .75rem 1.5rem;
             font-size: .875rem;
             color: #697a8d;
@@ -573,86 +576,110 @@
                 @{
                     var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
                     var action = ViewContext.RouteData.Values["action"]?.ToString();
-                    var isCatActive = ctrl == "CategoryManage" || ctrl == "CategorySpecs";
+                    var isCatActive = ctrl == "CategoryManage" || ctrl == "CategoryAttributes";
                     var isInvActive = ctrl == "Inventory";
-                    var isOrderActive = ctrl == "Orders" || ctrl == "ShipmentWorkstation" || ctrl == "ReturnRequests" || ctrl == "OrderTracking";
+                    var isOrderActive = (ctrl == "Orders" && action != "Dashboard") || ctrl == "ShipmentWorkstation" || ctrl == "ReturnRequests" || ctrl == "OrderTracking";
                     var isContentSupportActive = ctrl == "SupportTickets" || ctrl == "SensitiveWords" || ctrl == "SensitiveWordCategories";
                     var isPaymentActive = ctrl == "PaymentManagement";
+                    var isPointActive = ctrl == "Points";
+                    var isPromotionActive = ctrl == "Promotions";
                     var isStoreActive = ctrl == "Stores";
 
+
                     bool showOperations =
-                        User.HasPermission("product_manage") ||
-                        User.HasPermission("store_manage") ||
-                        User.HasPermission("cashflow_manage") ||
-                        User.HasPermission("ticket_manage") ||
-                        User.HasPermission("sensitive_manage");
+                    User.HasPermission("product_manage") ||
+                    User.HasPermission("store_manage") ||
+                    User.HasPermission("cashflow_manage") ||
+                    User.HasPermission("ticket_manage") ||
+                    User.HasPermission("sensitive_manage");
 
                     bool showAccount =
-                        User.HasPermission("member_manage") ||
-                        User.HasPermission("store_manage") ||
-                        User.IsSuperAdmin();
+                    User.HasPermission("member_manage") ||
+                    User.HasPermission("store_manage") ||
+                    User.IsSuperAdmin();
                 }
 
                 @if (showOperations)
                 {
                     <li class="menu-header"><span>營運管理</span></li>
 
-                    @if (User.HasPermission("product_manage"))
-                    {
-                        <li class="menu-item has-sub @(ctrl == "Products" ? "active" : "")">
-                            <span class="menu-link">
-                                <span class="mini-wrap">
-                                    <i class="menu-icon bx bx-store"></i>
-                                    <span class="menu-short">商品</span>
-                                </span>
-                                <i class="menu-icon bx bx-store"></i>
-                                <span class="menu-label">商品監管</span>
-                                <i class="menu-arrow bx bx-chevron-right"></i>
-                            </span>
-                            <div class="menu-sub">
-                                <ul>
-                                    <li class="menu-item @(ctrl == "Products" && action == "Index" ? "active" : "")">
-                                        <a href="@Url.Action("Index", "Products", new { area = "Admin" })" class="menu-link">商品總覽</a>
-                                    </li>
-                                    <li class="menu-item @(ctrl == "Products" && action == "PendingReview" ? "active" : "")">
-                                        <a href="@Url.Action("PendingReview", "Products", new { area = "Admin" })" class="menu-link">商品審核</a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="menu-flyout">
-                                <div class="menu-flyout-title">商品監管</div>
-                                <a href="@Url.Action("Index", "Products", new { area = "Admin" })">商品總覽</a>
-                                <a href="@Url.Action("PendingReview", "Products", new { area = "Admin" })">商品審核</a>
-                            </div>
-                        </li>
+                <li class="menu-item has-sub @(ctrl == "Products" ? "active" : "")">
+                    <span class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-store"></i>
+                            <span class="menu-short">商品</span>
+                        </span>
+                        <i class="menu-icon bx bx-store"></i>
+                        <span class="menu-label">商品監管</span>
+                        <i class="menu-arrow bx bx-chevron-right"></i>
+                    </span>
+                    <div class="menu-sub">
+                        <ul>
+                            <li class="menu-item @(ctrl == "Products" && action == "Index" ? "active" : "")">
+                                <a href="@Url.Action("Index", "Products", new { area = "Admin" })" class="menu-link">商品總覽</a>
+                            </li>
+                            <li class="menu-item @(ctrl == "Products" && action == "PendingReview" ? "active" : "")">
+                                <a href="@Url.Action("PendingReview", "Products", new { area = "Admin" })" class="menu-link">商品審核</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="menu-flyout">
+                        <div class="menu-flyout-title">商品監管</div>
+                        <a href="@Url.Action("Index", "Products", new { area = "Admin" })">商品總覽</a>
+                        <a href="@Url.Action("PendingReview", "Products", new { area = "Admin" })">商品審核</a>
+                    </div>
+                </li>
 
-                        <li class="menu-item has-sub @(isCatActive ? "active" : "")">
-                            <span class="menu-link">
-                                <span class="mini-wrap">
-                                    <i class="menu-icon bx bx-category"></i>
-                                    <span class="menu-short">分類</span>
-                                </span>
-                                <i class="menu-icon bx bx-category"></i>
-                                <span class="menu-label">分類管理</span>
-                                <i class="menu-arrow bx bx-chevron-right"></i>
-                            </span>
-                            <div class="menu-sub">
-                                <ul>
-                                    <li class="menu-item @(ctrl == "CategoryManage" ? "active" : "")">
-                                        <a href="@Url.Action("Index", "CategoryManage", new { area = "Admin" })" class="menu-link">分類總覽</a>
-                                    </li>
-                                    <li class="menu-item @(ctrl == "CategorySpecs" ? "active" : "")">
-                                        <a href="@Url.Action("Index", "CategorySpecs", new { area = "Admin" })" class="menu-link">分類屬性</a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="menu-flyout">
-                                <div class="menu-flyout-title">分類管理</div>
-                                <a href="@Url.Action("Index", "CategoryManage", new { area = "Admin" })">分類總覽</a>
-                                <a href="@Url.Action("Index", "CategorySpecs", new { area = "Admin" })">分類屬性</a>
-                            </div>
-                        </li>
-                    }
+                @* ── 促銷管理 ── *@
+                <li class="menu-item has-sub @(isPromotionActive ? "active" : "")">
+                    <span class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-purchase-tag-alt"></i>
+                            <span class="menu-short">促銷</span>
+                        </span>
+                        <i class="menu-icon bx bx-purchase-tag-alt"></i>
+                        <span class="menu-label">促銷管理</span>
+                        <i class="menu-arrow bx bx-chevron-right"></i>
+                    </span>
+                    <div class="menu-sub">
+                        <ul>
+                            <li class="menu-item @(isPromotionActive ? "active" : "")">
+                                <a href="@Url.Action("Index", "Promotions")" class="menu-link">活動管理</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="menu-flyout">
+                        <div class="menu-flyout-title">促銷管理</div>
+                        <a href="@Url.Action("Index", "Promotions")">活動管理</a>
+                    </div>
+                </li>
+
+                <li class="menu-item has-sub @(isCatActive ? "active" : "")">
+                    <span class="menu-link">
+                        <span class="mini-wrap">
+                            <i class="menu-icon bx bx-category"></i>
+                            <span class="menu-short">分類</span>
+                        </span>
+                        <i class="menu-icon bx bx-category"></i>
+                        <span class="menu-label">分類管理</span>
+                        <i class="menu-arrow bx bx-chevron-right"></i>
+                    </span>
+                    <div class="menu-sub">
+                        <ul>
+                            <li class="menu-item @(ctrl == "CategoryManage" ? "active" : "")">
+                                <a href="@Url.Action("Index", "CategoryManage", new { area = "Admin" })" class="menu-link">分類總覽</a>
+                            </li>
+                            <li class="menu-item @(ctrl == "CategoryAttributes" ? "active" : "")">
+                                <a href="@Url.Action("Index", "CategoryAttributes", new { area = "Admin" })" class="menu-link">分類屬性</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="menu-flyout">
+                        <div class="menu-flyout-title">分類管理</div>
+                        <a href="@Url.Action("Index", "CategoryManage", new { area = "Admin" })">分類總覽</a>
+                        <a href="@Url.Action("Index", "CategoryAttributes", new { area = "Admin" })">分類屬性</a>
+                    </div>
+                </li>
 
                     @if (User.HasPermission("store_manage"))
                     {
@@ -733,6 +760,16 @@
                                 <span class="menu-label">金流紀錄</span>
                             </a>
                         </li>
+                        <li class="menu-item @(isPointActive ? "active" : "")">
+                            <a href="@Url.Action("Index", "Points", new { area = "Admin" })" class="menu-link">
+                                <span class="mini-wrap">
+                                    <i class="menu-icon bx bx-coin"></i>
+                                    <span class="menu-short">點數</span>
+                                </span>
+                                <i class="menu-icon bx bx-coin"></i>
+                                <span class="menu-label">點數管理</span>
+                            </a>
+                        </li>
                     }
 
                     @if (User.HasPermission("ticket_manage") || User.HasPermission("sensitive_manage"))
@@ -749,34 +786,26 @@
                             </span>
                             <div class="menu-sub">
                                 <ul>
-                                    @if (User.HasPermission("ticket_manage"))
-                                    {
-                                        <li class="menu-item @(ctrl == "SupportTickets" ? "active" : "")">
-                                            <a href="@Url.Action("Index", "SupportTickets", new { area = "Admin" })" class="menu-link">客服中心</a>
-                                        </li>
-                                    }
-                                    @if (User.HasPermission("sensitive_manage"))
-                                    {
-                                        <li class="menu-item @(ctrl == "SensitiveWords" ? "active" : "")">
-                                            <a href="@Url.Action("Index", "SensitiveWords", new { area = "Admin" })" class="menu-link">敏感字管理</a>
-                                        </li>
-                                        <li class="menu-item @(ctrl == "SensitiveWordCategories" ? "active" : "")">
-                                            <a href="@Url.Action("Index", "SensitiveWordCategories", new { area = "Admin" })" class="menu-link">敏感字分類管理</a>
-                                        </li>
-                                    }
+                                    <li class="menu-item @(ctrl == "SupportTickets" ? "active" : "")">
+                                        <a href="@Url.Action("Index", "SupportTickets", new { area = "Admin" })" class="menu-link">客服中心</a>
+                                    </li>
+                                    <li class="menu-item @(ctrl == "OrderReviews" ? "active" : "")">
+                                        <a href="@Url.Action("Index", "OrderReviews", new { area = "Admin" })" class="menu-link">評論管理</a>
+                                    </li>
+                                    <li class="menu-item @(ctrl == "SensitiveWordCategories" ? "active" : "")">
+                                        <a href="@Url.Action("Index", "SensitiveWordCategories", new { area = "Admin" })" class="menu-link">分類管理-敏感字</a>
+                                    </li>
+                                    <li class="menu-item @(ctrl == "SensitiveWords" ? "active" : "")">
+                                        <a href="@Url.Action("Index", "SensitiveWords", new { area = "Admin" })" class="menu-link">敏感字管理</a>
+                                    </li>
                                 </ul>
                             </div>
                             <div class="menu-flyout">
                                 <div class="menu-flyout-title">內容與客服管理</div>
-                                @if (User.HasPermission("ticket_manage"))
-                                {
-                                    <a href="@Url.Action("Index", "SupportTickets", new { area = "Admin" })">客服中心</a>
-                                }
-                                @if (User.HasPermission("sensitive_manage"))
-                                {
-                                    <a href="@Url.Action("Index", "SensitiveWords", new { area = "Admin" })">敏感字管理</a>
-                                    <a href="@Url.Action("Index", "SensitiveWordCategories", new { area = "Admin" })">敏感字分類管理</a>
-                                }
+                                <a href="@Url.Action("Index", "SupportTickets", new { area = "Admin" })">客服中心</a>
+                                <a href="@Url.Action("Index", "OrderReviews", new { area = "Admin" })">評論管理</a>
+                                <a href="@Url.Action("Index", "SensitiveWordCategories", new { area = "Admin" })">分類管理-敏感字</a>
+                                <a href="@Url.Action("Index", "SensitiveWords", new { area = "Admin" })">敏感字管理</a>
                             </div>
                         </li>
                     }
@@ -921,6 +950,166 @@
         </div>
     </div>
 
+    @* ── 推拉式側邊面板共用標題樣式 ── *@
+    <style>
+        .side-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-bottom: 1px solid #bfdbfe;
+            box-shadow: 0 2px 8px rgba(49,130,206,.07);
+            flex-shrink: 0;
+            min-height: 60px;
+            gap: 8px;
+        }
+        .side-panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e3a5f;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .side-panel-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: rgba(255,255,255,.75);
+            border-radius: 8px;
+            color: #64748b;
+            font-size: 1.3rem;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background .15s, color .15s;
+            padding: 0;
+        }
+        .side-panel-close:hover { background: #fee2e2; color: #dc2626; }
+    </style>
+
+    <style>
+        /* ═══════════════════════════════════════════════════════════════════
+           Shared Split-Layout — 商品總覽 / 商品審核 / 促銷活動 三頁共用
+           ═══════════════════════════════════════════════════════════════════ */
+
+        /* 全頁單一滾動容器 */
+        .page-fluid-root {
+            height: calc(100vh - 56px - 3rem);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding-top: 1.25rem;
+        }
+        .page-above-content { flex-shrink: 0; }
+
+        /* 左右分割 flex 容器 */
+        .split-layout {
+            display: flex;
+            align-items: stretch;
+            flex: 1;
+            min-height: 0;
+            gap: 0;
+            transition: gap .35s cubic-bezier(.4,0,.2,1);
+        }
+        .split-layout.panel-open { gap: 14px; }
+
+        /* 左側列表欄 */
+        .split-list-col {
+            flex: 1;
+            min-width: 0;
+            overflow-y: auto;
+            padding: 1.25rem 1.5rem 2rem;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.10);
+            border: 1px solid rgba(226,232,240,.8);
+            transition: all .35s ease;
+        }
+        .split-layout.panel-open .split-list-col {
+            flex: 0 0 50%;
+            max-width: 50%;
+        }
+
+        /* 右側詳情面板 */
+        .split-detail-panel {
+            flex: 0 0 0%;
+            width: 0;
+            max-width: 0;
+            overflow: hidden;
+            transition: all .35s cubic-bezier(.4,0,.2,1);
+        }
+        .split-detail-panel.open { 
+            flex: 0 0 50%; 
+            width: 50%;
+            max-width: 50%;
+        }
+
+        .split-detail-panel-inner {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.10);
+            border: 1px solid rgba(226,232,240,.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .split-detail-panel-inner .panel-body { overflow-y: auto; flex: 1; }
+        .split-detail-panel-inner .panel-body img { 
+            max-height: 250px; 
+            object-fit: contain; 
+            width: auto;
+            max-width: 100%;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 返回完整列表按鈕（精簡模式時顯示） */
+        .back-to-list-btn {
+            display: none;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .split-layout.panel-open .back-to-list-btn { display: flex; }
+    </style>
+
+    @* ── 全域 Toast（成功通知，右上角自動消失）── *@
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:11000;">
+        <div id="globalToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fw-semibold" id="globalToastBody"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    @* ── 全域確認/提示 Modal ── *@
+    <div class="modal fade" id="globalModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold" id="globalModalTitle"></h5>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <p id="globalModalMessage" class="text-secondary mb-0" style="line-height:1.7;font-size:.93rem;"></p>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4 gap-2" id="globalModalFooter"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="~/sneat/assets/vendor/libs/jquery/jquery.js"></script>
     <script src="~/sneat/assets/vendor/libs/popper/popper.js"></script>
     <script src="~/sneat/assets/vendor/js/bootstrap.js"></script>
@@ -948,45 +1137,74 @@
     </script>
 
     <script>
-        // ── 全域 Alert / Confirm (SweetAlert2 版) ──
+        // ── 全域 Alert / Confirm / showMsg ──
         (function () {
-            window.showAlert = function (msg, callback) {
-                Swal.fire({
-                    title: '提示',
-                    text: msg,
-                    icon: 'info',
-                    confirmButtonText: '確定',
-                    customClass: {
-                        confirmButton: 'btn btn-primary rounded-pill px-5'
-                    },
-                    buttonsStyling: false
-                }).then((result) => {
+            function getModal() {
+                return bootstrap.Modal.getOrCreateInstance(document.getElementById('globalModal'));
+            }
+
+            // showAlert(msg, callback?, title?)
+            window.showAlert = function (msg, callback, title) {
+                document.getElementById('globalModalTitle').textContent = title || '提示';
+                document.getElementById('globalModalMessage').textContent = msg;
+                document.getElementById('globalModalFooter').innerHTML =
+                    '<button type="button" class="btn btn-primary rounded-pill px-5" id="_gOk">確定</button>';
+                document.getElementById('_gOk').onclick = function () {
+                    getModal().hide();
                     if (callback) callback();
-                });
+                };
             };
 
-            window.showConfirm = function (msg, onConfirm, onCancel) {
-                Swal.fire({
-                    title: '確認',
-                    text: msg,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: '確定',
-                    cancelButtonText: '取消',
-                    customClass: {
-                        confirmButton: 'btn btn-primary rounded-pill px-4 me-2',
-                        cancelButton: 'btn btn-outline-secondary rounded-pill px-4'
-                    },
-                    buttonsStyling: false,
-                    allowOutsideClick: () => !Swal.isLoading()
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        if (onConfirm) onConfirm();
-                    } else {
-                        // 包含點擊取消、點擊外部、按下 ESC 等所有情況
-                        if (onCancel) onCancel();
-                    }
+            // showConfirm — 支援兩種呼叫方式，皆回傳 Promise<bool>：
+            //   新式（Promotions 用）： await showConfirm(title, text)
+            //   舊式（callback 兼容）： showConfirm(msg, onConfirm, onCancel)
+            window.showConfirm = function (titleOrMsg, textOrCallback, onConfirm, onCancel) {
+                var title, text, confirmCb, cancelCb;
+                if (typeof textOrCallback === 'function') {
+                    // 舊式 callback signature
+                    title     = '確認';
+                    text      = titleOrMsg;
+                    confirmCb = textOrCallback;
+                    cancelCb  = onConfirm;
+                } else {
+                    // 新式 Promise signature
+                    title     = titleOrMsg || '確認';
+                    text      = textOrCallback || '';
+                    confirmCb = onConfirm;
+                    cancelCb  = onCancel;
+                }
+                document.getElementById('globalModalTitle').textContent = title;
+                document.getElementById('globalModalMessage').innerHTML = text;
+                document.getElementById('globalModalFooter').innerHTML =
+                    '<button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="_gCancel">取消</button>' +
+                    '<button type="button" class="btn btn-primary rounded-pill px-4" id="_gConfirm">確定</button>';
+                var promise = new Promise(function (resolve) {
+                    document.getElementById('_gConfirm').onclick = function () {
+                        getModal().hide();
+                        resolve(true);
+                        if (confirmCb) confirmCb();
+                    };
+                    document.getElementById('_gCancel').onclick = function () {
+                        getModal().hide();
+                        resolve(false);
+                        if (cancelCb) cancelCb();
+                    };
                 });
+                getModal().show();
+                return promise;
+            };
+
+            // showMsg(type, msg) — success 用右上角 Toast，error 用 Modal
+            window.showMsg = function (type, msg) {
+                if (type === 'success') {
+                    var toastEl   = document.getElementById('globalToast');
+                    var toastBody = document.getElementById('globalToastBody');
+                    toastEl.className = 'toast align-items-center border-0 text-bg-success';
+                    toastBody.textContent = msg;
+                    new bootstrap.Toast(toastEl, { delay: 1800 }).show();
+                } else {
+                    showAlert(msg, null, '操作失敗');
+                }
             };
         })();
     </script>
@@ -1117,3 +1335,10 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+

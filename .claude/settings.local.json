@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(find /c/Users/ispan/Desktop/github_repo/ISpanShop-Core -type d -name \"*romotion*\" -o -type d -name \"*Promo*\" 2>/dev/null | head -20)",
+      "Bash(ls -d /c/Users/ispan/Desktop/github_repo/ISpanShop-Core/*/)",
+      "Bash(find /c/Users/ispan/Desktop/github_repo/ISpanShop-Core -type f -name \"*.cs\" | xargs grep -l \"Promotion\" | grep -v bin | grep -v obj)",
+      "Bash(grep -n \"Swal\\\\|alert\\(\\\\|confirm\\(\" /c/Users/ispan/Desktop/github_repo/ISpanShop-Core/ISpanShop.MVC/Views/Promotions/*.cshtml 2>/dev/null | grep -v \"//\\\\|@\\\\*\")",
+      "Bash(grep -n \"showMsg\\\\|showConfirm\\\\|showAlert\" /c/Users/ispan/Desktop/github_repo/ISpanShop-Core/ISpanShop.MVC/Views/Promotions/*.cshtml 2>/dev/null)",
+      "Read(//c/Users/ispan/Desktop/github_repo/ISpanShop-Core/**)",
+      "Bash(grep -n \"Swal\\\\b\\\\|alert\\(\\\\b\" /c/Users/ispan/Desktop/github_repo/ISpanShop-Core/ISpanShop.MVC/Views/Promotions/*.cshtml 2>/dev/null | grep -v \"//\\\\|@\\\\*\" | head -5)",
+      "Bash(find /c/Users/ispan/Desktop/github_repo/ISpanShop-Core/ISpanShop.MVC -name \"*.cshtml\" -type f 2>/dev/null | grep -i \"product\\\\|review\\\\|audit\" | sort)",
+      "Bash(grep -l \"審核\\\\|review\\\\|PendingReview\" /c/Users/ispan/Desktop/github_repo/ISpanShop-Core/ISpanShop.MVC/Areas/Admin/Views/Products/*.cshtml 2>/dev/null)",
+      "Bash(python3:*)",
+      "Bash(powershell -Command \"[System.IO.File]::ReadAllBytes\\('C:\\\\Users\\\\ispan\\\\Desktop\\\\github_repo\\\\ISpanShop-Core\\\\ISpanShop.Models\\\\Seeding\\\\SeederMappings.cs'\\)[0..3] | ForEach-Object { '{0:X2}' -f $_ }\")",
+      "Bash(cmd /c \"type C:\\\\Users\\\\ispan\\\\Desktop\\\\github_repo\\\\ISpanShop-Core\\\\ISpanShop.Models\\\\Seeding\\\\SeederMappings.cs\" 2>&1 | grep -n \"機車\\\\|汽車\\\\|motorcycle\\\\|vehicle\" | head -20)",
+      "Bash(cd:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}

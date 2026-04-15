@@ -1,0 +1,392 @@
+@model ISpanShop.MVC.Areas.Admin.Models.Points.PointHistoryIndexVm
+
+@{
+    Layout = "~/Views/Shared/_SneatLayout.cshtml";
+    ViewData["Title"] = "點數紀錄查詢";
+}
+
+<style>
+    .font-noto { font-family: 'Noto Sans TC', sans-serif; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    .point-positive { color: #28c76f; font-weight: 600; }
+    .point-negative { color: #ea5455; font-weight: 600; }
+    .table > :not(caption) > * > * { padding: 1rem 0.75rem; }
+</style>
+
+<div class="container-xxl flex-grow-1 container-p-y font-noto">
+    <div class="d-flex align-items-center justify-content-between">
+        <h4 class="fw-bold py-3 mb-4">
+            <i class="bx bx bx-coin text-primary me-2 "></i>點數管理與查詢
+        </h4>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updatePointsModal">
+                <i class="bx bx-plus me-1"></i> 手動發放/收回
+            </button>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#bulkUpdateModal">
+                <i class="bx bx-group me-1"></i> 全站發放
+            </button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#confirmMockDataModal">
+                <i class="bx bx-plus-circle me-1"></i> 產生假資料
+            </button>
+        </div>
+    </div>
+
+    <!-- 產生假資料確認 Modal -->
+    <div class="modal fade" id="confirmMockDataModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-error-circle text-warning me-2"></i>確認產生假資料</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">確定要產生 <strong>50 筆</strong>點數假資料嗎？此操作僅供開發測試使用。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">取消</button>
+                    <form asp-action="GenerateMockData" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-warning">確認產生</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全站發放 Modal -->
+    <div class="modal fade" id="bulkUpdateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">全站會員批次發放/收回</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-action="BulkUpdatePoints" method="post">
+                    <div class="modal-body">
+                        <div class="alert alert-warning mb-3">
+                            <i class="bx bx-error me-1"></i> 注意：此操作將影響<strong>所有</strong>會員帳戶。
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">異動類型</label>
+                                <select name="UpdateType" class="form-select" required>
+                                    <option value="加點">加點 (+)</option>
+                                    <option value="扣點">扣點 (-)</option>
+                                    <option value="到期歸零">到期歸零</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">異動點數</label>
+                                <input type="number" name="ChangeAmount" class="form-control" placeholder="每人異動點數" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">異動原因</label>
+                            <select name="Reason" class="form-select" required>
+                                <option value="週年慶活動">週年慶活動</option>
+                                <option value="全站維護補償">全站維護補償</option>
+                                <option value="節慶贈點">節慶贈點</option>
+                                <option value="手動調整">手動調整</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">關聯活動代碼</label>
+                            <input type="text" name="OrderNumber" class="form-control" placeholder="例如: EVENT-2024-XMAS" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">詳細備註</label>
+                            <textarea name="Remark" class="form-control" rows="2" placeholder="將顯示於每一位會員的歷史紀錄中" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-success" onclick="return confirm('您確定要發放點數給全體會員嗎？此動作無法撤回。');">確認全體發放</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 手動點數異動 Modal -->
+    <div class="modal fade" id="updatePointsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">手動調整點數</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-action="UpdatePoints" method="post" id="updatePointsForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">搜尋會員 (帳號/姓名)</label>
+                            <select id="userSearch" name="UserId" class="form-select" style="width: 100%" required>
+                                <option value="">請輸入關鍵字搜尋...</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">異動類型</label>
+                                <select name="UpdateType" class="form-select" required id="updateTypeSelect">
+                                    <option value="加點">加點 (+)</option>
+                                    <option value="扣點">扣點 (-)</option>
+                                    <option value="到期歸零">到期歸零</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">異動點數</label>
+                                <input type="number" name="ChangeAmount" class="form-control" placeholder="輸入數值" required id="changeAmountInput">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">異動原因</label>
+                            <select name="Reason" class="form-select" required>
+                                <option value="客服補償">客服補償</option>
+                                <option value="行銷活動">行銷活動</option>
+                                <option value="訂單完成">訂單完成</option>
+                                <option value="退貨扣除">退貨扣除</option>
+                                <option value="手動調整">手動調整</option>
+                                <option value="點數過期">點數過期</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">關聯單號</label>
+                            <input type="text" name="OrderNumber" class="form-control" placeholder="例如: ORD20240101001" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">詳細備註</label>
+                            <textarea name="Remark" class="form-control" rows="2" placeholder="請輸入說明..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">確認執行</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header border-bottom">
+            <h5 class="card-title mb-3">搜尋篩選</h5>
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">關鍵字 (帳號、姓名、單號、描述)</label>
+                    <input type="text" name="keyword" class="form-control" placeholder="輸入關鍵字..." value="@Model.Keyword">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">會員 ID</label>
+                    <input type="number" name="userId" class="form-control" placeholder="指定會員 ID" value="@Model.UserId">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bx bx-search me-1"></i> 查詢
+                    </button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="@Url.Action("Index")" class="btn btn-label-secondary w-100">清除</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>會員資訊</th>
+                        <th>類型 / 單號</th>
+                        <th>變動點數</th>
+                        <th>餘額</th>
+                        <th>描述與操作軌跡</th>
+                        <th>建立時間</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+                    @if (Model.PagedResult.Data.Any())
+                    {
+                        foreach (var item in Model.PagedResult.Data)
+                        {
+                            var isManual = item.Description.StartsWith("[");
+                            var typeLabel = "";
+                            var cleanDesc = item.Description;
+                            
+                            if (isManual && item.Description.Contains("]")) {
+                                typeLabel = item.Description.Substring(1, item.Description.IndexOf("]") - 1);
+                                cleanDesc = item.Description.Substring(item.Description.IndexOf("]") + 1).Trim();
+                            }
+
+                            <tr>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-semibold">@item.FullName</span>
+                                        <small class="text-muted">@item.Account (ID: @item.UserId)</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(typeLabel))
+                                    {
+                                        var badgeClass = typeLabel == "加點" ? "bg-label-success" : (typeLabel == "扣點" ? "bg-label-danger" : "bg-label-warning");
+                                        <span class="badge @badgeClass mb-1">@typeLabel</span><br />
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.OrderNumber))
+                                    {
+                                        <small class="text-info">@item.OrderNumber</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.ChangeAmount > 0)
+                                    {
+                                        <span class="point-positive">+@item.ChangeAmount</span>
+                                    }
+                                    else if (item.ChangeAmount < 0)
+                                    {
+                                        <span class="point-negative">@item.ChangeAmount</span>
+                                    }
+                                    else
+                                    {
+                                        <span>0</span>
+                                    }
+                                </td>
+                                <td><span class="fw-bold">@item.BalanceAfter</span></td>
+                                <td>
+                                    <div class="text-wrap" style="min-width: 250px;">
+                                        @if (cleanDesc.Contains("|"))
+                                        {
+                                            var parts = cleanDesc.Split('|');
+                                            foreach (var part in parts)
+                                            {
+                                                <div class="small mb-1">@part.Trim()</div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            @cleanDesc
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <small>@(item.CreatedAt?.ToString("yyyy-MM-dd") ?? "-")</small><br/>
+                                    <small class="text-muted">@(item.CreatedAt?.ToString("HH:mm:ss") ?? "")</small>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <i class="bx bx-info-circle fs-2 mb-2"></i>
+                                <p class="mb-0">查無相關點數紀錄</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分頁 -->
+        <div class="card-footer">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    共 @Model.PagedResult.TotalCount 筆紀錄，第 @Model.PagedResult.CurrentPage / @Model.PagedResult.TotalPages 頁
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(Model.PagedResult.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-item page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, userId = Model.UserId, page = Model.PagedResult.CurrentPage - 1 })">
+                                <i class="tf-icon bx bx-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= Model.PagedResult.TotalPages; i++)
+                        {
+                            if (i == 1 || i == Model.PagedResult.TotalPages || (i >= Model.PagedResult.CurrentPage - 2 && i <= Model.PagedResult.CurrentPage + 2))
+                            {
+                                <li class="page-item @(i == Model.PagedResult.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, userId = Model.UserId, page = i })">@i</a>
+                                </li>
+                            }
+                            else if (i == Model.PagedResult.CurrentPage - 3 || i == Model.PagedResult.CurrentPage + 3)
+                            {
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            }
+                        }
+
+                        <li class="page-item @(Model.PagedResult.CurrentPage == Model.PagedResult.TotalPages || Model.PagedResult.TotalPages == 0 ? "disabled" : "")">
+                            <a class="page-item page-link" href="@Url.Action("Index", new { keyword = Model.Keyword, userId = Model.UserId, page = Model.PagedResult.CurrentPage + 1 })">
+                                <i class="tf-icon bx bx-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d9dee3; border-radius: 0.375rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 38px; padding-left: 12px; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+    </style>
+    <script>
+        $(document).ready(function() {
+            $('#userSearch').select2({
+                dropdownParent: $('#updatePointsModal'),
+                ajax: {
+                    url: '@Url.Action("SearchMembers")',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { term: params.term };
+                    },
+                    processResults: function (data) {
+                        return { results: data };
+                    },
+                    cache: true
+                },
+                placeholder: '輸入帳號或姓名搜尋...',
+                minimumInputLength: 1,
+                language: {
+                    inputTooShort: function() { return "請輸入至少 1 個字元"; },
+                    noResults: function() { return "查無會員"; },
+                    searching: function() { return "搜尋中..."; }
+                }
+            });
+
+            // 根據類型變動 UI 提示
+            $('#updateTypeSelect').change(function() {
+                var type = $(this).val();
+                var input = $('#changeAmountInput');
+                if (type === '加點') {
+                    input.attr('placeholder', '輸入增加點數 (例如: 100)');
+                } else if (type === '扣點') {
+                    input.attr('placeholder', '輸入扣除點數 (例如: 50)');
+                } else {
+                    input.attr('placeholder', '輸入扣除點數 (通常為全額)');
+                }
+            });
+        });
+    </script>
+}

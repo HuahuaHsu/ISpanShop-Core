@@ -21,11 +21,27 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.ContentModeration
             _context = context;
         }
 
-        // --- 1. 列表 ---
-        public async Task<IActionResult> Index()
+        // --- 1. 列表 (支援分頁) ---
+        [HttpGet]
+        public async Task<IActionResult> Index(int page = 1)
         {
-            var categories = await _context.SensitiveWordCategories
-                .Include(c => c.SensitiveWords)
+            int pageSize = 10;
+            var query = _context.SensitiveWordCategories
+                .Include(c => c.SensitiveWords);
+
+            // 計算分頁資訊
+            int totalCount = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            // 確保當前頁數在合理範圍內
+            page = page < 1 ? 1 : page;
+            if (totalPages > 0 && page > totalPages) page = totalPages;
+
+            // 進行分頁切割 (依照 ID 排序)
+            var pagedCategories = await query
+                .OrderBy(c => c.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(c => new SensitiveWordCategoryVm
                 {
                     Id = c.Id,
@@ -34,7 +50,11 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.ContentModeration
                 })
                 .ToListAsync();
 
-            return View(categories);
+            // 將分頁資訊傳給 View
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+
+            return View(pagedCategories);
         }
 
         // --- 2. 新增 (GET/POST) ---

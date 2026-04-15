@@ -1,13 +1,13 @@
 @model IEnumerable<ISpanShop.MVC.Areas.Admin.Models.ContentModeration.SensitiveWordCategoryVm>
 
 @{
-    ViewData["Title"] = "敏感字分類管理";
+    ViewData["Title"] = "分類管理-敏感字";//拿掉砍人
 
     Layout = "_SneatLayout";}
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2><i class="fas fa-tags me-2"></i>敏感字分類管理</h2>
+        <h2><i class="fas fa-tags me-2"></i>分類管理-敏感字</h2>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
             <i class="fas fa-plus me-1"></i>新增分類
         </button>
@@ -70,6 +70,43 @@
             </table>
         </div>
     </div>
+
+    @* 分頁控制項 *@
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="1">
+                        <i class="tf-icon bx bx-chevrons-left"></i>
+                    </a>
+                </li>
+                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)">
+                        <i class="tf-icon bx bx-chevron-left"></i>
+                    </a>
+                </li>
+
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)">
+                        <i class="tf-icon bx bx-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@ViewBag.TotalPages">
+                        <i class="tf-icon bx bx-chevrons-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
 </div>
 
 <!-- 新增分類 Modal -->

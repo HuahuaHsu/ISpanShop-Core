@@ -38,12 +38,18 @@ namespace ISpanShop.Repositories.Inventories
 
             if (!string.IsNullOrWhiteSpace(criteria.Keyword))
             {
-                var kw = criteria.Keyword.Trim();
+                var kw = criteria.Keyword.Trim().ToLower();
                 baseQuery = baseQuery.Where(v =>
-                    v.Product.Name.Contains(kw) ||
-                    v.VariantName.Contains(kw) ||
-                    v.SkuCode.Contains(kw));
+                    v.Product.Name.ToLower().Contains(kw) ||
+                    v.VariantName.ToLower().Contains(kw) ||
+                    v.SkuCode.ToLower().Contains(kw) ||
+                    (v.Product.Store != null && v.Product.Store.StoreName.ToLower().Contains(kw)) ||
+                    (v.Product.Brand != null && v.Product.Brand.Name.ToLower().Contains(kw)) ||
+                    (v.Product.Category != null && v.Product.Category.Name.ToLower().Contains(kw)));
             }
+
+            if (criteria.ParentCategoryId.HasValue)
+                baseQuery = baseQuery.Where(v => v.Product.Category.ParentId == criteria.ParentCategoryId.Value || v.Product.CategoryId == criteria.ParentCategoryId.Value);
 
             if (criteria.CategoryId.HasValue)
                 baseQuery = baseQuery.Where(v => v.Product.CategoryId == criteria.CategoryId.Value);
@@ -96,12 +102,18 @@ namespace ISpanShop.Repositories.Inventories
 
             if (!string.IsNullOrWhiteSpace(criteria.Keyword))
             {
-                var kw = criteria.Keyword.Trim();
+                var kw = criteria.Keyword.Trim().ToLower();
                 baseQuery = baseQuery.Where(v =>
-                    v.Product.Name.Contains(kw) ||
-                    v.VariantName.Contains(kw)  ||
-                    v.SkuCode.Contains(kw));
+                    v.Product.Name.ToLower().Contains(kw) ||
+                    v.VariantName.ToLower().Contains(kw) ||
+                    v.SkuCode.ToLower().Contains(kw) ||
+                    (v.Product.Store != null && v.Product.Store.StoreName.ToLower().Contains(kw)) ||
+                    (v.Product.Brand != null && v.Product.Brand.Name.ToLower().Contains(kw)) ||
+                    (v.Product.Category != null && v.Product.Category.Name.ToLower().Contains(kw)));
             }
+
+            if (criteria.ParentCategoryId.HasValue)
+                baseQuery = baseQuery.Where(v => v.Product.Category.ParentId == criteria.ParentCategoryId.Value || v.Product.CategoryId == criteria.ParentCategoryId.Value);
 
             if (criteria.CategoryId.HasValue)
                 baseQuery = baseQuery.Where(v => v.Product.CategoryId == criteria.CategoryId.Value);
@@ -235,6 +247,22 @@ namespace ISpanShop.Repositories.Inventories
         public IEnumerable<(int Id, string Name)> GetCategoryOptions()
             => _context.Categories
                 .Where(c => c.IsVisible != false)
+                .OrderBy(c => c.Sort).ThenBy(c => c.Name)
+                .Select(c => new { c.Id, c.Name })
+                .ToList()
+                .Select(c => (c.Id, c.Name));
+
+        public IEnumerable<(int Id, string Name)> GetMainCategories()
+            => _context.Categories
+                .Where(c => c.ParentId == null && c.IsVisible != false)
+                .OrderBy(c => c.Sort).ThenBy(c => c.Name)
+                .Select(c => new { c.Id, c.Name })
+                .ToList()
+                .Select(c => (c.Id, c.Name));
+
+        public IEnumerable<(int Id, string Name)> GetSubCategories(int parentId)
+            => _context.Categories
+                .Where(c => c.ParentId == parentId && c.IsVisible != false)
                 .OrderBy(c => c.Sort).ThenBy(c => c.Name)
                 .Select(c => new { c.Id, c.Name })
                 .ToList()

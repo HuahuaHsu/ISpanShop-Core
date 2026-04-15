@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_SneatLayout.cshtml";
 }
 @model ISpanShop.Models.DTOs.Common.PagedResult<ISpanShop.MVC.Areas.Admin.Models.Products.ProductListVm>
@@ -20,17 +20,29 @@
     string? currentEndDate   = ViewBag.CurrentEndDate;
     string? currentSort      = ViewBag.CurrentSort as string;
 
-    int countTotal       = (int)(ViewBag.CountTotal       ?? 0);
-    int countPublished   = (int)(ViewBag.CountPublished   ?? 0);
-    int countUnpublished = (int)(ViewBag.CountUnpublished ?? 0);
-    int countPending     = (int)(ViewBag.CountPending     ?? 0);
+    int countTotal          = (int)(ViewBag.CountTotal          ?? 0);
+    int countPublished      = (int)(ViewBag.CountPublished      ?? 0);
+    int countUnpublished    = (int)(ViewBag.CountUnpublished    ?? 0);
+    int countPending        = (int)(ViewBag.CountPending        ?? 0);
+    int countForcedOffShelf = (int)(ViewBag.CountForcedOffShelf ?? 0);
 
     // 帶上目前所有篩選參數的 returnUrl，讓商品詳情的「返回」可以還原到同一頁
     var currentReturnUrl = Url.Action("Index", "Products") + Context.Request.QueryString.Value;
+
+    // 計算有效篩選條件數（排序不算）
+    int activeFilterCount = 0;
+    if (!string.IsNullOrEmpty(currentKeyword)) activeFilterCount++;
+    if (currentParentId.HasValue) activeFilterCount++;
+    if (currentCategoryId.HasValue) activeFilterCount++;
+    if (currentStoreId.HasValue) activeFilterCount++;
+    if (currentBrandId.HasValue) activeFilterCount++;
+    if (currentStatus.HasValue) activeFilterCount++;
+    if (!string.IsNullOrEmpty(currentStartDate) || !string.IsNullOrEmpty(currentEndDate)) activeFilterCount++;
+    bool hasActiveFilters = activeFilterCount > 0;
 }
 
-<div class="container-fluid py-4 font-noto">
-
+<div class="page-fluid-root container-fluid font-noto">
+<div class="page-above-content">
     @* ── 頁首 ── *@
     <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div>
@@ -45,18 +57,15 @@
                 已選取 <span id="selected-count">0</span> 項
                 <button id="btn-clear-selection" type="button" class="batch-tag-close" aria-label="清除選取">×</button>
             </span>
-            <button id="btn-batch-publish" type="button" class="btn btn-emerald">
-                <i class="bx bx-upload me-1"></i>批次上架
-            </button>
-            <button id="btn-batch-unpublish" type="button" class="btn btn-batch-gray rounded-pill px-3">
-                <i class="bx bx-download me-1"></i>批次下架
+            <button id="btn-batch-force-off-shelf" type="button" class="btn btn-batch-force rounded-pill px-3">
+                <i class="bx bx-block me-1"></i>批次強制下架
             </button>
         </div>
     </div>
 
     @* ── 統計摘要卡片 ── *@
     <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md">
             <div class="stat-card stat-total @(currentStatus == null ? "stat-active" : "")">
                 <a href="@Url.Action("Index")" class="stretched-link"></a>
                 <div class="stat-icon"><i class="bx bx-package"></i></div>
@@ -64,7 +73,7 @@
                 <div class="stat-label">全站商品</div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md">
             <div class="stat-card stat-published @(currentStatus == 1 ? "stat-active" : "")">
                 <a href="@Url.Action("Index", new { status = 1 })" class="stretched-link"></a>
                 <div class="stat-icon"><i class="bx bx-check-circle"></i></div>
@@ -72,7 +81,7 @@
                 <div class="stat-label">已上架</div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md">
             <div class="stat-card stat-unpublished @(currentStatus == 0 ? "stat-active" : "")">
                 <a href="@Url.Action("Index", new { status = 0 })" class="stretched-link"></a>
                 <div class="stat-icon"><i class="bx bx-hide"></i></div>
@@ -80,12 +89,21 @@
                 <div class="stat-label">未上架</div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card stat-pending @(currentStatus == 2 ? "stat-active" : "")">
-                <a href="@Url.Action("PendingReview", "Products")" class="stretched-link"></a>
+        <div class="col-6 col-md">
+            <div class="stat-card stat-pending stat-card-clickable @(currentStatus == 2 ? "stat-active" : "")"
+                 onclick="navigateToPendingReviewPage(event)"
+                 title="點擊前往商品審核中心">
                 <div class="stat-icon"><i class="bx bx-time-five"></i></div>
                 <div class="stat-num">@countPending</div>
                 <div class="stat-label">待審核</div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="stat-card stat-forced @(currentStatus == 4 ? "stat-active" : "")">
+                <a href="@Url.Action("Index", new { status = 4 })" class="stretched-link"></a>
+                <div class="stat-icon"><i class="bx bx-block"></i></div>
+                <div class="stat-num">@countForcedOffShelf</div>
+                <div class="stat-label">強制下架</div>
             </div>
         </div>
     </div>
@@ -98,104 +116,144 @@
             <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
+</div><!-- /page-above-content -->
 
-    @* ── 篩選卡片 ── *@
-    <div class="filter-card mb-5">
-        <form method="get" asp-action="Index" class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">關鍵字搜尋</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bx bx-search"></i></span>
-                    <input type="text" name="keyword" value="@currentKeyword" class="form-control border-start-0 ps-0"
-                           placeholder="輸入商品名稱..." autocomplete="one-time-code">
+    <div id="productIndexLayout" class="split-layout">
+    <div id="productIndexListCol" class="split-list-col">
+
+    @* ── 返回完整列表（精簡模式按鈕）── *@
+    <div class="back-to-list-btn">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                onclick="closeProductIndexPanel()" title="返回完整列表">
+            <i class="bx bx-arrow-back me-1"></i>返回完整列表
+        </button>
+    </div>
+
+    @* ── 篩選卡片（可收合）── *@
+    <div class="filter-card mb-4">
+        <div class="filter-card-header" data-bs-toggle="collapse" data-bs-target="#filterCardBody"
+             aria-expanded="true" aria-controls="filterCardBody">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bx bx-filter-alt" style="color:#3182ce;font-size:1.1rem;"></i>
+                <span class="fw-semibold" style="color:#1e2d3d;">篩選條件</span>
+            </div>
+            <i class="bx bx-chevron-down filter-toggle-icon"></i>
+        </div>
+        <div class="collapse show" id="filterCardBody">
+            <form method="get" asp-action="Index" class="row g-3 align-items-end pt-3">
+                <div class="col-md-3">
+                    <label class="form-label">關鍵字搜尋</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bx bx-search"></i></span>
+                        <input type="text" name="keyword" value="@currentKeyword" class="form-control border-start-0 ps-0"
+                               placeholder="輸入商品名稱..." autocomplete="one-time-code">
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">主分類</label>
-                <select id="parentCategorySelect" name="parentCategoryId" class="form-select">
-                    <option value="">-- 全部 --</option>
-                    @foreach (var pc in parentCategories)
-                    {
-                        <option value="@pc.Id" selected="@(currentParentId == pc.Id)">@pc.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">子分類</label>
-                <select id="categorySelect" name="categoryId" class="form-select">
-                    <option value="">-- 全部 --</option>
-                    @foreach (var sc in allSubCategories)
-                    {
-                        <option value="@sc.Id" selected="@(currentCategoryId == sc.Id)">@sc.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">品牌</label>
-                <select id="brandSelect" name="brandId" class="form-select">
-                    <option value="">-- 全部 --</option>
-                    @foreach (var b in brands)
-                    {
-                        <option value="@b.Id" selected="@(currentBrandId == b.Id)">@b.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">狀態</label>
-                <select name="status" class="form-select">
-                    <option value="">-- 全部 --</option>
-                    <option value="1" selected="@(currentStatus == 1)">已上架</option>
-                    <option value="0" selected="@(currentStatus == 0)">未上架</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">排序方式</label>
-                <select name="sort" class="form-select">
-                    <option value="date_desc" selected="@(string.IsNullOrEmpty(currentSort) || currentSort == "date_desc")">建檔（新→舊）</option>
-                    <option value="date_asc"   selected="@(currentSort == "date_asc")">建檔（舊→新）</option>
-                    <option value="name_asc"   selected="@(currentSort == "name_asc")">名稱 A→Z</option>
-                    <option value="name_desc"  selected="@(currentSort == "name_desc")">名稱 Z→A</option>
-                    <option value="price_asc"  selected="@(currentSort == "price_asc")">價格 低→高</option>
-                    <option value="price_desc" selected="@(currentSort == "price_desc")">價格 高→低</option>
-                    <option value="status_asc"   selected="@(currentSort == "status_asc")">狀態</option>
-                    <option value="review_desc"  selected="@(currentSort == "review_desc")">審核時間（新→舊）</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">建檔日期區間</label>
-                <div class="input-group">
-                    <span class="input-group-text">從</span>
-                    <input type="date" name="startDate" value="@currentStartDate" class="form-control">
-                    <span class="input-group-text">至</span>
-                    <input type="date" name="endDate" value="@currentEndDate" class="form-control">
+                <div class="col-md-2">
+                    <label class="form-label">主分類</label>
+                    <select id="parentCategorySelect" name="parentCategoryId" class="form-select">
+                        <option value="">-- 全部 --</option>
+                        @foreach (var pc in parentCategories.Where(pc => !pc.Name.Contains("汽車") && !pc.Name.Contains("機車")))
+                        {
+                            <option value="@pc.Id" selected="@(currentParentId == pc.Id)">@pc.Name</option>
+                        }
+                    </select>
                 </div>
-            </div>
-            <div class="d-flex justify-content-end align-items-center mt-3 mb-2 gap-2">
-                <button type="submit" class="btn btn-emerald">
-                    <i class="bx bx-filter-alt me-1"></i>套用篩選
-                </button>
-                <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-3">清除條件</a>
-            </div>
-        </form>
+                <div class="col-md-2">
+                    <label class="form-label">子分類</label>
+                    <select id="categorySelect" name="categoryId" class="form-select">
+                        <option value="">-- 全部 --</option>
+                        @foreach (var sc in allSubCategories)
+                        {
+                            <option value="@sc.Id" selected="@(currentCategoryId == sc.Id)">@sc.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">品牌</label>
+                    <select id="brandSelect" name="brandId" class="form-select">
+                        <option value="">-- 全部 --</option>
+                        @foreach (var b in brands)
+                        {
+                            <option value="@b.Id" selected="@(currentBrandId == b.Id)">@b.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">狀態</label>
+                    <select name="status" class="form-select">
+                        <option value="">-- 全部 --</option>
+                        <option value="1" selected="@(currentStatus == 1)">已上架</option>
+                        <option value="0" selected="@(currentStatus == 0)">未上架</option>
+                        <option value="4" selected="@(currentStatus == 4)">強制下架</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">排序方式</label>
+                    <select name="sort" class="form-select">
+                        <optgroup label="價格">
+                            <option value="price_asc"    selected="@(string.IsNullOrEmpty(currentSort) || currentSort == "price_asc")">價格（低 → 高）</option>
+                            <option value="price_desc"   selected="@(currentSort == "price_desc")">價格（高 → 低）</option>
+                        </optgroup>
+                        <optgroup label="建檔時間">
+                            <option value="date_desc"    selected="@(currentSort == "date_desc")">建檔（新 → 舊）</option>
+                            <option value="date_asc"     selected="@(currentSort == "date_asc")">建檔（舊 → 新）</option>
+                        </optgroup>
+                        <optgroup label="最後更新">
+                            <option value="updated_desc" selected="@(currentSort == "updated_desc")">最後更新（新 → 舊）</option>
+                        </optgroup>
+                        <optgroup label="名稱">
+                            <option value="name_asc"     selected="@(currentSort == "name_asc")">名稱 A → Z</option>
+                            <option value="name_desc"    selected="@(currentSort == "name_desc")">名稱 Z → A</option>
+                        </optgroup>
+                        <optgroup label="庫存">
+                            <option value="stock_desc"   selected="@(currentSort == "stock_desc")">庫存（多 → 少）</option>
+                            <option value="stock_asc"    selected="@(currentSort == "stock_asc")">庫存（少 → 多）</option>
+                        </optgroup>
+                        <optgroup label="銷量">
+                            <option value="sales_desc"   selected="@(currentSort == "sales_desc")">總銷量（高 → 低）</option>
+                        </optgroup>
+                        <optgroup label="狀態">
+                            <option value="status_asc"   selected="@(currentSort == "status_asc")">狀態</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">建檔日期區間</label>
+                    <div class="input-group">
+                        <span class="input-group-text">從</span>
+                        <input type="date" name="startDate" value="@currentStartDate" class="form-control">
+                        <span class="input-group-text">至</span>
+                        <input type="date" name="endDate" value="@currentEndDate" class="form-control">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end align-items-center mt-2 mb-1 gap-2">
+                    <button type="submit" class="btn btn-emerald">
+                        <i class="bx bx-filter-alt me-1"></i>套用篩選
+                    </button>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary rounded-pill px-3">清除條件</a>
+                </div>
+            </form>
+        </div>
     </div>
 
     @* ── 商品表格 ── *@
-    <div class="table-responsive px-2 pb-3">
-        <table class="table table-custom align-middle">
+    <div class="px-2 pb-3 prod-table-wrap">
+        <table class="table table-custom align-middle" style="width:100%;">
             <thead>
                 <tr>
-                    <th style="width:44px;" class="text-center">
+                    <th style="width:44px;" class="text-center col-cb">
                         <input class="form-check-input" type="checkbox" id="selectAll" title="全選 / 取消全選">
                     </th>
-                    <th style="width:60px;">圖片</th>
+                    <th style="width:60px;" class="col-img">圖片</th>
                     <th style="min-width:240px;">商品名稱</th>
-                    <th>分類</th>
-                    <th>品牌</th>
-                    <th>賣家</th>
-                    <th>價格</th>
-                    <th>建檔日期</th>
+                    <th class="col-cat">分類</th>
+                    <th class="col-brand">品牌</th>
+                    <th class="col-seller">賣家</th>
+                    <th class="col-price">價格</th>
+                    <th class="col-date">建檔日期</th>
                     <th class="text-center">狀態</th>
-                    <th class="text-end">操作</th>
+                    <th class="text-end col-actions">操作</th>
                 </tr>
             </thead>
             <tbody>
@@ -204,26 +262,34 @@
                     foreach (var item in Model.Data)
                     {
                         var isPublished = item.Status == 1;
-                        var statusText  = item.Status switch { 1 => "已上架", 2 => "待審核", 3 => "已退回", _ => "未上架" };
-                        var statusCss   = item.Status switch { 1 => "bg-success-soft text-success", 2 => "bg-warning-soft text-warning", 3 => "bg-danger-soft text-danger", _ => "bg-secondary-soft text-secondary" };
-                        <tr data-id="@item.Id">
-                            <td class="text-center cb-cell" style="width:44px;">
-                                <input class="form-check-input row-checkbox" type="checkbox" value="@item.Id">
+                        var isForcedOff = item.Status == 4;
+                        var statusText  = item.Status switch { 1 => "已上架", 2 => "待審核", 3 => "已退回", 4 => "強制下架", _ => "未上架" };
+                        var statusCss   = item.Status switch { 1 => "bg-success-soft text-success", 2 => "bg-warning-soft text-warning", 3 => "bg-danger-soft text-danger", 4 => "bg-forced-soft text-forced", _ => "bg-secondary-soft text-secondary" };
+                        <tr data-id="@item.Id" data-status="@item.Status">
+                            <td class="text-center cb-cell col-cb" style="width:44px;">
+                                @if (isPublished)
+                                {
+                                    <input class="form-check-input row-checkbox" type="checkbox" value="@item.Id">
+                                }
+                                else
+                                {
+                                    <input class="form-check-input row-checkbox" type="checkbox" value="@item.Id" disabled title="只有已上架商品可執行強制下架">
+                                }
                             </td>
-                            <td>
+                            <td class="col-img">
                                 <img src="@item.MainImageUrl" alt="商品圖" class="list-thumbnail" loading="lazy"
                                      onerror="this.src='https://via.placeholder.com/50'" />
                             </td>
                             <td>
-                                <a href="@Url.Action("Details", new { id = item.Id, returnUrl = currentReturnUrl })"
-                                   class="fw-bold text-decoration-none" style="color:#1e2d3d;">
+                                <a href="#" class="fw-bold text-decoration-none" style="color:#1e2d3d;"
+                                   onclick="openProductOffcanvas(@item.Id, '@item.Name.Replace("'", "\\'")'); return false;">
                                     @item.Name
                                 </a>
                             </td>
-                            <td><span class="badge-soft bg-primary-soft text-primary">@item.CategoryName</span></td>
-                            <td><span class="badge-soft bg-info-soft text-info">@item.BrandName</span></td>
-                            <td><span class="badge-soft bg-purple-soft text-purple">@item.StoreName</span></td>
-                            <td class="fw-bold" style="color:#1e2d3d;">
+                            <td class="col-cat"><span class="badge-soft bg-primary-soft text-primary">@item.CategoryName</span></td>
+                            <td class="col-brand"><span class="badge-soft bg-info-soft text-info">@item.BrandName</span></td>
+                            <td class="col-seller" style="color:#2d3748;">@item.StoreName</td>
+                            <td class="fw-bold col-price" style="color:#1e2d3d;">
                                 @if (item.MinPrice == item.MaxPrice)
                                 {
                                     @($"NT${item.MinPrice.GetValueOrDefault():N0}")
@@ -233,24 +299,14 @@
                                     @($"NT${item.MinPrice.GetValueOrDefault():N0}~{item.MaxPrice.GetValueOrDefault():N0}")
                                 }
                             </td>
-                            <td class="fs-7 text-muted">
+                            <td class="fs-7 text-muted col-date">
                                 @item.CreatedAt.GetValueOrDefault().ToString("yyyy-MM-dd")
-                                @if (item.ReviewDate.HasValue)
-                                {
-                                    <div class="fs-7 text-muted mt-1" style="font-size:0.78rem !important;">
-                                        審核：@item.ReviewDate.Value.ToString("yyyy-MM-dd")
-                                    </div>
-                                }
                             </td>
                             <td class="text-center">
                                 <span class="badge rounded-pill px-3 py-2 @statusCss fw-normal">@statusText</span>
                             </td>
-                            <td>
+                            <td class="col-actions">
                                 <div class="act-group justify-content-end">
-                                    <a href="@Url.Action("Details", new { id = item.Id, returnUrl = currentReturnUrl })"
-                                       class="act-icon act-view" data-bs-toggle="tooltip" title="查看詳情">
-                                        <i class="bx bx-show"></i>
-                                    </a>
                                     @if (isPublished)
                                     {
                                         <button type="button"
@@ -259,6 +315,10 @@
                                                 onclick="openForceUnpublish(@item.Id, '@item.Name.Replace("'", "\\'")')">
                                             <i class="bx bx-block"></i>
                                         </button>
+                                    }
+                                    else if (isForcedOff && item.ReviewStatus == 3)
+                                    {
+                                        <span class="badge rounded-pill px-2" style="background:#fef9c3;color:#92400e;font-size:.75rem;" title="賣家已申請重新上架">審核中</span>
                                     }
                                     else
                                     {
@@ -272,7 +332,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="10" class="text-center py-5">
+                        <td colspan="11" class="text-center py-5">
                             <div class="mb-2" style="color:#a0aec0;font-size:2.5rem;"><i class="bx bx-inbox"></i></div>
                             <h5 class="fw-normal" style="color:#718096;">找不到符合條件的商品</h5>
                         </td>
@@ -292,10 +352,31 @@
         ShadowLinks = true,
         UrlForPage  = p => Url.Action("Index", new { page = p, keyword = currentKeyword, parentCategoryId = currentParentId, categoryId = currentCategoryId, brandId = currentBrandId, status = currentStatus, startDate = currentStartDate, endDate = currentEndDate, sort = currentSort })!
     })
+    </div><!-- /productIndexListCol -->
+
+    <div id="productIndexDetailPanel" class="split-detail-panel">
+        <div class="split-detail-panel-inner">
+            <div class="side-panel-header">
+                <div class="side-panel-title" id="productIndexPanelLabel" title="商品詳情">商品詳情</div>
+                <button type="button" class="side-panel-close" onclick="closeProductIndexPanel()" aria-label="Close" title="關閉">
+                    <i class="bx bx-x"></i>
+                </button>
+            </div>
+            <div class="panel-body" id="productIndexPanelBody">
+                <div class="text-center py-5 text-muted">
+                    <i class="bx bx-loader-alt bx-spin fs-1 d-block mb-2"></i>載入中…
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div><!-- /productIndexLayout -->
 </div>
 
+
+@* ── 單一商品強制下架 Modal ── *@
 <div class="modal fade" id="forceUnpublishModal" tabindex="-1" aria-labelledby="forceUnpublishLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
         <div class="modal-content border-0 shadow rounded-4">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold text-danger" id="forceUnpublishLabel">
@@ -304,13 +385,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body px-4">
-                <div class="alert alert-warning border-0 rounded-3 py-2 mb-3">
-                    <i class="bx bx-info-circle me-1"></i>
-                    商品「<strong id="fpProductName"></strong>」將被強制設為下架狀態。
+                <div class="p-3 mb-3 rounded-3" style="background:#fef2f2;border:1px solid #fca5a5;">
+                    <i class="bx bx-error-circle me-1" style="color:#dc2626;"></i>
+                    確定要強制下架商品「<strong id="fpProductName"></strong>」？
                 </div>
-                <label class="form-label fw-bold">
-                    下架原因 <span class="text-danger">*</span>
-                </label>
+                <label class="form-label fw-bold mb-2">下架原因 <span class="text-danger">*</span></label>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <button type="button" class="fp-chip" onclick="fpSetChip(this)">商品描述不實</button>
+                    <button type="button" class="fp-chip" onclick="fpSetChip(this)">疑似仿冒品</button>
+                    <button type="button" class="fp-chip" onclick="fpSetChip(this)">違反平台規範</button>
+                    <button type="button" class="fp-chip" onclick="fpSetChip(this)">圖片侵權</button>
+                    <button type="button" class="fp-chip" onclick="fpSetChip(this)">價格異常</button>
+                </div>
                 <textarea id="fpReasonInput" class="form-control rounded-3" rows="3"
                           placeholder="請說明強制下架原因（賣家將可看到此說明）..."></textarea>
                 <div id="fpReasonError" class="text-danger small mt-1 d-none">請填寫下架原因。</div>
@@ -319,6 +405,43 @@
                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-danger rounded-pill px-5 fw-bold" id="fpConfirmBtn">
                     <i class="bx bx-block me-1"></i>確認強制下架
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── 批次強制下架 Modal ── *@
+<div class="modal fade" id="batchForceModal" tabindex="-1" aria-labelledby="batchForceLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger" id="batchForceLabel">
+                    <i class="bx bx-block me-2"></i>批次強制下架
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="p-3 mb-3 rounded-3" style="background:#fef2f2;border:1px solid #fca5a5;">
+                    <i class="bx bx-error-circle me-1" style="color:#dc2626;"></i>
+                    確定要對已選取的 <strong id="bfProductCount">0</strong> 筆商品執行強制下架？
+                </div>
+                <label class="form-label fw-bold mb-2">下架原因 <span class="text-danger">*</span></label>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <button type="button" class="fp-chip" onclick="bfSetChip(this)">商品描述不實</button>
+                    <button type="button" class="fp-chip" onclick="bfSetChip(this)">疑似仿冒品</button>
+                    <button type="button" class="fp-chip" onclick="bfSetChip(this)">違反平台規範</button>
+                    <button type="button" class="fp-chip" onclick="bfSetChip(this)">圖片侵權</button>
+                    <button type="button" class="fp-chip" onclick="bfSetChip(this)">價格異常</button>
+                </div>
+                <textarea id="bfReasonInput" class="form-control rounded-3" rows="3"
+                          placeholder="請說明強制下架原因（賣家將可看到此說明）..."></textarea>
+                <div id="bfReasonError" class="text-danger small mt-1 d-none">請填寫下架原因。</div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger rounded-pill px-5 fw-bold" id="bfConfirmBtn">
+                    <i class="bx bx-block me-1"></i>確認批次強制下架
                 </button>
             </div>
         </div>
@@ -358,18 +481,46 @@
     .stat-pending   { border-color: #fefcbf; }
     .stat-pending   .stat-icon, .stat-pending   .stat-num { color: #744210; }
 
+    .stat-forced    { border-color: #fca5a5; }
+    .stat-forced    .stat-icon, .stat-forced .stat-num { color: #dc2626; }
     .stat-active.stat-total      { background: #ebf8ff; border-color: #3182ce; }
     .stat-active.stat-published  { background: #f0fff4; border-color: #38a169; }
     .stat-active.stat-unpublished{ background: #f7fafc; border-color: #718096; }
     .stat-active.stat-pending    { background: #fffff0; border-color: #d69e2e; }
+    .stat-active.stat-forced     { background: #fef2f2; border-color: #dc2626; }
+    .bg-forced-soft { background: #fde8e8; }
+    .text-forced    { color: #9b1c1c !important; }
 
-    /* ── 篩選卡片 ── */
+    /* ── 可點擊的統計卡片（待審核卡片專用）── */
+    .stat-card-clickable {
+        cursor: pointer;
+        user-select: none;
+    }
+    .stat-card-clickable:hover {
+        border-color: #f59e0b !important;
+        box-shadow: 0 6px 20px rgba(245,158,11,0.25) !important;
+    }
+    .stat-card-clickable:active {
+        transform: translateY(-1px) !important;
+    }
+
+    /* ── 篩選卡片（可收合）── */
     .filter-card {
         background: #fff; border-radius: 16px;
-        padding: 1.75rem 2rem;
+        padding: 1rem 1.5rem;
         box-shadow: 0 4px 20px rgba(0,0,0,.05);
         border: 1px solid #e8edf2;
     }
+    .filter-card-header {
+        display: flex; align-items: center; justify-content: space-between;
+        cursor: pointer; user-select: none; padding: .35rem 0;
+    }
+    .filter-card-header:hover .filter-toggle-icon { color: #3182ce; }
+    .filter-toggle-icon {
+        font-size: 1.25rem; color: #94a3b8;
+        transition: transform .25s ease, color .15s;
+    }
+    .filter-card-header[aria-expanded="true"] .filter-toggle-icon { transform: rotate(180deg); }
     .filter-card .form-label {
         color: #5a6a7a !important; font-size: .78rem !important;
         font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: .4rem;
@@ -382,7 +533,8 @@
     .table-custom { border-collapse: separate; border-spacing: 0 10px; }
     .table-custom th {
         border: none; color: #3d5166; font-weight: 700; letter-spacing: .8px;
-        font-size: .8rem; padding: .5rem 1.2rem; background: transparent; text-transform: uppercase;
+        font-size: .8rem; padding: .5rem 1.2rem; background: #f4f6f8; text-transform: uppercase;
+        position: relative; z-index: 2;
     }
     .table-custom td {
         background: #fff; border: none; padding: .95rem 1.2rem;
@@ -463,30 +615,88 @@
     }
     .batch-tag-close:hover { opacity: 1; color: #374151; }
 
-    /* ── 批次下架灰色按鈕 ── */
-    .btn-batch-gray {
+    /* ── 批次強制下架紅色按鈕 ── */
+    .btn-batch-force {
         background-color: #fff;
-        border: 1.5px solid #9ca3af;
-        color: #6b7280;
+        border: 1.5px solid #fca5a5;
+        color: #dc2626;
         font-weight: 600;
         font-size: 0.88rem;
         transition: background .2s, border-color .2s, transform .1s;
     }
-    .btn-batch-gray:hover {
-        background-color: #f3f4f6;
-        border-color: #6b7280;
-        color: #374151;
+    .btn-batch-force:hover {
+        background-color: #fef2f2;
+        border-color: #dc2626;
+        color: #b91c1c;
         transform: translateY(-1px);
     }
+    /* ── 強制下架 Modal 快捷標籤 ── */
+    .fp-chip {
+        display: inline-flex; align-items: center;
+        border: 1px solid #fca5a5; color: #dc2626;
+        background: #fff; border-radius: 20px;
+        padding: 3px 12px; font-size: .82rem; cursor: pointer;
+        transition: background .15s, color .15s;
+    }
+    .fp-chip:hover { background: #fef2f2; border-color: #dc2626; }
 
     /* 讓 checkbox 欄的 td 繼承圓角，避免左側切角消失 */
     .table-custom td.cb-cell { border-top-left-radius:14px; border-bottom-left-radius:14px; }
     .table-custom td:nth-child(2) { border-top-left-radius:0 !important; border-bottom-left-radius:0 !important; }
 </style>
 
+<style>
+    /* ── Products/Index 頁面專屬 ── */
+    /* 選中列高亮 */
+    .table-custom tbody tr.row-active td { background: #ebf8ff !important; }
+    .table-custom tbody tr.row-active td:first-child { box-shadow: inset 3px 0 0 #3182ce; }
+    /* 表格淡入淡出 */
+    #productIndexListCol .prod-table-wrap { transition: opacity 0.18s ease; }
+    /* 精簡模式 */
+    #productIndexLayout.panel-open .col-img,
+    #productIndexLayout.panel-open .col-cat,
+    #productIndexLayout.panel-open .col-brand,
+    #productIndexLayout.panel-open .col-seller,
+    #productIndexLayout.panel-open .col-price,
+    #productIndexLayout.panel-open .col-date,
+    #productIndexLayout.panel-open .col-actions { display: none; }
+    #productIndexLayout.panel-open .table > :not(caption) > * > * { padding: .55rem .75rem; }
+    .table-custom tbody tr { cursor: pointer; }
+    /* 面板展開時隱藏篩選卡，避免精簡模式下擠壓 */
+    #productIndexLayout.panel-open .filter-card { display: none; }
+</style>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // ══════════════════════════════════════════════════════
+        //  待審核卡片點擊事件：跳轉到商品審核中心
+        // ══════════════════════════════════════════════════════
+        function navigateToPendingReviewPage(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            console.log('待審核卡片被點擊，準備跳轉到商品審核中心');
+            
+            // 設定 sessionStorage，確保左側選單「商品審核」項目會被標記為 active
+            sessionStorage.setItem('openMenuKey', 'products');
+            sessionStorage.setItem('pageTitle', '商品審核中心 - ISpanShop 後台管理系統');
+            
+            // 跳轉到商品審核中心頁面
+            window.location.href = '@Url.Action("PendingReview", "Products", new { area = "Admin" })';
+        }
+
+        // ══════════════════════════════════════════════════════
+        //  前端資料層：記錄各商品 ID 對應的狀態，供跨頁統計使用
+        // ══════════════════════════════════════════════════════
+        window._productStatusMap = window._productStatusMap || {};
+        window.populateProductStatusMap = function () {
+            document.querySelectorAll('#productIndexListCol .table-custom tbody tr[data-id][data-status]').forEach(function (row) {
+                var id     = parseInt(row.dataset.id, 10);
+                var status = parseInt(row.dataset.status, 10);
+                if (!isNaN(id) && !isNaN(status)) window._productStatusMap[id] = status;
+            });
+        };
+
         // ══════════════════════════════════════════════════════
         //  跨分頁多選：使用 sessionStorage 記憶已勾選的商品 ID
         // ══════════════════════════════════════════════════════
@@ -505,95 +715,167 @@
             var selectedIds = loadIds();
 
             // ── DOM 節點 ────────────────────────────────────────
-            var bar            = document.getElementById('batch-action-bar');
-            var countBadge     = document.getElementById('selected-count');
-            var selectAllCb    = document.getElementById('selectAll');
-            var clearBtn       = document.getElementById('btn-clear-selection');
-            var btnPublish     = document.getElementById('btn-batch-publish');
-            var btnUnpublish   = document.getElementById('btn-batch-unpublish');
-            var urlBatchUpdate = '@Url.Action("BatchUpdateStatus", "Products")';
+            var bar                = document.getElementById('batch-action-bar');
+            var countBadge         = document.getElementById('selected-count');
+            var selectAllCb        = document.getElementById('selectAll');
+            var clearBtn           = document.getElementById('btn-clear-selection');
+            var btnBatchForce      = document.getElementById('btn-batch-force-off-shelf');
+            var urlBatchForce      = '@Url.Action("BatchForceOffShelf", "Products")';
 
             // ── UI 同步 ─────────────────────────────────────────
-            function updateUI() {
+            window.updateSelectionUI = function() {
                 var n = selectedIds.size;
-                countBadge.textContent = n;
-                if (n > 0) { bar.classList.remove('d-none'); }
-                else        { bar.classList.add('d-none');    }
+                if (countBadge) countBadge.textContent = n;
+                if (bar) {
+                    if (n > 0) bar.classList.remove('d-none');
+                    else       bar.classList.add('d-none');
+                }
 
-                // 更新全選框狀態（僅看當前頁的勾選情況）
                 var pageBoxes = document.querySelectorAll('.row-checkbox');
-                if (pageBoxes.length === 0) { selectAllCb.checked = false; selectAllCb.indeterminate = false; return; }
-                var checkedOnPage = Array.from(pageBoxes).filter(function(cb) { return cb.checked; }).length;
-                if (checkedOnPage === 0)                    { selectAllCb.checked = false; selectAllCb.indeterminate = false; }
-                else if (checkedOnPage === pageBoxes.length){ selectAllCb.checked = true;  selectAllCb.indeterminate = false; }
-                else                                        { selectAllCb.checked = false; selectAllCb.indeterminate = true;  }
+                var selectableBoxes = document.querySelectorAll('.row-checkbox:not(:disabled)');
+                
+                if (selectableBoxes.length === 0) {
+                    if (selectAllCb) { selectAllCb.checked = false; selectAllCb.indeterminate = false; }
+                    return;
+                }
+
+                var selectableIdsInPage = Array.from(selectableBoxes).map(cb => parseInt(cb.value, 10));
+                var selectedOnPage = selectableIdsInPage.filter(id => selectedIds.has(id)).length;
+
+                // 同步當前頁面的 checkbox 狀態
+                pageBoxes.forEach(cb => {
+                    cb.checked = selectedIds.has(parseInt(cb.value, 10));
+                });
+
+                if (selectAllCb) {
+                    if (selectedOnPage === 0) {
+                        selectAllCb.checked = false;
+                        selectAllCb.indeterminate = false;
+                    } else if (selectedOnPage === selectableIdsInPage.length) {
+                        selectAllCb.checked = true;
+                        selectAllCb.indeterminate = false;
+                    } else {
+                        selectAllCb.checked = false;
+                        selectAllCb.indeterminate = true;
+                    }
+                }
             }
 
-            // ── 初始化：將 sessionStorage 的勾選狀態還原到當前頁 ──
-            document.querySelectorAll('.row-checkbox').forEach(function (cb) {
-                if (selectedIds.has(parseInt(cb.value, 10))) cb.checked = true;
-            });
-            updateUI();
-
-            // ── 單選事件 ────────────────────────────────────────
-            document.querySelectorAll('.row-checkbox').forEach(function (cb) {
-                cb.addEventListener('change', function () {
-                    var id = parseInt(this.value, 10);
-                    if (this.checked) selectedIds.add(id);
-                    else              selectedIds.delete(id);
-                    saveIds(selectedIds);
-                    updateUI();
-                });
-            });
-
-            // ── 全選 / 取消全選（當前頁）───────────────────────
-            selectAllCb.addEventListener('change', function () {
-                var checked = this.checked;
+            // ── 初始化事件綁定 ──────────────────────────────────
+            function bindCheckboxEvents() {
                 document.querySelectorAll('.row-checkbox').forEach(function (cb) {
-                    cb.checked = checked;
-                    var id = parseInt(cb.value, 10);
-                    if (checked) selectedIds.add(id);
-                    else         selectedIds.delete(id);
+                    // 先移除舊的監聽器（避免 Ajax 重複綁定）
+                    cb.removeEventListener('change', onRowCheckChange);
+                    cb.addEventListener('change', onRowCheckChange);
                 });
+            }
+
+            function onRowCheckChange() {
+                var id = parseInt(this.value, 10);
+                if (this.checked) selectedIds.add(id);
+                else              selectedIds.delete(id);
                 saveIds(selectedIds);
-                updateUI();
-            });
+                updateSelectionUI();
+            }
+
+            // ── 全選 / 取消全選（當前頁，僅限已上架商品）───────────────────────
+            if (selectAllCb) {
+                selectAllCb.addEventListener('change', function () {
+                    var isChecked = this.checked;
+                    document.querySelectorAll('.row-checkbox:not(:disabled)').forEach(function (cb) {
+                        cb.checked = isChecked;
+                        var id = parseInt(cb.value, 10);
+                        if (isChecked) selectedIds.add(id);
+                        else           selectedIds.delete(id);
+                    });
+                    saveIds(selectedIds);
+                    updateSelectionUI();
+                });
+            }
 
             // ── 清空所有選擇 ────────────────────────────────────
-            clearBtn.addEventListener('click', function () {
-                selectedIds.clear();
-                saveIds(selectedIds);
-                document.querySelectorAll('.row-checkbox').forEach(function (cb) { cb.checked = false; });
-                selectAllCb.checked = false; selectAllCb.indeterminate = false;
-                updateUI();
-            });
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function () {
+                    selectedIds.clear();
+                    saveIds(selectedIds);
+                    updateSelectionUI();
+                });
+            }
 
-            // ── 批次上 / 下架 AJAX ───────────────────────────────
-            function batchUpdate(targetStatus) {
-                var ids  = Array.from(selectedIds);
-                var label = targetStatus === 1 ? '上架' : '下架';
-                if (ids.length === 0) return;
+            // ── 批次強制下架 → 打開 Modal ────────────────────────
+            if (btnBatchForce) {
+                btnBatchForce.addEventListener('click', function () {
+                    var ids = Array.from(selectedIds);
+                    if (ids.length === 0) {
+                        Swal.fire({ title: '未選取商品', text: '請先勾選要強制下架的商品。', icon: 'warning', confirmButtonColor: '#e53e3e' });
+                        return;
+                    }
+                    document.getElementById('bfProductCount').textContent = ids.length;
+                    document.getElementById('bfReasonInput').value = '';
+                    document.getElementById('bfReasonError').classList.add('d-none');
+                    new bootstrap.Modal(document.getElementById('batchForceModal')).show();
+                });
+            }
 
-                Swal.fire({
-                    title: '批次' + label,
-                    html: '確定要將已勾選的 <strong>' + ids.length + '</strong> 筆商品設為「' + label + '」？',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: targetStatus === 1 ? '#38a169' : '#718096',
-                    cancelButtonColor:  '#a0aec0',
-                    confirmButtonText: '確認' + label,
-                    cancelButtonText:  '取消'
-                }).then(async function (result) {
-                    if (!result.isConfirmed) return;
+            // 批次強制下架確認
+            var bfConfirmBtn = document.getElementById('bfConfirmBtn');
+            if (bfConfirmBtn) {
+                bfConfirmBtn.addEventListener('click', async function () {
+                    var reason = document.getElementById('bfReasonInput').value.trim();
+                    var errEl  = document.getElementById('bfReasonError');
+                    if (!reason) { errEl.classList.remove('d-none'); return; }
+                    errEl.classList.add('d-none');
+                    var ids = Array.from(selectedIds);
+                    bootstrap.Modal.getInstance(document.getElementById('batchForceModal'))?.hide();
                     Swal.fire({ title: '處理中…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                     try {
-                        const res = await apiPost(urlBatchUpdate, { productIds: ids, targetStatus: targetStatus });
+                        const res = await apiPost(urlBatchForce, { ids: ids, reason: reason });
                         if (res.success) {
-                            selectedIds.clear();
-                            saveIds(selectedIds);
-                            Swal.fire({ title: '完成！', text: res.message, icon: 'success',
-                                        timer: 1800, timerProgressBar: true, confirmButtonColor: '#1abb9c' })
-                                .then(function () { location.reload(); });
+                            selectedIds.clear(); saveIds(selectedIds); updateSelectionUI();
+                            // 寫入倒數計時狀態
+                            (function() {
+                                var states = {};
+                                try { states = JSON.parse(sessionStorage.getItem('rejectedCountdownStates')) || {}; } catch(e) {}
+                                var now = Date.now();
+                                ids.forEach(function(id) { states[String(id)] = { time: 15, savedAt: now }; });
+                                sessionStorage.setItem('rejectedCountdownStates', JSON.stringify(states));
+                            })();
+                            // ── 從資料層計算各狀態的異動筆數（含跨頁商品）──────────────────
+                            var publishedDelta = 0, unpublishedDelta = 0;
+                            ids.forEach(function(id) {
+                                var prev = window._productStatusMap[id];
+                                if (prev === 1)      publishedDelta++;
+                                else if (prev === 0) unpublishedDelta++;
+                                window._productStatusMap[id] = 4; // 更新資料層
+                            });
+                            // ── DOM：僅更新當前頁面可見的商品列 ───────────────────────────
+                            ids.forEach(function(id) {
+                                var srcRow = document.querySelector('tr[data-id="' + id + '"]');
+                                if (srcRow) {
+                                    srcRow.dataset.status = '4';
+                                    var statusBadge = srcRow.querySelector('span.badge.rounded-pill.px-3');
+                                    if (statusBadge) {
+                                        statusBadge.className = 'badge rounded-pill px-3 py-2 bg-forced-soft text-forced fw-normal';
+                                        statusBadge.textContent = '強制下架';
+                                    }
+                                    var cb = srcRow.querySelector('.row-checkbox');
+                                    if (cb) { cb.disabled = true; cb.checked = false; }
+                                    var actBtn = srcRow.querySelector('.act-ban');
+                                    if (actBtn) actBtn.remove();
+                                }
+                            });
+                            // ── 統計卡片：依資料層計算正確增減量（不受當前頁可見列限制）──
+                            var publishedEl   = document.querySelector('.stat-published .stat-num');
+                            var unpublishedEl = document.querySelector('.stat-unpublished .stat-num');
+                            var forcedEl      = document.querySelector('.stat-forced .stat-num');
+                            if (publishedEl && publishedDelta > 0)
+                                publishedEl.textContent = Math.max(0, (parseInt(publishedEl.textContent) || 0) - publishedDelta);
+                            if (unpublishedEl && unpublishedDelta > 0)
+                                unpublishedEl.textContent = Math.max(0, (parseInt(unpublishedEl.textContent) || 0) - unpublishedDelta);
+                            if (forcedEl)
+                                forcedEl.textContent = (parseInt(forcedEl.textContent) || 0) + res.count;
+                            Swal.fire({ title: '已強制下架', text: res.message, icon: 'success',
+                                        timer: 1800, timerProgressBar: true, confirmButtonColor: '#1abb9c' });
                         } else {
                             Swal.fire({ title: '操作失敗', text: res.message, icon: 'error', confirmButtonColor: '#e53e3e' });
                         }
@@ -601,8 +883,13 @@
                 });
             }
 
-            btnPublish.addEventListener('click',   function () { batchUpdate(1); });
-            btnUnpublish.addEventListener('click', function () { batchUpdate(0); });
+            // 初次載入與供外部（Ajax）呼叫
+            window.initSelection = function() {
+                bindCheckboxEvents();
+                updateSelectionUI();
+                populateProductStatusMap();
+            };
+            initSelection();
         })();
 
         // Bootstrap Tooltips
@@ -650,8 +937,12 @@
             }
         })();
 
-        // 強制下架
+        // 強制下架（單一）
         var fpProductId = null;
+        var urlForceUnpublish = '@Url.Action("ForceUnpublish", "Products")';
+
+        function fpSetChip(btn) { document.getElementById('fpReasonInput').value = btn.textContent.trim(); }
+        function bfSetChip(btn) { document.getElementById('bfReasonInput').value = btn.textContent.trim(); }
 
         function openForceUnpublish(id, name) {
             fpProductId = id;
@@ -668,15 +959,249 @@
             errEl.classList.add('d-none');
 
             try {
-                const res = await apiPost('@Url.Action("ForceUnpublish", "Products")', { id: fpProductId, reason: reason });
+                const res = await apiPost(urlForceUnpublish, { id: fpProductId, reason: reason });
                 bootstrap.Modal.getInstance(document.getElementById('forceUnpublishModal'))?.hide();
                 if (res.success) {
-                    Swal.fire({ title: '已強制下架', text: res.message, icon: 'success', timer: 1500, timerProgressBar: true })
-                        .then(() => location.reload());
+                    // 寫入倒數計時狀態
+                    (function() {
+                        var states = {};
+                        try { states = JSON.parse(sessionStorage.getItem('rejectedCountdownStates')) || {}; } catch(e) {}
+                        states[String(fpProductId)] = { time: 15, savedAt: Date.now() };
+                        sessionStorage.setItem('rejectedCountdownStates', JSON.stringify(states));
+                    })();
+                    // 更新資料層
+                    if (window._productStatusMap) window._productStatusMap[fpProductId] = 4;
+                    // DOM：保留商品列，更新狀態為「強制下架」並禁用 checkbox
+                    var srcRow = document.querySelector('tr[data-id="' + fpProductId + '"]');
+                    if (srcRow) {
+                        srcRow.dataset.status = '4';
+                        var statusBadge = srcRow.querySelector('span.badge.rounded-pill.px-3');
+                        if (statusBadge) {
+                            statusBadge.className = 'badge rounded-pill px-3 py-2 bg-forced-soft text-forced fw-normal';
+                            statusBadge.textContent = '強制下架';
+                        }
+                        var cb = srcRow.querySelector('.row-checkbox');
+                        if (cb) { cb.disabled = true; cb.checked = false; }
+                        var actBtn = srcRow.querySelector('.act-ban');
+                        if (actBtn) actBtn.remove();
+                        var publishedEl = document.querySelector('.stat-published .stat-num');
+                        var forcedEl    = document.querySelector('.stat-forced .stat-num');
+                        if (publishedEl) publishedEl.textContent = Math.max(0, (parseInt(publishedEl.textContent)||0) - 1);
+                        if (forcedEl)    forcedEl.textContent    = (parseInt(forcedEl.textContent)||0) + 1;
+                    }
+                    Swal.fire({ title: '已強制下架', text: res.message, icon: 'success', timer: 1500, timerProgressBar: true });
                 } else {
                     Swal.fire({ title: '操作失敗', text: res.message, icon: 'error' });
                 }
             } catch { Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }); }
         });
     </script>
+
+    <script>
+        // ── 商品總覽 Push-Pull 側邊面板 ──
+        var urlGetProductDetailsPartial = '@Url.Action("GetProductDetailsPartial", "Products")';
+        var _activeProductIndexRowId = null;
+
+        function _productIndexSwitchMode(toOpen, callback) {
+            var tbl    = document.querySelector('#productIndexListCol .prod-table-wrap');
+            var panel  = document.getElementById('productIndexDetailPanel');
+            var layout = document.getElementById('productIndexLayout');
+            if (tbl) tbl.style.opacity = '0';
+            setTimeout(function () {
+                if (toOpen) {
+                    if (panel  && !panel.classList.contains('open'))        panel.classList.add('open');
+                    if (layout && !layout.classList.contains('panel-open')) layout.classList.add('panel-open');
+                } else {
+                    if (panel)  panel.classList.remove('open');
+                    if (layout) layout.classList.remove('panel-open');
+                }
+                if (tbl) tbl.style.opacity = '1';
+                if (callback) callback();
+            }, 180);
+        }
+
+        window.openProductOffcanvas = function (id, name) {
+            var body    = document.getElementById('productIndexPanelBody');
+            var titleEl = document.getElementById('productIndexPanelLabel');
+
+            if (_activeProductIndexRowId !== null) {
+                var prevRow = document.querySelector('.table-custom tbody tr[data-id="' + _activeProductIndexRowId + '"]');
+                if (prevRow) prevRow.classList.remove('row-active');
+            }
+            _activeProductIndexRowId = id;
+            var activeRow = document.querySelector('.table-custom tbody tr[data-id="' + id + '"]');
+            if (activeRow) activeRow.classList.add('row-active');
+
+            if (titleEl) { titleEl.textContent = name || '商品詳情'; titleEl.title = name || '商品詳情'; }
+            if (body) body.innerHTML = '<div class="text-center py-5 text-muted"><i class="bx bx-loader-alt bx-spin fs-1 d-block mb-2"></i>載入中…</div>';
+
+            var alreadyOpen = document.getElementById('productIndexDetailPanel').classList.contains('open');
+            if (!alreadyOpen) _productIndexSwitchMode(true, null);
+
+            fetch(urlGetProductDetailsPartial + '?id=' + id)
+                .then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.text();
+                })
+                .then(function (html) { if (body) body.innerHTML = html; })
+                .catch(function () {
+                    if (body) body.innerHTML = '<div class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1 d-block mb-2"></i>載入失敗，請稍後再試。</div>';
+                });
+        };
+
+        window.closeProductIndexPanel = function () {
+            if (_activeProductIndexRowId !== null) {
+                var row = document.querySelector('.table-custom tbody tr[data-id="' + _activeProductIndexRowId + '"]');
+                if (row) row.classList.remove('row-active');
+                _activeProductIndexRowId = null;
+            }
+            _productIndexSwitchMode(false, null);
+        };
+
+        // Way 1：ESC 鍵關閉面板
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                var panel = document.getElementById('productIndexDetailPanel');
+                if (panel && panel.classList.contains('open')) {
+                    console.log('[PanelClose] ESC key');
+                    closeProductIndexPanel();
+                }
+            }
+        });
+        console.log('[Panel] ESC listener bound ✓');
+
+        // Way 3a：點擊兩卡片間的 gap 區域關閉面板
+        document.getElementById('productIndexLayout').addEventListener('click', function (e) {
+            if (e.target === this) {
+                var panel = document.getElementById('productIndexDetailPanel');
+                if (panel && panel.classList.contains('open')) {
+                    console.log('[PanelClose] gap click');
+                    closeProductIndexPanel();
+                }
+            }
+        });
+
+        // Way 3b：點擊列表內空白區域（非列、非互動元素）關閉面板
+        document.getElementById('productIndexListCol').addEventListener('click', function (e) {
+            var panel = document.getElementById('productIndexDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            if (e.target.closest('tr, button, a, input, select, label, .filter-card, .filter-card-header, .back-to-list-btn')) return;
+            console.log('[PanelClose] list col empty area click');
+            closeProductIndexPanel();
+        });
+
+        // 點擊整行開啟（封裝為可重呼叫函式，供 AJAX 分頁後重綁）
+        function _productBindRows() {
+            document.querySelectorAll('#productIndexListCol .table-custom tbody tr[data-id]').forEach(function (tr) {
+                tr.addEventListener('click', function (e) {
+                    if (e.target.closest('a, button, input')) return;
+                    var id   = parseInt(this.dataset.id);
+                    var name = this.querySelector('td:nth-child(3) a') ? this.querySelector('td:nth-child(3) a').textContent.trim() : '';
+                    openProductOffcanvas(id, name);
+                });
+            });
+            // 重新初始化 tooltips
+            document.querySelectorAll('#productIndexListCol [data-bs-toggle="tooltip"]').forEach(function (el) {
+                new bootstrap.Tooltip(el, { trigger: 'hover', placement: 'top' });
+            });
+        }
+        _productBindRows();
+    </script>
+    <script>
+    // ── AJAX 分頁：面板展開時換頁不重整、自動載入第一筆 ──
+    (function () {
+        function ajaxLoadProductPage(href) {
+            var wrap    = document.querySelector('#productIndexListCol .prod-table-wrap');
+            var listCol = document.getElementById('productIndexListCol');
+            if (wrap) wrap.style.opacity = '0.4';
+            fetch(href)
+                .then(function (res) { if (!res.ok) throw new Error(); return res.text(); })
+                .then(function (html) {
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+                    // 更新表格 tbody
+                    var newTbody = doc.querySelector('#productIndexListCol .table-custom tbody');
+                    var tbody    = document.querySelector('#productIndexListCol .table-custom tbody');
+                    if (tbody && newTbody) tbody.innerHTML = newTbody.innerHTML;
+                    // 將新頁商品狀態合併至資料層
+                    if (window.populateProductStatusMap) populateProductStatusMap();
+                    // 更新分頁導航
+                    var newNav = doc.querySelector('#productIndexListCol nav');
+                    var curNav = document.querySelector('#productIndexListCol nav');
+                    if (curNav && newNav) curNav.outerHTML = newNav.outerHTML;
+                    // 更新統計卡片選中狀態
+                    var newStatCards = doc.querySelectorAll('.page-above-content .stat-card');
+                    var curStatCards = document.querySelectorAll('.page-above-content .stat-card');
+                    newStatCards.forEach(function(nc, i) {
+                        if (curStatCards[i]) curStatCards[i].classList.toggle('stat-active', nc.classList.contains('stat-active'));
+                    });
+                    // 恢復 checkbox 勾選狀態並同步全選框
+                    if (window.initSelection) {
+                        window.initSelection();
+                    }
+                    // 重綁行點擊 & tooltips
+                    _productBindRows();
+                    // 滾回頂部
+                    if (listCol) listCol.scrollTop = 0;
+                    // 恢復透明度
+                    wrap = document.querySelector('#productIndexListCol .prod-table-wrap');
+                    if (wrap) wrap.style.opacity = '1';
+                    // 自動開啟第一筆
+                    _activeProductIndexRowId = null;
+                    var firstRow = document.querySelector('#productIndexListCol .table-custom tbody tr[data-id]');
+                    if (firstRow) {
+                        var id      = parseInt(firstRow.dataset.id);
+                        var nameEl  = firstRow.querySelector('td:nth-child(3) a');
+                        openProductOffcanvas(id, nameEl ? nameEl.textContent.trim() : '商品詳情');
+                    }
+                    // 同步網址列
+                    history.pushState(null, '', href);
+                })
+                .catch(function () { window.location.href = href; });
+        }
+
+        // 面板開啟時：篩選表單送出 / 統計卡片點擊 → AJAX，不跳頁
+        (function () {
+            // 篩選表單 → AJAX
+            var filterForm = document.querySelector('#productIndexListCol form[method="get"]');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function (e) {
+                    var panel = document.getElementById('productIndexDetailPanel');
+                    if (!panel || !panel.classList.contains('open')) return;
+                    e.preventDefault();
+                    var params = new URLSearchParams(new FormData(filterForm)).toString();
+                    ajaxLoadProductPage(filterForm.action + '?' + params);
+                });
+            }
+            // 統計卡片連結 → AJAX
+            var above = document.querySelector('.page-above-content');
+            if (above) {
+                above.addEventListener('click', function (e) {
+                    var panel = document.getElementById('productIndexDetailPanel');
+                    if (!panel || !panel.classList.contains('open')) return;
+                    var link = e.target.closest('.stretched-link');
+                    if (!link) return;
+                    var href = link.getAttribute('href');
+                    if (!href || href === '#') return;
+                    e.preventDefault();
+                    ajaxLoadProductPage(href);
+                });
+            }
+        })();
+
+        // 事件委派：攔截 #productIndexListCol 內的分頁點擊（面板已開啟時）
+        document.getElementById('productIndexListCol').addEventListener('click', function (e) {
+            var panel = document.getElementById('productIndexDetailPanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            var link = e.target.closest('.page-link');
+            if (!link) return;
+            var pageItem = link.closest('.page-item');
+            if (!pageItem || pageItem.classList.contains('disabled') || pageItem.classList.contains('active')) return;
+            var href = link.getAttribute('href');
+            if (!href || href === '#') return;
+            e.preventDefault();
+            ajaxLoadProductPage(href);
+        });
+    })();
+    </script>
 }
+

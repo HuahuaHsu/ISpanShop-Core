@@ -20,23 +20,149 @@
 
         .picking-summary { font-size: 0.82rem; color: #595959; background: #fafafa; padding: 4px 8px; border-radius: 4px; border-left: 3px solid #1abb9c; }
         
-        .stock-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
+        .stock-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; }
         .stock-ok { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
         .stock-low { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
+
+        /* 統計卡片 */
+        .stat-card {
+            position: relative;
+            background: #fff;
+            border-radius: 16px;
+            padding: 1.3rem 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,.05);
+            border: 1.5px solid transparent;
+            transition: all .2s;
+            cursor: pointer;
+            overflow: hidden;
+            height: 100%;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.10); }
+        .stat-icon { font-size: 1.7rem; margin-bottom: .2rem; }
+        .stat-num { font-size: 1.9rem; font-weight: 900; line-height: 1; margin-bottom: .15rem; }
+        .stat-label { font-size: .75rem; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; opacity: .65; }
+
+        .stat-pending   { border-color: #bee3f8; }
+        .stat-pending   .stat-icon, .stat-pending   .stat-num { color: #2b6cb0; }
+        .stat-urgent    { border-color: #fed7d7; }
+        .stat-urgent    .stat-icon, .stat-urgent    .stat-num { color: #c53030; }
+        .stat-lowstock  { border-color: #ffe58f; }
+        .stat-lowstock  .stat-icon, .stat-lowstock  .stat-num { color: #d48806; }
+
+        .stat-active { background: #f0f2ff; border-width: 2px; }
+
+        /* 篩選卡片 */
+        .filter-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e8edf2;
+            margin-bottom: 1.5rem;
+        }
+        .filter-card .form-label {
+            font-size: 0.78rem; font-weight: 700; color: #5a6a7a; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px; display: block;
+        }
+
+        /* 展開列樣式與動畫 */
+        .details-row { background-color: #f8fafc; }
+        .details-wrapper { display: none; overflow: hidden; } /* 用於滑動動畫 */
+        .details-content { padding: 1.5rem; border-left: 4px solid #696cff; background: white; margin: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        
+        .detail-info-item { margin-bottom: 0.5rem; }
+        .detail-info-label { font-weight: 700; color: #566a7f; font-size: 0.8rem; text-transform: uppercase; width: 100px; display: inline-block; }
+        
+        .product-img-mini { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+        .tr-expanded { background-color: #f0f2ff !important; box-shadow: inset 0 0 0 9999px rgba(105, 108, 255, 0.05); }
+        
+        /* 整列可點擊樣式 */
+        .shipment-row { transition: all 0.2s; cursor: pointer; }
+        .shipment-row:hover { background-color: #f4f5ff !important; }
     </style>
 }
 
 <div class="container-fluid py-4 font-noto">
-    <div class="workstation-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h2 class="fw-bold mb-1"><i class="bx bx-package me-2 text-primary"></i>出貨工作台</h2>
-                <p class="mb-0 text-muted">目前共有 <span class="fw-bold text-primary">@Model.CountTotal</span> 筆訂單等待出貨</p>
-            </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary btn-sm" onclick="loadShipmentData(1)"><i class="bx bx-refresh"></i> 重新整理</button>
+    <div class="mb-4">
+        <h2 class="fw-bold tracking-tight mb-1" style="color:#1e2d3d;">
+            <i class="bx bx-package me-2 text-primary"></i>出貨工作台
+        </h2>
+        <p class="mb-0 fs-7 text-muted">處理待出貨訂單、列印揀貨單與管理出貨進度</p>
+    </div>
+
+    <!-- 統計摘要卡片 -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div id="card-total" class="stat-card stat-pending stat-active" onclick="resetForm()">
+                <div class="stat-icon"><i class="bx bx-time"></i></div>
+                <div class="stat-num" id="statPendingCount">@Model.CountTotal</div>
+                <div class="stat-label">待出貨總數</div>
             </div>
         </div>
+        <div class="col-12 col-md-4">
+            <div id="card-urgent" class="stat-card stat-urgent" onclick="filterUrgent()">
+                <div class="stat-icon"><i class="bx bx-error-alt"></i></div>
+                <div class="stat-num" id="statUrgentCount">@Model.CountUrgentShipment</div>
+                <div class="stat-label">緊急處理 (48h+)</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div id="card-lowstock" class="stat-card stat-lowstock" onclick="filterLowStock()">
+                <div class="stat-icon"><i class="bx bx-package"></i></div>
+                <div class="stat-num" id="statLowStockCount">@Model.CountLowStock</div>
+                <div class="stat-label">庫存緊缺訂單</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 篩選卡片 -->
+    <div class="filter-card shadow-sm">
+        <form id="filterForm" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">關鍵字搜尋 (訂單號/姓名/電話)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bx bx-search"></i></span>
+                    <input type="text" class="form-control" name="Keyword" placeholder="輸入關鍵字..." />
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">庫存狀態</label>
+                <select class="form-select" name="StockStatus" id="filterStockStatus">
+                    <option value="">-- 全部 --</option>
+                    <option value="1">庫存充足</option>
+                    <option value="2">庫存緊缺</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">日期維度</label>
+                <select class="form-select" name="DateDimension">
+                    @foreach (var item in Model.DateDimensionOptions)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">日期範圍</label>
+                <div class="input-group">
+                    <span class="input-group-text">從</span>
+                    <input type="date" name="StartDate" class="form-control" id="filterStartDate">
+                    <span class="input-group-text">至</span>
+                    <input type="date" name="EndDate" class="form-control" id="filterEndDate">
+                </div>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="button" class="btn btn-primary w-100 rounded-pill" onclick="loadShipmentData(1)">
+                    <i class="bx bx-filter-alt me-1"></i> 篩選
+                </button>
+                <button type="reset" class="btn btn-outline-secondary w-100 rounded-pill" onclick="resetForm()">
+                    重置
+                </button>
+            </div>
+        </form>
     </div>
 
     <!-- 批次操作區 -->
@@ -46,15 +172,9 @@
             <label class="form-check-label fw-bold" for="selectAll">全選</label>
         </div>
         <span class="text-muted me-3">已選取 <span id="selectedCount" class="text-primary fw-bold">0</span> 筆</span>
-        <div class="divider-vertical mx-2"></div>
-        <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="batchMarkAsShipped()">
-            <i class="bx bx-send me-1"></i> 批次更新為「已出貨」
-        </button>
-        <button class="btn btn-outline-info btn-sm rounded-pill px-3" onclick="batchPrint('picking')">
-            <i class="bx bx-printer me-1"></i> 列印揀貨單
-        </button>
-        <button class="btn btn-outline-info btn-sm rounded-pill px-3" onclick="batchPrint('label')">
-            <i class="bx bx-barcode-reader me-1"></i> 列印超商面單
+        <div class="divider-vertical mx-2" style="width: 1px; height: 24px; background: #cbd5e0;"></div>
+        <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" onclick="batchMarkAsShipped()">
+            <i class="bx bxs-truck me-1"></i> 批次更新為「已出貨」
         </button>
     </div>
 
@@ -64,10 +184,15 @@
                 <thead class="table-light">
                     <tr>
                         <th style="width: 40px;"></th>
-                        <th>訂單資訊</th>
-                        <th>揀貨摘要</th>
-                        <th>收件人資訊</th>
-                        <th>等待時長</th>
+                        <th>訂單編號</th>
+                        <th>買家資訊</th>
+                        <th class="cursor-pointer text-center" onclick="sortBy('StockStatus')">
+                            庫存狀態 <i class="bx bx-sort"></i>
+                        </th>
+                        <th>收件資訊</th>
+                        <th class="cursor-pointer" onclick="sortBy('OrderDate')">
+                            下單/付款時間 <i class="bx bx-sort"></i>
+                        </th>
                         <th class="text-center">操作</th>
                     </tr>
                 </thead>
@@ -78,115 +203,263 @@
         </div>
         <div class="pagination-container p-3 border-top d-flex justify-content-between align-items-center">
             <div id="paginationInfo" class="text-muted small"></div>
-            <nav id="paginationNav"></nav>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="paginationNav"></ul>
+            </nav>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         let currentPage = 1;
+        let currentSort = { SortBy: 'OrderDate', IsDescending: false }; 
+
+        const Toast = Swal.mixin({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true,
+            didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
+        });
 
         $(document).ready(function() {
             loadShipmentData(1);
         });
 
+        function updateCardActive(id) {
+            $('.stat-card').removeClass('stat-active');
+            $(`#card-${id}`).addClass('stat-active');
+        }
+
+        function resetForm() { 
+            $('#filterForm')[0].reset(); 
+            updateCardActive('total');
+            loadShipmentData(1); 
+        }
+
+        function filterUrgent() {
+            const twoDaysAgo = new Date(); twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+            const dateStr = twoDaysAgo.toISOString().split('T')[0];
+            $('#filterForm')[0].reset();
+            $('#filterStartDate').val(''); 
+            $('#filterEndDate').val(dateStr);
+            updateCardActive('urgent');
+            loadShipmentData(1);
+        }
+
+        function filterLowStock() {
+            $('#filterForm')[0].reset();
+            $('#filterStockStatus').val('2');
+            updateCardActive('lowstock');
+            loadShipmentData(1);
+        }
+
+        function sortBy(column) {
+            if (currentSort.SortBy === column) currentSort.IsDescending = !currentSort.IsDescending;
+            else { currentSort.SortBy = column; currentSort.IsDescending = false; }
+            loadShipmentData(currentPage);
+        }
+
+        function updateStats() {
+            $.get('@Url.Action("GetStatsAjax", "ShipmentWorkstation")', function(res) {
+                if (res.success) {
+                    $('#statPendingCount').text(res.totalPending);
+                    $('#statUrgentCount').text(res.totalUrgent);
+                    $('#statLowStockCount').text(res.totalLowStock);
+                }
+            });
+        }
+
         function loadShipmentData(page) {
             currentPage = page;
+            const formData = $('#filterForm').serializeArray();
+            let searchParams = { ...currentSort };
+            formData.forEach(item => { if (item.value) searchParams[item.name] = item.value; });
+            searchParams.PageNumber = page; searchParams.PageSize = 10;
+
             $.ajax({
                 url: '@Url.Action("GetShipmentListAjax", "ShipmentWorkstation")',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ PageNumber: page, PageSize: 15 }),
+                type: 'POST', contentType: 'application/json', data: JSON.stringify(searchParams),
                 success: function(res) {
-                    if (res.success) {
-                        renderTable(res.data.items);
-                        renderPagination(res.data);
-                        updateSelectedCount();
-                    }
+                    if (res.success) { renderTable(res.data.items); renderPagination(res.data); updateSelectedCount(); }
                 }
             });
         }
 
         function renderTable(items) {
-            const tbody = $('#shipmentTableBody');
-            tbody.empty();
+            const tbody = $('#shipmentTableBody'); tbody.empty();
             if (!items || items.length === 0) {
-                tbody.append('<tr><td colspan="6" class="text-center py-5">🎉 太棒了！目前沒有待出貨的訂單</td></tr>');
+                tbody.append('<tr><td colspan="7" class="text-center py-5"><div class="text-muted mb-2"><i class="bx bx-spreadsheet fs-1"></i></div>🎉 太棒了！目前沒有待出貨的訂單</td></tr>');
                 return;
             }
 
             items.forEach(item => {
-                const isUrgent = item.waitingTime && (item.waitingTime.includes('天') || parseInt(item.waitingTime) > 12);
+                const orderDate = new Date(item.orderDate); const now = new Date();
+                const diffHours = (now - orderDate) / (1000 * 60 * 60); const isUrgent = diffHours > 48;
+
                 tbody.append(`
-                    <tr>
-                        <td>
-                            <input class="form-check-input order-checkbox" type="checkbox" value="${item.orderId}" onchange="updateSelectedCount()">
+                    <tr id="row-${item.orderId}" class="shipment-row" onclick="handleRowClick(event, ${item.orderId})">
+                        <td onclick="event.stopPropagation()"><input class="form-check-input order-checkbox" type="checkbox" value="${item.orderId}" onchange="updateSelectedCount()"></td>
+                        <td><div class="fw-bold text-primary">${item.orderUuid}</div></td>
+                        <td><div>${item.memberName}</div></td>
+                        <td class="text-center" id="stock-summary-${item.orderId}">
+                           <span class="spinner-border spinner-border-sm text-secondary"></span>
                         </td>
+                        <td><div>${item.recipientName}</div><div class="small text-muted">${item.recipientPhone}</div></td>
                         <td>
-                            <div class="fw-bold text-primary mb-1">${item.orderUuid}</div>
-                            <div class="small text-muted">${item.memberName} · $${item.totalAmount.toLocaleString()}</div>
+                            <div class="waiting-time ${isUrgent ? 'waiting-urgent' : ''}"><i class="bx bx-time-five me-1"></i>${item.waitingTime || '計算中...'}</div>
+                            <div class="small text-muted">${new Date(item.orderDate).toLocaleString('zh-TW')}</div>
                         </td>
-                        <td>
-                            <div class="picking-summary">${item.itemsSummary || '無明細資料'}</div>
-                            <div class="mt-1">
-                                <span class="stock-badge stock-ok"><i class="bx bx-check"></i> 庫存充足</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="fw-medium">${item.recipientName}</div>
-                            <div class="small text-muted">${item.recipientPhone}</div>
-                            <div class="small text-muted text-truncate" style="max-width: 150px;">${item.storeName}</div>
-                        </td>
-                        <td>
-                            <div class="waiting-time ${isUrgent ? 'waiting-urgent' : ''}">
-                                <i class="bx bx-time-five me-1"></i>${item.waitingTime || '計算中...'}
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-icon btn-outline-primary" onclick="markAsShipped(${item.orderId})" title="出貨">
-                                <i class="bx bx-send"></i>
+                        <td class="text-center" onclick="event.stopPropagation()">
+                            <button class="btn btn-sm btn-icon btn-outline-primary" onclick="toggleDetails(${item.orderId})" title="查看詳情">
+                                <i class="bx bx-chevron-down" id="icon-${item.orderId}"></i>
                             </button>
-                            <a href="@Url.Content("~/Admin/Orders/Details/")${item.orderId}" class="btn btn-sm btn-icon btn-outline-secondary" title="詳情">
-                                <i class="bx bx-show"></i>
-                            </a>
+                        </td>
+                    </tr>
+                    <tr class="details-row" id="details-${item.orderId}" style="display:none;">
+                        <td colspan="7" class="p-0">
+                            <div class="details-wrapper" id="wrapper-${item.orderId}">
+                                <div class="details-content" id="content-${item.orderId}">載入中...</div>
+                            </div>
                         </td>
                     </tr>
                 `);
+                
+                loadStockSummary(item.orderId);
             });
         }
 
-        function toggleSelectAll() {
-            $('.order-checkbox').prop('checked', $('#selectAll').prop('checked'));
-            updateSelectedCount();
+        function handleRowClick(event, orderId) {
+            // 避免點擊 Checkbox 或操作按鈕時重複觸發
+            if ($(event.target).closest('td').index() === 0 || $(event.target).closest('td').index() === 6) return;
+            toggleDetails(orderId);
         }
 
-        function updateSelectedCount() {
-            const count = $('.order-checkbox:checked').length;
-            $('#selectedCount').text(count);
+        function loadStockSummary(orderId) {
+            $.get(`@Url.Action("GetOrderDetailAjax", "ShipmentWorkstation")/${orderId}`, function(res) {
+                if (res.success) {
+                    const o = res.data;
+                    const hasLowStock = o.details.some(p => p.stock < p.quantity);
+                    const badge = hasLowStock 
+                        ? '<span class="stock-badge stock-low"><i class="bx bx-error me-1"></i>庫存緊缺</span>'
+                        : '<span class="stock-badge stock-ok"><i class="bx bx-check me-1"></i>庫存充足</span>';
+                    $(`#stock-summary-${orderId}`).html(badge);
+                }
+            });
         }
 
-        function getSelectedIds() {
-            return $('.order-checkbox:checked').map(function() { return parseInt($(this).val()); }).get();
+        function toggleDetails(orderId) {
+            const wrapper = $(`#wrapper-${orderId}`);
+            const detailRow = $(`#details-${orderId}`);
+            const mainRow = $(`#row-${orderId}`);
+            const icon = $(`#icon-${orderId}`);
+
+            if (wrapper.is(':visible')) {
+                // 收合動畫
+                wrapper.slideUp(300, function() {
+                    detailRow.hide();
+                    mainRow.removeClass('tr-expanded');
+                    icon.removeClass('bx-chevron-up').addClass('bx-chevron-down');
+                });
+            } else {
+                // 先關閉其他已展開的列 (模擬 Side Drawer 只能開一個的行為，且動畫更整潔)
+                $('.details-wrapper:visible').each(function() {
+                    const otherId = $(this).attr('id').split('-')[1];
+                    $(this).slideUp(300);
+                    $(`#details-${otherId}`).hide();
+                    $(`#row-${otherId}`).removeClass('tr-expanded');
+                    $(`#icon-${otherId}`).removeClass('bx-chevron-up').addClass('bx-chevron-down');
+                });
+
+                // 展開動畫
+                detailRow.show();
+                mainRow.addClass('tr-expanded');
+                icon.removeClass('bx-chevron-down').addClass('bx-chevron-up');
+                wrapper.slideDown(300);
+                fetchDetails(orderId);
+            }
         }
+
+        function fetchDetails(orderId) {
+            const container = $(`#content-${orderId}`);
+            if (container.data('loaded') === 'true') return; // 避免重複加載
+
+            $.get(`@Url.Action("GetOrderDetailAjax", "ShipmentWorkstation")/${orderId}`, function(res) {
+                if (res.success) {
+                    const o = res.data;
+                    let productsHtml = '';
+                    o.details.forEach(p => {
+                        const stockClass = p.stock < p.quantity ? 'stock-low' : 'stock-ok';
+                        const stockIcon = p.stock < p.quantity ? 'bx-error' : 'bx-check';
+                        productsHtml += `
+                            <tr>
+                                <td><img src="${p.coverImage}" class="product-img-mini border shadow-sm"></td>
+                                <td><div class="fw-bold text-dark">${p.productName}</div><div class="small text-muted">${p.variantName || ''}</div></td>
+                                <td class="text-center fw-bold">${p.quantity}</td>
+                                <td class="text-center">
+                                    <span class="stock-badge ${stockClass}">
+                                        <i class="bx ${stockIcon} me-1"></i>${p.stock}
+                                    </span>
+                                </td>
+                                <td class="text-end">$${p.price.toLocaleString()}</td>
+                                <td class="text-end fw-bold text-primary">$${p.subTotal.toLocaleString()}</td>
+                            </tr>`;
+                    });
+
+                    container.html(`
+                        <div class="row g-4">
+                            <div class="col-md-4 border-end">
+                                <div class="pe-3">
+                                    <h6 class="fw-bold mb-3 text-primary d-flex align-items-center">
+                                        <i class="bx bx-info-circle me-2"></i> 訂單摘要處理
+                                    </h6>
+                                    <div class="bg-light p-3 rounded-3 mb-3">
+                                        <div class="detail-info-item"><span class="detail-info-label">買家帳號</span><span class="text-dark fw-bold">${o.userName}</span></div>
+                                        <div class="detail-info-item"><span class="detail-info-label">買家備註</span><span class="text-muted italic">${o.note || '無特別要求'}</span></div>
+                                        <div class="detail-info-item"><span class="detail-info-label">配送地址</span><span class="text-dark small">${o.recipientAddress}</span></div>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-primary btn-lg shadow-sm" onclick="markAsShipped(${o.id})">
+                                            <i class="bx bxs-truck me-2"></i> 確認出貨並通知買家
+                                        </button>
+                                        <a href="@Url.Content("~/Admin/Orders/Details/")${o.id}" class="btn btn-outline-secondary btn-sm">
+                                            <i class="bx bx-link-external me-1"></i> 查看完整訂單詳情
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <h6 class="fw-bold mb-3 text-primary d-flex align-items-center">
+                                    <i class="bx bx-list-ul me-2"></i> 商品揀貨清單
+                                </h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-borderless align-middle">
+                                        <thead class="border-bottom"><tr class="text-muted small"><th>商品</th><th>品名規格</th><th class="text-center">訂購</th><th class="text-center">庫存</th><th class="text-end">單價</th><th class="text-end">小計</th></tr></thead>
+                                        <tbody>${productsHtml}</tbody>
+                                        <tfoot class="border-top">
+                                            <tr><td colspan="5" class="text-end text-muted pt-3">運費小計</td><td class="text-end pt-3">$${o.shippingFee.toLocaleString()}</td></tr>
+                                            <tr><td colspan="5" class="text-end fw-bold text-danger">應收總金額</td><td class="text-end fw-bold text-danger h4 mb-0">$${o.finalAmount.toLocaleString()}</td></tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    container.data('loaded', 'true');
+                } else { container.html(`<div class="alert alert-danger">${res.message}</div>`); }
+            });
+        }
+
+        function toggleSelectAll() { $('.order-checkbox').prop('checked', $('#selectAll').prop('checked')); updateSelectedCount(); }
+        function updateSelectedCount() { const count = $('.order-checkbox:checked').length; $('#selectedCount').text(count); $('#selectAll').prop('checked', count > 0 && count === $('.order-checkbox').length); }
+        function getSelectedIds() { return $('.order-checkbox:checked').map(function() { return parseInt($(this).val()); }).get(); }
 
         function batchMarkAsShipped() {
-            const ids = getSelectedIds();
-            if (ids.length === 0) { showAlert('請先勾選要處理的訂單'); return; }
-
+            const ids = getSelectedIds(); if (ids.length === 0) { Toast.fire({ icon: 'warning', title: '請先勾選要處理的訂單' }); return; }
             showConfirm(`確定要將這 ${ids.length} 筆訂單標記為「已出貨」嗎？`, function() {
                 $.ajax({
                     url: '@Url.Action("BatchUpdateStatus", "ShipmentWorkstation")',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ OrderIds: ids, NewStatus: 2 }), // 2 = Shipped
-                    success: function(res) {
-                        if (res.success) {
-                            showAlert(res.message, function() { loadShipmentData(currentPage); });
-                        } else {
-                            showAlert('更新失敗: ' + res.message);
-                        }
-                    }
+                    type: 'POST', contentType: 'application/json', data: JSON.stringify({ OrderIds: ids, NewStatus: 2 }),
+                    success: function(res) { if (res.success) { Toast.fire({ icon: 'success', title: res.message || '更新成功' }); loadShipmentData(currentPage); updateStats(); } else { Swal.fire({ icon: 'error', title: '更新失敗', text: res.message }); } }
                 });
             });
         }
@@ -195,33 +468,20 @@
             showConfirm('確定將此訂單更新為「已出貨」？', function() {
                 $.ajax({
                     url: '@Url.Action("BatchUpdateStatus", "ShipmentWorkstation")',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ OrderIds: [id], NewStatus: 2 }),
-                    success: function(res) {
-                        if (res.success) {
-                            loadShipmentData(currentPage);
-                        }
-                    }
+                    type: 'POST', contentType: 'application/json', data: JSON.stringify({ OrderIds: [id], NewStatus: 2 }),
+                    success: function(res) { if (res.success) { Toast.fire({ icon: 'success', title: '訂單已標記為出貨' }); loadShipmentData(currentPage); updateStats(); } else { Swal.fire({ icon: 'error', title: '更新失敗', text: res.message }); } }
                 });
             });
         }
 
-        function batchPrint(type) {
-            const ids = getSelectedIds();
-            if (ids.length === 0) { showAlert('請先勾選要列印的訂單'); return; }
-            showAlert(`正在生成 ${ids.length} 筆訂單的${type === 'picking' ? '揀貨單' : '面單'}... (示範功能)`);
-        }
-
         function renderPagination(data) {
-            const nav = $('#paginationNav'); nav.empty();
-            if (data.totalPages <= 1) return;
-            let html = '<ul class="pagination pagination-sm mb-0">';
-            for(let i=1; i<=data.totalPages; i++) {
-                html += `<li class="page-item ${i===data.pageNumber?'active':''}"><a class="page-link" href="javascript:loadShipmentData(${i})">${i}</a></li>`;
-            }
-            html += '</ul>';
-            nav.append(html);
+            const list = $('#paginationNav'); list.empty(); const info = $('#paginationInfo');
+            if(data.totalCount === 0) { info.text('目前無待出貨訂單'); return; }
+            const startIdx = (data.pageNumber - 1) * data.pageSize + 1; const endIdx = Math.min(data.pageNumber * data.pageSize, data.totalCount);
+            info.text(`顯示第 ${startIdx} 到 ${endIdx} 筆，共 ${data.totalCount} 筆`);
+            list.append(`<li class="page-item ${data.pageNumber === 1 ? 'disabled' : ''}"><a class="page-link" href="javascript:loadShipmentData(${data.pageNumber - 1})"><i class="bx bx-chevron-left"></i></a></li>`);
+            for (let i = 1; i <= data.totalPages; i++) { list.append(`<li class="page-item ${i === data.pageNumber ? 'active' : ''}"><a class="page-link" href="javascript:loadShipmentData(${i})">${i}</a></li>`); }
+            list.append(`<li class="page-item ${data.pageNumber === data.totalPages ? 'disabled' : ''}"><a class="page-link" href="javascript:loadShipmentData(${data.pageNumber + 1})"><i class="bx bx-chevron-right"></i></a></li>`);
         }
     </script>
 }

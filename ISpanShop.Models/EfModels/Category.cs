@@ -23,7 +23,7 @@ public partial class Category
 
     public string NameEn { get; set; }
 
-    public virtual ICollection<CategorySpecMapping> CategorySpecMappings { get; set; } = new List<CategorySpecMapping>();
+    public virtual ICollection<CategoryAttributeMapping> CategoryAttributeMappings { get; set; } = new List<CategoryAttributeMapping>();
 
     public virtual ICollection<Category> InverseParent { get; set; } = new List<Category>();
 

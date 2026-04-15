@@ -1,0 +1,664 @@
+@model ISpanShop.MVC.Areas.Admin.Models.Products.ProductDetailVm
+@using System.Text.Json 
+
+@{
+    // ── 狀態 badge 樣式 ──
+    var (stBg, stColor, stIcon) = Model?.Status switch
+    {
+        1 => ("#e6f4ea", "#1b5e20", "bx-check-circle"),
+        2 => ("#fff8e1", "#e65100", "bx-time-five"),
+        3 => ("#fde8e8", "#b71c1c", "bx-x-circle"),
+        4 => ("#fde8e8", "#7f1d1d", "bx-block"),
+        0 => ("#f5f5f5", "#424242", "bx-minus-circle"),
+        _ => ("#f5f5f5", "#424242", "bx-minus-circle")
+    };
+    var stBorder = Model?.Status switch
+    {
+        1 => "#c8e6c9",
+        2 => "#ffe082",
+        3 => "#ffcdd2",
+        4 => "#fca5a5",
+        _ => "#e0e0e0"
+    };
+
+    // ── 規格維度解析 ──
+    var dimNames = new List<string>();
+    if (!string.IsNullOrWhiteSpace(Model?.SpecDefinitionJson) && Model.SpecDefinitionJson != "[]")
+    {
+        try
+        {
+            var arr = JsonSerializer.Deserialize<JsonElement[]>(Model.SpecDefinitionJson);
+            if (arr != null)
+                dimNames = arr
+                    .Where(el => el.TryGetProperty("name", out _))
+                    .Select(el => el.GetProperty("name").GetString() ?? "")
+                    .Where(n => n.Length > 0)
+                    .ToList();
+        }
+        catch { }
+    }
+    if (dimNames.Count == 0 && Model?.Variants != null)
+    {
+        var firstWithSpec = Model.Variants.FirstOrDefault(v => !v.IsDeleted && v.SpecValues.Count > 0);
+        if (firstWithSpec != null) dimNames = firstWithSpec.SpecValues.Keys.ToList();
+    }
+    bool hasMultiDims = dimNames.Count > 0;
+
+    int variantCount = Model?.Variants?.Count(v => !v.IsDeleted) ?? 0;
+    int imageCount   = Model?.Images?.Count ?? 0;
+    int totalStock   = Model?.Variants?.Where(v => !v.IsDeleted).Sum(v => v.Stock ?? 0) ?? 0;
+}
+
+@* ════════════════════════════════════════════════
+   圖片輪播
+   ════════════════════════════════════════════════ *@
+@if (Model.Images != null && Model.Images.Any())
+{
+    <div id="ocCarousel" class="carousel slide carousel-dark mb-0" data-bs-ride="false">
+        <div class="carousel-inner" style="background:#f3f4f6;border-radius:0;">
+            @for (int i = 0; i < Model.Images.Count; i++)
+            {
+                <div class="carousel-item @(i == 0 ? "active" : "")">
+                    <img src="@Model.Images[i]"
+                         alt="商品圖片 @(i + 1)"
+                         loading="lazy"
+                         style="width:100%;max-height:340px;object-fit:contain;display:block;background:#f3f4f6;" />
+                </div>
+            }
+        </div>
+        @if (Model.Images.Count > 1)
+        {
+            <button class="carousel-control-prev" type="button"
+                    data-bs-target="#ocCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+                <span class="visually-hidden">上一張</span>
+            </button>
+            <button class="carousel-control-next" type="button"
+                    data-bs-target="#ocCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+                <span class="visually-hidden">下一張</span>
+            </button>
+
+            @* 縮圖列 *@
+            <div class="d-flex gap-2 px-3 py-2 overflow-auto" style="background:#fff;border-top:1px solid #f0f0f0;">
+                @for (int i = 0; i < Model.Images.Count; i++)
+                {
+                    <img src="@Model.Images[i]"
+                         class="oc-thumb"
+                         alt="縮圖 @(i + 1)"
+                         loading="lazy"
+                         data-bs-target="#ocCarousel"
+                         data-bs-slide-to="@i" />
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="d-flex flex-column align-items-center justify-content-center gap-2 mb-0"
+         style="height:220px;background:#f3f4f6;color:#9ca3af;">
+        <i class="bx bx-image-alt" style="font-size:3.5rem;"></i>
+        <span style="font-size:.95rem;">尚無商品圖片</span>
+    </div>
+}
+
+@* ════════════════════════════════════════════════
+   主內容區（帶 padding）
+   ════════════════════════════════════════════════ *@
+<div class="p-4">
+
+    @* ── 強制下架橫幅（置頂提示，紅色醒目）── *@
+    @if (Model.Status == 4 && !string.IsNullOrWhiteSpace(Model.ForceOffShelfReason))
+    {
+        <div class="d-flex gap-3 p-3 mb-4 rounded-3"
+             style="background:#fef2f2;border:2px solid #fca5a5;">
+            <i class="bx bx-block mt-1" style="font-size:1.5rem;flex-shrink:0;color:#dc2626;"></i>
+            <div style="flex:1;">
+                <div class="fw-bold mb-1" style="font-size:.95rem;color:#991b1b;">平台強制下架原因</div>
+                <div style="font-size:.95rem;color:#374151;line-height:1.7;">@Model.ForceOffShelfReason</div>
+                <div class="mt-2 d-flex flex-wrap gap-3" style="font-size:.83rem;color:#6b7280;">
+                    @if (Model.ForceOffShelfDate.HasValue)
+                    {
+                        <span><i class="bx bx-calendar me-1"></i>下架時間：@Model.ForceOffShelfDate.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                    }
+                    @if (Model.ForceOffShelfBy.HasValue)
+                    {
+                        <span><i class="bx bx-user me-1"></i>操作人員 ID：@Model.ForceOffShelfBy</span>
+                    }
+                    @if (Model.ReApplyDate.HasValue)
+                    {
+                        <span><i class="bx bx-revision me-1"></i>賣家重新申請：@Model.ReApplyDate.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ── 退回原因橫幅（置頂提示） ── *@
+    @if (Model.Status == 3 && !string.IsNullOrWhiteSpace(Model.RejectReason))
+    {
+        <div class="d-flex gap-3 p-3 mb-4 rounded-3"
+             style="background:#fff5f5;border:1px solid #ffcdd2;">
+            <i class="bx bx-error-circle text-danger mt-1" style="font-size:1.4rem;flex-shrink:0;"></i>
+            <div>
+                <div class="fw-bold text-danger mb-1" style="font-size:.95rem;">審核退回原因</div>
+                <div style="font-size:.95rem;color:#374151;line-height:1.7;">@Model.RejectReason</div>
+            </div>
+        </div>
+    }
+
+    @* ── 分類標籤列 ── *@
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <span class="badge rounded-pill bg-label-primary" style="font-size:.82rem;padding:5px 12px;">
+            <i class="bx bx-store me-1"></i>@Model.StoreName
+        </span>
+        @if (!string.IsNullOrEmpty(Model.CategoryName))
+        {
+            <span class="badge rounded-pill bg-label-success" style="font-size:.82rem;padding:5px 12px;">
+                <i class="bx bx-category me-1"></i>@Model.CategoryName
+            </span>
+        }
+        @if (!string.IsNullOrEmpty(Model.BrandName))
+        {
+            <span class="badge rounded-pill bg-label-warning" style="font-size:.82rem;padding:5px 12px;">
+                <i class="bx bx-purchase-tag me-1"></i>@Model.BrandName
+            </span>
+        }
+    </div>
+
+    @* ── 商品名稱 ── *@
+    <h4 class="fw-bold mb-2" style="color:#1e2d3d;line-height:1.4;">@Model.Name</h4>
+
+    @* ── 狀態 + 申請日期 ── *@
+    <div class="d-flex align-items-center gap-3 mb-4">
+        @if (Model.Status == 2)
+        {
+            @* 待審核狀態：可點擊跳轉到審核中心 *@
+            <span class="product-status-badge clickable-badge"
+                  style="display:inline-flex;align-items:center;gap:6px;
+                         background:@stBg;color:@stColor;border:1px solid @stBorder;
+                         padding:5px 14px;border-radius:20px;font-size:.9rem;font-weight:600;
+                         cursor:pointer;transition:all 0.2s ease;"
+                  onclick="navigateToPendingReview(event)"
+                  title="點擊前往商品審核中心">
+                <i class="bx @stIcon"></i>@Model.StatusText
+            </span>
+        }
+        else
+        {
+            @* 其他狀態：一般顯示 *@
+            <span style="display:inline-flex;align-items:center;gap:6px;
+                         background:@stBg;color:@stColor;border:1px solid @stBorder;
+                         padding:5px 14px;border-radius:20px;font-size:.9rem;font-weight:600;">
+                <i class="bx @stIcon"></i>@Model.StatusText
+            </span>
+        }
+        @if (Model.CreatedAt.HasValue)
+        {
+            <span style="font-size:.88rem;color:#9ca3af;">
+                <i class="bx bx-calendar me-1"></i>@Model.CreatedAt.Value.ToString("yyyy-MM-dd")
+            </span>
+        }
+    </div>
+
+    @* ── 價格 ── *@
+    @if (Model.MinPrice.HasValue || Model.MaxPrice.HasValue)
+    {
+        <div class="mb-4 p-3 rounded-3" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+            <div style="font-size:.78rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">售價範圍</div>
+            <div class="fw-bold" style="font-size:1.6rem;color:#15803d;">
+                @if (Model.MinPrice == Model.MaxPrice)
+                {
+                    @($"NT$ {Model.MinPrice:N0}")
+                }
+                else
+                {
+                    @($"NT$ {Model.MinPrice:N0}")
+                    <span style="font-size:1.1rem;color:#6b7280;font-weight:400;margin:0 6px;">~</span>
+                    @($"NT$ {Model.MaxPrice:N0}")
+                }
+            </div>
+        </div>
+    }
+
+    @* ── 四格數據儀表板 ── *@
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="oc-stat-card">
+                <div class="oc-stat-icon" style="background:#ede9fe;color:#7c3aed;">
+                    <i class="bx bx-cube"></i>
+                </div>
+                <div class="oc-stat-body">
+                    <div class="oc-stat-label">規格數</div>
+                    <div class="oc-stat-value">@variantCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="oc-stat-card">
+                <div class="oc-stat-icon" style="background:#dbeafe;color:#1d4ed8;">
+                    <i class="bx bx-image"></i>
+                </div>
+                <div class="oc-stat-body">
+                    <div class="oc-stat-label">圖片數</div>
+                    <div class="oc-stat-value">@imageCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="oc-stat-card">
+                <div class="oc-stat-icon" style="background:#fef9c3;color:#a16207;">
+                    <i class="bx bx-trending-up"></i>
+                </div>
+                <div class="oc-stat-body">
+                    <div class="oc-stat-label">總銷量</div>
+                    <div class="oc-stat-value">@(Model.TotalSales?.ToString("N0") ?? "—")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="oc-stat-card">
+                <div class="oc-stat-icon" style="background:#dcfce7;color:#15803d;">
+                    <i class="bx bx-package"></i>
+                </div>
+                <div class="oc-stat-body">
+                    <div class="oc-stat-label">總庫存</div>
+                    <div class="oc-stat-value">@totalStock.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── 商品描述 ── *@
+    @if (!string.IsNullOrWhiteSpace(Model.Description))
+    {
+        <div class="mb-4">
+            <div class="oc-section-label mb-2">
+                <i class="bx bx-notepad me-1"></i>商品描述
+            </div>
+            <div class="p-3 rounded-3" style="background:#f8f9fa;border-left:3px solid #d1d5db;font-size:1rem;line-height:1.85;color:#374151;">
+                @Model.Description
+            </div>
+        </div>
+    }
+
+    @* ── 審核歷程時間軸 ── *@
+    <div class="mb-4">
+        <div class="oc-section-label mb-3">
+            <i class="bx bx-history me-1"></i>審核歷程
+        </div>
+        <div class="audit-timeline">
+            @if (Model.UpdatedAt.HasValue)
+            {
+                <div class="tl-item">
+                    <div class="tl-dot tl-dot-gray"></div>
+                    <div class="tl-body">
+                        <div class="tl-label">最後更新</div>
+                        <div class="tl-time">@Model.UpdatedAt.Value.ToString("yyyy/MM/dd HH:mm")</div>
+                    </div>
+                </div>
+            }
+            @if (Model.ReviewStatus == 1)
+            {
+                <div class="tl-item">
+                    <div class="tl-dot tl-dot-green"></div>
+                    <div class="tl-body">
+                        <div class="tl-label">
+                            審核通過
+                            @if (!string.IsNullOrEmpty(Model.ReviewedBy))
+                            {
+                                <span class="tl-reviewer">by @Model.ReviewedBy</span>
+                            }
+                        </div>
+                        <div class="tl-time">@(Model.ReviewDate?.ToString("yyyy/MM/dd HH:mm") ?? "—")</div>
+                    </div>
+                </div>
+            }
+            else if (Model.ReviewStatus == 2)
+            {
+                <div class="tl-item">
+                    <div class="tl-dot tl-dot-red"></div>
+                    <div class="tl-body">
+                        <div class="tl-label">
+                            審核退回
+                            @if (!string.IsNullOrEmpty(Model.ReviewedBy))
+                            {
+                                <span class="tl-reviewer">by @Model.ReviewedBy</span>
+                            }
+                        </div>
+                        <div class="tl-time">@(Model.ReviewDate?.ToString("yyyy/MM/dd HH:mm") ?? "—")</div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="tl-item">
+                    <div class="tl-dot tl-dot-yellow"></div>
+                    <div class="tl-body">
+                        <div class="tl-label">等待審核中</div>
+                    </div>
+                </div>
+            }
+            @if (Model.CreatedAt.HasValue)
+            {
+                <div class="tl-item tl-last">
+                    <div class="tl-dot tl-dot-gray"></div>
+                    <div class="tl-body">
+                        <div class="tl-label">建檔</div>
+                        <div class="tl-time">@Model.CreatedAt.Value.ToString("yyyy/MM/dd HH:mm")</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ── 規格與庫存明細 ── *@
+    @if (Model.Variants != null && Model.Variants.Any(v => !v.IsDeleted))
+    {
+        <div class="oc-section-label mb-3">
+            <i class="bx bx-list-ul me-1"></i>規格與庫存明細
+        </div>
+        <div class="table-responsive rounded-3 overflow-hidden" style="border:1px solid #e5e7eb;">
+            <table class="table table-hover align-middle mb-0" style="font-size:.95rem;">
+                <thead>
+                    <tr style="background:#f8f9fa;">
+                        <th class="oc-th">SKU</th>
+                        @if (hasMultiDims)
+                        {
+                            foreach (var dim in dimNames) { <th class="oc-th">@dim</th> }
+                        }
+                        else
+                        {
+                            <th class="oc-th">規格</th>
+                        }
+                        <th class="oc-th text-end">售價</th>
+                        <th class="oc-th text-center">庫存</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var v in Model.Variants.Where(v => !v.IsDeleted))
+                    {
+                        var stock = v.Stock ?? 0;
+                        <tr>
+                            <td class="oc-td">
+                                <code class="oc-sku">@v.SkuCode</code>
+                            </td>
+                            @if (hasMultiDims)
+                            {
+                                foreach (var dim in dimNames)
+                                {
+                                    var cellVal = v.SpecValues.TryGetValue(dim, out var sv) ? sv : "—";
+                                    <td class="oc-td fw-medium">@cellVal</td>
+                                }
+                            }
+                            else
+                            {
+                                <td class="oc-td fw-medium">@v.VariantName</td>
+                            }
+                            <td class="oc-td text-end fw-bold" style="color:#1d4ed8;">NT$ @v.Price.ToString("N0")</td>
+                            <td class="oc-td text-center">
+                                @if (stock > 10)
+                                {
+                                    <span class="oc-stock" style="background:#dcfce7;color:#15803d;">@stock 件</span>
+                                }
+                                else if (stock > 0)
+                                {
+                                    <span class="oc-stock" style="background:#fef9c3;color:#a16207;">緊張 @stock 件</span>
+                                }
+                                else
+                                {
+                                    <span class="oc-stock" style="background:#fee2e2;color:#b91c1c;">售罄</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</div>@* /p-4 *@
+
+@* ── 面板底部操作按鈕區（根據審核狀態動態顯示，sticky 固定在底部）── *@
+@{
+    var _isPending      = Model.ReviewStatus == 0;
+    var _isReApply      = Model.ReviewStatus == 3;
+    var _isApproved     = Model.ReviewStatus == 1;
+    var _isRejectedView = Model.ReviewStatus == 2 && Model.Status != 4;
+    var _isForcedFinal  = Model.Status == 4 && Model.ReviewStatus != 3;
+    var _isReviewMode   = ViewBag.IsReviewMode ?? false;  // 是否從審核中心開啟
+    
+    // 嚴格條件：必須同時滿足 (1) 從審核中心開啟 且 (2) 商品狀態為待審核或重新申請
+    var _shouldShowReviewButtons = _isReviewMode && (_isPending || _isReApply);
+
+    // ── 全域優化：商品總覽專屬「強制下架」按鈕 ──
+    var _currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var _canShowForceOffBtn = _currentAction == "Index" && Model.Status == 1;
+}
+<div class="panel-action-footer">
+    @if (_canShowForceOffBtn)
+    {
+        <button type="button" class="btn btn-panel-force-off w-100"
+                onclick="openForceUnpublish(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
+            <i class="bx bx-block me-2"></i>強制下架商品
+        </button>
+    }
+    else if (_shouldShowReviewButtons && _isPending)
+    {
+        <button type="button" class="btn btn-panel-approve"
+                onclick="approveProduct(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
+            <i class="bx bx-check-circle me-2"></i>核准上架
+        </button>
+        <button type="button" class="btn btn-panel-reject"
+                onclick="openRejectModal(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
+            <i class="bx bx-x-circle me-2"></i>退回
+        </button>
+    }
+    else if (_shouldShowReviewButtons && _isReApply)
+    {
+        @if (!string.IsNullOrWhiteSpace(Model.ForceOffShelfReason))
+        {
+            <div style="width:100%;font-size:0.83rem;color:#dc2626;padding:0 0 6px 0;line-height:1.5;word-break:break-all;">
+                <i class="bx bx-info-circle me-1"></i>原始下架原因：@Model.ForceOffShelfReason
+            </div>
+        }
+        <button type="button" class="btn btn-panel-approve-forced"
+                onclick="approveForcedProduct(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
+            <i class="bx bx-check-circle me-2"></i>核准上架
+        </button>
+        <button type="button" class="btn btn-panel-reject-forced"
+                onclick="openRejectForcedModal(@Model.Id, '@Model.Name.Replace("'", "\\'")')">
+            <i class="bx bx-x-circle me-2"></i>再次駁回
+        </button>
+    }
+    else if (_isApproved)
+    {
+        <div class="panel-footer-info-box success">
+            <i class="bx bx-check-circle me-2 mt-1" style="flex-shrink:0;"></i>
+            <div>
+                <div>已核准上架</div>
+                @if (!string.IsNullOrEmpty(Model.ReviewedBy))
+                {
+                    <div style="font-size:0.83rem;color:#6b7280;margin-top:2px;">by @Model.ReviewedBy</div>
+                }
+                @if (Model.ReviewDate.HasValue)
+                {
+                    <div style="font-size:0.82rem;color:#9ca3af;margin-top:1px;">@Model.ReviewDate.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                }
+            </div>
+        </div>
+    }
+    else if (_isRejectedView)
+    {
+        <div class="panel-footer-info-box danger">
+            <i class="bx bx-x-circle me-2 mt-1" style="flex-shrink:0;"></i>
+            <div>
+                <div>已退回</div>
+                @if (!string.IsNullOrEmpty(Model.RejectReason))
+                {
+                    <div style="font-size:0.83rem;color:#9ca3af;margin-top:2px;">原因：@Model.RejectReason</div>
+                }
+            </div>
+        </div>
+    }
+    else if (_isForcedFinal)
+    {
+        <div class="panel-footer-info-box forced">
+            <i class="bx bx-block me-2 mt-1" style="flex-shrink:0;"></i>
+            <span>已強制下架，等待賣家申請重新上架</span>
+        </div>
+    }
+</div>
+
+<style>
+    /* ── 縮圖 ── */
+    .oc-thumb {
+        width: 60px; height: 60px; object-fit: cover; border-radius: 8px;
+        cursor: pointer; opacity: .65; border: 2px solid transparent;
+        transition: all .2s ease; flex-shrink: 0;
+    }
+    .oc-thumb:hover { opacity: 1; border-color: #0d9488; transform: translateY(-2px); }
+
+    /* ── 區塊標題 ── */
+    .oc-section-label {
+        font-size: .78rem; font-weight: 700; color: #9ca3af;
+        text-transform: uppercase; letter-spacing: 1.2px;
+    }
+
+    /* ── 數據卡片 ── */
+    .oc-stat-card {
+        display: flex; align-items: center; gap: 14px;
+        background: #fff; border: 1px solid #e5e7eb;
+        border-radius: 12px; padding: 14px 16px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    }
+    .oc-stat-icon {
+        width: 44px; height: 44px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.35rem; flex-shrink: 0;
+    }
+    .oc-stat-label { font-size: .78rem; color: #9ca3af; font-weight: 600; margin-bottom: 2px; }
+    .oc-stat-value { font-size: 1.3rem; font-weight: 700; color: #1e2d3d; line-height: 1; }
+
+    /* ── 時間軸 ── */
+    .audit-timeline { position: relative; }
+    .tl-item { display: flex; align-items: flex-start; gap: 14px; position: relative; padding-bottom: 16px; }
+    .tl-item::before {
+        content: ''; position: absolute; left: 7px; top: 18px;
+        width: 2px; bottom: 0; background: #e5e7eb;
+    }
+    .tl-last::before { display: none; }
+    .tl-dot {
+        width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+        margin-top: 3px; position: relative; z-index: 1; border: 2px solid;
+    }
+    .tl-dot-gray   { background: #f3f4f6; border-color: #9ca3af; }
+    .tl-dot-green  { background: #dcfce7; border-color: #22c55e; }
+    .tl-dot-red    { background: #fee2e2; border-color: #ef4444; }
+    .tl-dot-yellow { background: #fef9c3; border-color: #eab308; }
+    .tl-body { min-width: 0; }
+    .tl-label    { font-size: .95rem; font-weight: 600; color: #374151; line-height: 1.5; }
+    .tl-reviewer { font-weight: 400; color: #9ca3af; font-size: .88rem; }
+    .tl-time     { font-size: .85rem; color: #9ca3af; margin-top: 2px; }
+
+    /* ── 規格表 ── */
+    .oc-th {
+        font-size: .8rem; font-weight: 700; color: #9ca3af;
+        text-transform: uppercase; letter-spacing: .5px;
+        padding: .8rem 1rem; border-bottom: 1px solid #e5e7eb !important;
+        white-space: nowrap;
+    }
+    .oc-td { padding: .8rem 1rem; border-bottom: 1px solid #f3f4f6; font-size: .95rem; }
+
+    /* ── SKU code ── */
+    .oc-sku {
+        background: #f3f4f6; color: #566a7f;
+        padding: 3px 8px; border-radius: 5px; font-size: .82rem;
+    }
+
+    /* ── 庫存 badge ── */
+    .oc-stock { padding: 3px 10px; border-radius: 8px; font-size: .85rem; font-weight: 600; }
+
+    /* ── 面板底部操作按鈕區 ── */
+    .panel-action-footer {
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+        padding: 14px 16px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        z-index: 10;
+    }
+    .btn-panel-approve, .btn-panel-approve-forced {
+        flex: 1; min-width: 120px;
+        background: #d1fae5; color: #065f46;
+        border: 1px solid #6ee7b7; font-weight: 600;
+        padding: 0.6rem 1rem; border-radius: 10px; font-size: .95rem;
+        transition: all .2s;
+    }
+    .btn-panel-approve:hover, .btn-panel-approve-forced:hover {
+        background: #059669; color: #fff; border-color: #059669;
+        box-shadow: 0 4px 12px rgba(5,150,105,.3);
+    }
+    .btn-panel-force-off {
+        background: #fff; color: #dc2626; border: 1.5px solid #fca5a5;
+        font-weight: 700; padding: 0.75rem 1rem; border-radius: 12px; font-size: 1rem;
+        transition: all .2s;
+    }
+    .btn-panel-force-off:hover {
+        background: #dc2626; color: #fff; border-color: #dc2626;
+        box-shadow: 0 6px 15px rgba(220,38,38,0.3); transform: translateY(-1px);
+    }
+    .btn-panel-reject, .btn-panel-reject-forced {
+        flex: 1; min-width: 120px;
+        background: #fee2e2; color: #991b1b;
+        border: 1px solid #fca5a5; font-weight: 600;
+        padding: 0.6rem 1rem; border-radius: 10px; font-size: .95rem;
+        transition: all .2s;
+    }
+    .btn-panel-reject:hover, .btn-panel-reject-forced:hover {
+        background: #dc2626; color: #fff; border-color: #dc2626;
+        box-shadow: 0 4px 12px rgba(220,38,38,.3);
+    }
+    .panel-footer-info-box {
+        width: 100%; display: flex; align-items: flex-start; gap: 8px;
+        font-weight: 600; font-size: .95rem;
+        padding: 10px 14px; border-radius: 10px;
+    }
+    .panel-footer-info-box.success { background: #f0fdf4; color: #15803d; }
+    .panel-footer-info-box.danger  { background: #fff1f2; color: #991b1b; }
+    .panel-footer-info-box.forced  { background: #fef2f2; color: #991b1b; }
+
+    /* ── 可點擊狀態 badge ── */
+    .clickable-badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        opacity: 0.9;
+    }
+    .clickable-badge:active {
+        transform: translateY(0);
+    }
+</style>
+
+<script>
+    // ══════════════════════════════════════════════════════
+    //  待審核狀態 badge 點擊事件：跳轉到商品審核中心
+    // ══════════════════════════════════════════════════════
+    function navigateToPendingReview(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log('待審核 badge 被點擊，準備跳轉到商品審核中心');
+        
+        // 設定 sessionStorage，確保左側選單「商品審核」項目會被標記為 active
+        sessionStorage.setItem('openMenuKey', 'products');
+        sessionStorage.setItem('pageTitle', '商品審核中心 - ISpanShop 後台管理系統');
+        
+        // 跳轉到商品審核中心頁面
+        window.location.href = '@Url.Action("PendingReview", "Products", new { area = "Admin" })';
+    }
+</script>

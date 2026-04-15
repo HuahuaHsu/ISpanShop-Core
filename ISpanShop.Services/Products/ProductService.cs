@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using ISpanShop.Models.DTOs.Products;
 using ISpanShop.Models.DTOs.Categories;
 using ISpanShop.Models.DTOs.Common;
+using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Products;
+using ISpanShop.Services.ContentModeration;
 using ISpanShop.Services.Products;
 
 namespace ISpanShop.Services.Products
@@ -16,14 +18,12 @@ namespace ISpanShop.Services.Products
     public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
+        private readonly ISensitiveWordService _sensitiveWordService;
 
-        /// <summary>
-        /// 建構子 - 注入 ProductRepository
-        /// </summary>
-        /// <param name="productRepository">商品 Repository</param>
-        public ProductService(IProductRepository productRepository)
+        public ProductService(IProductRepository productRepository, ISensitiveWordService sensitiveWordService)
         {
-            _productRepository = productRepository;
+            _productRepository   = productRepository;
+            _sensitiveWordService = sensitiveWordService;
         }
 
         /// <summary>
@@ -240,9 +240,13 @@ namespace ISpanShop.Services.Products
                 SpecDefinitionJson = product.SpecDefinitionJson,
                 CreatedAt          = product.CreatedAt,
                 UpdatedAt          = product.UpdatedAt,
-                ReviewStatus       = product.ReviewStatus,
-                ReviewedBy         = product.ReviewedBy,
-                ReviewDate         = product.ReviewDate,
+                ReviewStatus        = product.ReviewStatus,
+                ReviewedBy          = product.ReviewedBy,
+                ReviewDate          = product.ReviewDate,
+                ForceOffShelfReason = product.ForceOffShelfReason,
+                ForceOffShelfDate   = product.ForceOffShelfDate,
+                ForceOffShelfBy     = product.ForceOffShelfBy,
+                ReApplyDate         = product.ReApplyDate,
                 Images = product.ProductImages?
                     .OrderBy(img => img.SortOrder)
                     .Select(img => img.ImageUrl)
@@ -302,6 +306,15 @@ namespace ISpanShop.Services.Products
             return await _productRepository.UpdateBatchStatusAsync(productIds, targetStatus);
         }
 
+        /// <summary>
+        /// 批次更新商品審核狀態
+        /// </summary>
+        public async Task<int> UpdateBatchReviewStatusAsync(List<int> productIds, int targetReviewStatus, string adminId)
+        {
+            if (productIds == null || productIds.Count == 0) return 0;
+            return await _productRepository.UpdateBatchReviewStatusAsync(productIds, targetReviewStatus, adminId);
+        }
+
         // ═══════════════════════════════════════════════════════════
         //  非同步實作（async/await + 投影 + 真分頁）
         // ═══════════════════════════════════════════════════════════
@@ -356,15 +369,316 @@ namespace ISpanShop.Services.Products
             => await _productRepository.ResetToPendingAsync(productId);
 
         /// <inheritdoc/>
-        public async Task<(int Total, int Published, int Unpublished, int Pending)> GetProductStatusCountsAsync()
+        public async Task<(int Total, int Published, int Unpublished, int Pending, int ForcedOffShelf)> GetProductStatusCountsAsync()
             => await _productRepository.GetStatusCountsAsync();
 
         /// <inheritdoc/>
-        public async Task ForceUnpublishAsync(int id, string? reason)
-            => await _productRepository.ForceUnpublishAsync(id, reason);
+        public async Task ForceUnpublishAsync(int id, string? reason, int? adminBy)
+            => await _productRepository.ForceUnpublishAsync(id, reason, adminBy);
 
         /// <inheritdoc/>
+        public async Task<int> BatchForceOffShelfAsync(List<int> ids, string? reason, int? adminBy)
+        {
+            if (ids == null || ids.Count == 0) return 0;
+            return await _productRepository.BatchForceOffShelfAsync(ids, reason, adminBy);
+        }
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductReviewDto>> GetReApplyProductsPagedAsync(int page, int pageSize)
+        {
+            var (items, total) = await _productRepository.GetReApplyProductsPagedAsync(page, pageSize);
+            return PagedResult<ProductReviewDto>.Create(items.ToList(), total, page, pageSize);
+        }
+
+        /// <inheritdoc/>
+        public async Task ReApplyAsync(int id)
+            => await _productRepository.ReApplyAsync(id);
+
+        /// <inheritdoc/>
+        public async Task SimulateSellerResubmitAsync(int id)
+            => await _productRepository.SimulateSellerResubmitAsync(id);
+
+        /// <inheritdoc/>
+        public async Task ApproveForcedProductAsync(int id, string adminId)
+            => await _productRepository.ApproveForcedProductAsync(id, adminId);
+
+        /// <inheritdoc/>
+        public async Task RejectForcedProductAsync(int id, string adminId, string reason)
+            => await _productRepository.RejectForcedProductAsync(id, adminId, reason);
+
+        /// <inheritdoc/>
+        /// <summary>
+        /// 對目前所有待審核商品執行敏感字自動比對。
+        /// 審核結果判斷規則：
+        ///   Rejected  - 商品名稱含敏感字，或描述中出現敏感字累計 2 次以上
+        ///   Uncertain - 描述中僅出現敏感字 1 次（疑似，交人工複審）
+        ///   Approved  - 名稱與描述均無敏感字
+        /// </summary>
         public async Task<SimulateAutoReviewResult> SimulateAutoReviewAsync()
-            => await _productRepository.SimulateAutoReviewAsync();
+        {
+            // 1. 從 DB 取得所有啟用中的敏感字
+            var sensitiveWords = await _sensitiveWordService.GetActiveWordListAsync();
+
+            // 2. 取得所有待審核商品
+            var pendingProducts = (await _productRepository.GetPendingProductsAsync()).ToList();
+
+            var result = new SimulateAutoReviewResult();
+
+            foreach (var product in pendingProducts)
+            {
+                var matchedWords = new List<string>();
+                bool nameHit     = false;
+                int  descHits    = 0;
+
+                foreach (var word in sensitiveWords)
+                {
+                    bool inName = product.Name?.Contains(word, StringComparison.OrdinalIgnoreCase) == true;
+                    bool inDesc = product.Description?.Contains(word, StringComparison.OrdinalIgnoreCase) == true;
+
+                    if (inName)
+                    {
+                        nameHit = true;
+                        if (!matchedWords.Contains(word)) matchedWords.Add(word);
+                    }
+                    if (inDesc)
+                    {
+                        descHits++;
+                        if (!matchedWords.Contains(word)) matchedWords.Add(word);
+                    }
+                }
+
+                var item = new AutoReviewItemResult
+                {
+                    ProductId    = product.Id,
+                    ProductName  = product.Name ?? string.Empty,
+                    MatchedWords = matchedWords
+                };
+
+                if (nameHit || descHits >= 2)
+                {
+                    // 嚴重違規 → 直接退回
+                    var reason = $"系統自動攔截：內容含違規詞彙【{string.Join("、", matchedWords)}】";
+                    await _productRepository.RejectProductAsync(product.Id, "系統自動審核", reason);
+                    item.Outcome = "Rejected";
+                    result.RejectedCount++;
+                }
+                else if (descHits == 1)
+                {
+                    // 疑似 → 維持待審核，由人工複審（不改動 DB 狀態）
+                    item.Outcome = "Uncertain";
+                    result.ManualReviewCount++;
+                }
+                else
+                {
+                    // 清白 → 自動上架
+                    await _productRepository.ApproveProductAsync(product.Id, "系統自動審核");
+                    item.Outcome = "Approved";
+                    result.ApprovedCount++;
+                }
+
+                result.Items.Add(item);
+            }
+
+            return result;
+        }
+
+        /// <inheritdoc/>
+        /// <summary>
+        /// 生成 15 筆測試用待審核商品，涵蓋三種情境：
+        ///   Group A (5 筆) - 乾淨商品，無任何敏感字，預期自動審核通過
+        ///   Group B (5 筆) - 高風險：敏感字出現在商品名稱，預期自動審核退回
+        ///   Group C (5 筆) - 邊緣：敏感字僅出現在描述一次，預期標記待人工複審
+        /// 敏感字從 DB 動態讀取，若 DB 無任何敏感字則使用示範用語。
+        /// </summary>
+        public async Task<GenerateTestProductsResult> GenerateTestProductsAsync()
+        {
+            // 1. 從 DB 依風險等級分組取得敏感字
+            var (highRiskWords, lowRiskWords) = await _sensitiveWordService.GetActiveWordsByRiskAsync();
+
+            // 安全 fallback：DB 無資料時使用預設字
+            if (highRiskWords.Count == 0) highRiskWords = new List<string> { "違禁品", "仿冒品", "詐騙" };
+            if (lowRiskWords.Count == 0)  lowRiskWords  = new List<string>(highRiskWords);
+
+            // 2. 從 DB 隨機取得 15 筆真實商品（含商品層級圖片）
+            var sourceProducts = await _productRepository.GetRandomProductsWithImagesAsync(15);
+            if (sourceProducts.Count == 0)
+                throw new InvalidOperationException("資料庫中無任何商品，請先建立至少一筆商品後再使用此功能。");
+
+            // 若取得數量不足 15，允許循環補齊
+            var rng = new Random();
+            while (sourceProducts.Count < 15)
+                sourceProducts.Add(sourceProducts[rng.Next(sourceProducts.Count)]);
+
+            var now      = DateTime.Now;
+            var products = new List<Product>();
+
+            // ── Group A（索引 0–4）：5 筆乾淨，保留真實名稱與描述 ─────────────
+            // 直接複製真實商品資料（名稱、描述、圖片皆相符），只將狀態改為待審核
+            for (int i = 0; i < 5; i++)
+            {
+                var src = sourceProducts[i];
+                products.Add(BuildTestProduct(src, src.Name, src.Description ?? string.Empty, now));
+            }
+
+            // ── Group B（索引 5–9）：5 筆高風險，隨機注入高風險敏感字 ──────────
+            // 注入策略：
+            //   50% → 附加到名稱後綴（名稱命中 = 自動退回）
+            //   50% → 在描述中出現兩次（descHits >= 2 = 自動退回）
+            for (int i = 0; i < 5; i++)
+            {
+                var src  = sourceProducts[5 + i];
+                var word = highRiskWords[rng.Next(highRiskWords.Count)];
+                string name, desc;
+
+                if (rng.Next(2) == 0)
+                {
+                    // 注入名稱
+                    name = $"{src.Name}【{word}】";
+                    desc = src.Description ?? string.Empty;
+                }
+                else
+                {
+                    // 注入描述兩次（確保 descHits >= 2，觸發自動退回）
+                    name = src.Name;
+                    desc = $"{src.Description ?? string.Empty} 注意：此商品含有「{word}」成分，附「{word}」使用說明書一份。";
+                }
+
+                products.Add(BuildTestProduct(src, name, desc, now));
+            }
+
+            // ── Group C（索引 10–14）：5 筆低風險，隨機注入低風險敏感字 ─────────
+            // 注入策略：
+            //   50% → 附加到名稱（名稱命中 = 自動退回，較高風險的結果）
+            //   50% → 僅在描述出現一次（descHits == 1 = 待人工確認 Uncertain）
+            for (int i = 0; i < 5; i++)
+            {
+                var src  = sourceProducts[10 + i];
+                var word = lowRiskWords[rng.Next(lowRiskWords.Count)];
+                string name, desc;
+
+                if (rng.Next(2) == 0)
+                {
+                    // 注入名稱
+                    name = $"{src.Name}（含{word}相關）";
+                    desc = src.Description ?? string.Empty;
+                }
+                else
+                {
+                    // 注入描述一次（Uncertain）
+                    name = src.Name;
+                    desc = $"{src.Description ?? string.Empty} 備註：本商品部分說明含有「{word}」相關文字，僅供參考。";
+                }
+
+                products.Add(BuildTestProduct(src, name, desc, now));
+            }
+
+            await _productRepository.AddProductsRangeAsync(products);
+
+            // 依 EF Core 自動填入的 ID 查回完整顯示資料（含商店名稱、圖片 URL）
+            var createdIds      = products.Select(p => p.Id);
+            var createdProducts = await _productRepository.GetProductsByIdsForReviewAsync(createdIds);
+
+            return new GenerateTestProductsResult
+            {
+                TotalCount      = products.Count,
+                CleanCount      = 5,
+                HighRiskCount   = 5,
+                BorderlineCount = 5,
+                CreatedProducts = createdProducts
+            };
+        }
+
+        /// <summary>建立一筆待審核的測試商品實體，並從來源商品複製商品層級圖片</summary>
+        private static Product BuildTestProduct(Product source, string name, string desc, DateTime now)
+        {
+            var product = new Product
+            {
+                StoreId      = source.StoreId,
+                CategoryId   = source.CategoryId,
+                BrandId      = source.BrandId,
+                Name         = name,
+                Description  = desc,
+                MinPrice     = source.MinPrice,
+                MaxPrice     = source.MaxPrice,
+                Status       = 2,   // 待審核
+                ReviewStatus = 0,   // 待審核
+                ReviewedBy   = null,
+                RejectReason = null,
+                ReviewDate   = null,
+                CreatedAt    = now,
+                UpdatedAt    = now,
+                IsDeleted    = false
+            };
+
+            // 複製來源商品的圖片（只複製商品層級圖片，排除規格圖）
+            foreach (var img in source.ProductImages.Where(i => i.VariantId == null))
+            {
+                product.ProductImages.Add(new ProductImage
+                {
+                    ImageUrl  = img.ImageUrl,
+                    IsMain    = img.IsMain,
+                    SortOrder = img.SortOrder,
+                    VariantId = null
+                });
+            }
+
+            return product;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductReviewDto>> GetRecentlyApprovedAsync(int hours = 24)
+            => await _productRepository.GetRecentlyApprovedProductsAsync(hours);
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductReviewDto>> GetRecentlyApprovedPagedAsync(int page, int pageSize, int hours = 24)
+        {
+            var (items, total) = await _productRepository.GetRecentlyApprovedProductsPagedAsync(page, pageSize, hours);
+            return PagedResult<ProductReviewDto>.Create(items.ToList(), total, page, pageSize);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品列表
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductListDto>> GetFrontActiveProductsAsync(
+            int? categoryId, string? keyword, string sortBy, int page, int pageSize,
+            int? subCategoryId = null, int[]? brandIds = null,
+            decimal? minPrice = null, decimal? maxPrice = null)
+        {
+            pageSize = Math.Clamp(pageSize, 1, 50);
+            var (items, total) = await _productRepository.GetFrontActiveProductsAsync(
+                categoryId, keyword, sortBy, page, pageSize,
+                subCategoryId, brandIds, minPrice, maxPrice);
+            return PagedResult<ProductListDto>.Create(items.ToList(), total, page, pageSize);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  前台商品詳情頁
+        // ═══════════════════════════════════════════════════════════
+
+        /// <inheritdoc/>
+        public async Task<(ISpanShop.Models.EfModels.Product? Product, decimal? Rating, int ReviewCount, int StoreProductCount)>
+            GetProductDetailAsync(int id)
+        {
+            var product = await _productRepository.GetProductDetailAsync(id);
+
+            // 找不到、已刪除、或非上架狀態 → 回傳 null
+            if (product == null || product.Status != 1)
+                return (null, null, 0, 0);
+
+            var (rating, reviewCount) = await _productRepository.GetProductRatingAsync(id);
+            var storeCount = await _productRepository.GetStoreActiveProductCountAsync(product.StoreId);
+
+            return (product, rating, reviewCount, storeCount);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductListDto>> GetRelatedProductsAsync(
+            int productId, int categoryId, int limit)
+        {
+            limit = Math.Clamp(limit, 1, 50);
+            return await _productRepository.GetRelatedProductsAsync(productId, categoryId, limit);
+        }
     }
 }

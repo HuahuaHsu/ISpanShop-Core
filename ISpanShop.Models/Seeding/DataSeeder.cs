@@ -46,6 +46,35 @@ namespace ISpanShop.Models.Seeding
 			{ "", " (2025 全新升級版)", " (特仕限量版)", " (海外平輸版)", " - 聯名精裝版" };
 
 		// ====================================================================
+		// CategoryId → StoreId 對應表（依 ReadMe 賣場分類對應）
+		// ====================================================================
+		private static readonly Dictionary<int, int[]> CategoryToStores = new Dictionary<int, int[]>
+		{
+			{ 7,  new[] { 1 } },        // 生鮮食材與飲品   → 小明の奇妙雜貨
+			{ 8,  new[] { 1, 2, 7 } },  // 居家裝飾與收納   → Store 1, 2, 7 隨機
+			{ 9,  new[] { 1, 2 } },     // 廚房餐具與用品   → Store 1, 2 隨機
+			{ 5,  new[] { 2 } },        // 大型家具         → 建國五金
+			{ 11, new[] { 3 } },        // 筆記型電腦       → 豪客3C
+			{ 16, new[] { 3 } },        // 手機與平板周邊   → 豪客3C
+			{ 20, new[] { 3 } },        // 智慧型手機       → 豪客3C
+			{ 24, new[] { 3 } },        // 平板電腦         → 豪客3C
+			{ 13, new[] { 4 } },        // 男款上衣與襯衫   → 秘密衣櫥
+			{ 14, new[] { 4 } },        // 男士鞋款         → 秘密衣櫥
+			{ 26, new[] { 4 } },        // 女款上衣與洋裝   → 秘密衣櫥
+			{ 28, new[] { 4 } },        // 精品包包         → 秘密衣櫥
+			{ 29, new[] { 4 } },        // 派對與晚禮服     → 秘密衣櫥
+			{ 31, new[] { 4 } },        // 女款鞋類         → 秘密衣櫥
+			{ 32, new[] { 4 } },        // 女士腕錶         → 秘密衣櫥
+			{ 3,  new[] { 5, 6 } },     // 香水與香氛       → Store 5, 6 隨機
+			{ 19, new[] { 5, 6 } },     // 臉部與身體保養   → Store 5, 6 隨機
+			{ 2,  new[] { 6 } },        // 彩妝與修容       → 心怡日韓嚴選
+			{ 15, new[] { 7 } },        // 男士腕錶         → 宇過天晴文創
+			{ 30, new[] { 7 } },        // 珠寶與飾品       → 宇過天晴文創
+			{ 22, new[] { 8 } },        // 運動裝備與球類   → 流浪戶外
+			{ 23, new[] { 8 } },        // 太陽眼鏡與配件   → 流浪戶外
+		};
+
+		// ====================================================================
 		// ★★★ 核心播種方法 ★★★
 		// ====================================================================
 		public static async Task SeedAsync(ISpanShopDBContext context)
@@ -68,12 +97,22 @@ namespace ISpanShop.Models.Seeding
 				foreach (var dummy in dummyProducts)
 				{
 					var category = ResolveCategory(dummy.Category, categories);
+					// 分類不在對照表（如 vehicle、motorcycle 汽機車）→ 跳過，不植入資料庫
+					if (category == null) continue;
+
 					var brand = ResolveBrand(dummy.Brand, brands);
 					var (productName, productDescription) = TranslateProduct(dummy);
 					int basePriceTwd = (int)(dummy.Price * USD_TO_TWD);
 
 					// 建立圖片清單 (可被所有克隆版本共用模板)
 					var imageTemplates = BuildImageTemplates(dummy.Images);
+
+					// 根據分類決定所屬賣場（找不到對應則退回預設賣場）
+					int resolvedStoreId;
+					if (CategoryToStores.TryGetValue(category.Id, out var storeOptions))
+						resolvedStoreId = storeOptions[_random.Next(storeOptions.Length)];
+					else
+						resolvedStoreId = store.Id;
 
 					// 資料倍增術：將 1 筆真實商品變種成 5 筆
 					for (int k = 0; k < CloneSuffixes.Length; k++)
@@ -82,8 +121,8 @@ namespace ISpanShop.Models.Seeding
 						var variants = ProductVariantHelper.GenerateVariants(dummy.Category, clonePrice, maxCombinations: 6);
 
 						products.Add(CreateProductEntity(
-							storeId: store.Id,
-							categoryId: category?.Id ?? categories.First().Id,
+							storeId: resolvedStoreId,
+							categoryId: category.Id,
 							brandId: brand?.Id ?? brands.First().Id,
 							name: productName + CloneSuffixes[k],
 							description: productDescription,
@@ -93,16 +132,59 @@ namespace ISpanShop.Models.Seeding
 					}
 				}
 
-				// 3. 將最後 15 筆設為「待審核」
-				foreach (var p in products.Skip(Math.Max(0, products.Count - 15)))
+				// 3. 所有商品預設為「已上架」狀態 (不再生成待審核商品)
+				// 備註：若需測試審核流程，請使用「商品總覽」的「生成測試用待審核商品」功能
+
+				// 3b. 庫存狀態平均分佈：1/3 零庫存 / 1/3 低庫存 / 1/3 正常
+				//     低庫存閾值由各 variant 的 SafetyStock 決定（系統判斷：Stock <= SafetyStock）
+				var allVariants = products
+					.SelectMany(p => p.ProductVariants)
+					.OrderBy(_ => _random.Next())   // 隨機打散，確保各狀態平均分佈到不同商品
+					.ToList();
+				int vTotal = allVariants.Count;
+				int vThird = vTotal / 3;
+
+				for (int vi = 0; vi < vTotal; vi++)
 				{
-					p.Status = 2;
+					var v = allVariants[vi];
+					int safety = v.SafetyStock ?? 10;
+
+					if (vi < vThird)
+					{
+						// 零庫存（已售罄狀態）
+						v.Stock = 0;
+					}
+					else if (vi < vThird * 2)
+					{
+						// 低庫存警報：Stock 設為 1 ~ SafetyStock，確保 Stock <= SafetyStock 觸發警報
+						v.Stock = _random.Next(1, Math.Max(2, safety + 1));
+					}
+					else
+					{
+						// 正常庫存：50 ~ 200，且確保高於 SafetyStock（SafetyStock 最高 19，不影響下限 50）
+						v.Stock = _random.Next(Math.Max(50, safety + 1), 201);
+					}
+				}
+
+				// 3c. 上架狀態二次分配：10-20% 已審核通過的商品設為「未上架」
+				//     確保商品總覽的「未上架」統計卡片有數據可展示
+				var approvedProducts = products
+					.OrderBy(_ => _random.Next())   // 隨機打散
+					.ToList();
+				int unpublishCount = (int)(approvedProducts.Count * _random.Next(10, 21) / 100.0);  // 10-20%
+
+				for (int i = 0; i < unpublishCount; i++)
+				{
+					approvedProducts[i].Status = 0;  // 未上架（已審核通過但未公開銷售）
 				}
 
 				// 4. 一次性批次寫入資料庫
 				context.Products.AddRange(products);
 				await context.SaveChangesAsync();
+
+				int publishedCount = products.Count(p => p.Status == 1);
 				Console.WriteLine($"✅ 成功匯入 {products.Count} 筆商品 (含多規格變體) 到資料庫");
+				Console.WriteLine($"   └─ 已上架: {publishedCount} 筆 / 未上架: {unpublishCount} 筆");
 			}
 			catch (Exception ex)
 			{
@@ -129,7 +211,10 @@ namespace ISpanShop.Models.Seeding
 				Description = description,
 				MinPrice = variants.Min(v => v.Price),
 				MaxPrice = variants.Max(v => v.Price),
-				Status = (byte)_random.Next(0, 2),
+				Status = 1,  // 修改：所有商品預設為「已上架」(1)，不再隨機分配待審核狀態
+				ReviewStatus = 1,  // 已審核通過
+				ReviewedBy = "系統預設",
+				ReviewDate = DateTime.Now.AddDays(-_random.Next(1, 30)),
 				CreatedAt = DateTime.Now.AddDays(-_random.Next(1, 100)),
 				UpdatedAt = DateTime.Now,
 				ProductVariants = variants,
@@ -146,12 +231,12 @@ namespace ISpanShop.Models.Seeding
 		// ★ 輔助方法：解析分類、品牌、翻譯
 		// ====================================================================
 
-		/// <summary>根據 API 分類名稱找到對應的子分類</summary>
+		/// <summary>根據 API 分類名稱找到對應的子分類；若分類不在對照表則回傳 null</summary>
 		private static Category ResolveCategory(string apiCategory, List<Category> categories)
 		{
-			var childCatName = SeederMappings.CategoryHierarchyMap.ContainsKey(apiCategory)
-				? SeederMappings.CategoryHierarchyMap[apiCategory].ChildName
-				: char.ToUpper(apiCategory[0]) + apiCategory.Substring(1);
+			if (!SeederMappings.CategoryHierarchyMap.ContainsKey(apiCategory))
+				return null;
+			var childCatName = SeederMappings.CategoryHierarchyMap[apiCategory].ChildName;
 			return categories.FirstOrDefault(c => c.Name == childCatName);
 		}
 
@@ -200,43 +285,23 @@ namespace ISpanShop.Models.Seeding
 
 		private static Store EnsureStoreExists(ISpanShopDBContext context)
 		{
+			// ★ 防撞車修改：不再自動產生 Role, User, Store，而是檢查雲端有沒有你匯入的資料
 			var store = context.Stores.FirstOrDefault();
-			if (store != null) return store;
+			if (store == null)
+			{
+				throw new Exception("❌ 資料庫中找不到任何 Store。請先使用 SSMS 將本機的 Roles, Users, Stores 資料匯入 Azure，再執行播種。");
+			}
 
 			var role = context.Roles.FirstOrDefault();
 			if (role == null)
 			{
-				role = new Role { RoleName = "Seller", Description = "賣家角色" };
-				context.Roles.Add(role);
-				context.SaveChanges();
+				throw new Exception("❌ 資料庫中找不到任何 Role。請先匯入本機資料。");
 			}
 
-			var user = new User
-			{
-				RoleId = role.Id,
-				Account = "dataseed_seller",
-				Password = "hashed_password_placeholder",
-				Email = "dataseed@example.com",
-				IsConfirmed = true,
-				IsBlacklisted = false,
-				CreatedAt = DateTime.Now,
-				UpdatedAt = DateTime.Now
-			};
-			context.Users.Add(user);
-			context.SaveChanges();
-
-			store = new Store
-			{
-				UserId = user.Id,
-				StoreName = "原廠直營",
-				Description = "精選商品，品質保證",
-				IsVerified = true,
-				CreatedAt = DateTime.Now
-			};
-			context.Stores.Add(store);
-			context.SaveChanges();
+			// 只要找得到你匯入的 Store，就直接回傳給主程式繼續播種
 			return store;
 		}
+		
 
 		/// <summary>
 		/// 批次建立分類階層 (優化：先收集所有新分類，最後統一存檔)
@@ -366,77 +431,27 @@ namespace ISpanShop.Models.Seeding
 			Console.WriteLine($"✅ 審核資料補充：已修補 {products.Count} 筆商品的審核人 / 審核時間。");
 		}
 
-		/// <summary>
-		/// 確保資料庫中有預設管理員帳號（admin / Admin@1234）
-		/// </summary>
 		public static async Task EnsureAdminUserAsync(ISpanShopDBContext context)
 		{
-			var adminRole = context.Roles.FirstOrDefault(r => r.RoleName == "Admin");
-			if (adminRole == null)
-			{
-				adminRole = new Role { RoleName = "Admin", Description = "後台管理員" };
-				context.Roles.Add(adminRole);
-				await context.SaveChangesAsync();
-				Console.WriteLine("✅ 已建立 Admin 角色");
-			}
-
+			// ★ 防撞車修改：不再自動產生 Admin 角色和帳號
 			var adminUser = context.Users.FirstOrDefault(u => u.Account == "admin");
 			if (adminUser == null)
 			{
-				adminUser = new User
-				{
-					RoleId = adminRole.Id,
-					Account = "admin",
-					Password = BCrypt.Net.BCrypt.HashPassword("Admin@1234"),  // ✅ 改這行
-					Email = "admin@ispanshop.com",
-					IsConfirmed = true,
-					IsBlacklisted = false,
-					CreatedAt = DateTime.Now,
-					UpdatedAt = DateTime.Now
-				};
-				context.Users.Add(adminUser);
-				await context.SaveChangesAsync();
-				Console.WriteLine("✅ 已建立預設管理員帳號：admin / Admin@1234");
+				Console.WriteLine("ℹ️  注意：資料庫中找不到預設的 admin 帳號。這沒關係，只要你後續有匯入本機的 User 資料即可。");
 			}
-			else
-			{
-				// ✅ 帳號已存在，但密碼可能是明碼，自動補上 BCrypt hash
-				bool isAlreadyHashed = adminUser.Password != null && adminUser.Password.StartsWith("$2");
-				if (!isAlreadyHashed)
-				{
-					adminUser.Password = BCrypt.Net.BCrypt.HashPassword("Admin@1234");
-					await context.SaveChangesAsync();
-					Console.WriteLine("✅ 已將 admin 密碼更新為 BCrypt hash");
-				}
-			}
+			await Task.CompletedTask;
 		}
 
 		/// <summary>
-		/// 確保有足夠的待審核商品 (至少 15 筆)
+		/// [已停用] 確保有足夠的待審核商品 (至少 15 筆)
+		/// 修改說明：為了讓系統初始化時「待審核」列表為空，此方法已停用
+		/// 若需測試審核流程，請使用「商品總覽」的「生成測試用待審核商品」功能
 		/// </summary>
 		public static async Task EnsurePendingProductsAsync(ISpanShopDBContext context)
 		{
-			var currentCount = context.Products.Count(p => p.Status == 2);
-			if (currentCount >= 15)
-			{
-				Console.WriteLine($"ℹ️  待審核商品已有 {currentCount} 筆，無需補充。");
-				return;
-			}
-
-			var needed = 15 - currentCount;
-			var candidates = context.Products
-				.Where(p => p.Status != 2 && p.IsDeleted != true)
-				.Take(needed)
-				.ToList();
-
-			foreach (var p in candidates)
-			{
-				p.Status = 2;
-				p.UpdatedAt = DateTime.Now;
-			}
-
-			await context.SaveChangesAsync();
-			Console.WriteLine($"✅ 已補充 {candidates.Count} 筆待審核商品，目前共 {currentCount + candidates.Count} 筆");
+			// 停用此功能：不再自動補充待審核商品
+			Console.WriteLine("ℹ️  種子資料不再自動生成待審核商品，待審核列表保持淨空。");
+			await Task.CompletedTask;
 		}
 	}
 }

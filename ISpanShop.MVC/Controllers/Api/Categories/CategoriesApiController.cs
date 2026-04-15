@@ -36,22 +36,20 @@ namespace ISpanShop.MVC.Controllers.Api.Categories
             if (!categoryExists)
                 return NotFound(new { message = "分類不存在" });
 
-            var mappings = _context.CategorySpecMappings
-                .Where(m => m.CategoryId == categoryId && m.CategorySpec.IsActive)
-                .Include(m => m.CategorySpec)
-                    .ThenInclude(s => s.CategorySpecOptions)
-                .OrderBy(m => m.CategorySpec.SortOrder)
+            var mappings = _context.CategoryAttributeMappings
+                .Where(m => m.CategoryId == categoryId && m.CategoryAttribute.IsActive)
+                .Include(m => m.CategoryAttribute)
+                    .ThenInclude(s => s.CategoryAttributeOptions)
                 .ToList();
 
             var result = mappings.Select(m => new CategoryAttributeResponse
             {
-                Id           = m.CategorySpec.Id,
-                Name         = m.CategorySpec.Name,
-                InputType    = m.CategorySpec.InputType,
-                IsRequired   = m.CategorySpec.IsRequired,
+                Id           = m.CategoryAttribute.Id,
+                Name         = m.CategoryAttribute.Name,
+                InputType    = m.CategoryAttribute.InputType,
+                IsRequired   = m.CategoryAttribute.IsRequired,
                 IsFilterable = m.IsFilterable,
-                SortOrder    = m.CategorySpec.SortOrder,
-                Options      = m.CategorySpec.CategorySpecOptions
+                Options      = m.CategoryAttribute.CategoryAttributeOptions
                     .OrderBy(o => o.SortOrder)
                     .Select(o => o.OptionName)
                     .ToList()

@@ -1,0 +1,164 @@
+@model IEnumerable<ISpanShop.MVC.Models.ViewModels.OrderReviewVm>
+
+@{
+    ViewData["Title"] = "評論管理";
+}
+
+<div class="container mt-4">
+    <h2>商品評論審核與管理</h2>
+    <hr />
+
+    <table class="table table-striped table-hover mt-3 align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>評論 ID</th>
+                <th>訂單編號</th>
+                <th>星等</th>
+                <th style="width: 40%;">內容</th>
+                <th>發表時間</th>
+                <th>目前狀態</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    // 根據隱藏狀態決定整行的背景色，被隱藏的稍微反灰
+                    <tr class="@(item.IsHidden ? "table-secondary text-muted" : "")">
+                        <td># @item.Id</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                @{
+                                    var mainImg = item.ProductMainImage;
+                                    // 簡單判斷是否為網址，若不是網址則補上 /images/ 前綴 (或依您的專案路徑調整)
+                                    if (!string.IsNullOrEmpty(mainImg) && !mainImg.StartsWith("http") && !mainImg.StartsWith("/")) {
+                                        mainImg = "/images/" + mainImg;
+                                    }
+                                }
+                                <img src="@mainImg" class="rounded me-2" 
+                                     style="width: 40px; height: 40px; object-fit: cover;" 
+                                     onerror="this.onerror=null;this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2040%2040%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_18e5470d050%20text%20%7B%20fill%3Argba(255%2C255%2C255%2C.75)%3Bfont-weight%3Anormal%3Bfont-family%3AHelvetica%2C%20monospace%3Bfont-size%3A10pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Crect%20width%3D%2240%22%20height%3D%2240%22%20fill%3D%22%23777%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%224%22%20y%3D%2224%22%3E%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fsvg%3E';" />
+                                <span># @item.OrderId</span>
+                            </div>
+                        </td>
+                        <td class="text-warning">
+                            @for (int i = 0; i < item.Rating; i++)
+                            {
+                                <span>★</span>
+                            }
+                            @for (int i = item.Rating; i < 5; i++)
+                            {
+                                <span>☆</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.IsAutoFlagged)
+                            {
+                                <span class="badge bg-warning text-dark mb-1">
+                                    <i class="fas fa-exclamation-triangle"></i> 系統偵測到敏感字
+                                </span>
+                                <br />
+                            }
+                            @item.Comment 
+                            
+                            @if (item.ImageUrls != null && item.ImageUrls.Any())
+                            {
+                                <div class="mt-2 d-flex flex-wrap gap-1">
+                                    <span class="badge bg-secondary mb-1 w-100 text-start" style="font-size: 0.7rem;">
+                                        <i class="fas fa-images"></i> 附圖 (@item.ImageUrls.Count)
+                                    </span>
+                                    @foreach (var url in item.ImageUrls)
+                                    {
+                                        <a href="@url" target="_blank" title="點擊查看原圖">
+                                            <img src="@url" class="img-thumbnail" 
+                                                 style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;" 
+                                                 onerror="this.src='/images/no-image.png';this.title='圖片連結失效';" />
+                                        </a>
+                                    }
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(item.StoreReply))
+                            {
+                                <div class="text-success small mt-1">
+                                    <strong>賣家回覆：</strong> @item.StoreReply
+                                </div>
+                            }
+                        </td>
+                        <td> @item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            @if (item.IsHidden)
+                            {
+                                <span class="badge bg-danger">已隱藏</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">正常顯示</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-action="ToggleHidden" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                @if (item.IsHidden)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-success">解除隱藏</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('確定要隱藏這筆評論嗎？前台將不再顯示。');">隱藏違規</button>
+                                }
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted">目前沒有任何商品評論。</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @* 分頁控制項 *@
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                @* 回第一頁 & 上一頁 *@
+                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="1">
+                        <i class="tf-icon bx bx-chevrons-left"></i>
+                    </a>
+                </li>
+                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)">
+                        <i class="tf-icon bx bx-chevron-left"></i>
+                    </a>
+                </li>
+
+                @* 頁碼 *@
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                    </li>
+                }
+
+                @* 下一頁 & 最後一頁 *@
+                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)">
+                        <i class="tf-icon bx bx-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@ViewBag.TotalPages">
+                        <i class="tf-icon bx bx-chevrons-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>

@@ -1,0 +1,567 @@
+@model ISpanShop.MVC.Models.Promotions.PromotionFormVm
+
+@{
+    Layout = "~/Views/Shared/_SneatLayout.cshtml";
+    ViewData["Title"] = "建立促銷活動";
+}
+
+<style>
+    .font-noto { font-family: 'Public Sans', sans-serif; }
+    /* 類型卡片 */
+    .type-card {
+        border: 2px solid #e2e8f0; border-radius: 12px; padding: 1.4rem 1rem 1.2rem;
+        cursor: pointer; transition: all .2s; position: relative; text-align: center; min-height: 115px;
+    }
+    .type-card:hover { border-color: #93c5fd; background: #f0f7ff; transform: translateY(-2px); }
+    .type-card.selected { border-color: #3182ce; background: #eff6ff; box-shadow: 0 0 0 3px rgba(49,130,206,.18); }
+    .type-card .check-badge {
+        display: none; position: absolute; top: 8px; right: 8px;
+        width: 22px; height: 22px; background: #3182ce; color: #fff;
+        border-radius: 50%; font-size: .75rem; line-height: 22px; text-align: center;
+    }
+    .type-card.selected .check-badge { display: block; }
+    .type-icon-wrap { font-size: 2.2rem; line-height: 1; margin-bottom: .5rem; }
+    /* 商品/規則表格 */
+    .section-panel { display: none; }
+    .section-panel.active { display: block; }
+    .items-table th, .items-table td { font-size: .875rem; vertical-align: middle; }
+    /* 空狀態 */
+    .empty-state-wrap { padding: 2rem 1rem; text-align: center; }
+    .empty-state-wrap .empty-icon { font-size: 2.8rem; color: #cbd5e1; margin-bottom: .5rem; }
+    .empty-state-wrap p { color: #94a3b8; font-size: .875rem; margin-bottom: 1rem; }
+</style>
+
+<div class="container-fluid py-4 font-noto">
+
+    @* 頁首 *@
+    <div class="mb-4">
+        <h2 class="fw-bold mb-2" style="color:#1e2d3d; letter-spacing:-.02em;">
+            <i class="bx bx-plus-circle me-2" style="color:#3182ce;"></i>建立促銷活動
+        </h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index")" style="color:#3182ce;">促銷管理</a></li>
+                <li class="breadcrumb-item active">建立活動</li>
+            </ol>
+        </nav>
+    </div>
+
+    <form id="promotionForm" action="@Url.Action("Create")" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-4">
+            @* 左欄：基本資訊 *@
+            <div class="col-lg-8">
+
+                @* 基本資訊卡 *@
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-info-circle me-2" style="color:#3182ce;"></i>基本資訊
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">活動名稱 <span class="text-danger">*</span></label>
+                                <input type="text" id="name" class="form-control" placeholder="請輸入活動名稱" maxlength="100" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">活動說明</label>
+                                <textarea id="description" class="form-control" rows="3" placeholder="選填，簡短說明此活動內容與規則"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">開始時間 <span class="text-danger">*</span></label>
+                                <input type="datetime-local" id="startTime" class="form-control"
+                                       value="@Model.StartTime.ToString("yyyy-MM-ddTHH:mm")" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">結束時間 <span class="text-danger">*</span></label>
+                                <input type="datetime-local" id="endTime" class="form-control"
+                                       value="@Model.EndTime.ToString("yyyy-MM-ddTHH:mm")" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">適用賣家 <span class="text-danger">*</span></label>
+                                <select id="sellerId" class="form-select" required>
+                                    <option value="">請選擇賣家</option>
+                                    @foreach (var s in Model.Sellers)
+                                    {
+                                        <option value="@s.Id">@s.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* 活動類型選擇 *@
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-category me-2" style="color:#3182ce;"></i>活動類型
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3" style="font-size:.875rem;">
+                            <i class="bx bx-info-circle me-1"></i>
+                            請選擇活動類型（選擇後下方會顯示對應的設定區域）
+                        </p>
+                        <div class="row g-3" id="typeCards">
+                            <div class="col-md-4">
+                                <div class="type-card selected" onclick="selectType(1)" id="typeCard1">
+                                    <span class="check-badge"><i class="bx bx-check"></i></span>
+                                    <div class="type-icon-wrap">⚡</div>
+                                    <div class="fw-semibold" style="font-size:.95rem;">限時特賣</div>
+                                    <div class="text-muted" style="font-size:.8rem; margin-top:.25rem;">指定商品設定活動價</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="type-card" onclick="selectType(2)" id="typeCard2">
+                                    <span class="check-badge"><i class="bx bx-check"></i></span>
+                                    <div class="type-icon-wrap">🎁</div>
+                                    <div class="fw-semibold" style="font-size:.95rem;">滿額折扣</div>
+                                    <div class="text-muted" style="font-size:.8rem; margin-top:.25rem;">設定滿額/滿件折扣規則</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="type-card" onclick="selectType(3)" id="typeCard3">
+                                    <span class="check-badge"><i class="bx bx-check"></i></span>
+                                    <div class="type-icon-wrap">🔥</div>
+                                    <div class="fw-semibold" style="font-size:.95rem;">限量搶購</div>
+                                    <div class="text-muted" style="font-size:.8rem; margin-top:.25rem;">設定限購數量與活動庫存</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* 限時特賣區塊 *@
+                <div id="section1" class="section-panel active card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-store me-2" style="color:#f59e0b;"></i>活動商品（限時特賣）
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-success" onclick="openProductModal()">
+                            <i class="bx bx-plus me-1"></i>新增商品
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table items-table mb-0">
+                            <thead style="background:#f8fafc;">
+                                <tr class="outline-none focus:outline-none">
+                                    <th>商品名稱</th>
+                                    <th>原價</th>
+                                    <th style="min-width:130px;">活動價 <span class="text-danger">*</span></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsBody1"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @* 滿額折扣區塊 *@
+                <div id="section2" class="section-panel card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-receipt me-2" style="color:#0ea5e9;"></i>折扣規則（滿額折扣）
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="addRule()">
+                            <i class="bx bx-plus me-1"></i>新增規則
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table items-table mb-0">
+                            <thead style="background:#f8fafc;">
+                                <tr class="outline-none focus:outline-none">
+                                    <th>規則類型</th><th>門檻值</th><th>折扣方式</th><th>折扣值</th><th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="rulesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @* 限量搶購區塊 *@
+                <div id="section3" class="section-panel card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0 fw-bold" style="color:#1e2d3d;">
+                            <i class="bx bx-flame me-2" style="color:#ea5455;"></i>搶購商品（限量搶購）
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-success" onclick="openProductModal()">
+                            <i class="bx bx-plus me-1"></i>新增商品
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table items-table mb-0">
+                            <thead style="background:#f8fafc;">
+                                <tr class="outline-none focus:outline-none">
+                                    <th>商品名稱</th><th>原價</th>
+                                    <th style="min-width:120px;">活動價</th>
+                                    <th style="min-width:100px;">每人限購</th>
+                                    <th style="min-width:100px;">活動庫存</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsBody3"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            @* 右欄：操作 + 注意事項 *@
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="button" id="saveBtn" class="btn btn-primary" onclick="submitForm()">
+                                <i class="bx bx-save me-1"></i>儲存活動
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-label-secondary">
+                                <i class="bx bx-x me-1"></i>取消
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                @* 注意事項（優化版） *@
+                <div class="card shadow-sm" style="border-left:4px solid #3182ce; background:#f8faff;">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3" style="color:#1e3a5f;">
+                            <i class="bx bx-bulb me-2" style="color:#3182ce;"></i>建立注意事項
+                        </h6>
+                        <ul class="mb-0" style="font-size:.875rem; color:#374151; padding-left:1.2rem; line-height:2;">
+                            <li>管理員建立的活動狀態直接為<strong style="color:#10b981;">已核准</strong></li>
+                            <li>賣家申請的活動需在<strong>詳情頁</strong>個別審核</li>
+                            <li>活動<strong>開始後</strong>僅能修改結束時間</li>
+                            <li><strong style="color:#ea5455;">進行中</strong>的活動無法刪除</li>
+                        </ul>
+                        <div class="mt-3 pt-3 border-top" style="font-size:.813rem; color:#6b7280;">
+                            <i class="bx bx-info-circle me-1"></i>
+                            建立後可前往列表頁查看活動狀態
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@* 商品選擇 Modal *@
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bx bx-package me-2"></i>選擇商品</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="p-3 border-bottom">
+                    <div class="input-group">
+                        <input type="text" id="productSearch" class="form-control" placeholder="搜尋商品名稱或分類..." />
+                        <button class="btn btn-primary" onclick="searchProducts(1)"><i class="bx bx-search"></i></button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead style="background:#f8fafc;">
+                            <tr>
+                                <th style="width:40px;"></th>
+                                <th>商品名稱</th><th>分類</th><th>定價</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productModalBody">
+                            <tr><td colspan="4" class="text-center py-4 text-muted">載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="productPagination" class="px-3 pt-1 pb-0"></div>
+            <div class="modal-footer">
+                <span class="text-muted me-auto" style="font-size:.875rem;" id="selectedCount">已選 0 個商品</span>
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmProducts()">確認加入</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let currentType   = 1;
+    let selectedItems = [];
+    let selectedRules = [];
+
+    // 初始渲染空狀態
+    renderItems();
+    renderRules();
+
+    // ── 類型切換 ──
+    function selectType(t) {
+        currentType = t;
+        [1,2,3].forEach(i => {
+            document.getElementById(`typeCard${i}`).classList.toggle('selected', i === t);
+            document.getElementById(`section${i}`).classList.toggle('active', i === t);
+        });
+        renderItems();
+    }
+
+    // ── 渲染商品列表（type 1 & 3）──
+    function renderItems() {
+        const bodyId  = currentType === 1 ? 'itemsBody1' : 'itemsBody3';
+        const colSpan = currentType === 1 ? 4 : 6;
+        const tbody   = document.getElementById(bodyId);
+
+        if (selectedItems.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${colSpan}">
+                <div class="empty-state-wrap">
+                    <div class="empty-icon"><i class="bx bx-package"></i></div>
+                    <p>尚未選擇商品<br>請加入要參加此活動的商品並設定活動價格</p>
+                    <button type="button" class="btn btn-success px-4" onclick="openProductModal()">
+                        <i class="bx bx-plus me-1"></i>新增商品
+                    </button>
+                </div>
+            </td></tr>`;
+            return;
+        }
+        tbody.innerHTML = selectedItems.map((item, i) => {
+            const priceFmt = `NT$ ${item.originalPrice.toLocaleString()}`;
+            let extra = '';
+            if (currentType === 1) {
+                extra = `<td><input type="number" class="form-control form-control-sm" style="width:130px;"
+                            placeholder="活動價" min="1" value="${item.discountPrice ?? ''}"
+                            onchange="selectedItems[${i}].discountPrice = +this.value || null" /></td>`;
+            } else {
+                extra = `
+                    <td><input type="number" class="form-control form-control-sm" style="width:110px;"
+                            placeholder="活動價" min="1" value="${item.discountPrice ?? ''}"
+                            onchange="selectedItems[${i}].discountPrice = +this.value || null" /></td>
+                    <td><input type="number" class="form-control form-control-sm" style="width:90px;"
+                            placeholder="件數" min="1" value="${item.quantityLimit ?? ''}"
+                            onchange="selectedItems[${i}].quantityLimit = +this.value || null" /></td>
+                    <td><input type="number" class="form-control form-control-sm" style="width:90px;"
+                            placeholder="庫存" min="1" value="${item.stockLimit ?? ''}"
+                            onchange="selectedItems[${i}].stockLimit = +this.value || null" /></td>`;
+            }
+            return `<tr>
+                <td><span class="fw-semibold" style="font-size:.875rem;">${item.productName}</span></td>
+                <td style="color:#64748b;font-size:.875rem;">${priceFmt}</td>
+                ${extra}
+                <td><button type="button" class="btn btn-sm btn-label-danger" onclick="removeItem(${i})">
+                    <i class="bx bx-x"></i></button></td>
+            </tr>`;
+        }).join('');
+    }
+
+    function removeItem(i) { selectedItems.splice(i, 1); renderItems(); }
+
+    // ── 渲染規則（type 2）──
+    function renderRules() {
+        const tbody = document.getElementById('rulesBody');
+        if (selectedRules.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5">
+                <div class="empty-state-wrap">
+                    <div class="empty-icon"><i class="bx bx-receipt"></i></div>
+                    <p>尚未設定折扣規則<br>請設定滿額或滿件的折扣門檻與優惠</p>
+                    <button type="button" class="btn btn-primary px-4" onclick="addRule()">
+                        <i class="bx bx-plus me-1"></i>新增規則
+                    </button>
+                </div>
+            </td></tr>`;
+            return;
+        }
+        tbody.innerHTML = selectedRules.map((r, i) => `
+            <tr>
+                <td>
+                    <select class="form-select form-select-sm" style="width:100px;"
+                            onchange="selectedRules[${i}].ruleType = +this.value">
+                        <option value="1" ${r.ruleType===1?'selected':''}>滿額</option>
+                        <option value="2" ${r.ruleType===2?'selected':''}>滿件</option>
+                    </select>
+                </td>
+                <td>
+                    <div class="input-group input-group-sm" style="width:130px;">
+                        <input type="number" class="form-control" value="${r.threshold}" min="1"
+                               onchange="selectedRules[${i}].threshold = +this.value || 0" />
+                        <span class="input-group-text">${r.ruleType===2?'件':'元'}</span>
+                    </div>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm" style="width:120px;"
+                            onchange="selectedRules[${i}].discountType = +this.value">
+                        <option value="1" ${r.discountType===1?'selected':''}>折抵金額</option>
+                        <option value="2" ${r.discountType===2?'selected':''}>折扣百分比</option>
+                    </select>
+                </td>
+                <td>
+                    <div class="input-group input-group-sm" style="width:120px;">
+                        <input type="number" class="form-control" value="${r.discountValue}" min="0"
+                               onchange="selectedRules[${i}].discountValue = +this.value || 0" />
+                        <span class="input-group-text">${r.discountType===2?'%':'元'}</span>
+                    </div>
+                </td>
+                <td><button type="button" class="btn btn-sm btn-label-danger" onclick="removeRule(${i})">
+                    <i class="bx bx-x"></i></button></td>
+            </tr>
+        `).join('');
+    }
+
+    function addRule() {
+        selectedRules.push({ ruleType: 1, threshold: 1000, discountType: 1, discountValue: 100 });
+        renderRules();
+    }
+
+    function removeRule(i) { selectedRules.splice(i, 1); renderRules(); }
+
+    // ── 商品 Modal ──
+    function openProductModal() {
+        searchProducts(1);
+        new bootstrap.Modal(document.getElementById('productModal')).show();
+    }
+
+    async function searchProducts(page) {
+        page = page || 1;
+        const kw    = document.getElementById('productSearch').value;
+        const tbody = document.getElementById('productModalBody');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">搜尋中...</td></tr>';
+        const res  = await fetch(`/Promotions/SearchProducts?keyword=${encodeURIComponent(kw)}&page=${page}&pageSize=5`);
+        const data = await res.json();
+        if (!data.items.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">找不到商品</td></tr>';
+            document.getElementById('productPagination').innerHTML = '';
+            return;
+        }
+        tbody.innerHTML = data.items.map(p => {
+            const checked = selectedItems.some(x => x.productId === p.id) ? 'checked' : '';
+            return `<tr>
+                <td><input type="checkbox" class="form-check-input product-cb" value="${p.id}"
+                    data-name="${p.name}" data-price="${p.price}" ${checked} /></td>
+                <td><span class="fw-semibold" style="font-size:.875rem;">${p.name}</span></td>
+                <td><span class="badge bg-label-secondary">${p.categoryName}</span></td>
+                <td class="fw-semibold" style="color:#1e2d3d;">NT$ ${p.price.toLocaleString()}</td>
+            </tr>`;
+        }).join('');
+        updateSelectedCount();
+        document.querySelectorAll('.product-cb').forEach(cb => cb.addEventListener('change', updateSelectedCount));
+        _renderProductPagination(data.currentPage, data.totalPages, data.totalCount);
+    }
+
+    function _renderProductPagination(page, totalPages, totalCount) {
+        const container = document.getElementById('productPagination');
+        if (totalPages <= 1) { container.innerHTML = ''; return; }
+        let html = '<nav class="d-flex align-items-center justify-content-between py-1">';
+        html += `<small class="text-muted">共 ${totalCount} 筆商品</small>`;
+        html += '<ul class="pagination pagination-sm mb-0">';
+        html += `<li class="page-item ${page <= 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="searchProducts(${page - 1}); return false;">&laquo;</a></li>`;
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="searchProducts(${i}); return false;">${i}</a></li>`;
+        }
+        html += `<li class="page-item ${page >= totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="searchProducts(${page + 1}); return false;">&raquo;</a></li>`;
+        html += '</ul></nav>';
+        container.innerHTML = html;
+    }
+
+    function updateSelectedCount() {
+        const selectedIds = new Set(selectedItems.map(x => x.productId));
+        document.querySelectorAll('.product-cb').forEach(cb => {
+            if (cb.checked) selectedIds.add(+cb.value);
+            else            selectedIds.delete(+cb.value);
+        });
+        document.getElementById('selectedCount').textContent = `已選 ${selectedIds.size} 個商品`;
+    }
+
+    function confirmProducts() {
+        document.querySelectorAll('.product-cb:checked').forEach(cb => {
+            const pid = +cb.value;
+            if (!selectedItems.some(x => x.productId === pid)) {
+                selectedItems.push({
+                    productId: pid, productName: cb.dataset.name,
+                    originalPrice: +cb.dataset.price,
+                    discountPrice: null, quantityLimit: null, stockLimit: null
+                });
+            }
+        });
+        const checkedIds = Array.from(document.querySelectorAll('.product-cb:checked')).map(cb => +cb.value);
+        selectedItems = selectedItems.filter(x => {
+            const inModal = document.querySelector(`.product-cb[value="${x.productId}"]`);
+            return !inModal || checkedIds.includes(x.productId);
+        });
+        renderItems();
+        bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+    }
+
+    document.getElementById('productSearch').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); searchProducts(1); }
+    });
+
+    // ── 表單提交 ──
+    async function submitForm() {
+        const name      = document.getElementById('name').value.trim();
+        const startTime = document.getElementById('startTime').value;
+        const endTime   = document.getElementById('endTime').value;
+
+        if (!name)  { showMsg('error', '請填寫活動名稱'); return; }
+        if (!startTime || !endTime) { showMsg('error', '請填寫活動時間'); return; }
+        if (new Date(endTime) <= new Date(startTime)) { showMsg('error', '結束時間必須晚於開始時間'); return; }
+        if ((currentType === 1 || currentType === 3) && selectedItems.length === 0) {
+            showMsg('error', '請至少選擇一個商品'); return;
+        }
+        if (currentType === 2 && selectedRules.length === 0) {
+            showMsg('error', '請至少新增一條折扣規則'); return;
+        }
+
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>儲存中...';
+
+        const fd = new FormData();
+        fd.append('__RequestVerificationToken', document.querySelector('[name="__RequestVerificationToken"]').value);
+        fd.append('Name',          name);
+        fd.append('Description',   document.getElementById('description').value);
+        fd.append('PromotionType', currentType);
+        fd.append('StartTime',     startTime);
+        fd.append('EndTime',       endTime);
+        fd.append('SellerId',      document.getElementById('sellerId').value);
+
+        if (currentType !== 2) {
+            selectedItems.forEach((item, i) => {
+                fd.append(`Items[${i}].ProductId`,     item.productId);
+                fd.append(`Items[${i}].ProductName`,   item.productName);
+                fd.append(`Items[${i}].OriginalPrice`, item.originalPrice);
+                if (item.discountPrice != null) fd.append(`Items[${i}].DiscountPrice`, item.discountPrice);
+                if (currentType === 3) {
+                    if (item.quantityLimit != null) fd.append(`Items[${i}].QuantityLimit`, item.quantityLimit);
+                    if (item.stockLimit    != null) fd.append(`Items[${i}].StockLimit`,    item.stockLimit);
+                }
+            });
+        } else {
+            selectedRules.forEach((r, i) => {
+                fd.append(`Rules[${i}].RuleType`,      r.ruleType);
+                fd.append(`Rules[${i}].Threshold`,     r.threshold);
+                fd.append(`Rules[${i}].DiscountType`,  r.discountType);
+                fd.append(`Rules[${i}].DiscountValue`, r.discountValue);
+            });
+        }
+
+        try {
+            const res = await fetch(document.getElementById('promotionForm').action, {
+                method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd
+            });
+            const result = await res.json();
+            if (result.success) {
+                window.location.href = '/Promotions';
+            } else {
+                showMsg('error', result.message || '儲存失敗');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bx bx-save me-1"></i>儲存活動';
+            }
+        } catch {
+            showMsg('error', '發生錯誤，請重試');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bx bx-save me-1"></i>儲存活動';
+        }
+    }
+
+    // showMsg 使用全域 window.showMsg（由 _SneatLayout 提供）
+</script>
+}

@@ -29,7 +29,7 @@ namespace ISpanShop.WebAPI.Controllers
 				return BadRequest("購物車內容不可為空");
 			}
 
-			// 1. 呼叫 Service 建立訂單並處理點數
+			// 1. 呼叫 Service 建立訂單並處理點數.
 			var result = await _checkoutService.CreateOrderAsync(dto);
 
 			if (!result.IsSuccess)

@@ -44,15 +44,21 @@
                             </td>
                             <td>
                                 @{
+                                    var isForcedOff = item.Status == 4;
                                     var (sBadge, sText) = item.Status switch
                                     {
                                         1 => ("bg-success", "已上架"),
                                         2 => ("bg-warning text-dark", "待審核"),
                                         3 => ("bg-danger", "審核退回"),
+                                        4 => ("bg-danger", "被平台下架"),
                                         _ => ("bg-secondary", "已下架")
                                     };
                                 }
                                 <span class="badge @sBadge">@sText</span>
+                                @if (isForcedOff && item.ReviewStatus == 3)
+                                {
+                                    <span class="badge bg-warning text-dark ms-1">審核中</span>
+                                }
                             </td>
                             <td>
                                 @{
@@ -60,6 +66,7 @@
                                     {
                                         1 => ("bg-success", "✅ 已通過"),
                                         2 => ("bg-danger",  "❌ 已退回"),
+                                        3 => ("bg-warning text-dark", "🔄 重新申請中"),
                                         _ => ("bg-warning text-dark", "⏳ 待審核")
                                     };
                                 }
@@ -71,7 +78,18 @@
                                         ? expirationDays - (int)(DateTime.Now - item.ReviewDate.Value).TotalDays
                                         : int.MaxValue;
                                 }
-                                @if (item.ReviewStatus == 2)
+                                @if (item.Status == 4)
+                                {
+                                    @if (!string.IsNullOrWhiteSpace(item.ForceOffShelfReason))
+                                    {
+                                        <span class="text-danger fw-semibold">🚫 @item.ForceOffShelfReason</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">請洽管理員</span>
+                                    }
+                                }
+                                else if (item.ReviewStatus == 2)
                                 {
                                     <span class="text-danger fw-semibold">⚠️ @(item.RejectReason ?? "請洽管理員")</span>
                                     <br />
@@ -93,9 +111,20 @@
                                     <span class="text-muted">—</span>
                                 }
                             </td>
-                                                        <td class="text-muted small">@item.CreatedAt?.ToString("yyyy-MM-dd")</td>
+                            <td class="text-muted small">@item.CreatedAt?.ToString("yyyy-MM-dd")</td>
                             <td class="text-end">
-                                @if (item.ReviewStatus == 2)
+                                @if (item.Status == 4 && item.ReviewStatus != 3)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                            onclick="reApply(@item.Id, '@item.Name.Replace("'", "\\'")') ">
+                                        <i class="bx bx-upload me-1"></i>申請重新上架
+                                    </button>
+                                }
+                                else if (item.Status == 4 && item.ReviewStatus == 3)
+                                {
+                                    <span class="text-muted small">等待平台審核中…</span>
+                                }
+                                else if (item.ReviewStatus == 2)
                                 {
                                     <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
                                             onclick="resetToPending(@item.Id, '@item.Name.Replace("'", "\\'")') ">
@@ -122,6 +151,33 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         var urlResetToPending = '@Url.Action("ResetToPending", "Products", new { area = "Admin" })';
+        var urlReApply        = '@Url.Action("ReApply", "Products", new { area = "Admin" })';
+
+        window.reApply = function (id, name) {
+            Swal.fire({
+                title: '申請重新上架',
+                html: '確定要申請商品<br><strong>「' + name + '」</strong><br>重新上架嗎？商品將送交平台審核，審核完成前無法再編輯。',
+                icon: 'question', showCancelButton: true,
+                confirmButtonColor: '#dc2626', cancelButtonColor: '#a0aec0',
+                confirmButtonText: '確認申請', cancelButtonText: '取消'
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                fetch(urlReApply, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('input[name=__RequestVerificationToken]')?.value ?? '' },
+                    body: JSON.stringify({ id: parseInt(id) })
+                })
+                .then(r => r.json()).then(function (res) {
+                    if (res.success) {
+                        Swal.fire({ title: '申請成功！', text: res.message, icon: 'success',
+                                    confirmButtonColor: '#1abb9c', timer: 2000, timerProgressBar: true })
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire({ title: '操作失敗', text: res.message, icon: 'error' });
+                    }
+                }).catch(() => Swal.fire({ title: '連線錯誤', text: '請稍後再試。', icon: 'error' }));
+            });
+        };
 
         window.resetToPending = function (id, name) {
             Swal.fire({

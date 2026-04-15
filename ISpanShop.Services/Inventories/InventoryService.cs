@@ -117,5 +117,11 @@ namespace ISpanShop.Services.Inventories
 
         public IEnumerable<(int Id, string Name)> GetCategoryOptions()
             => _inventoryRepository.GetCategoryOptions();
+
+        public IEnumerable<(int Id, string Name)> GetMainCategories()
+            => _inventoryRepository.GetMainCategories();
+
+        public IEnumerable<(int Id, string Name)> GetSubCategories(int parentId)
+            => _inventoryRepository.GetSubCategories(parentId);
     }
 }
