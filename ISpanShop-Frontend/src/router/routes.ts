@@ -1,8 +1,9 @@
 import type { RouteRecordRaw } from 'vue-router';
 import DefaultLayout from '../layouts/DefaultLayout.vue';
+import MemberLayout from '../layouts/MemberLayout.vue';
 
 export const routes: RouteRecordRaw[] = [
-  // 使用 DefaultLayout 的頁面（包含完整的蝦皮風格 header/footer）
+  // ── 前台主佈局（Header + Footer） ──
   {
     path: '/',
     component: DefaultLayout,
@@ -24,10 +25,71 @@ export const routes: RouteRecordRaw[] = [
         name: 'ProductDetail',
         component: () => import('../views/ProductDetailView.vue'),
         meta: { requiresAuth: false }
+      },
+      {
+        path: 'cart',
+        name: 'cart',
+        component: () => import('../views/cart/CartView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'coupons',
+        name: 'coupons',
+        component: () => import('../views/CouponsView.vue'),
+        meta: { requiresAuth: false }
+      },
+      // ── 會員中心嵌套佈局（在 DefaultLayout 內再包一層側邊欄） ──
+      {
+        path: 'member',
+        component: MemberLayout,
+        meta: { requiresAuth: true },
+        children: [
+          {
+            path: '',
+            name: 'member-center',
+            component: () => import('../views/member/MemberCenterView.vue'),
+          },
+          {
+            path: 'profile',
+            name: 'member-profile',
+            component: () => import('../views/member/ProfileView.vue'),
+          },
+          {
+            path: 'orders',
+            name: 'member-orders',
+            component: () => import('../views/member/OrdersView.vue'),
+          },
+          {
+            path: 'orders/:id',
+            name: 'member-order-detail',
+            component: () => import('../views/member/OrderDetailView.vue'),
+          },
+          {
+            path: 'settings',
+            name: 'member-settings',
+            component: () => import('../views/member/SettingsView.vue'),
+          },
+          {
+            path: 'wallet',
+            name: 'member-wallet',
+            component: () => import('../views/member/WalletView.vue'),
+          },
+          {
+            path: 'coupons',
+            name: 'member-coupons',
+            component: () => import('../views/member/MemberCouponsView.vue'),
+          },
+          {
+            path: 'mystore',
+            name: 'member-mystore',
+            component: () => import('../views/member/MyStoreView.vue'),
+          }
+        ]
       }
     ]
   },
-  // 登入/註冊頁面（不需要 header/footer）
+
+  // ── 獨立頁面（無 Header/Footer） ──
   {
     path: '/login',
     name: 'login',
@@ -40,40 +102,12 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('../views/auth/RegisterView.vue'),
     meta: { requiresAuth: false, hideForAuth: true }
   },
+
+  // ── 錯誤/其他頁面 ──
   {
-    path: '/member',
-    name: 'member',
-    component: () => import('../views/member/MemberCenterView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/member/orders',
-    name: 'member-orders',
-    component: () => import('../views/member/OrdersView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/member/settings',
-    name: 'member-settings',
-    component: () => import('../views/member/SettingsView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/member/wallet',
-    name: 'member-wallet',
-    component: () => import('../views/member/WalletView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/member/mystore',
-    name: 'member-mystore',
-    component: () => import('../views/member/MyStoreView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/cart',
-    name: 'cart',
-    component: () => import('../views/cart/CartView.vue'),
+    path: '/checkout',
+    name: 'checkout',
+    component: () => import('../views/cart/CheckoutView.vue'),
     meta: { requiresAuth: true }
   },
   {

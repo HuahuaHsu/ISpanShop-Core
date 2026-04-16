@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ISpanShop.Services;
+using ISpanShop.Services.Coupons;
 using ISpanShop.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,11 +12,16 @@ namespace ISpanShop.WebAPI.Controllers
 	{
 		private readonly ISpanShopDBContext _context;
 		private readonly PaymentService _paymentService;
+		private readonly ICouponService _couponService;
 
-		public PaymentCallbackController(ISpanShopDBContext context, PaymentService paymentService)
+		public PaymentCallbackController(
+			ISpanShopDBContext context, 
+			PaymentService paymentService,
+			ICouponService couponService)
 		{
 			_context = context;
 			_paymentService = paymentService;
+			_couponService = couponService;
 		}
 
 		// 接收綠界付款結果通知
@@ -58,6 +64,9 @@ namespace ISpanShop.WebAPI.Controllers
 					{
 						order.Status = 1; // 假設 1 代表已付款
 						order.PaymentDate = paymentLog.PaymentDate;
+
+						// 更新優惠券狀態為已使用
+						await _couponService.MarkAsUsedAsync(order.Id);
 					}
 
 					await _context.SaveChangesAsync();

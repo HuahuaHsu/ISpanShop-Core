@@ -65,7 +65,7 @@
 
           <!-- 左側圖片區 -->
           <div class="pd-gallery">
-            <div class="pd-main-image-wrap">
+            <div class="pd-main-image-wrap" style="position:relative;overflow:hidden;">
               <el-image
                 :src="activeImageUrl || fallbackImage"
                 :alt="safeProduct.name"
@@ -78,6 +78,9 @@
                   </div>
                 </template>
               </el-image>
+              <div v-if="isSoldOut" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1;pointer-events:none;">
+                <span style="color:#fff;font-size:24px;font-weight:bold;background:rgba(0,0,0,0.7);padding:10px 28px;border-radius:4px;">已售完</span>
+              </div>
             </div>
 
             <!-- 縮圖列（超過 1 張才顯示） -->
@@ -110,7 +113,7 @@
               </template>
               <template v-else>
                 <span class="pd-no-rating">暫無評價</span>
-                <span class="pd-review-count">{{ safeProduct.soldCount.toLocaleString() }} 已售</span>
+                <span class="pd-review-count">{{ formatSoldCount(safeProduct.soldCount) }}</span>
               </template>
             </div>
 
@@ -168,7 +171,7 @@
                       selected: selectedSpecs[spec.name] === option,
                       unavailable: getOptionStatus(spec.name, option) !== 'available',
                     }"
-                    :disabled="getOptionStatus(spec.name, option) !== 'available'"
+                    :disabled="isSoldOut || getOptionStatus(spec.name, option) !== 'available'"
                     @click="selectSpec(spec.name, option)"
                   >
                     <el-icon v-if="selectedSpecs[spec.name] === option" class="spec-check"><Check /></el-icon>
@@ -185,7 +188,7 @@
                 v-model="quantity"
                 :min="1"
                 :max="currentStock"
-                :disabled="!allSpecsSelected"
+                :disabled="isSoldOut || !allSpecsSelected"
                 controls-position="right"
                 size="default"
               />
@@ -201,33 +204,17 @@
 
             <!-- (f) 按鈕 -->
             <div class="pd-action-buttons">
-              <el-tooltip
-                :content="needsSpecSelection ? '請選擇規格' : ''"
-                :disabled="!needsSpecSelection"
-                placement="top"
-              >
-                <span class="btn-wrapper">
-                  <el-button
-                    class="btn-cart"
-                    :disabled="!canAddToCart"
-                    @click="handleAddToCart"
-                  >加入購物車</el-button>
-                </span>
-              </el-tooltip>
-              <el-tooltip
-                :content="needsSpecSelection ? '請選擇規格' : ''"
-                :disabled="!needsSpecSelection"
-                placement="top"
-              >
-                <span class="btn-wrapper">
-                  <el-button
-                    type="primary"
-                    class="btn-buy"
-                    :disabled="!canAddToCart"
-                    @click="handleBuyNow"
-                  >直接購買</el-button>
-                </span>
-              </el-tooltip>
+              <el-button
+                class="btn-cart"
+                :disabled="isSoldOut"
+                @click="handleAddToCart"
+              >加入購物車</el-button>
+              <el-button
+                type="primary"
+                class="btn-buy"
+                :disabled="isSoldOut"
+                @click="handleBuyNow"
+              >直接購買</el-button>
             </div>
 
           </div><!-- /pd-info -->
@@ -342,6 +329,7 @@ import { Picture, Check } from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
 import { fetchProductDetail, fetchRelatedProducts } from '@/api/product'
 import { useCartStore } from '@/stores/cart'
+import { formatPrice, formatSoldCount } from '@/utils/format'
 import type {
   ProductDetail,
   ProductListItem,
@@ -423,6 +411,18 @@ const subCategoryItem = computed(() => {
 
 // ─── 計算屬性 ────────────────────────────────────────────────────
 
+/** 商品已售完 */
+const isSoldOut = computed<boolean>(() => {
+  if (!isReady.value) return false
+  return safeProduct.value.totalStock === 0
+})
+
+/** 商品是否有規格 */
+const hasSpecs = computed<boolean>(() => {
+  if (!isReady.value) return false
+  return safeProduct.value.specs.length > 0
+})
+
 /** 所有規格軸都已選齊（無規格商品視為「已選齊」） */
 const allSpecsSelected = computed<boolean>(() => {
   if (!isReady.value) return false
@@ -441,12 +441,6 @@ const selectedVariant = computed<ProductVariant | null>(() => {
       specs.every((s) => v.specValues[s.name] === selectedSpecs.value[s.name]),
     ) ?? null
   )
-})
-
-/** tooltip 需要顯示「請選擇規格」的情況 */
-const needsSpecSelection = computed<boolean>(() => {
-  if (!isReady.value) return false
-  return safeProduct.value.specs.length > 0 && !allSpecsSelected.value
 })
 
 /** 按鈕是否可按：無規格商品直接可按；有規格商品需選齊且庫存 > 0 */
@@ -612,6 +606,13 @@ watch(
 // ─── 按鈕行為 ────────────────────────────────────────────────────
 
 function handleAddToCart(): void {
+  // 狀態 B：有規格但還沒選完
+  if (hasSpecs.value && !allSpecsSelected.value) {
+    ElMessage.warning('請選擇規格')
+    return
+  }
+
+  // 狀態 C：正常加入購物車
   const p = safeProduct.value
   const variant = selectedVariant.value
   const image = activeImageUrl.value || p.images[0]?.url || ''
@@ -634,6 +635,13 @@ function handleAddToCart(): void {
 }
 
 function handleBuyNow(): void {
+  // 狀態 B：有規格但還沒選完
+  if (hasSpecs.value && !allSpecsSelected.value) {
+    ElMessage.warning('請選擇規格')
+    return
+  }
+
+  // 狀態 C：正常執行購買流程
   ElMessage.info('即將前往結帳')
 }
 
@@ -642,10 +650,6 @@ function handleViewStore(): void {
 }
 
 // ─── 工具函式 ────────────────────────────────────────────────────
-
-function formatPrice(price: number): string {
-  return price.toLocaleString('zh-TW')
-}
 </script>
 
 <style scoped>
@@ -930,10 +934,6 @@ function formatPrice(price: number): string {
 .pd-action-buttons {
   display: flex;
   gap: 12px;
-}
-
-.btn-wrapper {
-  display: inline-block;
 }
 
 .btn-cart {

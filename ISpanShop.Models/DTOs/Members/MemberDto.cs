@@ -26,6 +26,12 @@ namespace ISpanShop.Models.DTOs.Members
 		[Display(Name = "電話")]
 		public string PhoneNumber { get; set; }
 
+		[Display(Name = "性別")]
+		public byte? Gender { get; set; }
+
+		[Display(Name = "生日")]
+		public System.DateOnly? Birthday { get; set; }
+
 		[Display(Name = "點數")]
 		public int PointBalance { get; set; }
 

@@ -36,26 +36,12 @@ async function confirmRemove(productId: number, variantId: number | null): Promi
   }
 }
 
-async function clearAll(): Promise<void> {
-  try {
-    await ElMessageBox.confirm('確定要清空購物車？', '清空購物車', {
-      confirmButtonText: '確定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
-    cartStore.clearCart()
-    ElMessage.success('購物車已清空')
-  } catch {
-    // 取消
-  }
-}
-
 function formatPrice(price: number): string {
   return price.toLocaleString('zh-TW')
 }
 
 function handleCheckout(): void {
-  ElMessage.info('結帳功能即將上線，敬請期待')
+  router.push('/checkout')
 }
 </script>
 
@@ -144,7 +130,6 @@ function handleCheckout(): void {
 
         <!-- 底部結帳列 -->
         <div class="cart-footer">
-          <el-button plain size="small" @click="clearAll">清空購物車</el-button>
           <div class="footer-right">
             <span class="total-label">合計：</span>
             <span class="total-price">NT$ {{ formatPrice(cartStore.totalPrice) }}</span>
@@ -274,7 +259,7 @@ function handleCheckout(): void {
   border-radius: 8px;
   padding: 16px 20px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 }
 .footer-right {

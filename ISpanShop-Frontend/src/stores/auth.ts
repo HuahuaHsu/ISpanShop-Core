@@ -29,6 +29,9 @@ export const useAuthStore = defineStore('auth', () => {
   // Actions
   async function login(loginData: LoginRequest) {
     try {
+      // 登入前先強制登出，確保舊 Token (例如 admin) 被清除
+      logout();
+
       const response = await loginApi(loginData);
       const { data } = response;
       
@@ -70,11 +73,20 @@ export const useAuthStore = defineStore('auth', () => {
     storage.clearAll();
   }
 
+  /** 更新點數並同步持久化到 localStorage */
+  function updatePoints(newBalance: number) {
+    if (memberInfo.value) {
+      memberInfo.value.pointBalance = newBalance;
+      storage.setUser(memberInfo.value);
+    }
+  }
+
   return {
     token,
     memberInfo,
     isLoggedIn,
     login,
-    logout
+    logout,
+    updatePoints
   };
 });

@@ -65,6 +65,26 @@ namespace ISpanShop.Services.Members
 			_repo.Update(userInDb);
 		}
 
+		public void UpdateMemberProfile(UpdateMemberProfileDto dto)
+		{
+			var userInDb = _repo.GetById(dto.Id);
+			if (userInDb == null) throw new Exception("找不到該會員");
+
+			// 更新基本資訊 (Email, Account)
+			userInDb.Email = dto.Email;
+			
+			// 更新詳細資料 (MemberProfile)
+			if (userInDb.MemberProfile != null)
+			{
+				userInDb.MemberProfile.FullName = dto.FullName;
+				userInDb.MemberProfile.PhoneNumber = dto.PhoneNumber;
+				userInDb.MemberProfile.Gender = dto.Gender;
+				userInDb.MemberProfile.DateOfBirth = dto.Birthday;
+			}
+
+			_repo.Update(userInDb);
+		}
+
 		public void UpdateMemberProfile(MemberDto dto)
 		{
 			var userInDb = _repo.GetById(dto.Id);
@@ -79,6 +99,8 @@ namespace ISpanShop.Services.Members
 			{
 				userInDb.MemberProfile.FullName = dto.FullName;
 				userInDb.MemberProfile.PhoneNumber = dto.PhoneNumber;
+				userInDb.MemberProfile.Gender = dto.Gender;
+				userInDb.MemberProfile.DateOfBirth = dto.Birthday;
 			}
 
 			// 更新 Addresses 表中的預設地址
@@ -111,6 +133,8 @@ namespace ISpanShop.Services.Members
 
 				FullName = profile?.FullName ?? "未設定",
 				PhoneNumber = profile?.PhoneNumber ?? "未設定",
+				Gender = profile?.Gender,
+				Birthday = profile?.DateOfBirth,
 				PointBalance = profile?.PointBalance ?? 0,
 				TotalSpending = profile?.TotalSpending ?? 0,
 
@@ -118,7 +142,9 @@ namespace ISpanShop.Services.Members
 				LevelName = GetLevelNameBySpending(profile?.TotalSpending, levels),
 
 				// 如果有預設頭像 URL 生成邏輯
-				//AvatarUrl = $"https://ui-avatars.com/api/?name={profile?.FullName ?? u.Account}&background=random&color=fff",
+				AvatarUrl = profile?.FullName != null 
+					? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(profile.FullName)}&background=random&color=fff&size=128"
+					: null,
 
 				City = address?.City ?? "",
 				Region = address?.Region ?? "",

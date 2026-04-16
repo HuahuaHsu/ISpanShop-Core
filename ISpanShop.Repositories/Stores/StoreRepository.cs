@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ISpanShop.Models.DTOs.Stores;
@@ -190,21 +191,21 @@ namespace ISpanShop.Repositories.Stores
                         {
                             return new StoreDetailDto
                             {
-								StoreId = reader.GetInt32("StoreId"),
-								UserId = reader.GetInt32("UserId"),
-								OwnerAccount = reader.GetString("OwnerAccount"),
-								StoreName = reader.GetString("StoreName"),
-								Description = reader.IsDBNull("Description")
-						 ? null : reader.GetString("Description"),
-								IsVerified = reader.GetBoolean("IsVerified"),
-								IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
-								StoreStatus = Convert.ToInt32(reader["StoreStatus"]),        
-								CreatedAt = reader.IsDBNull("CreatedAt")
-						 ? (DateTime?)null : reader.GetDateTime("CreatedAt"),
-								ProductCount = Convert.ToInt32(reader["ProductCount"]),       
-								ActiveProductCount = Convert.ToInt32(reader["ActiveProductCount"]), 
-								TotalSales = Convert.ToInt32(reader["TotalSales"])          
-							};
+                                StoreId = reader.GetInt32("StoreId"),
+                                UserId = reader.GetInt32("UserId"),
+                                OwnerAccount = reader.GetString("OwnerAccount"),
+                                StoreName = reader.GetString("StoreName"),
+                                Description = reader.IsDBNull("Description")
+                         ? null : reader.GetString("Description"),
+                                IsVerified = reader.GetBoolean("IsVerified"),
+                                IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
+                                StoreStatus = Convert.ToInt32(reader["StoreStatus"]),
+                                CreatedAt = reader.IsDBNull("CreatedAt")
+                         ? (DateTime?)null : reader.GetDateTime("CreatedAt"),
+                                ProductCount = Convert.ToInt32(reader["ProductCount"]),
+                                ActiveProductCount = Convert.ToInt32(reader["ActiveProductCount"]),
+                                TotalSales = Convert.ToInt32(reader["TotalSales"])
+                            };
                         }
                     }
                 }
@@ -212,7 +213,14 @@ namespace ISpanShop.Repositories.Stores
             return null;
         }
 
-        public bool ToggleVerified(int storeId, bool isVerified)
+        public async Task<Store?> GetStoreByUserIdAsync(int userId)
+        {
+            return await _context.Stores
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+        }
+
+                public bool ToggleVerified(int storeId, bool isVerified)
         {
             var connectionString = _context.Database.GetDbConnection().ConnectionString;
 

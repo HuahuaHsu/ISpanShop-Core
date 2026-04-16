@@ -1,0 +1,133 @@
+@model ISpanShop.MVC.Models.Coupons.CouponIndexVm
+@{
+    ViewData["Title"] = "優惠券管理";
+    Layout = "~/Views/Shared/_SneatLayout.cshtml";
+}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold py-3 mb-0">
+            <span class="text-muted fw-light">行銷管理 /</span> 優惠券管理
+        </h4>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bx bx-plus me-1"></i> 新增優惠券
+        </a>
+    </div>
+
+    <div class="card">
+        <h5 class="card-header">優惠券列表</h5>
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>標題 / 優惠碼</th>
+                        <th>所屬商家</th>
+                        <th>類型</th>
+                        <th>折扣內容</th>
+                        <th>低消門檻</th>
+                        <th>有效期</th>
+                        <th>發行狀況</th>
+                        <th>狀態</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@item.Title</strong><br />
+                                <small class="text-muted">@item.CouponCode</small>
+                            </td>
+                            <td>@item.StoreName</td>
+                            <td>
+                                <span class="badge bg-label-info">@item.DistributionTypeName</span>
+                            </td>
+                            <td>
+                                @if (item.CouponType == 1)
+                                {
+                                    <span>折抵 $@item.DiscountValue.ToString("N0")</span>
+                                }
+                                else
+                                {
+                                    <span>打 @((100 - item.DiscountValue).ToString("G0")) 折</span>
+                                }
+                            </td>
+                            <td>$@item.MinimumSpend.ToString("N0")</td>
+                            <td>
+                                <small>
+                                    @item.StartTime.ToString("yyyy/MM/dd") ~<br />
+                                    @item.EndTime.ToString("yyyy/MM/dd")
+                                </small>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <small>已領: @item.UsedQuantity / @item.TotalQuantity</small>
+                                    <div class="progress" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: @(item.TotalQuantity > 0 ? (item.UsedQuantity * 100 / item.TotalQuantity) : 0)%" aria-valuenow="@item.UsedQuantity" aria-valuemin="0" aria-valuemax="@item.TotalQuantity"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @{
+                                    var statusClass = item.Status switch
+                                    {
+                                        "進行中" => "bg-label-success",
+                                        "即將開始" => "bg-label-primary",
+                                        "已結束" => "bg-label-secondary",
+                                        "已領完" => "bg-label-warning",
+                                        _ => "bg-label-info"
+                                    };
+                                }
+                                <span class="badge @statusClass">@item.Status</span>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id"><i class="bx bx-edit-alt me-1"></i> 編輯</a>
+                                        <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteCoupon(@item.Id)"><i class="bx bx-trash me-1"></i> 刪除</a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function deleteCoupon(id) {
+            Swal.fire({
+                title: '確定要刪除嗎？',
+                text: "刪除後將無法還原！",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('@Url.Action("Delete")', { id: id }, function (res) {
+                        if (res.success) {
+                            Swal.fire(
+                                '已刪除！',
+                                '該優惠券已被刪除。',
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        }
+                    });
+                }
+            })
+        }
+    </script>
+}

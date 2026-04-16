@@ -1,6 +1,8 @@
 ﻿using ISpanShop.Common.Enums;
 using ISpanShop.Models.DTOs.Orders;
+using ISpanShop.Models.DTOs.Members;
 using ISpanShop.Repositories.Orders;
+using ISpanShop.Services.Payments;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +14,12 @@ namespace ISpanShop.Services.Orders
 	public class OrderService : IOrderService
 	{
 		private readonly IOrderRepository _orderRepository;
+		private readonly PointService _pointService;
 
-		public OrderService(IOrderRepository orderRepository)
+		public OrderService(IOrderRepository orderRepository, PointService pointService)
 		{
 			_orderRepository = orderRepository;
+			_pointService = pointService;
 		}
 
 		public async Task<IDictionary<byte, int>> GetOrderStatusCountsAsync()
@@ -30,6 +34,7 @@ namespace ISpanShop.Services.Orders
 
 		public async Task<OrderFullDto> GetOrderDetailAsync(long id)
 		{
+            // ... (rest of method stays the same)
 			var o = await _orderRepository.GetOrderByIdAsync(id);
 			if (o == null) return null;
 
@@ -94,6 +99,23 @@ namespace ISpanShop.Services.Orders
 		public async Task UpdateStatusAsync(long id, OrderStatus status)
 		{
 			await _orderRepository.UpdateStatusAsync(id, (byte)status);
+
+			if (status == OrderStatus.Completed)
+			{
+				var order = await _orderRepository.GetOrderByIdAsync(id);
+				if (order != null)
+				{
+					// 依訂單最終金額 1% 贈點，最少 10 點
+					int rewardPoints = Math.Max(10, (int)(order.FinalAmount * 0.01m));
+					await _pointService.UpdatePointsAsync(new PointUpdateDTO
+					{
+						UserId = order.UserId,
+						ChangeAmount = rewardPoints,
+						OrderNumber = order.OrderNumber,
+						Description = "訂單完成贈點"
+					});
+				}
+			}
 		}
 	}
 }

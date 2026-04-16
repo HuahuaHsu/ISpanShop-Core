@@ -87,8 +87,45 @@
               :class="{ active: sortBy === s.value }"
               @click="setSort(s.value as SortBy)"
             >{{ s.label }}</button>
+            
+            <!-- 價格下拉選單 -->
+            <el-dropdown trigger="click" @command="handleSortCommand">
+              <button
+                class="sort-btn"
+                :class="{ active: sortBy === 'priceAsc' || sortBy === 'priceDesc' }"
+              >
+                {{ priceLabel }}
+                <el-icon style="margin-left: 4px; vertical-align: middle;"><ArrowDown /></el-icon>
+              </button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="priceAsc">價格：低到高</el-dropdown-item>
+                  <el-dropdown-item command="priceDesc">價格：高到低</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
-          <div v-if="hasActiveFilters" class="clear-filters">
+          
+          <!-- 右側精簡分頁 -->
+          <div v-if="total > 0" class="compact-pagination">
+            <span class="page-indicator">{{ currentPage }}/{{ totalPages }}</span>
+            <el-button
+              size="small"
+              :icon="ArrowLeft"
+              circle
+              :disabled="currentPage === 1"
+              @click="onPageChange(currentPage - 1)"
+            />
+            <el-button
+              size="small"
+              :icon="ArrowRight"
+              circle
+              :disabled="currentPage === totalPages"
+              @click="onPageChange(currentPage + 1)"
+            />
+          </div>
+          
+          <div v-if="hasActiveFilters && total === 0" class="clear-filters">
             <el-button link size="small" @click="clearFilters">清除篩選</el-button>
           </div>
         </div>
@@ -150,6 +187,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowDown, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
 import { fetchProductList } from '@/api/product'
 import { fetchMainCategories } from '@/api/category'
@@ -165,9 +203,17 @@ const router = useRouter()
 const sortOptions = [
   { value: 'latest',    label: '最新' },
   { value: 'soldCount', label: '銷量' },
-  { value: 'priceAsc',  label: '價格↑' },
-  { value: 'priceDesc', label: '價格↓' },
 ]
+
+// 價格排序下拉文字
+const priceLabel = computed<string>(() => {
+  if (sortBy.value === 'priceAsc') return '價格：低到高'
+  if (sortBy.value === 'priceDesc') return '價格：高到低'
+  return '價格'
+})
+
+// 總頁數
+const totalPages = computed<number>(() => Math.ceil(total.value / pageSize.value))
 
 // ── 從 route.query 讀取當前狀態（computed = 唯一資料來源）──────────
 const keyword = computed<string>(() =>
@@ -178,6 +224,18 @@ const selectedCategoryId = computed<number | null>(() => {
   if (!v) return null
   const n = Number(v)
   return Number.isNaN(n) ? null : n
+})
+const selectedSubCategoryId = computed<number | null>(() => {
+  const v = route.query['subCategoryId']
+  if (!v) return null
+  const n = Number(v)
+  return Number.isNaN(n) ? null : n
+})
+const selectedBrandIds = computed<number[]>(() => {
+  const v = route.query['brandIds']
+  if (!v) return []
+  const str = typeof v === 'string' ? v : ''
+  return str.split(',').map(Number).filter(n => !Number.isNaN(n))
 })
 const sortBy = computed<SortBy>(() => {
   const v = route.query['sortBy'] as string
@@ -272,6 +330,12 @@ function setSort(value: SortBy): void {
   pushQuery({ sortBy: value })
 }
 
+function handleSortCommand(command: string): void {
+  if (command === 'priceAsc' || command === 'priceDesc') {
+    pushQuery({ sortBy: command })
+  }
+}
+
 function applyPriceFilter(): void {
   const min = priceMinStr.value ? Number(priceMinStr.value) : undefined
   const max = priceMaxStr.value ? Number(priceMaxStr.value) : undefined
@@ -302,10 +366,12 @@ async function loadProducts(): Promise<void> {
       pageSize: pageSize.value,
       sortBy:   sortBy.value,
     }
-    if (keyword.value)                    params.keyword    = keyword.value
-    if (selectedCategoryId.value !== null) params.categoryId = selectedCategoryId.value
-    if (routeMinPrice.value !== undefined) params.minPrice   = routeMinPrice.value
-    if (routeMaxPrice.value !== undefined) params.maxPrice   = routeMaxPrice.value
+    if (keyword.value)                        params.keyword       = keyword.value
+    if (selectedCategoryId.value !== null)    params.categoryId    = selectedCategoryId.value
+    if (selectedSubCategoryId.value !== null) params.subCategoryId = selectedSubCategoryId.value
+    if (selectedBrandIds.value.length > 0)    params.brandIds      = selectedBrandIds.value
+    if (routeMinPrice.value !== undefined)    params.minPrice      = routeMinPrice.value
+    if (routeMaxPrice.value !== undefined)    params.maxPrice      = routeMaxPrice.value
 
     const res = await fetchProductList(params)
     if (res.success) {
@@ -489,7 +555,22 @@ watch(
   font-weight: 600;
 }
 .clear-filters {
+  margin-left: 12px;
+}
+
+/* 精簡分頁（排序列右側） */
+.compact-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
+}
+.page-indicator {
+  font-size: 14px;
+  font-weight: 600;
+  color: #EE4D2D;
+  min-width: 50px;
+  text-align: center;
 }
 
 /* 商品網格 — 響應式 4 欄 */

@@ -77,12 +77,44 @@
             <el-icon :size="24"><Star /></el-icon>
             <div class="action-label">收藏</div>
           </div>
-          <div class="action-icon cart" @click="$router.push('/cart')">
-            <el-badge :value="cartStore.totalCount" :hidden="cartStore.totalCount === 0" :max="99">
-              <el-icon :size="24"><ShoppingCart /></el-icon>
-            </el-badge>
-            <div class="action-label">購物車</div>
-          </div>
+          <el-popover
+            placement="bottom-end"
+            :width="400"
+            trigger="hover"
+            popper-class="cart-popover"
+            :disabled="cartStore.totalCount === 0"
+          >
+            <template #reference>
+              <div class="action-icon cart" @click="$router.push('/cart')">
+                <el-badge :value="cartStore.totalCount" :hidden="cartStore.totalCount === 0" :max="99">
+                  <el-icon :size="24"><ShoppingCart /></el-icon>
+                </el-badge>
+                <div class="action-label">購物車</div>
+              </div>
+            </template>
+            <!-- 購物車預覽內容 -->
+            <div class="cart-preview">
+              <div class="cart-preview-header">最近加入的商品</div>
+              <div class="cart-preview-list">
+                <div v-for="item in cartStore.items.slice(0, 5)" :key="item.productId + '-' + item.variantId" class="cart-preview-item">
+                  <img :src="item.image" class="preview-img" alt="商品圖片" />
+                  <div class="preview-info">
+                    <div class="preview-name">{{ item.name }}</div>
+                  </div>
+                  <div class="preview-price">${{ item.price.toLocaleString() }}</div>
+                </div>
+              </div>
+              <div class="cart-preview-footer">
+                <span class="more-items" v-if="cartStore.items.length > 5">
+                  {{ cartStore.items.length - 5 }} 件商品尚未展示
+                </span>
+                <span v-else></span>
+                <button class="view-cart-btn" @click="$router.push('/cart')">
+                  查看我的購物車
+                </button>
+              </div>
+            </div>
+          </el-popover>
         </div>
       </div>
     </header>
@@ -488,5 +520,85 @@ function handleDropdownCommand(command: string) {
   color: #64748b;
   font-size: 13px;
   border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* 購物車預覽 Popover */
+:global(.cart-popover) {
+  padding: 0 !important;
+  border-radius: 4px;
+}
+.cart-preview {
+  display: flex;
+  flex-direction: column;
+}
+.cart-preview-header {
+  padding: 12px 16px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+.cart-preview-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+.cart-preview-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  gap: 12px;
+}
+.cart-preview-item:hover {
+  background-color: #f8fafc;
+}
+.preview-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border: 1px solid #f1f5f9;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.preview-info {
+  flex: 1;
+  min-width: 0; /* for text-overflow */
+}
+.preview-name {
+  color: #334155;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preview-price {
+  color: #EE4D2D;
+  font-weight: 500;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.cart-preview-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+.more-items {
+  color: #64748b;
+  font-size: 13px;
+}
+.view-cart-btn {
+  background: #EE4D2D;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.view-cart-btn:hover {
+  background: #BE3E24;
 }
 </style>

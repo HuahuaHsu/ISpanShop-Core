@@ -25,6 +25,8 @@ public partial class Order
 
     public decimal FinalAmount { get; set; }
 
+    public int? CouponId { get; set; }
+
     public byte? Status { get; set; }
 
     public DateTime? PaymentDate { get; set; }
@@ -50,6 +52,10 @@ public partial class Order
     public virtual ICollection<ReturnRequest> ReturnRequests { get; set; } = new List<ReturnRequest>();
 
     public virtual Store Store { get; set; }
+
+    public virtual Coupon Coupon { get; set; }
+
+    public virtual ICollection<MemberCoupon> MemberCoupons { get; set; } = new List<MemberCoupon>();
 
     public virtual ICollection<SupportTicket> SupportTickets { get; set; } = new List<SupportTicket>();
 

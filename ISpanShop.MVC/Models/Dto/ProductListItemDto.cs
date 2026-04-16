@@ -11,6 +11,7 @@ namespace ISpanShop.MVC.Models.Dto
         public decimal? OriginalPrice { get; set; }
         public string   ImageUrl      { get; set; } = string.Empty;
         public int      SoldCount     { get; set; }
+        public int      TotalStock    { get; set; }
         /// <summary>賣家所在地（Store 目前無 Location 欄位，回傳空字串）</summary>
         public string   Location      { get; set; } = string.Empty;
         public int      CategoryId    { get; set; }

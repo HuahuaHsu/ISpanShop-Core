@@ -83,6 +83,7 @@ export interface ProductListItem {
   originalPrice: number | null
   imageUrl: string
   soldCount: number
+  totalStock: number
   location: string
   categoryId: number
   /** 平均評分（目前後端固定回傳 null） */

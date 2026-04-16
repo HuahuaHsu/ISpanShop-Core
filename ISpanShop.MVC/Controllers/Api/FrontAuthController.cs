@@ -1,6 +1,10 @@
 using ISpanShop.Models.DTOs.Auth;
 using ISpanShop.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System;
+using System.Threading.Tasks;
 
 namespace ISpanShop.MVC.Controllers.Api
 {
@@ -13,6 +17,22 @@ namespace ISpanShop.MVC.Controllers.Api
         public FrontAuthController(IFrontAuthService authService)
         {
             _authService = authService;
+        }
+
+        [HttpGet("me")]
+        [Authorize(AuthenticationSchemes = "FrontendJwt")]
+        public IActionResult GetMe()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var account = User.FindFirst(ClaimTypes.Name)?.Value;
+            var role = User.FindFirst("RoleId")?.Value;
+
+            return Ok(new {
+                userId = userId,
+                account = account,
+                role = role,
+                authType = "JWT Bearer"
+            });
         }
 
         [HttpPost("login")]

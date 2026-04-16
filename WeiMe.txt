@@ -1,0 +1,127 @@
+太好了！既然後端已經具備了綠界金流 (ECPay)、蝦幣以及基本的優惠券折抵邏輯，這會大幅減輕開發的負擔。
+
+這意味著我們這次升級的重點將放在：「資料庫架構的企業級擴充 (範圍限定、分攤)」、「Vue 前後端介面實作」，以及**「將新架構無縫對接到現有的後端結帳 API」**。
+
+以下是為您更新，針對「已有後端核心邏輯」量身打造的 CLI 閱讀友善版規劃書：
+
+優惠券與結帳系統擴充規劃 (Coupon System - Enterprise Upgrade)
+狀態：整合現有金流與折抵 API 版
+
+本文件概述了如何在「已有綠界金流與基礎折抵邏輯」的後端基礎上，將優惠券系統升級至具備「範圍限定、高併發防護、退貨分攤」的企業級架構，並完成 Vue.js 前後端介面開發。
+
+1. 資料庫擴充設計 (Database Schema Upgrade)
+(在現有架構上進行擴充與修改)
+
+[Coupon] 優惠券主檔 (擴充欄位)
+Id: int (PK)
+
+StoreId / SellerId: int (FK)
+
+CouponCode: nvarchar(50)
+
+Title: nvarchar(100) [新增] (前台顯示名稱)
+
+DistributionType: byte [新增] (1:公開領取, 2:序號兌換, 3:系統派發)
+
+CouponType / DiscountValue / MinimumSpend / MaximumDiscount (維持現有設定)
+
+StartTime / EndTime: DateTime (確保與現有邏輯時區一致)
+
+TotalQuantity / UsedQuantity: int
+
+PerUserLimit: int [新增] (每人限用/限領張數)
+
+ApplyToAll: bit [新增] (預設 1: 全店通用)
+
+RowVersion: rowversion [新增] (用於領取時的樂觀鎖防護)
+
+[Scope Mapping] 範圍關聯表 (全新建立)
+用來支援「非全館通用」的進階玩法
+
+CouponProduct: CouponId, ProductId (多對多，限定特定商品)
+
+CouponCategory: CouponId, CategoryId (多對多，限定特定分類)
+
+[MemberCoupon] 會員持有的券 (全新/擴充建立)
+Id: int (PK)
+
+UserId / CouponId: int (FK)
+
+UsageStatus: byte [修改] (0:未使用, 1:已使用, 2:已過期, 3:鎖定中)
+
+新增 3:鎖定中 是為了配合現有綠界 API，避免跳轉付款期間被重複扣券。
+
+OrderId: bigint?
+
+Constraint: UNIQUE(UserId, CouponId) 當 PerUserLimit = 1 時。
+
+[Order & OrderDetail] 訂單關聯 (擴充欄位)
+Order.CouponId: int? (維持現有)
+
+Order.PointDiscount: int (維持現有蝦幣紀錄)
+
+OrderDetail.AllocatedDiscountAmount: decimal [新增]
+
+將現有整筆優惠券折扣，依商品小計比例拆分，寫入此欄位以防未來退貨溢退。
+
+2. 後台介面需求 (Seller Dashboard UI - Vue)
+A. 優惠券管理列表 (List View)
+API 對接: 呼叫現有或新增的 GET /api/coupons。
+
+展示欄位: 狀態 (啟用/下架)、標題、折扣代碼、類型/額度、使用期限、庫存狀態。
+
+操作功能: 狀態切換 (Toggle)、編輯、刪除 (軟刪除)。
+
+B. 優惠券新增/編輯表單 (Create/Edit Form)
+基本與規則設定: 標題、代碼、發放方式、總發行量、折扣邏輯 (金額/%)、低消門檻、日期選擇器。
+
+進階範圍設定 (新功能 UI):
+
+提供 Radio Button 切換：[全店適用] / [指定商品] / [指定分類]。
+
+若選擇「指定商品」，實作商品選擇器 (Product Selector Modal)，選取後寫入 CouponProduct 表。
+
+3. 前台購物車與結帳介面 (Storefront UI - Vue)
+A. 折抵互動區塊 (Discount & Points Section)
+優惠券模組:
+
+實作「選擇優惠券」Modal。
+
+前端驗證過濾: 根據購物車內的 ProductId 與金額，比對 CouponProduct 與 MinimumSpend。
+
+將優惠券分為「可使用」與「不可使用 (置灰並顯示不適用原因)」。
+
+提供輸入框，讓使用者輸入 DistributionType = 2 的專屬折扣碼。
+
+蝦幣模組:
+
+呼叫現有 API 獲取可用蝦幣餘額。
+
+實作 Switch 或自訂輸入框供使用者折抵。
+
+B. 動態金額面板 (Reactive Price Summary)
+監聽優惠券與蝦幣的選擇狀態，即時呼叫後端「試算 API」或由前端依現有邏輯試算：
+
+商品小計 -> 扣除優惠券 -> 扣除蝦幣 -> 加上運費 = FinalAmount。
+
+4. 系統對接與現有 API 整合流程 (Integration Strategy)
+既然核心邏輯已存在，我們的重點是**「攔截與加工」**現有的資料流：
+
+A. 結帳送出前 (Checkout Payload)
+Vue 前端在送出結帳要求時，Payload 需包含：{ ..., CouponId: 12, UsedPoints: 150 }。
+
+B. 進入現有結帳 API (Backend Interception)
+新增範圍驗證 (Scope Check): 在進入既有扣款邏輯前，新增一段程式碼檢查訂單內的商品是否符合 CouponProduct / CouponCategory 的設定。
+
+鎖定狀態變更 (Locking): 在產生訂單並跳轉綠界前，將該張券的 MemberCoupon.UsageStatus 更新為 3 (鎖定中)，而非直接標記為已使用。
+
+計算分攤 (Pro-rating): 呼叫現有邏輯算出總折扣後，新增一段迴圈，將總折扣按比例分配至 OrderDetail.AllocatedDiscountAmount 並 SaveChanges。
+
+傳遞至綠界: 確保現有綠界整合模組拿到的 TotalAmount 是扣除優惠與蝦幣後的最終正確金額。
+
+C. 綠界 Webhook 回傳 (Payment Callback)
+修改現有的綠界 ReturnURL 處理邏輯：
+
+若付款成功 (Success): 將對應的 MemberCoupon.UsageStatus 從 3 改為 1 (已使用)，並填入 UsedAt。
+
+異常處理排程 (Cron Job): 新增一支背景排程，定期掃描超過 30 分鐘仍處於 3 (鎖定中) 且未付款的訂單，將優惠券狀態還原為 0 (未使用)，並退還鎖定的蝦幣。

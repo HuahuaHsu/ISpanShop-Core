@@ -175,16 +175,13 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 				}
 
 				// ── 更新資料庫 ──
-				var dto = new MemberDto
+				var dto = new UpdateMemberProfileDto
 				{
 					Id = model.UserId,
 					Email = model.Email,
 					FullName = model.FullName,
 					PhoneNumber = model.PhoneNumber,
-					IsBlacklisted = model.IsBlacklisted,
-					City = model.City,
-					Region = model.Region,
-					Address = model.Street
+					
 				};
 
 				_memberService.UpdateMemberProfile(dto);
@@ -199,21 +196,21 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 						message = $"會員「{updatedMember.FullName}」資料更新成功！",
 						member = new
 						{
-							userId       = updatedMember.Id,
-							fullName     = updatedMember.FullName,
-							email        = updatedMember.Email,
-							phoneNumber  = updatedMember.PhoneNumber,
+							userId = updatedMember.Id,
+							fullName = updatedMember.FullName,
+							email = updatedMember.Email,
+							phoneNumber = updatedMember.PhoneNumber,
 							isBlacklisted = updatedMember.IsBlacklisted,
-							isSeller     = updatedMember.IsSeller,
-							levelName    = updatedMember.LevelName,
+							isSeller = updatedMember.IsSeller,
+							levelName = updatedMember.LevelName,
 							pointBalance = updatedMember.PointBalance,
-							avatarUrl    = updatedMember.AvatarUrl,
-							account      = updatedMember.Account
+							avatarUrl = updatedMember.AvatarUrl,
+							account = updatedMember.Account
 						}
 					});
 				}
 
-				TempData["Success"] = $"會員資料更新成功！";
+				TempData["Success"] = "會員資料更新成功！";
 				return RedirectToAction(nameof(Index));
 			}
 			catch (Exception ex)

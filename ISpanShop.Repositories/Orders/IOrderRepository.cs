@@ -25,6 +25,9 @@ namespace ISpanShop.Repositories.Orders
 		// 取得分頁與篩選後的訂單清單 (主要用於列表頁 A & B 需求)
 		Task<PagedResultDto<OrderListDto>> GetFilteredOrdersAsync(OrderSearchDto criteria);
 
+		// 前台：取得會員訂單列表
+		Task<List<Order>> GetOrdersByMemberIdAsync(int memberId);
+
 		// 儀表板數據查詢 (C & D 需求)
 		Task<DashboardKpiRawDataDto> GetDashboardKpisAsync(int? storeId, DateTime startDate, DateTime endDate, DateTime prevStartDate, DateTime prevEndDate);
 		Task<ApexChartDataDto> GetCategoryCompositionBarChartAsync(int? storeId, DateTime startDate, DateTime endDate);

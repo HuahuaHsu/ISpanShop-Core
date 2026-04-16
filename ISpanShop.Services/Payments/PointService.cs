@@ -36,52 +36,70 @@ namespace ISpanShop.Services.Payments;
 		/// </summary>
 		public async Task<(bool IsSuccess, string Message)> UpdatePointsAsync(PointUpdateDTO dto)
 		{
-			using (var transaction = await _context.Database.BeginTransactionAsync())
+			// 檢查目前是否已經有交易在執行中 (避免嵌套交易報錯)
+			bool hasExistingTransaction = _context.Database.CurrentTransaction != null;
+
+			if (hasExistingTransaction)
 			{
-				try
-				{
-					var profile = await _context.MemberProfiles
-						.FirstOrDefaultAsync(p => p.UserId == dto.UserId);
-
-					if (profile == null) return (false, "找不到會員資料");
-
-					// --- 修正 1: 處理 PointBalance 為 int? 的加減法 ---
-					int currentBalance = profile.PointBalance ?? 0; // 如果是 null 則當作 0
-
-					if (dto.ChangeAmount < 0 && (currentBalance + dto.ChangeAmount) < 0)
-					{
-						return (false, "點數不足，無法折抵");
-					}
-
-					// 更新餘額
-					profile.PointBalance = currentBalance + dto.ChangeAmount;
-					profile.UpdatedAt = DateTime.Now;
-
-					// --- 修正 2: 建立歷史紀錄 ---
-					var history = new PointHistory
-					{
-						UserId = dto.UserId,
-						OrderNumber = dto.OrderNumber,
-						ChangeAmount = dto.ChangeAmount,
-						BalanceAfter = profile.PointBalance ?? 0, // 確保寫入歷史的是實體數值
-						Description = dto.Description,
-						CreatedAt = DateTime.Now
-					};
-
-					// --- 修正 3: 使用 DbContext 正確的 DbSet 名稱 (PointHistories) ---
-					_context.PointHistories.Add(history);
-
-					await _context.SaveChangesAsync();
-					await transaction.CommitAsync();
-
-					return (true, "點數更新成功");
-				}
-				catch (Exception ex)
-				{
-					await transaction.RollbackAsync();
-					return (false, $"更新失敗: {ex.Message}");
-				}
+				return await PerformUpdateLogic(dto);
 			}
+			else
+			{
+				var strategy = _context.Database.CreateExecutionStrategy();
+				return await strategy.ExecuteAsync(async () =>
+				{
+					using (var transaction = await _context.Database.BeginTransactionAsync())
+					{
+						try
+						{
+							var res = await PerformUpdateLogic(dto);
+							if (res.IsSuccess) await transaction.CommitAsync();
+							else await transaction.RollbackAsync();
+							return res;
+						}
+						catch (Exception ex)
+						{
+							await transaction.RollbackAsync();
+							return (false, $"更新失敗: {ex.Message}");
+						}
+					}
+				});
+			}
+		}
+
+		private async Task<(bool IsSuccess, string Message)> PerformUpdateLogic(PointUpdateDTO dto)
+		{
+			var profile = await _context.MemberProfiles
+				.FirstOrDefaultAsync(p => p.UserId == dto.UserId);
+
+			if (profile == null) return (false, "找不到會員資料");
+
+			int currentBalance = profile.PointBalance ?? 0;
+
+			if (dto.ChangeAmount < 0 && (currentBalance + dto.ChangeAmount) < 0)
+			{
+				return (false, "點數不足，無法折抵");
+			}
+
+			// 更新餘額
+			profile.PointBalance = currentBalance + dto.ChangeAmount;
+			profile.UpdatedAt = DateTime.Now;
+
+			// 建立歷史紀錄
+			var history = new PointHistory
+			{
+				UserId = dto.UserId,
+				OrderNumber = dto.OrderNumber,
+				ChangeAmount = dto.ChangeAmount,
+				BalanceAfter = profile.PointBalance ?? 0,
+				Description = dto.Description,
+				CreatedAt = DateTime.Now
+			};
+
+			_context.PointHistories.Add(history);
+			await _context.SaveChangesAsync();
+
+			return (true, "點數更新成功");
 		}
 
         /// <summary>

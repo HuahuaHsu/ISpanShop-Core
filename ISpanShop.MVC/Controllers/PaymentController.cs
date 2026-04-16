@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace ISpanShop.MVC.Controllers
 {
+	[Route("Payment/[action]")]
 	public class PaymentController : Controller
 	{
 		private readonly ISpanShopDBContext _context;

@@ -15,12 +15,17 @@
             </div>
           </template>
         </el-image>
+        <div v-if="product.totalStock === 0" class="sold-out-overlay">
+          <span class="sold-out-text">已售完</span>
+        </div>
       </div>
 
       <div class="card-body">
         <p class="card-name">{{ product.name }}</p>
-        <p class="card-price">${{ formatPrice(product.price) }}</p>
-        <p class="card-sold">已售 {{ product.soldCount.toLocaleString() }} 件</p>
+        <div class="card-price-row">
+          <span class="card-price">${{ formatPrice(product.price) }}</span>
+          <span class="card-sold">{{ formatSoldCount(product.soldCount) }}</span>
+        </div>
       </div>
     </div>
   </router-link>
@@ -29,6 +34,7 @@
 <script setup lang="ts">
 import { Picture } from '@element-plus/icons-vue'
 import type { ProductListItem } from '@/types/product'
+import { formatPrice, formatSoldCount } from '@/utils/format'
 
 const props = defineProps<{
   product: ProductListItem
@@ -36,10 +42,6 @@ const props = defineProps<{
 
 // 圖片載入失敗時的佔位圖（data URI 1x1 透明 PNG）
 const fallbackImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-
-function formatPrice(price: number): string {
-  return price.toLocaleString('zh-TW')
-}
 
 // 避免 props 未使用的 lint 警告
 void props
@@ -113,16 +115,46 @@ void props
   height: 36px;
 }
 
+.card-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .card-price {
   font-size: 18px;
   font-weight: 700;
   color: #EE4D2D;
-  margin: 0 0 4px;
+  flex-shrink: 0;
 }
 
 .card-sold {
-  font-size: 11px;
-  color: #94a3b8;
-  margin: 0;
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sold-out-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.sold-out-text {
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px 16px;
+  border-radius: 4px;
 }
 </style>
