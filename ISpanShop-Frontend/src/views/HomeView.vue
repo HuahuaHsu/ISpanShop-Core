@@ -195,6 +195,37 @@
 
         <!-- 右側商品牆 -->
         <div class="products-main">
+          <!-- 排序列 -->
+          <div class="sort-bar">
+            <span class="sort-label">排序：</span>
+            <div class="sort-btns">
+              <button
+                v-for="s in sortOptions"
+                :key="s.value"
+                class="sort-btn"
+                :class="{ active: sortBy === s.value }"
+                @click="setSort(s.value as SortBy)"
+              >{{ s.label }}</button>
+              
+              <!-- 價格下拉選單 -->
+              <el-dropdown trigger="click" @command="handleSortCommand">
+                <button
+                  class="sort-btn"
+                  :class="{ active: sortBy === 'priceAsc' || sortBy === 'priceDesc' }"
+                >
+                  {{ priceLabel }}
+                  <el-icon style="margin-left: 4px; vertical-align: middle;"><ArrowDown /></el-icon>
+                </button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="priceAsc">價格：低到高</el-dropdown-item>
+                    <el-dropdown-item command="priceDesc">價格：高到低</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </div>
+
           <!-- 骨架屏 -->
           <div v-if="loading" class="product-grid">
             <el-skeleton
@@ -226,17 +257,15 @@
           <!-- 空狀態 -->
           <el-empty v-else description="目前沒有商品" :image-size="120" />
 
-          <!-- 分頁 -->
-          <div v-if="total > 0" class="pagination-wrap">
-            <el-pagination
-              background
-              layout="prev, pager, next, jumper, total"
-              :total="total"
-              :page-size="pageSize"
-              :current-page="currentPage"
-              :disabled="loading"
-              @current-change="onPageChange"
-            />
+          <!-- 查看更多按鈕 -->
+          <div v-if="products.length > 0" class="view-more-wrap">
+            <el-button
+              class="view-more-btn"
+              @click="goToProductsPage"
+            >
+              查看更多
+              <el-icon style="margin-left: 6px;"><ArrowRight /></el-icon>
+            </el-button>
           </div>
         </div>
       </div>
@@ -246,9 +275,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Filter as FilterIcon } from '@element-plus/icons-vue'
+import { Filter as FilterIcon, ArrowDown, ArrowRight } from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
 import FilterSidebar from '@/components/home/FilterSidebar.vue'
 import { fetchProductList } from '@/api/product'
@@ -261,8 +290,11 @@ import type { Category, SubCategory } from '@/types/category'
 import type { Promotion } from '@/types/promotion'
 import type { Brand } from '@/types/brand'
 
+type SortBy = 'latest' | 'priceAsc' | 'priceDesc' | 'soldCount'
+
 // ── 路由 ─────────────────────────────────────────────────────────
 const route = useRoute()
+const router = useRouter()
 
 // ── 響應式斷點 ────────────────────────────────────────────────────
 const isMobile = ref<boolean>(typeof window !== 'undefined' && window.innerWidth < 768)
@@ -274,10 +306,24 @@ function handleResize(): void {
 const products = ref<ProductListItem[]>([])
 const loading = ref<boolean>(false)
 const currentPage = ref<number>(1)
-const pageSize = ref<number>(30)
+const pageSize = ref<number>(20) // 固定 20 筆
 const total = ref<number>(0)
 const sectionRef = ref<HTMLElement | null>(null)
 const keyword = ref<string>('')
+const sortBy = ref<SortBy>('latest')
+
+// ── 排序選項 ──────────────────────────────────────────────────────
+const sortOptions = [
+  { value: 'latest',    label: '最新' },
+  { value: 'soldCount', label: '銷量' },
+]
+
+// 價格排序下拉文字
+const priceLabel = computed<string>(() => {
+  if (sortBy.value === 'priceAsc') return '價格：低到高'
+  if (sortBy.value === 'priceDesc') return '價格：高到低'
+  return '價格'
+})
 
 // ── 主分類篩選 ───────────────────────────────────────────────────
 const selectedCategoryId = ref<number | null>(null)
@@ -311,7 +357,7 @@ async function loadProducts(): Promise<void> {
     const params: FetchProductsParams = {
       page: currentPage.value,
       pageSize: pageSize.value,
-      sortBy: 'latest',
+      sortBy: sortBy.value,
     }
     if (selectedCategoryId.value !== null) params.categoryId = selectedCategoryId.value
     if (selectedSubCategoryId.value !== null) params.subCategoryId = selectedSubCategoryId.value
@@ -482,11 +528,35 @@ async function applyQueryFilter(): Promise<void> {
   void loadProducts()
 }
 
-function onPageChange(page: number): void {
-  currentPage.value = page
-  void loadProducts().then(() => {
-    sectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  })
+function setSort(value: SortBy): void {
+  sortBy.value = value
+  currentPage.value = 1
+  void loadProducts()
+}
+
+function handleSortCommand(command: string): void {
+  if (command === 'priceAsc' || command === 'priceDesc') {
+    sortBy.value = command as SortBy
+    currentPage.value = 1
+    void loadProducts()
+  }
+}
+
+function goToProductsPage(): void {
+  const query: Record<string, string> = {}
+  if (selectedCategoryId.value !== null) {
+    query['categoryId'] = String(selectedCategoryId.value)
+  }
+  if (selectedSubCategoryId.value !== null) {
+    query['subCategoryId'] = String(selectedSubCategoryId.value)
+  }
+  if (selectedBrandIds.value.length > 0) {
+    query['brandIds'] = selectedBrandIds.value.join(',')
+  }
+  if (sortBy.value !== 'latest') {
+    query['sortBy'] = sortBy.value
+  }
+  void router.push({ path: '/products', query })
 }
 
 // ── 生命週期 ─────────────────────────────────────────────────────
@@ -754,6 +824,7 @@ const quickItems = [
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 12px;
+  margin-bottom: 20px;
 }
 .with-sidebar .product-grid {
   grid-template-columns: repeat(5, 1fr);
@@ -767,13 +838,69 @@ const quickItems = [
   .with-sidebar .product-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* 分頁 */
-.pagination-wrap {
+/* 排序列 */
+.sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+}
+.sort-label {
+  font-size: 13px;
+  color: #606266;
+  flex-shrink: 0;
+}
+.sort-btns {
+  display: flex;
+  gap: 6px;
+}
+.sort-btn {
+  padding: 5px 16px;
+  border: 1px solid #dcdfe6;
+  background: white;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sort-btn:hover {
+  border-color: #EE4D2D;
+  color: #EE4D2D;
+}
+.sort-btn.active {
+  background: #EE4D2D;
+  border-color: #EE4D2D;
+  color: white;
+  font-weight: 600;
+}
+
+/* 查看更多按鈕 */
+.view-more-wrap {
   display: flex;
   justify-content: center;
-  margin-top: 28px;
+  margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid #f1f5f9;
+}
+.view-more-btn {
+  width: 280px;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #EE4D2D;
+  border-color: #EE4D2D;
+  background: white;
+  transition: all 0.3s;
+}
+.view-more-btn:hover {
+  background: #EE4D2D;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(238, 77, 45, 0.3);
 }
 
 /* 骨架屏卡片 */
