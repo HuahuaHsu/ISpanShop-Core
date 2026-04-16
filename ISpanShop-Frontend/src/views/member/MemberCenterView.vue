@@ -25,6 +25,26 @@ const IconChat = () => (
 const authStore = useAuthStore();
 const router = useRouter();
 
+// ── Lifecycle ──────────────────────────────────────
+import { onMounted, ref } from "vue";
+import { checkoutApi } from "@/api/checkout";
+
+const liveBalance = ref<number | null>(null);
+
+onMounted(async () => {
+  try {
+    const res = await checkoutApi.getWalletBalance();
+    console.log('Member Center Wallet Sync:', res.data);
+    liveBalance.value = res.data.pointBalance ?? res.data.balance ?? 0;
+    // 同步更新 store 中的資料（如果有的話）
+    if (authStore.memberInfo) {
+      authStore.memberInfo.pointBalance = liveBalance.value;
+    }
+  } catch (err) {
+    console.error('Failed to sync wallet balance', err);
+  }
+});
+
 const go = (name: string) => {
   switch (name) {
     case '設定':
@@ -123,8 +143,8 @@ const services = [
       <div class="wallet-grid">
         <div class="wallet-item" @click="go('紅利點數')">
           <span class="wallet-icon">🪙</span>
-          <span class="wallet-value">{{ authStore.memberInfo?.pointBalance?.toLocaleString() || 0 }}</span>
-          <span class="wallet-label">紅利點數</span>
+          <span class="wallet-value">{{ (liveBalance ?? authStore.memberInfo?.pointBalance ?? 0).toLocaleString() }}</span>
+          <span class="wallet-label">我的蝦幣</span>
         </div>
         <div class="wallet-item" @click="go('優惠券')">
           <span class="wallet-icon">🎟</span>

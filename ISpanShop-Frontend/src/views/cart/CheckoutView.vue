@@ -70,7 +70,7 @@ onMounted(async () => {
       ),
       checkoutApi.getWalletBalance()
     ])
-    console.log('Checkout Data Loaded:', { coupons: couponsRes.data, wallet: walletRes.data })
+    console.log('Checkout Data JSON:', JSON.stringify({ coupons: couponsRes.data, wallet: walletRes.data }))
     
     availableCoupons.value = couponsRes.data
     // 支援 balance 或 pointBalance 欄位

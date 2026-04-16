@@ -51,7 +51,7 @@ namespace ISpanShop.WebAPI.Controllers
             if (profile == null) return NotFound("找不到該帳號的會員設定檔");
 
             profile.PointBalance = (profile.PointBalance ?? 0) + 1000;
-            
+
             _context.PointHistories.Add(new PointHistory {
                 UserId = user.Id,
                 ChangeAmount = 1000,
@@ -63,5 +63,29 @@ namespace ISpanShop.WebAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok($"已成功為 {account} 儲值 1000 點蝦幣。目前餘額：{profile.PointBalance}");
         }
-    }
-}
+
+        [HttpGet("add-points-to-me")]
+        public async Task<IActionResult> AddPointsToMe()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized("請先登入");
+            int userId = int.Parse(userIdStr);
+
+            var profile = await _context.MemberProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+            if (profile == null) return NotFound("找不到您的會員設定檔");
+
+            profile.PointBalance = (profile.PointBalance ?? 0) + 1000;
+
+            _context.PointHistories.Add(new PointHistory {
+                UserId = userId,
+                ChangeAmount = 1000,
+                BalanceAfter = profile.PointBalance.Value,
+                Description = "開發者自我儲值測試",
+                CreatedAt = DateTime.Now
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok($"儲值成功！已為您的帳號增加 1000 點。目前餘額：{profile.PointBalance}");
+        }
+        }
+        }
