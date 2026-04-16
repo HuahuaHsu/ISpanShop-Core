@@ -12,7 +12,7 @@ const isEmpty = computed(() => cartStore.items.length === 0)
 
 function increment(productId: number, variantId: number | null, current: number): void {
   cartStore.updateQty(productId, variantId, current + 1)
-      }
+}
 
 function decrement(productId: number, variantId: number | null, current: number): void {
   if (current <= 1) {
@@ -39,10 +39,10 @@ async function confirmRemove(productId: number, variantId: number | null): Promi
 async function clearAll(): Promise<void> {
   try {
     await ElMessageBox.confirm('確定要清空購物車？', '清空購物車', {
-    confirmButtonText: '確定',
-    cancelButtonText: '取消',
-    type: 'warning',
-  })
+      confirmButtonText: '確定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
     cartStore.clearCart()
     ElMessage.success('購物車已清空')
   } catch {
@@ -63,13 +63,13 @@ function handleCheckout(): void {
   <div class="cart-page">
     <div class="cart-container">
       <!-- Header -->
-    <div class="cart-header">
+      <div class="cart-header">
         <el-button circle @click="router.back()">
           <el-icon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></el-icon>
         </el-button>
         <h1 class="cart-title">購物車</h1>
         <span class="cart-count">（{{ cartStore.totalQuantity }} 件）</span>
-    </div>
+      </div>
 
       <!-- 空購物車 -->
       <div v-if="isEmpty" class="cart-empty">
@@ -78,20 +78,15 @@ function handleCheckout(): void {
         </el-empty>
       </div>
 
-    <!-- 購物車清單 -->
+      <!-- 購物車清單 -->
       <template v-else>
         <div class="cart-list">
           <div
             v-for="item in cartStore.items"
             :key="`${item.productId}-${item.variantId}`"
             class="cart-item"
-      >
-        <!-- 勾選框 -->
-        <el-table-column type="selection" width="55" />
-
-        <!-- 商品圖片 -->
-        <el-table-column label="商品圖片" width="120">
-          <template #default="{ row }">
+          >
+            <!-- 商品圖片 -->
             <el-image
               :src="item.image"
               fit="cover"
@@ -102,10 +97,8 @@ function handleCheckout(): void {
                 <div class="image-fallback">🖼️</div>
               </template>
             </el-image>
-          </template>
-        </el-table-column>
 
-        <!-- 商品資訊 -->
+            <!-- 商品資訊 -->
             <div class="item-info">
               <div
                 class="item-name"
@@ -114,17 +107,15 @@ function handleCheckout(): void {
               <div v-if="item.specLabel" class="item-spec">{{ item.specLabel }}</div>
               <div class="item-price">NT$ {{ formatPrice(item.price) }}</div>
             </div>
-          </template>
-        </el-table-column>
 
             <!-- 數量控制 -->
             <div class="item-qty">
               <el-button
                 circle
-              size="small"
+                size="small"
                 :icon="Minus"
                 @click="decrement(item.productId, item.variantId, item.quantity)"
-            />
+              />
               <span class="qty-num">{{ item.quantity }}</span>
               <el-button
                 circle
@@ -134,15 +125,13 @@ function handleCheckout(): void {
               />
             </div>
 
-        <!-- 小計 -->
+            <!-- 小計 -->
             <div class="item-subtotal">
               NT$ {{ formatPrice(item.price * item.quantity) }}
             </div>
 
             <!-- 刪除 -->
             <el-button
-              type="danger"
-              :icon="Delete"
               circle
               size="small"
               type="danger"
@@ -150,20 +139,8 @@ function handleCheckout(): void {
               :icon="Delete"
               @click="confirmRemove(item.productId, item.variantId)"
             />
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 底部固定結帳列 -->
-      <div class="checkout-bar">
-        <div class="bar-left">
-          <span>已選取 {{ cartStore.selectedCount }} 項商品</span>
-        </div>
-        <div class="bar-right">
-          <div class="total-section">
-            <span class="label">總金額 ({{ cartStore.selectedCount }} 個項目):</span>
-            <span class="total-price">NT$ {{ cartStore.totalPrice.toLocaleString() }}</span>
           </div>
+        </div>
 
         <!-- 底部結帳列 -->
         <div class="cart-footer">
@@ -173,10 +150,10 @@ function handleCheckout(): void {
             <span class="total-price">NT$ {{ formatPrice(cartStore.totalPrice) }}</span>
             <el-button type="primary" size="large" @click="handleCheckout">
               結帳（{{ cartStore.totalQuantity }} 件）
-          </el-button>
+            </el-button>
+          </div>
         </div>
-      </div>
-    </template>
+      </template>
     </div>
   </div>
 </template>
@@ -192,12 +169,9 @@ function handleCheckout(): void {
   margin: 0 auto;
   padding: 0 16px;
 }
-
 .cart-header {
-  margin-bottom: 24px;
-  h1 {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
   gap: 12px;
   margin-bottom: 24px;
   padding: 16px 0 12px;
@@ -205,8 +179,8 @@ function handleCheckout(): void {
 .cart-title {
   font-size: 22px;
   font-weight: 700;
-    margin: 0;
-  }
+  margin: 0;
+}
 .cart-count {
   color: #909399;
   font-size: 15px;
@@ -262,7 +236,7 @@ function handleCheckout(): void {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-    margin-bottom: 4px;
+  margin-bottom: 4px;
   color: #303133;
 }
 .item-name:hover { color: #EE4D2D; }
@@ -274,7 +248,7 @@ function handleCheckout(): void {
 .item-price {
   font-size: 13px;
   color: #606266;
-  }
+}
 .item-qty {
   display: flex;
   align-items: center;
@@ -302,27 +276,19 @@ function handleCheckout(): void {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  z-index: 10;
-
-  .bar-left {
-    color: #606266;
-  }
+}
 .footer-right {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
   gap: 16px;
 }
 .total-label {
   font-size: 15px;
-        color: #606266;
-        margin-right: 8px;
-      }
-      .total-price {
+  color: #606266;
+}
+.total-price {
   font-size: 22px;
   font-weight: 700;
   color: #EE4D2D;
 }
 </style>
-
