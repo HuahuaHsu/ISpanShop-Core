@@ -70,6 +70,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 OriginalPrice = null,
                 ImageUrl      = p.MainImageUrl ?? string.Empty,
                 SoldCount     = p.TotalSales ?? 0,
+                TotalStock    = p.TotalStock,
                 Location      = string.Empty,
                 CategoryId    = p.CategoryId,
                 Rating        = null
@@ -299,6 +300,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 OriginalPrice = null,
                 ImageUrl      = p.MainImageUrl ?? string.Empty,
                 SoldCount     = p.TotalSales ?? 0,
+                TotalStock    = p.TotalStock,
                 Location      = string.Empty,
                 CategoryId    = p.CategoryId,
                 Rating        = null

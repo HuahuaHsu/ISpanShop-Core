@@ -15,6 +15,9 @@
             </div>
           </template>
         </el-image>
+        <div v-if="product.totalStock === 0" class="sold-out-overlay">
+          <span class="sold-out-text">已售完</span>
+        </div>
       </div>
 
       <div class="card-body">
@@ -124,5 +127,27 @@ void props
   font-size: 11px;
   color: #94a3b8;
   margin: 0;
+}
+
+.sold-out-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.sold-out-text {
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px 16px;
+  border-radius: 4px;
 }
 </style>
