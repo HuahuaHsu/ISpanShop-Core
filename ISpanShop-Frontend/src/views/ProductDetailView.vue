@@ -113,7 +113,7 @@
               </template>
               <template v-else>
                 <span class="pd-no-rating">暫無評價</span>
-                <span class="pd-review-count">{{ safeProduct.soldCount.toLocaleString() }} 已售</span>
+                <span class="pd-review-count">{{ formatSoldCount(safeProduct.soldCount) }}</span>
               </template>
             </div>
 
@@ -329,6 +329,7 @@ import { Picture, Check } from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
 import { fetchProductDetail, fetchRelatedProducts } from '@/api/product'
 import { useCartStore } from '@/stores/cart'
+import { formatPrice, formatSoldCount } from '@/utils/format'
 import type {
   ProductDetail,
   ProductListItem,
@@ -649,10 +650,6 @@ function handleViewStore(): void {
 }
 
 // ─── 工具函式 ────────────────────────────────────────────────────
-
-function formatPrice(price: number): string {
-  return price.toLocaleString('zh-TW')
-}
 </script>
 
 <style scoped>
