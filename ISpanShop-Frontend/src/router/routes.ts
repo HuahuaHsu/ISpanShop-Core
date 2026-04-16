@@ -49,7 +49,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/member/orders',
     name: 'member-orders',
-    component: () => import('../views/member/OrdersView.vue'),
+    component: () => import('../views/member/OrderListView.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -68,6 +68,12 @@ export const routes: RouteRecordRaw[] = [
     path: '/member/mystore',
     name: 'member-mystore',
     component: () => import('../views/member/MyStoreView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/member/support',
+    name: 'member-support',
+    component: () => import('../views/member/SupportTicketsView.vue'),
     meta: { requiresAuth: true }
   },
   {

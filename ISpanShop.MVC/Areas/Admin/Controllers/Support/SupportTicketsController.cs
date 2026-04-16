@@ -56,9 +56,9 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Support
 				Id = d.Id,
 				Subject = d.Subject,
 				Category = d.Category,
-				Status = d.Status,
+				Status = d.Status ?? 0, // 處理 Nullable byte
 				AdminReply = d.AdminReply,
-				CreatedAt = d.CreatedAt
+				CreatedAt = d.CreatedAt ?? DateTime.MinValue // 處理 Nullable DateTime
 			}).ToList();
 
 			// 將分頁資訊存入 ViewBag
@@ -181,12 +181,12 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Support
 				Id = dto.Id,
 				Subject = dto.Subject,
 				Category = dto.Category,
-				Status = dto.Status,
+				Status = dto.Status ?? 0,
 				Description = dto.Description,
 				AttachmentUrl = dto.AttachmentUrl,
 				OrderId = dto.OrderId,
 				AdminReply = dto.AdminReply,
-				CreatedAt = dto.CreatedAt
+				CreatedAt = dto.CreatedAt ?? DateTime.MinValue
 			};
 
 			return View(vm);

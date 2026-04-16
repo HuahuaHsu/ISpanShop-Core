@@ -3,12 +3,14 @@ import type { Order, OrderListResponse } from '@/types/order';
 
 /**
  * 取得訂單列表
- * @param userId 使用者 ID
- * @param pageNumber 頁碼
- * @param pageSize 每頁筆數
+ * @param query 查詢參數
  */
-export const getOrders = (userId: number, pageNumber: number = 1, pageSize: number = 10): Promise<OrderListResponse> => {
-  return axios.get('/api/orders', { params: { userId, pageNumber, pageSize } });
+export const getOrders = (query: { 
+  pageNumber?: number; 
+  pageSize?: number; 
+  statuses?: number[] 
+}): Promise<OrderListResponse> => {
+  return axios.get('/api/orders', { params: query });
 };
 
 /**

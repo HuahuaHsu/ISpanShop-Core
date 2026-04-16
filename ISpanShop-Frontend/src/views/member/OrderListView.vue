@@ -1,25 +1,81 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { ref, onMounted, watch, reactive } from 'vue';
+import { useRouter } from 'vue-router';
 import { getOrders } from '@/api/order';
-import type { OrderListItem } from '@/types/order';
-import { Calendar, ShoppingBag } from '@element-plus/icons-vue';
+import { createTicket } from '@/api/support';
+import { SUPPORT_CATEGORIES, type SupportTicket } from '@/types/support';
+import { Calendar, ShoppingBag, ChatLineRound } from '@element-plus/icons-vue';
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 
 const router = useRouter();
-const route = useRoute();
 const loading = ref(false);
 const orders = ref<OrderListItem[]>([]);
 const total = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(10);
 
-// 優先從網址參數取得 userId (?userId=1)，若無則預設為 1
-const userId = computed(() => Number(route.query.userId) || 1);
+// --- 聯絡客服彈窗相關 ---
+const supportDialogVisible = ref(false);
+const submitLoading = ref(false);
+const supportFormRef = ref<FormInstance>();
+const supportForm = reactive({
+  category: 0,
+  subject: '',
+  description: '',
+  orderId: 0 as number | null
+});
 
+const supportRules: FormRules = {
+  subject: [{ required: true, message: '請輸入主旨', trigger: 'blur' }],
+  description: [{ required: true, message: '請描述您遇到的問題', trigger: 'blur' }],
+};
+
+const openSupportDialog = (row: OrderListItem) => {
+  supportForm.orderId = row.id;
+  supportForm.subject = `關於訂單 #${row.orderNumber} 的問題`;
+  supportForm.description = '';
+  supportForm.category = 0; // 預設為訂單問題
+  supportDialogVisible.value = true;
+};
+
+const handleSupportSubmit = async () => {
+  if (!supportFormRef.value) return;
+  await supportFormRef.value.validate(async (valid) => {
+    if (valid) {
+      submitLoading.value = true;
+      try {
+        await createTicket(supportForm);
+        ElMessage.success('客服單已送出！');
+        supportDialogVisible.value = false;
+        // 詢問是否前往客服中心
+        router.push('/member/support');
+      } catch (error) {
+        ElMessage.error('送出失敗，請稍後再試');
+      } finally {
+        submitLoading.value = false;
+      }
+    }
+  });
+};
+// -----------------------
+
+// 標籤頁狀態： 'all' 或 'pending' (待付款: status 0)
+const activeTab = ref('all');
+// ... (fetchOrders 等邏輯保持不變)
 const fetchOrders = async () => {
   loading.value = true;
   try {
-    const response = await getOrders(userId.value, currentPage.value, pageSize.value);
+    const params: any = {
+      pageNumber: currentPage.value,
+      pageSize: pageSize.value
+    };
+
+    // 如果是待付款標籤，加入狀態過濾 (0: Pending)
+    if (activeTab.value === 'pending') {
+      params.statuses = [0];
+    }
+
+    const response = await getOrders(params);
     orders.value = response.items;
     total.value = response.totalCount;
   } catch (error) {
@@ -29,8 +85,8 @@ const fetchOrders = async () => {
   }
 };
 
-// 監聽網址參數變化 (當 userId 改變時重新抓取)
-watch(() => route.query.userId, () => {
+// 監聽標籤切換
+watch(activeTab, () => {
   currentPage.value = 1;
   fetchOrders();
 });
@@ -46,17 +102,17 @@ const viewDetail = (id: number) => {
 
 const getStatusType = (status: number) => {
   switch (status) {
-    case 0: return 'warning';
+    case 0: return 'danger'; // 待付款用紅色醒目一點
     case 1: return 'primary';
     case 3: return 'success';
     case 4: return 'info';
-    case 5: return 'danger';
-    case 6: return 'info';
+    case 5: return 'warning';
     default: return 'info';
   }
 };
 
 const formatDate = (dateStr: string) => {
+  if (!dateStr) return '-';
   return new Date(dateStr).toLocaleString('zh-TW', {
     year: 'numeric',
     month: '2-digit',
@@ -74,14 +130,19 @@ onMounted(fetchOrders);
     <div class="header">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/' }">首頁</el-breadcrumb-item>
-        <el-breadcrumb-item>會員中心</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/member' }">會員中心</el-breadcrumb-item>
         <el-breadcrumb-item>我的訂單</el-breadcrumb-item>
       </el-breadcrumb>
       <div class="title-row">
         <h2>我的訂單</h2>
-        <el-tag v-if="route.query.userId" type="info">正在查看會員 ID: {{ userId }}</el-tag>
       </div>
     </div>
+
+    <!-- 標籤頁篩選 -->
+    <el-tabs v-model="activeTab" class="order-tabs">
+      <el-tab-pane label="全部" name="all" />
+      <el-tab-pane label="待付款" name="pending" />
+    </el-tabs>
 
     <el-card shadow="never" class="list-card">
       <el-table :data="orders" v-loading="loading" style="width: 100%">
@@ -113,18 +174,24 @@ onMounted(fetchOrders);
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="viewDetail(row.id)">
-              查看詳情
-            </el-button>
+            <div class="operation-btns">
+              <el-button type="primary" link @click="viewDetail(row.id)">
+                詳情
+              </el-button>
+              <el-button type="danger" link :icon="ChatLineRound" @click="openSupportDialog(row)">
+                聯絡客服
+              </el-button>
+            </div>
           </template>
         </el-table-column>
 
         <template #empty>
           <div class="empty-state">
             <el-icon class="empty-icon"><ShoppingBag /></el-icon>
-            <p>目前尚無訂單紀錄 (UserId: {{ userId }})</p>
+            <p v-if="activeTab === 'pending'">目前沒有待付款的訂單</p>
+            <p v-else>目前尚無訂單紀錄</p>
             <el-button type="primary" @click="router.push('/')">去逛逛吧</el-button>
           </div>
         </template>
@@ -141,6 +208,46 @@ onMounted(fetchOrders);
         />
       </div>
     </el-card>
+
+    <!-- 聯絡客服彈窗 -->
+    <el-dialog
+      v-model="supportDialogVisible"
+      title="聯絡客服 / 售後申請"
+      width="500px"
+      destroy-on-close
+    >
+      <el-form
+        ref="supportFormRef"
+        :model="supportForm"
+        :rules="supportRules"
+        label-position="top"
+      >
+        <el-form-item label="相關訂單">
+          <el-input :value="'#' + orders.find(o => o.id === supportForm.orderId)?.orderNumber" disabled />
+        </el-form-item>
+
+        <el-form-item label="主旨" prop="subject">
+          <el-input v-model="supportForm.subject" />
+        </el-form-item>
+
+        <el-form-item label="詳細描述您的問題" prop="description">
+          <el-input
+            v-model="supportForm.description"
+            type="textarea"
+            :rows="4"
+            placeholder="請詳細描述商品狀況或您的需求，以便客服人員快速處理。"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="supportDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSupportSubmit" :loading="submitLoading">
+            提交申請
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -151,11 +258,8 @@ onMounted(fetchOrders);
   padding: 20px;
 
   .header {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     .title-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
       margin-top: 16px;
     }
     h2 {
@@ -165,8 +269,18 @@ onMounted(fetchOrders);
     }
   }
 
+  .order-tabs {
+    background: #fff;
+    padding: 0 20px;
+    border-radius: 8px 8px 0 0;
+    :deep(.el-tabs__header) {
+      margin: 0;
+    }
+  }
+
   .list-card {
-    border-radius: 8px;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
   }
 
   .order-info {
@@ -189,6 +303,12 @@ onMounted(fetchOrders);
   .amount {
     font-weight: bold;
     color: #f56c6c;
+  }
+
+  .operation-btns {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .pagination-container {

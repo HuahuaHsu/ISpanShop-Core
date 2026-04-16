@@ -1,13 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ISpanShop.Services.Orders;
 using ISpanShop.Common.Enums;
+using ISpanShop.Common.Helpers;
 using ISpanShop.Models.DTOs.Orders;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ISpanShop.MVC.Controllers.Api.Orders
 {
+	[Authorize]
 	[Route("api/orders")]
 	[ApiController]
 	public class OrdersApiController : ControllerBase
@@ -19,14 +23,18 @@ namespace ISpanShop.MVC.Controllers.Api.Orders
 			_orderService = orderService;
 		}
 
-		// GET: api/orders?userId=1&pageNumber=1&pageSize=10
+		// GET: api/orders?pageNumber=1&pageSize=10&statuses=0&statuses=1
 		[HttpGet]
-		public async Task<IActionResult> GetMyOrders([FromQuery] int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+		public async Task<IActionResult> GetMyOrders([FromQuery] List<int> statuses, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
 		{
+			var userId = User.GetUserId();
+			if (userId == null) return Unauthorized();
+
 			// 封裝查詢條件
 			var criteria = new OrderSearchDto
 			{
-				UserId = userId,
+				UserId = userId.Value,
+				Statuses = statuses,
 				PageNumber = pageNumber,
 				PageSize = pageSize,
 				IsDescending = true, // 最新訂單排在前面
