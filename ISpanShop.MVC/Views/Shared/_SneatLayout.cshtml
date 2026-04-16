@@ -631,7 +631,7 @@
                 </li>
 
                 @* ── 促銷管理 ── *@
-                <li class="menu-item has-sub @(isPromotionActive ? "active" : "")">
+                <li class="menu-item has-sub @(isPromotionActive || ctrl == "Coupons" ? "active" : "")">
                     <span class="menu-link">
                         <span class="mini-wrap">
                             <i class="menu-icon bx bx-purchase-tag-alt"></i>
@@ -643,17 +643,20 @@
                     </span>
                     <div class="menu-sub">
                         <ul>
-                            <li class="menu-item @(isPromotionActive ? "active" : "")">
+                            <li class="menu-item @(ctrl == "Promotions" ? "active" : "")">
                                 <a href="@Url.Action("Index", "Promotions")" class="menu-link">活動管理</a>
+                            </li>
+                            <li class="menu-item @(ctrl == "Coupons" ? "active" : "")">
+                                <a href="@Url.Action("Index", "Coupons", new { area = "Admin" })" class="menu-link">優惠券管理</a>
                             </li>
                         </ul>
                     </div>
                     <div class="menu-flyout">
                         <div class="menu-flyout-title">促銷管理</div>
                         <a href="@Url.Action("Index", "Promotions")">活動管理</a>
+                        <a href="@Url.Action("Index", "Coupons", new { area = "Admin" })">優惠券管理</a>
                     </div>
                 </li>
-
                 <li class="menu-item has-sub @(isCatActive ? "active" : "")">
                     <span class="menu-link">
                         <span class="mini-wrap">

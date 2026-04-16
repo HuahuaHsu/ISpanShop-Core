@@ -24,6 +24,12 @@ export const routes: RouteRecordRaw[] = [
         name: 'ProductDetail',
         component: () => import('../views/ProductDetailView.vue'),
         meta: { requiresAuth: false }
+      },
+      {
+        path: 'coupons',
+        name: 'coupons',
+        component: () => import('../views/CouponsView.vue'),
+        meta: { requiresAuth: false }
       }
     ]
   },
@@ -65,6 +71,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/member/coupons',
+    name: 'member-coupons',
+    component: () => import('../views/member/MemberCouponsView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/member/mystore',
     name: 'member-mystore',
     component: () => import('../views/member/MyStoreView.vue'),
@@ -74,6 +86,12 @@ export const routes: RouteRecordRaw[] = [
     path: '/cart',
     name: 'cart',
     component: () => import('../views/cart/CartView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/checkout',
+    name: 'checkout',
+    component: () => import('../views/cart/CheckoutView.vue'),
     meta: { requiresAuth: true }
   },
   {

@@ -55,7 +55,7 @@ function formatPrice(price: number): string {
 }
 
 function handleCheckout(): void {
-  ElMessage.info('結帳功能即將上線，敬請期待')
+  router.push('/checkout')
 }
 </script>
 

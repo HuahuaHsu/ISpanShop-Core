@@ -38,8 +38,10 @@ const go = (name: string) => {
       router.push('/member/orders');
       break;
     case '紅利點數':
-    case '優惠券':
       router.push('/member/wallet');
+      break;
+    case '優惠券':
+      router.push('/member/coupons');
       break;
     case '我的賣場':
       router.push('/member/mystore');

@@ -78,7 +78,7 @@
 
     <!-- ── 圓形快捷服務 ── -->
     <section class="quick-icons">
-      <div v-for="item in quickItems" :key="item.label" class="quick-item">
+      <div v-for="item in quickItems" :key="item.label" class="quick-item" @click="item.url ? $router.push(item.url) : undefined">
         <div class="quick-circle">{{ item.icon }}</div>
         <div class="quick-label">{{ item.label }}</div>
       </div>
@@ -526,6 +526,7 @@ const staticSideBanners = [
 const quickItems = [
   { icon: '🚚', label: '全站大免運' },
   { icon: '📦', label: '免運$99起' },
+  { icon: '🎫', label: '領券中心', url: '/coupons' },
   { icon: '💰', label: '全額$49免運' },
   { icon: '👑', label: 'VIP 獨享 18%' },
   { icon: '🛍️', label: 'HowBuy 商城' },
@@ -533,7 +534,6 @@ const quickItems = [
   { icon: '💳', label: '銀行刷卡優惠' },
   { icon: '💻', label: 'HowBuy 3C' },
   { icon: '🔥', label: '天天超划算' },
-  { icon: '🎁', label: '活動合集' },
 ]
 </script>
 

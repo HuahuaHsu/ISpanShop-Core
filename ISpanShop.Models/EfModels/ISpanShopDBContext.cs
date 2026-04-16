@@ -35,7 +35,15 @@ public partial class ISpanShopDBContext : DbContext
 
     public virtual DbSet<ChatMessage> ChatMessages { get; set; }
 
+    public virtual DbSet<Coupon> Coupons { get; set; }
+
+    public virtual DbSet<CouponCategory> CouponCategories { get; set; }
+
+    public virtual DbSet<CouponProduct> CouponProducts { get; set; }
+
     public virtual DbSet<LoginHistory> LoginHistories { get; set; }
+
+    public virtual DbSet<MemberCoupon> MemberCoupons { get; set; }
 
     public virtual DbSet<MemberProfile> MemberProfiles { get; set; }
 
@@ -280,6 +288,38 @@ public partial class ISpanShopDBContext : DbContext
                 .HasConstraintName("FK_ChatMessages_Sender");
         });
 
+        modelBuilder.Entity<Coupon>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CouponCode).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.DiscountValue).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.MinimumSpend).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.MaximumDiscount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.StartTime).HasColumnType("datetime");
+            entity.Property(e => e.EndTime).HasColumnType("datetime");
+            entity.Property(e => e.RowVersion).IsRowVersion();
+
+            entity.HasOne(d => d.Store).WithMany(p => p.Coupons)
+                .HasForeignKey(d => d.StoreId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Coupons_Stores");
+        });
+
+        modelBuilder.Entity<CouponProduct>(entity =>
+        {
+            entity.HasKey(e => new { e.CouponId, e.ProductId });
+            entity.HasOne(d => d.Coupon).WithMany(p => p.CouponProducts).HasForeignKey(d => d.CouponId);
+            entity.HasOne(d => d.Product).WithMany(p => p.CouponProducts).HasForeignKey(d => d.ProductId);
+        });
+
+        modelBuilder.Entity<CouponCategory>(entity =>
+        {
+            entity.HasKey(e => new { e.CouponId, e.CategoryId });
+            entity.HasOne(d => d.Coupon).WithMany(p => p.CouponCategories).HasForeignKey(d => d.CouponId);
+            entity.HasOne(d => d.Category).WithMany(p => p.CouponCategories).HasForeignKey(d => d.CategoryId);
+        });
+
         modelBuilder.Entity<LoginHistory>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__LoginHis__3214EC07B4209083");
@@ -296,6 +336,14 @@ public partial class ISpanShopDBContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.LoginHistories)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_LoginHistories_Users");
+        });
+
+        modelBuilder.Entity<MemberCoupon>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(d => d.User).WithMany(p => p.MemberCoupons).HasForeignKey(d => d.UserId);
+            entity.HasOne(d => d.Coupon).WithMany(p => p.MemberCoupons).HasForeignKey(d => d.CouponId);
+            entity.HasOne(d => d.Order).WithMany(p => p.MemberCoupons).HasForeignKey(d => d.OrderId);
         });
 
         modelBuilder.Entity<MemberProfile>(entity =>

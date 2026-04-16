@@ -28,6 +28,7 @@ using ISpanShop.Services.Payments;
 using ISpanShop.Services.Stores;
 using ISpanShop.Services.Promotions;
 using ISpanShop.Services.Brands;
+using ISpanShop.Services.Coupons;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -189,6 +190,11 @@ namespace ISpanShop.MVC
 			// 前台品牌 API
 			builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 			builder.Services.AddScoped<BrandService>();
+
+			// ── 優惠券系統 ──
+			builder.Services.AddScoped<ICouponService, CouponService>();
+			builder.Services.AddHostedService<CouponCleanupService>();
+
 			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
@@ -240,6 +246,7 @@ namespace ISpanShop.MVC
 				name: "home",
 				pattern: "Home/{action=Index}/{id?}");
 
+			app.MapControllers();
 
 			using (var scope = app.Services.CreateScope())
 			{

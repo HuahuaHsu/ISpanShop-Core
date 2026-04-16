@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ISpanShop.Services.Payments;
 using ISpanShop.Models.DTOs.Orders;
 using ISpanShop.Services;
@@ -6,7 +7,8 @@ using ISpanShop.Services;
 namespace ISpanShop.WebAPI.Controllers
 {
 	[ApiController]
-	[Route("api/[controller]")]
+	[Authorize]
+	[Route("api/checkout")]
 	public class CheckoutController : ControllerBase
 	{
 		private readonly CheckoutService _checkoutService;
@@ -29,6 +31,11 @@ namespace ISpanShop.WebAPI.Controllers
 				return BadRequest("購物車內容不可為空");
 			}
 
+			// 強制從登入資訊獲取 UserId
+			var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+			if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+			dto.UserId = int.Parse(userIdStr);
+
 			// 1. 呼叫 Service 建立訂單並處理點數.
 			var result = await _checkoutService.CreateOrderAsync(dto);
 
@@ -36,16 +43,15 @@ namespace ISpanShop.WebAPI.Controllers
 			{
 				return BadRequest(new { message = result.Message });
 			}
-
+	// ... (rest of code)
 			// 2. 訂單建立成功，準備回傳給前端所需的資訊
-			// 在實際金流串接中，這裡通常會回傳一個自動導向綠界的 HTML Form 或是 URL
 			return Ok(new
 			{
 				success = true,
 				message = result.Message,
 				orderNumber = result.OrderNumber,
-				// 這裡可以預留呼叫綠界產生付款 Form 的邏輯
-				paymentUrl = "/api/Payment/GoToEcpay?orderNumber=" + result.OrderNumber
+				// 修正：指向 Payment 控制器的 Pay 方法
+				paymentUrl = "/Payment/Pay?orderNumber=" + result.OrderNumber
 			});
 		}
 	}
