@@ -42,33 +42,40 @@ export const routes: RouteRecordRaw[] = [
   },
   {
     path: '/member',
-    name: 'member',
-    component: () => import('../views/member/MemberCenterView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/member/orders',
-    name: 'member-orders',
-    component: () => import('../views/member/OrdersView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/member/settings',
-    name: 'member-settings',
-    component: () => import('../views/member/SettingsView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/member/wallet',
-    name: 'member-wallet',
-    component: () => import('../views/member/WalletView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/member/mystore',
-    name: 'member-mystore',
-    component: () => import('../views/member/MyStoreView.vue'),
-    meta: { requiresAuth: true }
+    component: () => import('../layouts/MemberLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'member-center',
+        component: () => import('../views/member/MemberCenterView.vue')
+      },
+      {
+        path: 'profile',
+        name: 'member-profile',
+        component: () => import('../views/member/ProfileView.vue')
+      },
+      {
+        path: 'orders',
+        name: 'member-orders',
+        component: () => import('../views/member/OrdersView.vue')
+      },
+      {
+        path: 'settings',
+        name: 'member-settings',
+        component: () => import('../views/member/SettingsView.vue')
+      },
+      {
+        path: 'wallet',
+        name: 'member-wallet',
+        component: () => import('../views/member/WalletView.vue')
+      },
+      {
+        path: 'mystore',
+        name: 'member-mystore',
+        component: () => import('../views/member/MyStoreView.vue')
+      }
+    ]
   },
   {
     path: '/cart',

@@ -70,7 +70,7 @@ namespace ISpanShop.Services.Members
 			var userInDb = _repo.GetById(dto.Id);
 			if (userInDb == null) throw new Exception("找不到該會員");
 
-			// 更新 Users 表中的基本資訊
+			// 直接帶入 Email，不進行空值檢查 (前端保證必填)
 			userInDb.Email = dto.Email;
 			userInDb.IsBlacklisted = dto.IsBlacklisted;
 
@@ -79,6 +79,8 @@ namespace ISpanShop.Services.Members
 			{
 				userInDb.MemberProfile.FullName = dto.FullName;
 				userInDb.MemberProfile.PhoneNumber = dto.PhoneNumber;
+				userInDb.MemberProfile.Gender = dto.Gender;
+				userInDb.MemberProfile.DateOfBirth = dto.Birthday;
 			}
 
 			// 更新 Addresses 表中的預設地址
@@ -111,6 +113,8 @@ namespace ISpanShop.Services.Members
 
 				FullName = profile?.FullName ?? "未設定",
 				PhoneNumber = profile?.PhoneNumber ?? "未設定",
+				Gender = profile?.Gender,
+				Birthday = profile?.DateOfBirth,
 				PointBalance = profile?.PointBalance ?? 0,
 				TotalSpending = profile?.TotalSpending ?? 0,
 
@@ -118,7 +122,9 @@ namespace ISpanShop.Services.Members
 				LevelName = GetLevelNameBySpending(profile?.TotalSpending, levels),
 
 				// 如果有預設頭像 URL 生成邏輯
-				//AvatarUrl = $"https://ui-avatars.com/api/?name={profile?.FullName ?? u.Account}&background=random&color=fff",
+				AvatarUrl = profile?.FullName != null 
+					? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(profile.FullName)}&background=random&color=fff&size=128"
+					: null,
 
 				City = address?.City ?? "",
 				Region = address?.Region ?? "",

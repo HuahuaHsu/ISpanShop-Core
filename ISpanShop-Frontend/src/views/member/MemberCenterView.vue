@@ -70,26 +70,7 @@ const services = [
 
 <template>
   <div class="page">
-    <!-- Header -->
-    <div class="header">
-      <div class="header-left">
-        <div class="avatar">U</div>
-        <div class="user-info">
-          <span class="username">{{ authStore.memberInfo?.account || '正在讀取...' }}</span>
-          <span class="level-badge" @click="go('會員等級說明')">
-            ★ {{ authStore.memberInfo?.levelName || '一般會員' }}
-          </span>
-        </div>
-      </div>
-      <div class="header-right">
-        <button class="icon-btn" @click="go('設定')" v-html="IconGear()"></button>
-        <button class="icon-btn" @click="go('購物車')">
-          <span v-html="IconCart()"></span>
-          <span class="cart-dot"></span>
-        </button>
-        <button class="icon-btn" @click="go('聊天室')" v-html="IconChat()"></button>
-      </div>
-    </div>
+    <!-- 原本的 Header 已經整合到 MemberLayout 中 -->
 
     <!-- 購買清單 -->
     <div class="card">
