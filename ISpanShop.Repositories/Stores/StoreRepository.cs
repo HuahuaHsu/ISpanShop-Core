@@ -207,12 +207,19 @@ namespace ISpanShop.Repositories.Stores
 							};
                         }
                     }
+                return store;
                 }
-            }
-            return null;
-        }
+                }
+                }
 
-        public bool ToggleVerified(int storeId, bool isVerified)
+                public async Task<Store?> GetStoreByUserIdAsync(int userId)
+                {
+                return await _context.Stores
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+                }
+
+                public bool ToggleVerified(int storeId, bool isVerified)
         {
             var connectionString = _context.Database.GetDbConnection().ConnectionString;
 

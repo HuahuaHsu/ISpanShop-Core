@@ -18,6 +18,7 @@ namespace ISpanShop.Repositories.Stores
         );
         (int Total, int Verified, int Blocked) GetStoreStats();
         StoreDetailDto? GetStoreById(int storeId);
+        Task<Store?> GetStoreByUserIdAsync(int userId);
         bool ToggleVerified(int storeId, bool isVerified);
         bool ToggleBlacklist(int userId, bool isBlacklisted);
         bool UpdateStoreStatus(int storeId, int status);

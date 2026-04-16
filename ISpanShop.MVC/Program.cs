@@ -182,6 +182,7 @@ namespace ISpanShop.MVC
 			// 註冊商店管理的 Repo 與 Service
 			builder.Services.AddScoped<IStoreRepository, StoreRepository>();
 			builder.Services.AddScoped<IStoreService, StoreService>();
+			builder.Services.AddScoped<IFrontStoreService, FrontStoreService>();
 
 			// 前台活動 API
 			builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
