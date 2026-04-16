@@ -83,6 +83,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/checkout',
+    name: 'checkout',
+    component: () => import('../views/checkout/CheckoutView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/wip',
     name: 'wip',
     component: () => import('../views/error/WipView.vue'),

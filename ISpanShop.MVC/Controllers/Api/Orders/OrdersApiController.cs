@@ -8,10 +8,13 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace ISpanShop.MVC.Controllers.Api.Orders
 {
-	[Authorize]
+	[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 	[Route("api/orders")]
 	[ApiController]
 	public class OrdersApiController : ControllerBase
@@ -66,11 +69,20 @@ namespace ISpanShop.MVC.Controllers.Api.Orders
 		[HttpGet("{id}")]
 		public async Task<IActionResult> GetOrderDetail(long id)
 		{
+			var userId = User.GetUserId();
+			if (userId == null) return Unauthorized();
+
 			var order = await _orderService.GetOrderDetailAsync(id);
 
 			if (order == null)
 			{
 				return NotFound(new { message = "找不到該訂單" });
+			}
+
+			// 權限檢查：確保只能讀取自己的訂單
+			if (order.UserId != userId.Value)
+			{
+				return Forbid();
 			}
 
 			// 維持與前端對接的屬性名稱 (camelCase)
@@ -99,10 +111,59 @@ namespace ISpanShop.MVC.Controllers.Api.Orders
 			return Ok(result);
 		}
 
+		// POST: api/orders/test-generate
+		[HttpPost("test-generate")]
+		public async Task<IActionResult> CreateTestOrder()
+		{
+			try
+			{
+				var userId = User.GetUserId();
+				if (userId == null) return Unauthorized();
+
+				var dbContext = (ISpanShop.Models.EfModels.ISpanShopDBContext)HttpContext.RequestServices.GetService(typeof(ISpanShop.Models.EfModels.ISpanShopDBContext));
+				
+				// 取得目前時間與單號
+				var now = DateTime.Now;
+				var orderNum = "TEST-" + now.ToString("yyyyMMddHHmmss");
+
+				// 1. 確保至少有一間商店 (直接用 SQL 查，沒有就生)
+				var storeId = await dbContext.Database.ExecuteSqlRawAsync(
+					"IF NOT EXISTS (SELECT 1 FROM Stores) INSERT INTO Stores (StoreName) VALUES (N'測試自動商店')");
+				
+				var actualStoreId = (await dbContext.Stores.AsNoTracking().FirstOrDefaultAsync())?.Id ?? 1;
+
+				// 2. 直接用 SQL 寫入 Order 表 (避免導航屬性導致的 500)
+				await dbContext.Database.ExecuteSqlInterpolatedAsync(@$"
+					INSERT INTO Orders (OrderNumber, UserId, StoreId, TotalAmount, ShippingFee, FinalAmount, Status, CreatedAt, RecipientName, RecipientPhone, RecipientAddress)
+					VALUES ({orderNum}, {userId.Value}, {actualStoreId}, 1500, 60, 1560, 3, {now}, N'測試人', '0912345678', N'測試地址')");
+
+				// 3. 取得剛產生的 OrderId
+				var orderId = (await dbContext.Orders.AsNoTracking().OrderByDescending(o => o.Id).FirstOrDefaultAsync())?.Id ?? 0;
+
+				// 4. 寫入一筆明細
+				await dbContext.Database.ExecuteSqlInterpolatedAsync(@$"
+					INSERT INTO OrderDetails (OrderId, ProductId, ProductName, Price, Quantity)
+					VALUES ({orderId}, 1, N'測試假商品', 1500, 1)");
+
+				return Ok(new { message = "測試資料已用原始 SQL 強制寫入（狀態：已完成）", orderId = orderId });
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { message = "強制生成失敗", detail = ex.Message + " " + ex.InnerException?.Message });
+			}
+		}
+
 		// POST: api/orders/1/cancel
 		[HttpPost("{id}/cancel")]
 		public async Task<IActionResult> CancelOrder(long id)
 		{
+			var userId = User.GetUserId();
+			if (userId == null) return Unauthorized();
+
+			var order = await _orderService.GetOrderDetailAsync(id);
+			if (order == null) return NotFound(new { message = "找不到該訂單" });
+			if (order.UserId != userId.Value) return Forbid();
+
 			var success = await _orderService.CancelOrderAsync(id);
 			if (success)
 			{
@@ -115,6 +176,13 @@ namespace ISpanShop.MVC.Controllers.Api.Orders
 		[HttpPost("{id}/return")]
 		public async Task<IActionResult> ReturnOrder(long id)
 		{
+			var userId = User.GetUserId();
+			if (userId == null) return Unauthorized();
+
+			var order = await _orderService.GetOrderDetailAsync(id);
+			if (order == null) return NotFound(new { message = "找不到該訂單" });
+			if (order.UserId != userId.Value) return Forbid();
+
 			var success = await _orderService.ReturnOrderAsync(id);
 			if (success)
 			{

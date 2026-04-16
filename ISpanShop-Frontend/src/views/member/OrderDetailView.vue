@@ -1,15 +1,65 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, onMounted, computed, reactive, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { getOrderDetail, cancelOrder, returnOrder } from '@/api/order';
+import { createTicket } from '@/api/support';
 import type { Order } from '@/types/order';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { Loading } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
+import { Loading, ChatLineRound } from '@element-plus/icons-vue';
 
 const route = useRoute();
+const router = useRouter();
 const order = ref<Order | null>(null);
 const isLoading = ref(true);
 const isOperating = ref(false); // 正在執行取消或退貨中
+
+// --- 聯絡客服相關 ---
+const supportDialogVisible = ref(false);
+const submitLoading = ref(false);
+const supportFormRef = ref<FormInstance>();
+const supportForm = reactive({
+  category: 0,
+  subject: '',
+  description: '',
+  orderId: 0 as number | null
+});
+
+const supportRules: FormRules = {
+  subject: [{ required: true, message: '請輸入主旨', trigger: 'blur' }],
+  description: [{ required: true, message: '請描述您遇到的問題', trigger: 'blur' }],
+};
+
+const handleSupportSubmit = async () => {
+  if (!supportFormRef.value) return;
+  await supportFormRef.value.validate(async (valid) => {
+    if (valid) {
+      submitLoading.value = true;
+      try {
+        await createTicket({
+          ...supportForm,
+          orderId: order.value?.id || null,
+          status: 0,
+          userId: 0
+        });
+        ElMessage.success('客服單已送出！');
+        supportDialogVisible.value = false;
+        router.push('/member/support');
+      } catch (error) {
+        ElMessage.error('送出失敗，請稍後再試');
+      } finally {
+        submitLoading.value = false;
+      }
+    }
+  });
+};
+
+watch(() => order.value, (newVal) => {
+  if (newVal) {
+    supportForm.orderId = newVal.id;
+    supportForm.subject = `關於訂單 #${newVal.orderNumber} 的問題`;
+  }
+}, { immediate: true });
+// -----------------
 
 // 訂單狀態文字對應
 const statusTexts: Record<number, string> = {
@@ -191,8 +241,57 @@ onMounted(fetchOrderDetail);
         >
           申請退貨
         </el-button>
+
+        <el-button 
+          type="danger" 
+          plain 
+          :icon="ChatLineRound" 
+          @click="supportDialogVisible = true"
+        >
+          聯絡客服
+        </el-button>
       </div>
     </div>
+
+    <!-- 聯絡客服彈窗 -->
+    <el-dialog
+      v-model="supportDialogVisible"
+      title="聯絡客服 / 售後申請"
+      width="500px"
+      destroy-on-close
+    >
+      <el-form
+        ref="supportFormRef"
+        :model="supportForm"
+        :rules="supportRules"
+        label-position="top"
+      >
+        <el-form-item label="相關訂單">
+          <el-input :value="'#' + (order?.orderNumber || '')" disabled />
+        </el-form-item>
+
+        <el-form-item label="主旨" prop="subject">
+          <el-input v-model="supportForm.subject" placeholder="請輸入主旨" />
+        </el-form-item>
+
+        <el-form-item label="詳細描述您的問題" prop="description">
+          <el-input
+            v-model="supportForm.description"
+            type="textarea"
+            :rows="4"
+            placeholder="請詳細描述您遇到的問題，以便客服人員快速協助您。"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="supportDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSupportSubmit" :loading="submitLoading">
+            提交申請
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <!-- 錯誤或找不到訂單 -->
     <el-empty v-else-if="!isLoading" description="找不到該訂單資訊" />

@@ -36,3 +36,10 @@ export const cancelOrder = (id: number): Promise<void> => {
 export const returnOrder = (id: number): Promise<void> => {
   return axios.post(`/api/orders/${id}/return`);
 };
+
+/**
+ * 產生測試訂單 (開發測試用)
+ */
+export const generateTestOrder = (): Promise<any> => {
+  return axios.post('/api/orders/test-generate');
+};

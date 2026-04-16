@@ -140,6 +140,7 @@ namespace ISpanShop.Repositories.Orders
 				var byteStatuses = criteria.Statuses.Select(s => (byte)s).ToList();
 				query = query.Where(o => o.Status.HasValue && byteStatuses.Contains(o.Status.Value));
 			}
+			// 如果 Statuses 為空，則不加任何 Where 條件，即查詢全部狀態 (預設行為已包含)
 
 			// A3. 金額區間
 			if (criteria.MinAmount.HasValue)

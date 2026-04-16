@@ -629,6 +629,8 @@ function handleAddToCart(): void {
     price,
     quantity: quantity.value,
     specLabel,
+    storeId: p.store?.id ?? 0,
+    storeName: p.store?.name ?? "未知商店",
   })
   ElMessage.success('已加入購物車')
 }

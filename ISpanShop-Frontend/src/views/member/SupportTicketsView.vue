@@ -30,7 +30,20 @@ const rules: FormRules = {
 const fetchTickets = async () => {
   loading.value = true;
   try {
-    tickets.value = await getMyTickets();
+    const response = await getMyTickets();
+    // 後端回傳可能是大寫開頭，轉為前端使用的小寫開頭
+    tickets.value = response.map((t: any) => ({
+      id: t.id ?? t.Id,
+      userId: t.userId ?? t.UserId,
+      category: t.category ?? t.Category,
+      subject: t.subject ?? t.Subject,
+      description: t.description ?? t.Description,
+      status: t.status ?? t.Status,
+      adminReply: t.adminReply ?? t.AdminReply,
+      createdAt: t.createdAt ?? t.CreatedAt,
+      resolvedAt: t.resolvedAt ?? t.ResolvedAt,
+      orderId: t.orderId ?? t.OrderId
+    }));
   } catch (error) {
     console.error('獲取工單列表失敗', error);
   } finally {

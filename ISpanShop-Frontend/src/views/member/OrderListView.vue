@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { getOrders } from '@/api/order';
+import { getOrders, generateTestOrder } from '@/api/order';
 import { createTicket } from '@/api/support';
 import { SUPPORT_CATEGORIES, type SupportTicket } from '@/types/support';
-import { Calendar, ShoppingBag, ChatLineRound } from '@element-plus/icons-vue';
+import { Calendar, ShoppingBag, ChatLineRound, Plus } from '@element-plus/icons-vue';
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 
 const router = useRouter();
@@ -13,6 +13,17 @@ const orders = ref<OrderListItem[]>([]);
 const total = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(10);
+
+const handleGenerateTestOrder = async () => {
+  try {
+    await generateTestOrder();
+    ElMessage.success('測試訂單已產生（狀態：已完成）！');
+    currentPage.value = 1; // 回到第一頁
+    fetchOrders(); // 重新整理列表
+  } catch (error) {
+    ElMessage.error('產生測試訂單失敗');
+  }
+};
 
 // --- 聯絡客服彈窗相關 ---
 const supportDialogVisible = ref(false);
@@ -135,6 +146,16 @@ onMounted(fetchOrders);
       </el-breadcrumb>
       <div class="title-row">
         <h2>我的訂單</h2>
+        <el-button 
+          type="primary" 
+          plain
+          :icon="Plus" 
+          size="small" 
+          @click="handleGenerateTestOrder" 
+          style="margin-left: 10px;"
+        >
+          生成測試資料 (開發用)
+        </el-button>
       </div>
     </div>
 
