@@ -10,6 +10,8 @@ export interface CartItem {
   quantity: number
   /** 規格描述，例如 "顏色: 紅、尺寸: M"，無規格時為空字串 */
   specLabel: string
+  storeId: number
+  storeName: string
 }
 
 const CART_KEY = 'cart_items'

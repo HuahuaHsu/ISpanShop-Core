@@ -64,6 +64,9 @@ const go = (name: string) => {
     case '我的賣場':
       router.push('/member/mystore');
       break;
+    case '客服專區':
+      router.push('/member/support');
+      break;
     case '購物車':
       router.push('/cart');
       break;

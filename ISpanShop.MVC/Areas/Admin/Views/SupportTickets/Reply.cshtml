@@ -13,7 +13,7 @@
                     <h5 class="mb-0">工單資訊 #@Model.Id</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>建立時間：</strong> @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</p>
+                    <p><strong>建立時間：</strong> @(Model.CreatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</p>
                     <p><strong>分類：</strong> <span class="badge bg-secondary">@Model.CategoryName</span></p>
 
                     @if (Model.OrderId.HasValue)

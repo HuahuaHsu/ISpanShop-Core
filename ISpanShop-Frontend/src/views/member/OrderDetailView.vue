@@ -108,15 +108,15 @@ const fetchOrderDetail = async () => {
   if (isNaN(id)) return;
 
   loading.value = true;
-  try {
+      try {
     const res = await getOrderDetailApi(id);
     order.value = res.data;
-  } catch (error) {
+      } catch (error) {
     console.error('獲取訂單詳情失敗', error);
     ElMessage.error('獲取訂單詳情失敗');
-  } finally {
+      } finally {
     loading.value = false;
-  }
+      }
 };
 
 const formatPrice = (price: number) => {
@@ -144,6 +144,18 @@ const getStepActive = (status?: number) => {
     case 3: return 5; // 已完成
     default: return 1;
   }
+}, { immediate: true });
+// -----------------
+
+// 訂單狀態文字對應
+const statusTexts: Record<number, string> = {
+  0: '待付款',
+  1: '待出貨',
+  2: '待收貨',
+  3: '已完成',
+  4: '已取消',
+  5: '退貨中',
+  6: '已退貨',
 };
 
 onMounted(() => {
@@ -171,7 +183,7 @@ onMounted(() => {
   border-radius: 2px;
   margin-bottom: 12px;
   box-shadow: 0 1px 1px 0 rgba(0,0,0,.05);
-
+  
   .header-top {
     display: flex;
     justify-content: space-between;
@@ -185,19 +197,24 @@ onMounted(() => {
       align-items: center;
       color: #757575;
       font-size: 14px;
-      
+    
       .status-text {
         color: #ee4d2d;
         font-weight: 500;
         text-transform: uppercase;
-      }
     }
+  } finally {
+    isOperating.value = false;
+  }
   }
 
   .status-steps {
     padding: 20px 0;
+    }
+  } finally {
+    isOperating.value = false;
   }
-}
+};
 
 /* 資訊網格 */
 .info-grid {
@@ -211,7 +228,7 @@ onMounted(() => {
     padding: 20px;
     border-radius: 2px;
     box-shadow: 0 1px 1px 0 rgba(0,0,0,.05);
-    
+
     .card-title {
       font-size: 18px;
       font-weight: normal;
@@ -219,7 +236,7 @@ onMounted(() => {
       margin: 0 0 20px 0;
     }
   }
-
+        
   .address-content {
     .recipient-name {
       font-weight: 500;
@@ -232,7 +249,7 @@ onMounted(() => {
       margin-bottom: 4px;
     }
   }
-
+        
   .logistics-content {
     .note-text {
       color: rgba(0,0,0,.8);
@@ -279,7 +296,7 @@ onMounted(() => {
         width: 80px;
         height: 80px;
         border: 1px solid #e1e1e1;
-      }
+}
 
       .item-info {
         .item-name {
@@ -296,25 +313,36 @@ onMounted(() => {
           font-size: 14px;
         }
       }
-    }
+}
 
     .item-price {
-      display: flex;
-      align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
       .unit-price {
         color: #ee4d2d;
-      }
-    }
-  }
+}
+
+.section {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.progress-section {
+  padding: 40px 24px;
+}
 
   .order-summary {
     padding: 20px;
     background-color: #fffbf8;
-    
+
     .summary-row {
-      display: flex;
+  display: flex;
       justify-content: flex-end;
-      align-items: center;
+  align-items: center;
       margin-bottom: 12px;
       
       .label {
@@ -324,7 +352,7 @@ onMounted(() => {
         font-size: 14px;
         padding-right: 20px;
         border-right: 1px solid #e1e1e1;
-      }
+}
 
       .value {
         width: 150px;
@@ -332,16 +360,16 @@ onMounted(() => {
         padding-left: 20px;
         font-size: 14px;
         color: rgba(0,0,0,.8);
-      }
+}
 
       &.total {
         margin-top: 20px;
         .final-price {
           color: #ee4d2d;
           font-size: 24px;
-          font-weight: 500;
+  font-weight: 500;
         }
-      }
+}
 
       &.payment-method {
         border-top: 1px solid #f0f0f0;
@@ -354,8 +382,8 @@ onMounted(() => {
 @media (max-width: 768px) {
   .info-grid {
     grid-template-columns: 1fr;
-  }
-  
+}
+
   .order-summary .summary-row {
     .label { width: 100px; }
     .value { width: 120px; }
