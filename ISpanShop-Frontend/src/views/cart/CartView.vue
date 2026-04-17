@@ -277,4 +277,3 @@ function handleCheckout(): void {
   color: #EE4D2D;
 }
 </style>
-

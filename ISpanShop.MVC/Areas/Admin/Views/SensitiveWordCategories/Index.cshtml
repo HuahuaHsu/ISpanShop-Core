@@ -49,10 +49,10 @@
                                             data-bs-target="#editModal">
                                         <i class="fas fa-edit"></i> 編輯
                                     </button>
-                                    <form asp-action="Delete" method="post" class="d-inline ms-1" onsubmit="return confirm('確定要刪除此分類嗎？')">
+                                    <form asp-action="Delete" method="post" class="d-inline ms-1">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger btn-delete-category">
                                             <i class="fas fa-trash-alt"></i> 刪除
                                         </button>
                                     </form>
@@ -161,6 +161,7 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
             // 點擊編輯按鈕時，將資料填入 Modal
@@ -169,6 +170,25 @@
                 var name = $(this).data('name');
                 $('#edit-id').val(id);
                 $('#edit-name').val(name);
+            });
+
+            // SweetAlert2 刪除確認
+            $('.btn-delete-category').click(function(e) {
+                e.preventDefault();
+                const form = $(this).closest('form');
+                Swal.fire({
+                    title: '<span style="color: #d33">確定要刪除此分類嗎？</span>',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: '確定',
+                    cancelButtonText: '取消'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
             });
         });
     </script>

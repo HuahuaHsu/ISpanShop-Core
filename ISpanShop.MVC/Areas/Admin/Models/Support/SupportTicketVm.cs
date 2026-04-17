@@ -11,13 +11,13 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Support
 		public byte Category { get; set; }
 
 		[Display(Name = "工單狀態")]
-		public byte Status { get; set; }
+		public byte? Status { get; set; } // 改為 byte?
 
 		[Required(ErrorMessage = "回覆內容不能為空")]
 		[Display(Name = "管理員回覆")]
 		public string AdminReply { get; set; }
 
-		public DateTime CreatedAt { get; set; }
+		public DateTime? CreatedAt { get; set; } // 改為 DateTime?
 
 		public string Description { get; set; }
 		public string AttachmentUrl { get; set; }

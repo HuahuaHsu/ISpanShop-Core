@@ -10,7 +10,9 @@ namespace ISpanShop.Repositories.Support
 	public interface ISupportTicketRepository
 	{
 		Task<List<SupportTicket>> GetAllAsync();
+		Task<List<SupportTicket>> GetByUserIdAsync(int userId);
 		Task<SupportTicket> GetByIdAsync(int id);
 		Task UpdateAsync(SupportTicket ticket);
+		Task CreateAsync(SupportTicket ticket);
 	}
 }
