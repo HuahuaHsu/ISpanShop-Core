@@ -103,6 +103,44 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false, hideForAuth: true }
   },
 
+  // ── 賣家中心（獨立 Layout，與前台完全分離） ──
+  {
+    path: '/seller',
+    component: () => import('../layouts/SellerLayout.vue'),
+    meta: { requiresAuth: true, requiresSeller: true },
+    children: [
+      {
+        path: '',
+        name: 'SellerDashboard',
+        component: () => import('../views/seller/DashboardView.vue'),
+      },
+      {
+        path: 'products',
+        name: 'SellerProducts',
+        component: () => import('../views/seller/ProductListView.vue'),
+      },
+      {
+        path: 'products/new',
+        name: 'SellerProductNew',
+        component: () => import('../views/seller/ProductEditView.vue'),
+      },
+      {
+        path: 'products/:id/edit',
+        name: 'SellerProductEdit',
+        component: () => import('../views/seller/ProductEditView.vue'),
+      },
+      // ── TODO 佔位路由 ──
+      { path: 'orders',             name: 'SellerOrders',     component: () => import('../views/seller/TodoView.vue') },
+      { path: 'orders/batch',       name: 'SellerOrdersBatch', component: () => import('../views/seller/TodoView.vue') },
+      { path: 'returns',            name: 'SellerReturns',    component: () => import('../views/seller/TodoView.vue') },
+      { path: 'promotions',         name: 'SellerPromotions', component: () => import('../views/seller/TodoView.vue') },
+      { path: 'coupons',            name: 'SellerCoupons',    component: () => import('../views/seller/TodoView.vue') },
+      { path: 'analytics/sales',    name: 'SellerSales',      component: () => import('../views/seller/TodoView.vue') },
+      { path: 'analytics/traffic',  name: 'SellerTraffic',    component: () => import('../views/seller/TodoView.vue') },
+      { path: 'chat',               name: 'SellerChat',       component: () => import('../views/seller/TodoView.vue') },
+    ],
+  },
+
   // ── 錯誤/其他頁面 ──
   {
     path: '/checkout',
