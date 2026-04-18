@@ -2,9 +2,9 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { ElMessage } from 'element-plus'
-import type { FormInstance, FormRules, UploadProps } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { User, Message, Iphone, Calendar } from '@element-plus/icons-vue'
-import { getMemberProfile, updateMemberProfile, type UpdateMemberProfileDto } from '../../api/member'
+import { getMemberProfile, updateMemberProfile, uploadAvatar, type UpdateMemberProfileDto } from '../../api/member'
 
 const authStore = useAuthStore()
 const profileFormRef = ref<FormInstance>()
@@ -50,13 +50,13 @@ const fetchProfile = async () => {
     isLoading.value = true
     const response = await getMemberProfile(memberId)
     const data = response.data as any
-    
+
     // 補足其餘細節欄位 (相容大小寫)
     profileForm.memberName = data.fullName ?? data.FullName ?? profileForm.memberName
     profileForm.email = data.email ?? data.Email ?? profileForm.email
     profileForm.phone = data.phoneNumber ?? data.PhoneNumber ?? profileForm.phone
     profileForm.gender = data.gender ?? data.Gender ?? null
-    
+
     const rawBirthday = data.birthday ?? data.Birthday ?? data.DateOfBirth ?? ''
     profileForm.birthday = rawBirthday ? String(rawBirthday).split('T')[0] : ''
     profileForm.avatarUrl = data.avatarUrl ?? data.AvatarUrl ?? ''
@@ -80,7 +80,7 @@ onMounted(() => {
 // ── 儲存按鈕 ──────────────────────────────────────
 const handleSave = async (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  
+
   const valid = await formEl.validate().catch(() => false)
   if (!valid) return
 
@@ -103,7 +103,7 @@ const handleSave = async (formEl: FormInstance | undefined) => {
 
     await updateMemberProfile(submitData.id, submitData)
     ElMessage.success('個人資料已成功更新')
-    
+
     // 同步更新 Pinia 與 LocalStorage
     authStore.memberInfo.email = profileForm.email
     authStore.memberInfo.memberName = profileForm.memberName
@@ -118,15 +118,45 @@ const handleSave = async (formEl: FormInstance | undefined) => {
 }
 
 // ── 頭像處理 (預覽) ──────────────────────────────────
-const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
+// ── 上傳狀態 ──────────────────────────────────────
+const isUploading = ref(false)
+
+// ── 組合完整圖片 URL ───────────────────────────────
+// 後端回傳的是相對路徑 /uploads/avatars/xxx.jpg
+// 需要補上後端 base URL 才能正確顯示
+const getFullImageUrl = (url: string) => {
+  if (!url) return ''
+  if (url.startsWith('blob:') || url.startsWith('http')) return url
+  return `https://localhost:7125${url}`
+}
+
+// ── 頭像上傳（完整流程）──────────────────────────────
+const handleAvatarUpload = async (rawFile: File) => {
   const isImage = ['image/jpeg', 'image/png', 'image/jpg'].includes(rawFile.type)
   const isLt1M = rawFile.size / 1024 / 1024 < 1
 
-  if (!isImage) { ElMessage.error('頭像只能是 JPG 或 PNG 格式!'); return false }
-  if (!isLt1M) { ElMessage.error('頭像檔案大小不能超過 1MB!'); return false }
-  
+  if (!isImage) { ElMessage.error('頭像只能是 JPG 或 PNG 格式!'); return }
+  if (!isLt1M) { ElMessage.error('頭像檔案大小不能超過 1MB!'); return }
+
+  // 1. 先用 Blob URL 做即時預覽（讓使用者感覺流暢）
   profileForm.avatarUrl = URL.createObjectURL(rawFile)
-  return false 
+
+  try {
+    isUploading.value = true
+
+    // 2. 真正上傳到伺服器
+    const res = await uploadAvatar(rawFile)
+
+    // 3. 用伺服器回傳的真實路徑取代 Blob URL
+    profileForm.avatarUrl = res.data.url
+
+    ElMessage.success('頭像上傳成功，請記得點擊儲存')
+  } catch (error: any) {
+    ElMessage.error('頭像上傳失敗，請稍後再試')
+    profileForm.avatarUrl = '' // 上傳失敗就清掉預覽
+  } finally {
+    isUploading.value = false
+  }
 }
 </script>
 
@@ -193,8 +223,8 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
 
       <el-col :xs="24" :md="8" class="avatar-col">
         <div class="avatar-upload-section">
-          <div class="avatar-preview-wrap">
-            <el-avatar v-if="profileForm.avatarUrl" :size="120" :src="profileForm.avatarUrl" />
+          <div class="avatar-preview-wrap" v-loading="isUploading">
+            <el-avatar v-if="profileForm.avatarUrl" :size="120" :src="getFullImageUrl(profileForm.avatarUrl)" />
             <el-avatar v-else :size="120" :icon="User" />
           </div>
           <el-upload
@@ -202,13 +232,13 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
             action=""
             :auto-upload="false"
             :show-file-list="false"
-            :on-change="(file: any) => beforeAvatarUpload(file.raw)"
+            :on-change="(file: any) => handleAvatarUpload(file.raw)"
           >
             <el-button size="default">選擇圖片</el-button>
           </el-upload>
           <div class="upload-hint">
             <p>檔案大小：最大 1MB</p>
-            <p>檔案延伸：.JPEG, .PNG</p>
+            <p>檔案格式：.JPEG, .PNG</p>
           </div>
         </div>
       </el-col>

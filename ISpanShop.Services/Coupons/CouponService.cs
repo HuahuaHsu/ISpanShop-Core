@@ -23,9 +23,9 @@ public class CouponService : ICouponService
         // 1. 取得會員持有的、未使用的券
         var memberCoupons = await _context.MemberCoupons
             .Include(mc => mc.Coupon)
-            .ThenInclude(c => c.CouponProducts)
-            .Include(mc => mc.Coupon)
-            .ThenInclude(c => c.CouponCategories)
+		   .ThenInclude(c => c.Products)
+			.Include(mc => mc.Coupon)
+            .ThenInclude(c => c.Categories)
             .Where(mc => mc.UserId == userId && 
                          mc.UsageStatus == 0 && 
                          mc.Coupon.StartTime <= now && 
@@ -58,8 +58,8 @@ public class CouponService : ICouponService
         var now = DateTime.Now;
         var memberCoupon = await _context.MemberCoupons
             .Include(mc => mc.Coupon)
-            .ThenInclude(c => c.CouponProducts)
-            .FirstOrDefaultAsync(mc => mc.UserId == userId && mc.CouponId == couponId);
+			 .ThenInclude(c => c.Products)
+			.FirstOrDefaultAsync(mc => mc.UserId == userId && mc.CouponId == couponId);
 
         if (memberCoupon == null) return (false, "您沒有這張優惠券", null);
         if (memberCoupon.UsageStatus != 0) return (false, "優惠券已使用或無效", null);
@@ -72,8 +72,8 @@ public class CouponService : ICouponService
         // 檢查範圍 (Scope Check)
         if (!coupon.ApplyToAll)
         {
-            var eligibleProducts = coupon.CouponProducts.Select(cp => cp.ProductId).ToList();
-            bool hasEligibleProduct = productIds.Any(pid => eligibleProducts.Contains(pid));
+			var eligibleProducts = coupon.Products.Select(p => p.Id).ToList();
+			bool hasEligibleProduct = productIds.Any(pid => eligibleProducts.Contains(pid));
             
             if (!hasEligibleProduct) return (false, "此優惠券不適用於您的訂單商品", null);
         }
@@ -221,8 +221,8 @@ public class CouponService : ICouponService
     public async Task<Coupon?> GetCouponByIdAsync(int id)
     {
         return await _context.Coupons
-            .Include(c => c.CouponProducts)
-            .Include(c => c.CouponCategories)
+            .Include(c => c.Products)
+            .Include(c => c.Categories)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 

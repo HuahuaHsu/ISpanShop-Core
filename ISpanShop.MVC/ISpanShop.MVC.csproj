@@ -40,4 +40,8 @@
     <Folder Include="Models\Orders\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="efpt.config.json.user" />
+  </ItemGroup>
+
 </Project>
