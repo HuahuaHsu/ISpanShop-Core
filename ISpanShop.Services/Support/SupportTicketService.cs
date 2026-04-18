@@ -19,46 +19,45 @@ namespace ISpanShop.Services.Support
 		public async Task<List<SupportTicketDto>> GetAllAsync()
 		{
 			var entities = await _repo.GetAllAsync();
+			return MapToDtos(entities);
+		}
 
-			// 將 Entity 轉換成 DTO 傳給前端
+		public async Task<List<SupportTicketDto>> GetByUserIdAsync(int userId)
+		{
+			var entities = await _repo.GetByUserIdAsync(userId);
+			return MapToDtos(entities);
+		}
+
+		private List<SupportTicketDto> MapToDtos(List<ISpanShop.Models.EfModels.SupportTicket> entities)
+		{
 			return entities.Select(e => new SupportTicketDto
 			{
 				Id = e.Id,
-				UserId = e.UserId,       // 拿掉 ??，因為它本來就是不可為空的 int
+				UserId = e.UserId,
 				OrderId = e.OrderId,
-				Category = e.Category,   // 拿掉 ??，因為它本來就是不可為空的 byte
+				Category = e.Category,
 				Subject = e.Subject,
 				Description = e.Description,
 				AttachmentUrl = e.AttachmentUrl,
-
-				// 【精準轉型】將 e.Status (byte?) 轉成 byte，若是 null 則給 0
-				Status = (byte)(e.Status ?? 0),
-
+				Status = e.Status, // 直接指派，因為 DTO 已經改為 byte?
 				AdminReply = e.AdminReply,
-
-				// DateTime? 給予預設值
-				CreatedAt = e.CreatedAt ?? DateTime.MinValue,
-
+				CreatedAt = e.CreatedAt, // 直接指派，因為 DTO 已經改為 DateTime?
 				ResolvedAt = e.ResolvedAt
 			}).ToList();
 		}
 
 		public async Task ReplyAndCloseTicketAsync(int id, string adminReply)
 		{
-			// 1. 先從資料庫把該筆工單撈出來
 			var ticket = await _repo.GetByIdAsync(id);
-
 			if (ticket != null)
 			{
-				// 2. 執行商業邏輯：填入回覆、改狀態、押結案時間
 				ticket.AdminReply = adminReply;
-				ticket.Status = 2; // 2 代表「已結案」
+				ticket.Status = 2; 
 				ticket.ResolvedAt = DateTime.Now;
-
-				// 3. 叫 Repository 幫忙存進資料庫
 				await _repo.UpdateAsync(ticket);
 			}
 		}
+
 		public async Task<SupportTicketDto> GetTicketDetailsAsync(int id)
 		{
 			var e = await _repo.GetByIdAsync(id);
@@ -73,11 +72,28 @@ namespace ISpanShop.Services.Support
 				Subject = e.Subject,
 				Description = e.Description,
 				AttachmentUrl = e.AttachmentUrl,
-				Status = (byte)(e.Status ?? 0),
+				Status = e.Status,
 				AdminReply = e.AdminReply,
-				CreatedAt = e.CreatedAt ?? DateTime.MinValue,
+				CreatedAt = e.CreatedAt,
 				ResolvedAt = e.ResolvedAt
 			};
+		}
+
+		public async Task CreateAsync(SupportTicketDto dto)
+		{
+			var entity = new ISpanShop.Models.EfModels.SupportTicket
+			{
+				UserId = dto.UserId,
+				OrderId = dto.OrderId,
+				Category = dto.Category,
+				Subject = dto.Subject,
+				Description = dto.Description,
+				AttachmentUrl = dto.AttachmentUrl,
+				Status = 0, // 待處理
+				CreatedAt = DateTime.Now
+			};
+
+			await _repo.CreateAsync(entity);
 		}
 	}
 }

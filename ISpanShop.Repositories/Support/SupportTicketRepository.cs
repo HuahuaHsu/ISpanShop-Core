@@ -21,12 +21,26 @@ public class SupportTicketRepository : ISupportTicketRepository
 			.ToListAsync();
 	}
 
+	public async Task<List<SupportTicket>> GetByUserIdAsync(int userId)
+	{
+		return await _context.SupportTickets
+			.Where(t => t.UserId == userId)
+			.OrderByDescending(t => t.CreatedAt)
+			.ToListAsync();
+	}
+
 	public async Task<SupportTicket> GetByIdAsync(int id) =>
 		await _context.SupportTickets.FirstOrDefaultAsync(t => t.Id == id);
 
 	public async Task UpdateAsync(SupportTicket ticket)
 	{
 		_context.SupportTickets.Update(ticket);
+		await _context.SaveChangesAsync();
+	}
+
+	public async Task CreateAsync(SupportTicket ticket)
+	{
+		_context.SupportTickets.Add(ticket);
 		await _context.SaveChangesAsync();
 	}
 }

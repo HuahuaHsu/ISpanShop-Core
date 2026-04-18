@@ -29,5 +29,15 @@ namespace ISpanShop.Services.Orders
 		/// 更新訂單狀態業務邏輯
 		/// </summary>
 		Task UpdateStatusAsync(long id, OrderStatus status);
+
+		/// <summary>
+		/// 取消訂單
+		/// </summary>
+		Task<bool> CancelOrderAsync(long id);
+
+		/// <summary>
+		/// 申請退貨
+		/// </summary>
+		Task<bool> ReturnOrderAsync(long id);
 	}
 }

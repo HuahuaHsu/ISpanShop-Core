@@ -30,6 +30,7 @@
                 <div class="card-body">
                     <form method="post" asp-action="ReplyTicket">
                         <input type="hidden" name="ticketId" value="@Model.Id" />
+                        <input type="hidden" name="page" value="@ViewBag.Page" />
                         
                         <div class="mb-3">
                             <label class="form-label">管理員回覆內容：</label>
@@ -45,7 +46,10 @@
                             </select>
                         </div>
                         
-                        <button type="submit" class="btn btn-info text-white">送出回覆</button>
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-info text-white">送出回覆</button>
+                            <a asp-action="Index" asp-route-page="@ViewBag.Page" class="btn btn-outline-secondary">返回列表</a>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -67,6 +71,7 @@
                     <form method="post" asp-action="SuspendUser">
                         <input type="hidden" name="userId" value="@Model.UserId" />
                         <input type="hidden" name="ticketId" value="@Model.Id" />
+                        <input type="hidden" name="page" value="@ViewBag.Page" />
                         <button type="submit" class="btn btn-danger">執行停權 (加入黑名單)</button>
                     </form>
                 </div>

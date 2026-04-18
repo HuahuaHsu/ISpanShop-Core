@@ -47,9 +47,8 @@
                         <td>
                             <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Id">編輯</a>
                             @* 刪除通常建議用一個小的 Form 包起來，比較安全 *@
-                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;"
-                                  onsubmit="return confirm('確定要刪除這筆敏感字嗎？');">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger btn-delete-word">刪除</button>
                             </form>
                         </td>
                     </tr>
@@ -101,3 +100,29 @@
         </nav>
     }
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
+            // SweetAlert2 刪除確認
+            $('.btn-delete-word').click(function(e) {
+                e.preventDefault();
+                const form = $(this).closest('form');
+                Swal.fire({
+                    title: '<span style="color: #d33">確定要刪除這筆敏感字嗎？</span>',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: '確定',
+                    cancelButtonText: '取消'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}
