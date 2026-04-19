@@ -26,10 +26,6 @@ const profileForm = reactive({
 
 // ── 表單驗證規則 ──────────────────────────────────
 const rules = reactive<FormRules>({
-  email: [
-    { required: true, message: '請輸入 Email', trigger: 'blur' },
-    { type: 'email', message: '請輸入正確的 Email 格式', trigger: 'blur' }
-  ],
   memberName: [
     { max: 50, message: '姓名長度不可超過 50 個字', trigger: 'blur' }
   ],
@@ -72,6 +68,19 @@ const fetchProfile = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+// ── Email 遮罩邏輯 (前兩碼 + 固定星號 + 最後一碼) ──
+const maskEmail = (email: string) => {
+  if (!email) return ''
+  const [user, domain] = email.split('@')
+  if (!domain) return email
+  
+  if (user.length <= 2) return `${user}***@${domain}`
+  
+  const prefix = user.substring(0, 2)
+  const suffix = user.slice(-1)
+  return `${prefix}***${suffix}@${domain}`
 }
 
 onMounted(() => {
@@ -182,15 +191,14 @@ const handleAvatarUpload = async (rawFile: File) => {
         >
           <el-form-item label="帳號">
             <span class="read-only-text">{{ profileForm.account }}</span>
-            <span class="hint-text">帳號無法更改</span>
           </el-form-item>
 
           <el-form-item label="姓名" prop="memberName">
             <el-input v-model="profileForm.memberName" placeholder="請輸入姓名" :prefix-icon="User" />
           </el-form-item>
 
-          <el-form-item label="Email" prop="email">
-            <el-input v-model="profileForm.email" placeholder="請輸入 Email" :prefix-icon="Message" />
+          <el-form-item label="Email">
+            <span class="read-only-text">{{ maskEmail(profileForm.email) }}</span>
           </el-form-item>
 
           <el-form-item label="手機號碼" prop="phone">
