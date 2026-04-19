@@ -104,6 +104,7 @@ namespace ISpanShop.MVC
 
 			// 核心身分與會員
 			builder.Services.AddScoped<IFrontAuthService, FrontAuthService>();
+			builder.Services.AddScoped<IAccountService, AccountService>();
 			builder.Services.AddScoped<IUserRepository, UserRepository>();
 			builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 			builder.Services.AddScoped<IMemberService, MemberService>();

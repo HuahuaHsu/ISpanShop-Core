@@ -27,6 +27,12 @@ export interface UpdateMemberProfileDto {
   avatarUrl?: string;
 }
 
+/** 變更密碼 DTO */
+export interface ChangePasswordDto {
+  oldPassword: string;
+  newPassword: string;
+}
+
 /**
  * 取得會員個人資料
  */
@@ -50,4 +56,11 @@ export const uploadAvatar = (file: File) => {
   return axios.post<{ url: string }>('/api/front/profile/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
+};
+
+/**
+ * 變更密碼
+ */
+export const changePassword = (data: ChangePasswordDto) => {
+  return axios.put<{ message: string }>('/api/front/profile/password', data);
 };

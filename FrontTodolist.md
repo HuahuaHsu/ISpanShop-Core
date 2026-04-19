@@ -140,4 +140,209 @@
           位置：src/views/auth/RegisterView.vue
           說明：使用 Element Plus el-form，呼叫 registerApi()，成功後導向登入頁。
 
+【變更密碼 實作】
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 1：後端 — 模型定義
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 1. 建立 ChangePasswordDto
+         位置：ISpanShop.Models 專案 -> DTOs -> Auth 資料夾 -> ChangePasswordDto.cs
+         說明：已登入使用者變更密碼時，接收舊密碼與新密碼。
+         內容：UserId、OldPassword、NewPassword
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 2：後端 — Repository 層
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 2. 確認 UserRepository 已有 GetByIdAsync
+         位置：ISpanShop.Repositories 專案 -> UserRepository.cs
+         說明：若尚未實作，補上依 UserId 查詢使用者的方法，供 Service 層驗證密碼使用。
+
+  [ ] 3. UserRepository 新增 UpdatePasswordHashAsync
+         位置：ISpanShop.Repositories 專案 -> UserRepository.cs
+         說明：依 UserId 更新資料庫中的密碼 Hash。
+         方法簽章：Task UpdatePasswordHashAsync(int userId, string newHash)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 3：後端 — Service 層
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 4. 建立 IAccountService 介面
+         位置：ISpanShop.Services 專案 -> Interfaces -> IAccountService.cs
+         說明：定義帳號相關業務邏輯的抽象介面。
+         方法：ChangePasswordAsync
+
+  [ ] 5. 建立 AccountService
+         位置：ISpanShop.Services 專案 -> AccountService.cs
+         說明：實作 IAccountService，包含以下方法：
+
+         ChangePasswordAsync(ChangePasswordDto dto)
+           - 依 UserId 取出使用者
+           - 驗證舊密碼 Hash 是否正確（使用 PasswordHasher）
+           - 確認新密碼不與舊密碼相同
+           - 呼叫 UpdatePasswordHashAsync 更新密碼
+           - 回傳 (bool Success, string Message)
+
+  [ ] 6. 在 Program.cs 註冊服務
+         位置：WebAPI 或 MVC 專案 -> Program.cs
+         說明：
+           builder.Services.AddScoped<IAccountService, AccountService>();
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 4：後端 — API Controller
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 7. 新增變更密碼 API
+         位置：FrontMemberController.cs（或新建 FrontAccountController.cs）
+         路由：PUT /api/front/member/password
+         說明：需加上 [Authorize]，從 JWT Token 取出 UserId，
+               呼叫 AccountService.ChangePasswordAsync，回傳成功或失敗訊息。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 5：前端
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 8. 實作 PasswordView.vue
+         位置：src/views/member/PasswordView.vue（已存在，補上實作）
+         說明：表單包含舊密碼、新密碼、確認新密碼三個欄位，
+               串接 PUT /api/front/member/password，
+               成功後清除本地 Token 並導向 /login。
+
+
+
+【忘記密碼 實作】（變更密碼完成後再開始）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 1：後端 — 模型定義
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 1. 建立 ForgotPasswordDto
+         位置：ISpanShop.Models 專案 -> DTOs -> Auth 資料夾 -> ForgotPasswordDto.cs
+         說明：忘記密碼時，接收使用者輸入的 Email 以觸發寄信流程。
+         內容：Email
+
+  [ ] 2. 建立 ResetPasswordDto
+         位置：ISpanShop.Models 專案 -> DTOs -> Auth 資料夾 -> ResetPasswordDto.cs
+         說明：使用者點擊信件連結後，接收 Token 與新密碼完成密碼重設。
+         內容：Token、NewPassword
+
+  [ ] 3. 建立 PasswordResetToken EfModel
+         位置：ISpanShop.Models 專案 -> EfModels -> PasswordResetToken.cs
+         說明：對應資料庫 PasswordResetTokens 資料表。
+         內容：Id、UserId (FK)、Token、ExpiresAt、IsUsed、CreatedAt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 2：後端 — 資料庫
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 4. 新增 PasswordResetTokens 資料表
+         位置：DbContext -> 新增 DbSet<PasswordResetToken>
+         說明：設定 UserId FK 對應 Users 資料表。
+         執行：Add-Migration AddPasswordResetTokens -> Update-Database
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 3：後端 — Repository 層
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 5. 建立 IPasswordResetTokenRepository 介面
+         位置：ISpanShop.Repositories 專案 -> Interfaces -> IPasswordResetTokenRepository.cs
+         說明：定義 Token 相關資料操作的抽象介面。
+         方法：CreateTokenAsync、GetValidTokenAsync、MarkTokenUsedAsync
+
+  [ ] 6. 建立 PasswordResetTokenRepository
+         位置：ISpanShop.Repositories 專案 -> PasswordResetTokenRepository.cs
+         說明：實作 IPasswordResetTokenRepository，直接操作 DbContext。
+         方法說明：
+           - CreateTokenAsync(int userId, string token, DateTime expiresAt)：建立新 Token 紀錄
+           - GetValidTokenAsync(string token)：查詢未過期且 IsUsed = false 的 Token
+           - MarkTokenUsedAsync(string token)：將 Token 的 IsUsed 設為 true
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 4：後端 — Service 層
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 7. 建立 IEmailService 介面
+         位置：ISpanShop.Common 專案 -> Helpers -> IEmailService.cs
+         說明：定義寄送 Email 的抽象介面。
+         方法：Task SendAsync(string toEmail, string subject, string htmlBody)
+
+  [ ] 8. 建立 EmailService
+         位置：ISpanShop.Common 專案 -> Helpers -> EmailService.cs
+         說明：使用 MailKit 實作寄信，SMTP 設定寫在 appsettings.json，
+               透過建構子注入 IConfiguration 讀取。
+
+  [ ] 9. IAccountService 介面補上忘記密碼相關方法
+         位置：ISpanShop.Services 專案 -> Interfaces -> IAccountService.cs
+         新增方法：ForgotPasswordAsync、ResetPasswordAsync
+
+  [ ] 10. AccountService 補上忘記密碼相關方法
+          位置：ISpanShop.Services 專案 -> AccountService.cs
+
+          ForgotPasswordAsync(string email)
+            - 查詢 Email 是否存在（不存在時仍回傳成功，避免洩漏帳號資訊）
+            - 產生 GUID Token，有效期限 30 分鐘
+            - 呼叫 CreateTokenAsync 存入資料庫
+            - 組合重設連結：{前端網址}/reset-password?token={Token}
+            - 呼叫 IEmailService 寄出重設密碼信
+
+          ResetPasswordAsync(ResetPasswordDto dto)
+            - 呼叫 GetValidTokenAsync 驗證 Token 是否有效
+            - Token 無效或已過期則回傳失敗訊息
+            - 依 Token 找到對應 UserId，更新新密碼 Hash
+            - 呼叫 MarkTokenUsedAsync 將 Token 標記為已使用
+            - 回傳 (bool Success, string Message)
+
+  [ ] 11. 在 Program.cs 補上新增服務註冊
+          位置：WebAPI 或 MVC 專案 -> Program.cs
+          說明：
+            builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+            builder.Services.AddSingleton<IEmailService, EmailService>();
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 5：後端 — API Controller
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 12. 新增忘記密碼 API
+          位置：FrontAuthController.cs
+          路由：POST /api/front/auth/forgot-password
+          說明：不需 [Authorize]，接收 Email，呼叫 AccountService.ForgotPasswordAsync。
+
+  [ ] 13. 新增驗證 Token API
+          位置：FrontAuthController.cs
+          路由：GET /api/front/auth/verify-reset-token?token=xxx
+          說明：不需 [Authorize]，前端重設密碼頁面載入時呼叫，
+                Token 無效則前端顯示「連結已失效」。
+
+  [ ] 14. 新增重設密碼 API
+          位置：FrontAuthController.cs
+          路由：POST /api/front/auth/reset-password
+          說明：不需 [Authorize]，接收 Token + NewPassword，
+                呼叫 AccountService.ResetPasswordAsync，成功後導引前端回登入頁。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 6：前端
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 15. LoginView.vue 新增「忘記密碼？」連結
+          位置：src/views/auth/LoginView.vue
+          說明：在密碼欄位下方加上連結，點擊後導向 /forgot-password。
+
+  [ ] 16. 新增 ForgotPasswordView.vue
+          位置：src/views/auth/ForgotPasswordView.vue
+          說明：單一 Email 輸入欄位，送出後顯示「請查收信箱，連結 30 分鐘內有效」提示，
+                使用 BlankLayout 版型。
+
+  [ ] 17. 新增 ResetPasswordView.vue
+          位置：src/views/auth/ResetPasswordView.vue
+          說明：頁面載入時從網址取出 Token，呼叫 verify-reset-token 驗證，
+                Token 無效則顯示「連結已失效，請重新申請」；
+                Token 有效則顯示新密碼 + 確認新密碼表單，
+                送出後串接 POST /api/front/auth/reset-password，成功後導向 /login。
+                使用 BlankLayout 版型。
+
+  [ ] 18. 新增路由設定
+          位置：src/router/index.js
+          說明：新增以下兩條路由，皆使用 BlankLayout，不需 requiresAuth：
+            { path: '/forgot-password', component: ForgotPasswordView }
+            { path: '/reset-password', component: ResetPasswordView }

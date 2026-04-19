@@ -1,54 +1,203 @@
 <template>
-  <div class="page-container">
-    <div class="maintenance-box">
-      <div class="icon-wrap">
-        <el-icon :size="60"><Lock /></el-icon>
+  <div class="password-container">
+    <div class="password-card">
+      <div class="card-header">
+        <h2>修改密碼</h2>
+        <p>為了確保帳號安全，建議您定期更改密碼，並避免使用與其他網站相同的密碼。</p>
       </div>
-      <h2>更改密碼功能維護中</h2>
-      <p>為了確保帳號安全，我們正在升級加密系統。此功能目前正在進行維護測試。</p>
-      <div class="progress-bar">
-        <el-progress :percentage="45" status="warning" />
-      </div>
-      <el-button type="primary" plain @click="$router.push('/member')">返回會員中心</el-button>
+
+      <el-form
+        ref="passwordFormRef"
+        :model="passwordForm"
+        :rules="rules"
+        label-width="100px"
+        label-position="top"
+        class="password-form"
+      >
+        <el-form-item label="目前密碼" prop="oldPassword">
+          <el-input
+            v-model="passwordForm.oldPassword"
+            type="password"
+            show-password
+            placeholder="請輸入目前使用的密碼"
+          />
+        </el-form-item>
+
+        <el-form-item label="新密碼" prop="newPassword">
+          <el-input
+            v-model="passwordForm.newPassword"
+            type="password"
+            show-password
+            placeholder="請輸入 6-20 位包含英數字的新密碼"
+          />
+        </el-form-item>
+
+        <el-form-item label="確認新密碼" prop="confirmPassword">
+          <el-input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            show-password
+            placeholder="請再次輸入新密碼"
+          />
+        </el-form-item>
+
+        <el-form-item class="form-actions">
+          <el-button 
+            type="primary" 
+            :loading="submitting" 
+            @click="handleSubmit"
+            class="submit-btn"
+          >
+            確認修改
+          </el-button>
+          <el-button @click="$router.push('/member')" :disabled="submitting">
+            取消
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Lock } from '@element-plus/icons-vue'
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import { changePassword } from '@/api/member'
+import { useAuthStore } from '@/stores/auth'
+
+const router = useRouter()
+const authStore = useAuthStore()
+const passwordFormRef = ref<FormInstance>()
+const submitting = ref(false)
+
+const passwordForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+// 表單驗證規則
+const rules = reactive<FormRules>({
+  oldPassword: [
+    { required: true, message: '請輸入目前密碼', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '請輸入新密碼', trigger: 'blur' },
+    { min: 6, max: 20, message: '長度應為 6 到 20 個字元', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '請再次輸入新密碼', trigger: 'blur' },
+    {
+      validator: (rule: any, value: any, callback: any) => {
+        if (value !== passwordForm.newPassword) {
+          callback(new Error('兩次輸入的新密碼不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+})
+
+const handleSubmit = async () => {
+  if (!passwordFormRef.value) return
+
+  await passwordFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        submitting.value = true
+        
+        const { message } = await changePassword({
+          oldPassword: passwordForm.oldPassword,
+          newPassword: passwordForm.newPassword
+        })
+
+        ElMessage.success(message || '密碼修改成功，請重新登入')
+        
+        // 成功後清除 Token 並強制登出
+        authStore.logout()
+        
+        // 延遲導向登入頁面
+        setTimeout(() => {
+          router.push('/login')
+        }, 1500)
+
+      } catch (error: any) {
+        console.error('修改密碼失敗:', error)
+        const errorMsg = error.response?.data?.message || '修改失敗，請檢查目前密碼是否正確'
+        ElMessage.error(errorMsg)
+      } finally {
+        submitting.value = false
+      }
+    }
+  })
+}
 </script>
 
 <style scoped>
-.page-container {
+.password-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 500px;
+  padding: 20px 0;
 }
-.maintenance-box {
-  text-align: center;
-  background: white;
-  padding: 60px 40px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+
+.password-card {
+  width: 100%;
   max-width: 500px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  padding: 40px;
 }
-.icon-wrap {
-  color: #ee4d2d;
-  margin-bottom: 24px;
-}
-h2 {
-  font-size: 24px;
-  color: #1e293b;
-  margin-bottom: 12px;
-}
-p {
-  color: #64748b;
-  line-height: 1.6;
+
+.card-header {
   margin-bottom: 30px;
+  text-align: center;
 }
-.progress-bar {
-  margin: 0 auto 30px;
-  max-width: 300px;
+
+.card-header h2 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.card-header p {
+  font-size: 14px;
+  color: #999;
+  line-height: 1.5;
+}
+
+.password-form {
+  margin-top: 20px;
+}
+
+.form-actions {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.submit-btn {
+  padding: 12px 30px;
+  font-size: 16px;
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 500;
+  padding-bottom: 8px;
+}
+
+:deep(.el-input__wrapper) {
+  padding: 8px 12px;
+}
+
+@media (max-width: 480px) {
+  .password-card {
+    padding: 20px;
+    box-shadow: none;
+  }
 }
 </style>
