@@ -87,11 +87,11 @@ namespace ISpanShop.Services.Members
 			try
 			{
 				var resetLink = $"http://localhost:5173/reset-password?token={token}";
-				var subject = "ISpanShop - 重設您的密碼";
+				var subject = "HowBuy好買 - 重設您的密碼";
 				var body = $@"
                     <div style='font-family: sans-serif; padding: 20px; color: #333;'>
                         <h2>您好，{user.Account}</h2>
-                        <p>我們收到了重設您 ISpanShop 帳號密碼的請求。</p>
+                        <p>我們收到了重設您 HowBuy好買 帳號密碼的請求。</p>
                         <p>請點擊下方按鈕以重設密碼（此連結將在 30 分鐘後失效）：</p>
                         <div style='margin: 30px 0;'>
                             <a href='{resetLink}' style='background-color: #ee4d2d; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold;'>重設密碼</a>
