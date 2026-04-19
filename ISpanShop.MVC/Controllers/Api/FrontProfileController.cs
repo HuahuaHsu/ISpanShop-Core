@@ -99,32 +99,5 @@ namespace ISpanShop.MVC.Controllers.Api
                 return BadRequest(new { message = ex.Message });
             }
         }
-
-        /// <summary>
-        /// 變更密碼 (需透過 JWT 驗證)
-        /// </summary>
-        [Authorize(AuthenticationSchemes = "FrontendJwt")]
-        [HttpPut("password")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
-        {
-            try
-            {
-                // 從 Token 中安全取得 UserId，並覆寫到 dto 中
-                var currentUserId = User.GetUserId();
-                if (currentUserId == null) 
-                    return Unauthorized(new { message = "無法取得目前使用者 ID" });
-
-                dto.UserId = currentUserId.Value;
-
-                var (success, message) = await _accountService.ChangePasswordAsync(dto);
-                if (!success) return BadRequest(new { message });
-
-                return Ok(new { message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
     }
 }

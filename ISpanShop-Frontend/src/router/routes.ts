@@ -117,6 +117,18 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('../views/auth/RegisterView.vue'),
     meta: { requiresAuth: false, hideForAuth: true }
   },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('../views/auth/ForgotPasswordView.vue'),
+    meta: { requiresAuth: false, hideForAuth: true }
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('../views/auth/ResetPasswordView.vue'),
+    meta: { requiresAuth: false, hideForAuth: true }
+  },
 
   // ── 賣家中心（獨立 Layout，與前台完全分離） ──
   {

@@ -21,3 +21,19 @@ export interface RegisterRequest {
   fullName: string;
   phoneNumber?: string;
 }
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string; // 從 URL query 取得
+  newPassword: string;
+  confirmPassword: string;
+}

@@ -1,5 +1,5 @@
 import axios from './axios';
-
+import type { ChangePasswordRequest } from '@/types/auth';
 
 /** 會員資料 DTO (用於讀取) */
 export interface MemberDto {
@@ -25,12 +25,6 @@ export interface UpdateMemberProfileDto {
   gender: number | null;  // byte? (0-255)
   birthday: string | null;  // DateOnly? -> 送 "YYYY-MM-DD" 字串
   avatarUrl?: string;
-}
-
-/** 變更密碼 DTO */
-export interface ChangePasswordDto {
-  oldPassword: string;
-  newPassword: string;
 }
 
 /**
@@ -61,6 +55,6 @@ export const uploadAvatar = (file: File) => {
 /**
  * 變更密碼
  */
-export const changePassword = (data: ChangePasswordDto) => {
-  return axios.put<{ message: string }>('/api/front/profile/password', data);
+export const changePassword = (data: ChangePasswordRequest) => {
+  return axios.put<{ isSuccess: boolean; message: string }>('/api/front/member/password', data);
 };

@@ -87,6 +87,8 @@ public partial class ISpanShopDBContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>

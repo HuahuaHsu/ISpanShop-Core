@@ -112,7 +112,8 @@ const handleSubmit = async () => {
         
         const { message } = await changePassword({
           oldPassword: passwordForm.oldPassword,
-          newPassword: passwordForm.newPassword
+          newPassword: passwordForm.newPassword,
+          confirmPassword: passwordForm.confirmPassword
         })
 
         ElMessage.success(message || '密碼修改成功，請重新登入')

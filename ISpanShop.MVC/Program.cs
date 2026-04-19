@@ -106,6 +106,7 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<IFrontAuthService, FrontAuthService>();
 			builder.Services.AddScoped<IAccountService, AccountService>();
 			builder.Services.AddScoped<IUserRepository, UserRepository>();
+			builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 			builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 			builder.Services.AddScoped<IMemberService, MemberService>();
 			builder.Services.AddScoped<IPointRepository, PointRepository>();

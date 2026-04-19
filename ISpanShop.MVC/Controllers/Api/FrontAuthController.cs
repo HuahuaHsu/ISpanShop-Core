@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System;
 using System.Threading.Tasks;
+using ISpanShop.Services.Members;
 
 namespace ISpanShop.MVC.Controllers.Api
 {
@@ -13,16 +14,19 @@ namespace ISpanShop.MVC.Controllers.Api
     public class FrontAuthController : ControllerBase
     {
         private readonly IFrontAuthService _authService;
+        private readonly IAccountService _accountService;
 
-        public FrontAuthController(IFrontAuthService authService)
+        public FrontAuthController(IFrontAuthService authService, IAccountService accountService)
         {
             _authService = authService;
+            _accountService = accountService;
         }
 
         [HttpGet("me")]
         [Authorize(AuthenticationSchemes = "FrontendJwt")]
         public IActionResult GetMe()
         {
+            // ... (existing code)
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var account = User.FindFirst(ClaimTypes.Name)?.Value;
             var role = User.FindFirst("RoleId")?.Value;
@@ -38,6 +42,7 @@ namespace ISpanShop.MVC.Controllers.Api
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] FrontLoginRequestDto request)
         {
+            // ... (existing code)
             try
             {
                 var response = await _authService.LoginAsync(request);
@@ -52,6 +57,7 @@ namespace ISpanShop.MVC.Controllers.Api
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] FrontRegisterRequestDto request)
         {
+            // ... (existing code)
             try
             {
                 await _authService.RegisterAsync(request);
@@ -60,6 +66,42 @@ namespace ISpanShop.MVC.Controllers.Api
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 忘記密碼 - 申請重設
+        /// </summary>
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            try
+            {
+                var (isSuccess, message) = await _accountService.ForgotPasswordAsync(dto);
+                return Ok(new { isSuccess, message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { isSuccess = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 重設密碼 - 提交新密碼
+        /// </summary>
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            try
+            {
+                var (isSuccess, message) = await _accountService.ResetPasswordAsync(dto);
+                if (!isSuccess) return BadRequest(new { isSuccess, message });
+
+                return Ok(new { isSuccess, message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { isSuccess = false, message = ex.Message });
             }
         }
     }

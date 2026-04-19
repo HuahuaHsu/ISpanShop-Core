@@ -38,7 +38,7 @@ namespace ISpanShop.Repositories.Members
                 .FirstOrDefaultAsync(u => u.Id == userId);
         }
 
-        public async Task UpdatePasswordHashAsync(int userId, string newHash)
+        public async Task<bool> UpdatePasswordHashAsync(int userId, string newHash)
         {
             var user = await _db.Users.FindAsync(userId);
             if (user != null)
@@ -46,7 +46,9 @@ namespace ISpanShop.Repositories.Members
                 user.Password = newHash;
                 user.UpdatedAt = DateTime.Now;
                 await _db.SaveChangesAsync();
+                return true;
             }
+            return false;
         }
     }
 }
