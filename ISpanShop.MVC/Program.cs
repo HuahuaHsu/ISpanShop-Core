@@ -31,6 +31,7 @@ using ISpanShop.Services.Promotions;
 using ISpanShop.Services.Brands;
 using ISpanShop.Services.Coupons;
 using ISpanShop.Services.Auth;
+using ISpanShop.Services.Communication;
 using ISpanShop.Services;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -105,6 +106,7 @@ namespace ISpanShop.MVC
 			// 核心身分與會員
 			builder.Services.AddScoped<IFrontAuthService, FrontAuthService>();
 			builder.Services.AddScoped<IAccountService, AccountService>();
+			builder.Services.AddScoped<IEmailService, EmailService>();
 			builder.Services.AddScoped<IUserRepository, UserRepository>();
 			builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 			builder.Services.AddScoped<IMemberRepository, MemberRepository>();

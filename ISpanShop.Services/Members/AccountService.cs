@@ -2,6 +2,7 @@ using ISpanShop.Common.Helpers;
 using ISpanShop.Models.DTOs.Auth;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Members;
+using ISpanShop.Services.Communication;
 
 namespace ISpanShop.Services.Members
 {
@@ -9,11 +10,16 @@ namespace ISpanShop.Services.Members
 	{
 		private readonly IUserRepository _userRepository;
 		private readonly IPasswordResetTokenRepository _tokenRepository;
+		private readonly IEmailService _emailService;
 
-		public AccountService(IUserRepository userRepository, IPasswordResetTokenRepository tokenRepository)
+		public AccountService(
+			IUserRepository userRepository, 
+			IPasswordResetTokenRepository tokenRepository,
+			IEmailService emailService)
 		{
 			_userRepository = userRepository;
 			_tokenRepository = tokenRepository;
+			_emailService = emailService;
 		}
 
 		public async Task<(bool IsSuccess, string Message)> ChangePasswordAsync(ChangePasswordDto dto)
@@ -77,10 +83,37 @@ namespace ISpanShop.Services.Members
 			// 4. 儲存 Token
 			await _tokenRepository.CreateAsync(resetToken);
 
-			// 5. 發送郵件（模擬）
-			Console.WriteLine($"[模擬發信] 重設密碼連結: http://localhost:5173/reset-password?token={token}");
+			// 5. 發送郵件
+			try
+			{
+				var resetLink = $"http://localhost:5173/reset-password?token={token}";
+				var subject = "ISpanShop - 重設您的密碼";
+				var body = $@"
+                    <div style='font-family: sans-serif; padding: 20px; color: #333;'>
+                        <h2>您好，{user.Account}</h2>
+                        <p>我們收到了重設您 ISpanShop 帳號密碼的請求。</p>
+                        <p>請點擊下方按鈕以重設密碼（此連結將在 30 分鐘後失效）：</p>
+                        <div style='margin: 30px 0;'>
+                            <a href='{resetLink}' style='background-color: #ee4d2d; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold;'>重設密碼</a>
+                        </div>
+                        <p>如果按鈕無法運作，請複製並貼上以下連結至瀏覽器：</p>
+                        <p><a href='{resetLink}'>{resetLink}</a></p>
+                        <hr style='border: none; border-top: 1px solid #eee; margin-top: 30px;'>
+                        <p style='font-size: 12px; color: #999;'>如果您並未要求重設密碼，請忽略此電子郵件。您的帳號安全無虞。</p>
+                    </div>";
 
-			return (true, "重設密碼信件已發送，請檢查您的信箱");
+				await _emailService.SendEmailAsync(user.Email, subject, body);
+				return (true, "重設密碼信件已發送，請檢查您的信箱");
+			}
+			catch (Exception ex)
+			{
+				// 郵件發送失敗但不中斷流程 (用於本地測試)
+				// 可以在開發者主控台查看 Token
+				Console.WriteLine($"[錯誤] 郵件發送失敗: {ex.Message}");
+				Console.WriteLine($"[本地測試] 重設連結: http://localhost:5173/reset-password?token={token}");
+				
+				return (false, $"郵件發送失敗，請確認郵件伺服器設定。錯誤原因: {ex.Message}");
+			}
 		}
 
 		public async Task<(bool IsSuccess, string Message)> ResetPasswordAsync(ResetPasswordDto dto)

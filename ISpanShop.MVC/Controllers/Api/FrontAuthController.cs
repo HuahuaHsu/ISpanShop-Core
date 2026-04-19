@@ -69,27 +69,34 @@ namespace ISpanShop.MVC.Controllers.Api
             }
         }
 
-        /// <summary>
-        /// 忘記密碼 - 申請重設
-        /// </summary>
-        [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
-        {
-            try
-            {
-                var (isSuccess, message) = await _accountService.ForgotPasswordAsync(dto);
-                return Ok(new { isSuccess, message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { isSuccess = false, message = ex.Message });
-            }
-        }
+		/// <summary>
+		/// 忘記密碼 - 申請重設
+		/// </summary>
+		[HttpPost("forgot-password")]
+		public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+		{
+			try
+			{
+				var (isSuccess, message) = await _accountService.ForgotPasswordAsync(dto);
 
-        /// <summary>
-        /// 重設密碼 - 提交新密碼
-        /// </summary>
-        [HttpPost("reset-password")]
+				// 如果 Service 回傳 false，就丟出 BadRequest (HTTP 400)
+				if (!isSuccess)
+				{
+					return BadRequest(new { isSuccess, message });
+				}
+
+				return Ok(new { isSuccess, message });
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { isSuccess = false, message = ex.Message });
+			}
+		}
+
+		/// <summary>
+		/// 重設密碼 - 提交新密碼
+		/// </summary>
+		[HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
             try
