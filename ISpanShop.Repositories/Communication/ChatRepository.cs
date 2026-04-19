@@ -39,7 +39,7 @@ namespace ISpanShop.Repositories.Communication
 
 		// ... (existing methods)
 
-		// 實作：取得聯絡人列表
+		// 實作：取得聯絡人列表.
 		public async Task<List<dynamic>> GetChatSessionsAsync(int userId)
 		{
             // 找出所有與該使用者有關的訊息，並依對象分組
