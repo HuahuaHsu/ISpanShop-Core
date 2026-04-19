@@ -21,12 +21,15 @@ namespace ISpanShop.Repositories.Communication
 
 		// 取得買賣家雙方的歷史聊天紀錄
 		Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id);
+
+        // 取得聯絡人列表 (包含最後一則訊息)
+        Task<List<dynamic>> GetChatSessionsAsync(int userId);
 	}
 
 	// 2. 實作介面
 	public class ChatRepository : IChatRepository
 	{
-		// 這裡替換成你實際的 DbContext 名稱 (通常叫 ISpanShopContext 或 AppDbContext)
+		// ... (existing constructor)
 		private readonly ISpanShopDBContext _context;
 
 		public ChatRepository(ISpanShopDBContext context)
@@ -34,47 +37,29 @@ namespace ISpanShop.Repositories.Communication
 			_context = context;
 		}
 
-		// 實作：計算未讀數量
-		public async Task<int> GetUnreadCountAsync(int receiverId)
-		{
-			// 利用 LINQ 去資料庫找：接收者是我，且 IsRead 為 false (0) 的數量
-			return await _context.ChatMessages
-				.Where(m => m.ReceiverId == receiverId && m.IsRead == false)
-				.CountAsync();
-		}
+		// ... (existing methods)
 
-		// 實作：標記為已讀
-		public async Task MarkAsReadAsync(int senderId, int receiverId)
+		// 實作：取得聯絡人列表
+		public async Task<List<dynamic>> GetChatSessionsAsync(int userId)
 		{
-			var unreadMessages = await _context.ChatMessages
-				.Where(m => m.SenderId == senderId && m.ReceiverId == receiverId && m.IsRead == false)
-				.ToListAsync();
+            // 找出所有與該使用者有關的訊息，並依對象分組
+            var messages = await _context.ChatMessages
+                .Where(m => m.SenderId == userId || m.ReceiverId == userId)
+                .OrderByDescending(m => m.SentAt)
+                .ToListAsync();
 
-			if (unreadMessages.Any())
-			{
-				foreach (var msg in unreadMessages)
-				{
-					msg.IsRead = true;
-				}
-				await _context.SaveChangesAsync();
-			}
-		}
+            var sessions = messages
+                .GroupBy(m => m.SenderId == userId ? m.ReceiverId : m.SenderId)
+                .Select(g => new
+                {
+                    OtherUserId = g.Key,
+                    LastMessage = g.First().Content,
+                    SentAt = g.First().SentAt,
+                    UnreadCount = g.Count(m => m.ReceiverId == userId && m.IsRead == false)
+                })
+                .ToList<dynamic>();
 
-		// 實作：儲存新訊息
-		public async Task AddMessageAsync(ChatMessage message)
-		{
-			_context.ChatMessages.Add(message);
-			await _context.SaveChangesAsync();
-		}
-
-		// 實作：取得對話紀錄 (依時間排序)
-		public async Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id)
-		{
-			return await _context.ChatMessages
-				.Where(m => (m.SenderId == user1Id && m.ReceiverId == user2Id) ||
-							(m.SenderId == user2Id && m.ReceiverId == user1Id))
-				.OrderBy(m => m.SentAt)
-				.ToListAsync();
+            return sessions;
 		}
 	}
 }

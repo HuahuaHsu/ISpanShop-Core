@@ -1,44 +1,8 @@
-using ISpanShop.Models.EfModels;
-using ISpanShop.Models.Seeding;
-using ISpanShop.MVC.Middleware;
+using ISpanShop.MVC.Hubs;
+using ISpanShop.Repositories.Communication;
+using ISpanShop.Services.Communication;
 
-// Repository namespaces
-using ISpanShop.Repositories.Admins;
-using ISpanShop.Repositories.Members;
-using ISpanShop.Repositories.Members.Implementations;
-using ISpanShop.Repositories.Products;
-using ISpanShop.Repositories.Categories;
-using ISpanShop.Repositories.Orders;
-using ISpanShop.Repositories.Inventories;
-using ISpanShop.Repositories.ContentModeration;
-using ISpanShop.Repositories.Support;
-using ISpanShop.Repositories.Stores;
-using ISpanShop.Repositories.Promotions;
-using ISpanShop.Repositories.Brands;
-
-// Service namespaces
-using ISpanShop.Services.Admins;
-using ISpanShop.Services.Members;
-using ISpanShop.Services.Products;
-using ISpanShop.Services.Categories;
-using ISpanShop.Services.Orders;
-using ISpanShop.Services.Inventories;
-using ISpanShop.Services.ContentModeration;
-using ISpanShop.Services.Support;
-using ISpanShop.Services.Payments;
-using ISpanShop.Services.Stores;
-using ISpanShop.Services.Promotions;
-using ISpanShop.Services.Brands;
-using ISpanShop.Services.Coupons;
-using ISpanShop.Services.Auth;
-using ISpanShop.Services;
-
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using System.Text;
+// ... (other using statements)
 
 namespace ISpanShop.MVC
 {
@@ -57,7 +21,6 @@ namespace ISpanShop.MVC
 				options.AddPolicy("ISpanShopFrontendPolicy", policy =>
 				{
 					// 開發環境：允許 Vite (localhost:5173) 
-					// 分開部署後，可將此網址移動到 appsettings.json
 					policy.WithOrigins("http://localhost:5173")
 						  .AllowAnyHeader()
 						  .AllowAnyMethod()
@@ -66,6 +29,7 @@ namespace ISpanShop.MVC
 			});
 
 			// ── 2. 資料庫連線 ──
+            // ... (rest of DB connection code)
 			builder.Services.AddDbContext<ISpanShopDBContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
 				sqlServerOptionsAction: sqlOptions =>
@@ -98,11 +62,27 @@ namespace ISpanShop.MVC
 						ValidAudience = jwtSettings["Audience"],
 						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
 					};
+
+					// 支援 SignalR 從 Query String 取得 Token
+					options.Events = new JwtBearerEvents
+					{
+						OnMessageReceived = context =>
+						{
+							var accessToken = context.Request.Query["access_token"];
+							var path = context.HttpContext.Request.Path;
+							if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+							{
+								context.Token = accessToken;
+							}
+							return Task.CompletedTask;
+						}
+					};
 				});
 
 			// ── 4. DI 服務註冊 ──
 
 			// 核心身分與會員
+            // ... (rest of auth registrations)
 			builder.Services.AddScoped<IFrontAuthService, FrontAuthService>();
 			builder.Services.AddScoped<IUserRepository, UserRepository>();
 			builder.Services.AddScoped<IMemberRepository, MemberRepository>();
@@ -111,6 +91,7 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<PointService>();
 
 			// 後台管理
+            // ... (rest of admin registrations)
 			builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 			builder.Services.AddScoped<IAdminRoleRepository, AdminRoleRepository>();
 			builder.Services.AddScoped<IAdminService, AdminService>();
@@ -118,6 +99,7 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<ILoginHistoryService, LoginHistoryService>();
 
 			// 商品與分類
+            // ... (rest of product registrations)
 			builder.Services.AddScoped<IProductRepository, ProductRepository>();
 			builder.Services.AddScoped<IProductService, ProductService>();
 			builder.Services.AddScoped<ICategoryAttributeRepository, CategoryAttributeRepository>();
@@ -130,6 +112,7 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<BrandService>();
 
 			// 訂單、評論與行銷
+            // ... (rest of order registrations)
 			builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 			builder.Services.AddScoped<IOrderService, OrderService>();
 			builder.Services.AddScoped<IFrontOrderService, FrontOrderService>();
@@ -142,6 +125,7 @@ namespace ISpanShop.MVC
 			builder.Services.AddHostedService<CouponCleanupService>();
 
 			// 支付與系統
+            // ... (rest of payment registrations)
 			builder.Services.AddScoped<PaymentService>();
 			builder.Services.AddScoped<CheckoutService>();
 			builder.Services.AddScoped<NewebPayService>();
@@ -153,7 +137,13 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<IStoreService, StoreService>();
 			builder.Services.AddScoped<IFrontStoreService, FrontStoreService>();
 
+			// 聊聊系統
+			builder.Services.AddScoped<IChatRepository, ChatRepository>();
+			builder.Services.AddScoped<IChatService, ChatService>();
+			builder.Services.AddSignalR(); // 啟用 SignalR
+
 			// ── 5. Swagger / OpenAPI ──
+            // ... (rest of swagger config)
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(c =>
 			{
@@ -189,6 +179,7 @@ namespace ISpanShop.MVC
 			var app = builder.Build();
 
 			// ── 6. HTTP Request Pipeline ──
+            // ... (rest of app pipeline)
 			if (!app.Environment.IsDevelopment())
 			{
 				app.UseExceptionHandler("/Home/Error");
@@ -220,6 +211,8 @@ namespace ISpanShop.MVC
 			}
 
 			// ── 7. 路由設定 ──
+			app.MapHub<ChatHub>("/chatHub"); // 對應 ChatHub 路由
+
 			app.MapControllerRoute(
 				name: "areas",
 				pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
@@ -236,6 +229,7 @@ namespace ISpanShop.MVC
 			app.MapControllers();
 
 			// ── 8. 資料初始化與結構補強 ──
+            // ... (rest of seeding code)
 			using (var scope = app.Services.CreateScope())
 			{
 				var services = scope.ServiceProvider;
@@ -265,7 +259,8 @@ namespace ISpanShop.MVC
 		/// 確保開發階段所需的資料庫欄位存在
 		/// </summary>
 		private static async Task EnsureDatabaseSchemaAsync(ISpanShopDBContext context)
-		{
+        {
+            // ... (rest of schema code)
 			var sqlCommands = new[]
 			{
 				"IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Products' AND COLUMN_NAME = 'IsDeleted') ALTER TABLE Products ADD IsDeleted BIT NOT NULL DEFAULT 0",

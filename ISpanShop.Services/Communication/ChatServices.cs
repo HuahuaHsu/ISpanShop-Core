@@ -12,23 +12,43 @@ public interface IChatService
 {
 	// 發送訊息 (包含過濾髒話的邏輯)
 	Task SendMessageAsync(int senderId, int receiverId, string content, byte type);
+
+    // 取得歷史紀錄
+    Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id);
+
+    // 取得對話清單
+    Task<List<dynamic>> GetChatSessionsAsync(int userId);
 }
 
 // 2. 實作
 public class ChatService : IChatService
 {
-		// 宣告兩個唯讀的 Repository 介面
+		// ... (existing constructor)
 		private readonly IChatRepository _chatRepo;
 		private readonly ISensitiveWordRepository _wordRepo;
 
-		// 透過依賴注入 (DI) 把實體傳進來
 		public ChatService(IChatRepository chatRepo, ISensitiveWordRepository wordRepo)
 		{
 			_chatRepo = chatRepo;
 			_wordRepo = wordRepo;
 		}
 
+		// ... (existing SendMessageAsync)
+
+        public async Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id)
+        {
+            // 在載入紀錄時，順便將訊息標記為已讀
+            await _chatRepo.MarkAsReadAsync(user2Id, user1Id);
+            return await _chatRepo.GetChatHistoryAsync(user1Id, user2Id);
+        }
+
+        public async Task<List<dynamic>> GetChatSessionsAsync(int userId)
+        {
+            return await _chatRepo.GetChatSessionsAsync(userId);
+        }
+
 		public async Task SendMessageAsync(int senderId, int receiverId, string content, byte type)
+// ... rest of file
 		{
 			// --- 商業邏輯區塊開始 ---
 
