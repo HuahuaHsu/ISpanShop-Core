@@ -37,21 +37,6 @@ namespace ISpanShop.MVC.Hubs
             }
         }
 
-        public async Task RecallMessage(long messageId, int receiverId)
-        {
-            var senderIdStr = Context.UserIdentifier;
-            if (int.TryParse(senderIdStr, out int senderId))
-            {
-                var success = await _chatService.RecallMessageAsync(messageId, senderId);
-                if (success)
-                {
-                    // 通知對方與自己這則訊息被撤回了
-                    await Clients.User(receiverId.ToString()).SendAsync("MessageRecalled", messageId);
-                    await Clients.Caller.SendAsync("MessageRecalled", messageId);
-                }
-            }
-        }
-
         public override async Task OnConnectedAsync()
         {
             _logger.LogInformation($"ChatHub: User connected - {Context.UserIdentifier}");

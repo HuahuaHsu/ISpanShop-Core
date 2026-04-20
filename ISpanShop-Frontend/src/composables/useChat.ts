@@ -36,16 +36,6 @@ export function useChat() {
       fetchSessions();
     });
 
-    // 監聽撤回訊息
-    connection.value.on('MessageRecalled', (messageId: number) => {
-      const msg = messages.value.find(m => (m as any).id === messageId);
-      if (msg) {
-        msg.type = 99;
-        msg.content = '訊息已撤回';
-      }
-      fetchSessions();
-    });
-
     try {
       await connection.value.start();
       isConnected.value = true;
@@ -87,21 +77,6 @@ export function useChat() {
       } catch (err) {
         console.error('Send Message Error: ', err);
       }
-    } else {
-      console.error('Cannot send message: SignalR not connected.', { 
-        connectionExists: !!connection.value, 
-        isConnected: isConnected.value 
-      });
-    }
-  };
-
-  const recallMessage = async (messageId: number, receiverId: number) => {
-    if (connection.value && isConnected.value) {
-      try {
-        await connection.value.invoke('RecallMessage', messageId, receiverId);
-      } catch (err) {
-        console.error('Recall Message Error:', err);
-      }
     }
   };
 
@@ -121,10 +96,8 @@ export function useChat() {
     messages,
     sessions,
     isConnected,
-    connection,
     fetchHistory,
     fetchSessions,
-    sendMessage,
-    recallMessage
+    sendMessage
   };
 }

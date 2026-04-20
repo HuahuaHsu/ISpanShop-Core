@@ -14,7 +14,6 @@ namespace ISpanShop.Repositories.Communication
         Task AddMessageAsync(ChatMessage message);
         Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id);
         Task<List<ISpanShop.Models.DTOs.Common.ChatSessionDto>> GetChatSessionsAsync(int userId);
-        Task<bool> RecallMessageAsync(long messageId, int senderId);
     }
 
     public class ChatRepository : IChatRepository
@@ -53,17 +52,6 @@ namespace ISpanShop.Repositories.Communication
         {
             _context.ChatMessages.Add(message);
             await _context.SaveChangesAsync();
-        }
-
-        public async Task<bool> RecallMessageAsync(long messageId, int senderId)
-        {
-            var msg = await _context.ChatMessages.FirstOrDefaultAsync(m => m.Id == messageId && m.SenderId == senderId);
-            if (msg == null) return false;
-
-            msg.Content = "訊息已撤回";
-            msg.Type = 99; // 撤回專用類型
-            await _context.SaveChangesAsync();
-            return true;
         }
 
         public async Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id)
@@ -113,7 +101,6 @@ namespace ISpanShop.Repositories.Communication
                         1 => "[圖片]",
                         2 => "[影片]",
                         3 => "[檔案]",
-                        99 => "[訊息已撤回]",
                         _ => lastMsg.Content
                     };
                     

@@ -55,16 +55,10 @@
             <div class="chat-body" ref="messageBox">
               <div v-for="(msg, index) in messages" :key="index" 
                    class="message-item" 
-                   :class="{ 
-                     'is-me': msg.senderId === authStore.memberInfo.memberId,
-                     'is-recalled': msg.type === 99 
-                   }"
+                   :class="{ 'is-me': msg.senderId === authStore.memberInfo.memberId }"
                    @contextmenu.prevent="showContextMenu($event, msg)">
                 <div class="message-content">
-                  <template v-if="msg.type === 99">
-                    <span class="recalled-text">訊息已撤回</span>
-                  </template>
-                  <template v-else-if="msg.type === 1">
+                  <template v-if="msg.type === 1">
                     <el-image :src="msg.content" :preview-src-list="[msg.content]" class="chat-img" />
                   </template>
                   <template v-else-if="msg.type === 2">
@@ -83,7 +77,7 @@
                     {{ msg.content }}
                   </template>
                 </div>
-                <div class="message-time" v-if="msg.type !== 99">{{ formatTime(msg.sentAt) }}</div>
+                <div class="message-time">{{ formatTime(msg.sentAt) }}</div>
               </div>
             </div>
 
@@ -92,7 +86,6 @@
                  class="custom-context-menu" 
                  :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
               <div class="menu-item" v-if="contextMenu.msg?.type === 0" @click="copyText">複製文字</div>
-              <div class="menu-item recall" v-if="contextMenu.msg?.senderId === authStore.memberInfo.memberId" @click="handleRecall">撤回訊息</div>
             </div>
 
             <div class="chat-footer">
@@ -151,7 +144,7 @@ import axios from 'axios';
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
-const { messages, sessions, fetchSessions, fetchHistory, sendMessage, recallMessage } = useChat();
+const { messages, sessions, fetchSessions, fetchHistory, sendMessage } = useChat();
 
 const inputMsg = ref('');
 const messageBox = ref<HTMLElement | null>(null);
@@ -168,7 +161,6 @@ const contextMenu = ref({
 });
 
 const showContextMenu = (e: MouseEvent, msg: any) => {
-  if (msg.type === 99) return;
   contextMenu.value = {
     show: true,
     x: e.clientX,
@@ -187,12 +179,6 @@ const copyText = () => {
     navigator.clipboard.writeText(contextMenu.value.msg.content);
     ElMessage.success('已複製到剪貼簿');
   }
-};
-
-const handleRecall = async () => {
-  const msg = contextMenu.value.msg;
-  if (!msg || !chatStore.currentChatUser?.id || !msg.id) return;
-  await recallMessage(msg.id, chatStore.currentChatUser.id);
 };
 
 const triggerImageUpload = () => imageInput.value?.click();
@@ -336,9 +322,6 @@ watch(() => messages.value.length, () => scrollToBottom());
 .message-content { padding: 10px 14px; border-radius: 8px; font-size: 14px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; position: relative; }
 .is-me .message-content { background: #EE4D2D; color: white; border-color: #EE4D2D; }
 
-.recalled-text { font-style: italic; color: #94a3b8; font-size: 12px; }
-.is-me .recalled-text { color: #fed7aa; }
-
 .chat-img { max-width: 200px; max-height: 200px; border-radius: 4px; cursor: pointer; }
 .chat-video { max-width: 280px; border-radius: 8px; background: black; }
 .file-card { display: flex; align-items: center; gap: 12px; padding: 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; min-width: 180px; }
@@ -351,7 +334,6 @@ watch(() => messages.value.length, () => scrollToBottom());
 .custom-context-menu { position: fixed; background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); padding: 5px 0; z-index: 3000; min-width: 100px; border: 1px solid #e2e8f0; }
 .menu-item { padding: 8px 16px; font-size: 13px; color: #334155; cursor: pointer; transition: background 0.2s; }
 .menu-item:hover { background: #f1f5f9; }
-.menu-item.recall { color: #ef4444; }
 
 .chat-footer { background: white; padding: 15px; border-top: 1px solid #f1f5f9; }
 .footer-tools { display: flex; gap: 15px; margin-bottom: 10px; color: #64748b; font-size: 18px; }

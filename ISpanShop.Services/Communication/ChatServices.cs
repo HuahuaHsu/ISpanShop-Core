@@ -14,9 +14,6 @@ public interface IChatService
     // 發送訊息 (包含過濾髒話的邏輯)
     Task SendMessageAsync(int senderId, int receiverId, string content, byte type);
 
-    // 撤回訊息
-    Task<bool> RecallMessageAsync(long messageId, int senderId);
-
     // 取得歷史紀錄
     Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id);
 
@@ -34,11 +31,6 @@ public class ChatService : IChatService
     {
         _chatRepo = chatRepo;
         _wordRepo = wordRepo;
-    }
-
-    public async Task<bool> RecallMessageAsync(long messageId, int senderId)
-    {
-        return await _chatRepo.RecallMessageAsync(messageId, senderId);
     }
 
     public async Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id)
