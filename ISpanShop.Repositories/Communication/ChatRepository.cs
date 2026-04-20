@@ -95,8 +95,14 @@ namespace ISpanShop.Repositories.Communication
                 .GroupBy(m => m.SenderId == userId ? m.ReceiverId : m.SenderId)
                 .Select(g => {
                     var lastMsg = g.First();
-                    // 強制檢查 Type，如果是 1 (byte) 則顯示 [圖片]
-                    string displayMsg = lastMsg.Type == (byte)1 ? "[圖片]" : lastMsg.Content;
+                    // 根據訊息類型顯示對應的預覽文字
+                    string displayMsg = lastMsg.Type switch
+                    {
+                        1 => "[圖片]",
+                        2 => "[影片]",
+                        3 => "[檔案]",
+                        _ => lastMsg.Content
+                    };
                     
                     Console.WriteLine($"[DebugChat] MsgId: {lastMsg.Id}, Type: {lastMsg.Type}, Display: {displayMsg}");
 

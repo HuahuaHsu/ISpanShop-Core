@@ -52,29 +52,49 @@
             </div>
           </div>
 
-          <div class="chat-body" ref="messageBox">
-            <div v-for="(msg, index) in messages" :key="index" 
-                 class="message-item" 
-                 :class="{ 'is-me': msg.senderId === authStore.memberInfo.memberId }">
-              <div class="message-content">
-                <template v-if="msg.type === 1">
-                  <el-image :src="msg.content" :preview-src-list="[msg.content]" class="chat-img" />
-                </template>
-                <template v-else>
-                  {{ msg.content }}
-                </template>
+            <div class="chat-body" ref="messageBox">
+              <div v-for="(msg, index) in messages" :key="index" 
+                   class="message-item" 
+                   :class="{ 'is-me': msg.senderId === authStore.memberInfo.memberId }">
+                <div class="message-content">
+                  <template v-if="msg.type === 1">
+                    <el-image :src="msg.content" :preview-src-list="[msg.content]" class="chat-img" />
+                  </template>
+                  <template v-else-if="msg.type === 2">
+                    <video :src="msg.content" controls class="chat-video"></video>
+                  </template>
+                  <template v-else-if="msg.type === 3">
+                    <div class="file-card" @click="downloadFile(msg.content, '下載檔案')">
+                      <el-icon :size="30"><Document /></el-icon>
+                      <div class="file-info">
+                        <div class="file-name">點擊下載檔案</div>
+                        <div class="file-size">一般檔案</div>
+                      </div>
+                    </div>
+                  </template>
+                  <template v-else>
+                    {{ msg.content }}
+                  </template>
+                </div>
+                <div class="message-time">{{ formatTime(msg.sentAt) }}</div>
               </div>
-              <div class="message-time">{{ formatTime(msg.sentAt) }}</div>
             </div>
-          </div>
 
-          <div class="chat-footer">
-            <div class="footer-tools">
-              <el-icon @click="triggerImageUpload"><Picture /></el-icon>
-              <input type="file" ref="fileInput" style="display: none" accept="image/*" @change="handleImageUpload" />
-              <el-icon><VideoCamera /></el-icon>
-              <el-icon><FolderOpened /></el-icon>
-            </div>              <div class="input-area">
+            <div class="chat-footer">
+              <div class="footer-tools">
+                <!-- 圖片 -->
+                <el-icon @click="triggerImageUpload" title="發送圖片"><Picture /></el-icon>
+                <input type="file" ref="imageInput" style="display: none" accept="image/*" @change="handleImageUpload" />
+                
+                <!-- 影片 -->
+                <el-icon @click="triggerVideoUpload" title="發送影片"><VideoCamera /></el-icon>
+                <input type="file" ref="videoInput" style="display: none" accept="video/mp4,video/webm" @change="handleVideoUpload" />
+                
+                <!-- 檔案 -->
+                <el-icon @click="triggerFileUpload" title="發送檔案"><FolderOpened /></el-icon>
+                <input type="file" ref="fileInput" style="display: none" 
+                       accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.txt" @change="handleFileUpload" />
+              </div>              <div class="input-area">
                 <el-input
                   v-model="inputMsg"
                   type="textarea"
@@ -109,11 +129,12 @@
 import { ref, watch, nextTick, computed } from 'vue';
 import { 
   ChatDotRound, Close, ChatLineSquare, Search, 
-  Picture, VideoCamera, FolderOpened 
+  Picture, VideoCamera, FolderOpened, Document
 } from '@element-plus/icons-vue';
 import { useAuthStore } from '../../stores/auth';
 import { useChatStore } from '../../stores/chat';
 import { useChat } from '../../composables/useChat';
+import { ElMessage } from 'element-plus';
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
@@ -121,24 +142,88 @@ const { messages, sessions, fetchSessions, fetchHistory, sendMessage } = useChat
 
 const inputMsg = ref('');
 const messageBox = ref<HTMLElement | null>(null);
+const imageInput = ref<HTMLInputElement | null>(null);
+const videoInput = ref<HTMLInputElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-const triggerImageUpload = () => {
-  fileInput.value?.click();
-};
+const triggerImageUpload = () => imageInput.value?.click();
+const triggerVideoUpload = () => videoInput.value?.click();
+const triggerFileUpload = () => fileInput.value?.click();
+
+import axios from 'axios';
 
 const handleImageUpload = async (e: Event) => {
-  const target = e.target as HTMLInputElement;
-  const file = target.files?.[0];
+  const file = (e.target as HTMLInputElement).files?.[0];
   if (!file || !chatStore.currentChatUser?.id) return;
 
-  const reader = new FileReader();
-  reader.onload = async (event) => {
-    const base64 = event.target?.result as string;
-    await sendMessage(chatStore.currentChatUser!.id!, base64, 1); // type 1 為圖片
-    target.value = ''; // 清空 input
-  };
-  reader.readAsDataURL(file);
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await axios.post('https://localhost:7125/api/chat/upload', formData, {
+      headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' }
+    });
+    // 上傳成功，透過 SignalR 傳送網址
+    const fileUrl = 'https://localhost:7125' + res.data.url;
+    await sendMessage(chatStore.currentChatUser!.id!, fileUrl, 1);
+  } catch (err) {
+    ElMessage.error('圖片上傳失敗');
+  } finally {
+    (e.target as HTMLInputElement).value = '';
+  }
+};
+
+const handleVideoUpload = async (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file || !chatStore.currentChatUser?.id) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const loading = ElMessage({ message: '影片上傳中，請稍候...', duration: 0 });
+
+  try {
+    const res = await axios.post('https://localhost:7125/api/chat/upload', formData, {
+      headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' }
+    });
+    const fileUrl = 'https://localhost:7125' + res.data.url;
+    await sendMessage(chatStore.currentChatUser!.id!, fileUrl, 2);
+    loading.close();
+    ElMessage.success('影片發送成功');
+  } catch (err) {
+    loading.close();
+    ElMessage.error('影片上傳失敗');
+  } finally {
+    (e.target as HTMLInputElement).value = '';
+  }
+};
+
+const handleFileUpload = async (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file || !chatStore.currentChatUser?.id) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await axios.post('https://localhost:7125/api/chat/upload', formData, {
+      headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' }
+    });
+    const fileUrl = 'https://localhost:7125' + res.data.url;
+    await sendMessage(chatStore.currentChatUser!.id!, fileUrl, 3);
+  } catch (err) {
+    ElMessage.error('檔案上傳失敗');
+  } finally {
+    (e.target as HTMLInputElement).value = '';
+  }
+};
+
+const downloadFile = (fileUrl: string, filename: string) => {
+  const link = document.createElement('a');
+  link.href = fileUrl;
+  link.download = filename;
+  link.target = '_blank';
+  link.click();
 };
 
 const totalUnread = computed(() => {
@@ -347,6 +432,34 @@ watch(() => messages.value.length, () => {
   border-radius: 4px;
   cursor: pointer;
 }
+
+.chat-video {
+  max-width: 280px;
+  border-radius: 8px;
+  background: black;
+}
+
+.file-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  min-width: 180px;
+}
+
+.is-me .file-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.file-info { flex: 1; }
+.file-name { font-size: 13px; font-weight: 500; }
+.file-size { font-size: 11px; opacity: 0.7; }
 
 .message-time { font-size: 10px; color: #94a3b8; margin-top: 4px; }
 
