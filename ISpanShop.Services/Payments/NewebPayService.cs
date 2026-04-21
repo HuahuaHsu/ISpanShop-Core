@@ -77,7 +77,7 @@ namespace ISpanShop.Services
                 { "TimeStamp", DateTimeOffset.Now.ToUnixTimeSeconds().ToString() },
                 { "Version", "2.0" },
                 { "MerchantOrderNo", merchantTradeNo },
-                { "Amt", ((int)order.TotalAmount).ToString() },
+                { "Amt", ((int)order.FinalAmount).ToString() },
                 { "ItemDesc", "商品購買" },
                 { "Email", "test@example.com" },
                 { "LoginType", "0" },
