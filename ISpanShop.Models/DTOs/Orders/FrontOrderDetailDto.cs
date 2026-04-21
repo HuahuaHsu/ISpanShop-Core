@@ -25,6 +25,19 @@ namespace ISpanShop.Models.DTOs.Orders
         public string Note { get; set; }
         
         public List<FrontOrderItemDto> Items { get; set; } = new List<FrontOrderItemDto>();
+
+        // 退貨退款資訊快照
+        public FrontReturnDetailDto ReturnInfo { get; set; }
+    }
+
+    public class FrontReturnDetailDto
+    {
+        public string ReasonCategory { get; set; }
+        public string ReasonDescription { get; set; }
+        public decimal RefundAmount { get; set; }
+        public byte Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public List<string> ImageUrls { get; set; }
     }
 
     public class FrontOrderItemDto

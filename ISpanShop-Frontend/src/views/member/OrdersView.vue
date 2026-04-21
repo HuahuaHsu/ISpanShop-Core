@@ -10,6 +10,8 @@
           <el-tab-pane label="運送中" name="2"></el-tab-pane>
           <el-tab-pane label="已完成" name="3"></el-tab-pane>
           <el-tab-pane label="已取消" name="4"></el-tab-pane>
+          <el-tab-pane label="退貨/款中" name="5"></el-tab-pane>
+          <el-tab-pane label="已退款" name="6"></el-tab-pane>
         </el-tabs>
       </div>
 
@@ -40,10 +42,6 @@
               <span class="status-text" :class="getStatusClass(order.status)">
                 {{ order.statusName }}
               </span>
-              <template v-if="order.status === 3">
-                <el-divider direction="vertical" />
-                <span class="status-subtext">已完成</span>
-              </template>
             </div>
           </div>
 
@@ -75,9 +73,14 @@
               <span class="order-time">下單時間: {{ formatDate(order.createdAt) }}</span>
             </div>
             <div class="footer-right">
-              <el-button v-if="order.status === 3" type="primary" plain size="default">再次購買</el-button>
-              <el-button @click="goToDetail(order.id)" size="default" class="detail-btn">查看訂單詳情</el-button>
-              <el-button v-if="order.status === 0" type="primary" size="default">立即付款</el-button>
+              <OrderActionButtons 
+                :order-id="order.id" 
+                :status="order.status" 
+                @refresh="fetchOrders"
+              />
+              <el-button @click="goToDetail(order.id)" size="default" class="detail-btn">
+                查看訂單詳情
+              </el-button>
             </div>
           </div>
         </div>
@@ -93,6 +96,7 @@ import { Search } from '@element-plus/icons-vue';
 import { getMyOrdersApi } from '@/api/order';
 import type { OrderListItem } from '@/types/order';
 import { ElMessage } from 'element-plus';
+import OrderActionButtons from '@/components/order/OrderActionButtons.vue';
 
 const router = useRouter();
 const loading = ref(false);
@@ -139,6 +143,13 @@ const goToDetail = (id: number) => {
   router.push(`/member/orders/${id}`);
 };
 
+const handlePay = (orderNumber: string) => {
+  const backendBase = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7125';
+  const targetUrl = `${backendBase.replace(/\/$/, '')}/PaymentNewebPay/Pay?orderNumber=${orderNumber}`;
+  console.log('Redirecting to Payment:', targetUrl);
+  window.location.href = targetUrl;
+};
+
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('zh-TW').format(price);
 };
@@ -162,6 +173,8 @@ const getStatusClass = (status: number) => {
     case 2: return 'status-shipped';
     case 3: return 'status-completed';
     case 4: return 'status-cancelled';
+    case 5: return 'status-returning';
+    case 6: return 'status-refunded';
     default: return '';
   }
 };
@@ -286,6 +299,8 @@ onMounted(() => {
         &.status-shipped { color: #26aa99; }
         &.status-completed { color: #ee4d2d; }
         &.status-cancelled { color: #929292; }
+        &.status-returning { color: #faad14; }
+        &.status-refunded { color: #929292; }
       }
 
       .status-subtext {

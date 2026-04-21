@@ -94,6 +94,12 @@ namespace ISpanShop.Repositories.Orders
 			}
 		}
 
+		public async Task CreateReturnRequestAsync(ReturnRequest request)
+		{
+			_context.ReturnRequests.Add(request);
+			await _context.SaveChangesAsync();
+		}
+
 		public async Task<List<Order>> GetOrdersByMemberIdAsync(int memberId)
 		{
 			return await _context.Orders

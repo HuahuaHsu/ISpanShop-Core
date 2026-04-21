@@ -80,6 +80,16 @@ export const routes: RouteRecordRaw[] = [
             component: () => import('../views/member/OrderDetailView.vue'),
           },
           {
+            path: 'orders/:id/refund',
+            name: 'member-order-refund',
+            component: () => import('../views/member/RefundView.vue'),
+          },
+          {
+            path: 'orders/:id/refund/detail',
+            name: 'member-order-refund-detail',
+            component: () => import('../views/member/RefundDetailView.vue'),
+          },
+          {
             path: 'settings',
             name: 'member-settings',
             component: () => import('../views/member/SettingsView.vue'),
@@ -172,7 +182,7 @@ export const routes: RouteRecordRaw[] = [
       { path: 'returns',            name: 'SellerReturns',    component: () => import('../views/seller/TodoView.vue') },
       { path: 'promotions',         name: 'SellerPromotions', component: () => import('../views/seller/TodoView.vue') },
       { path: 'coupons',            name: 'SellerCoupons',    component: () => import('../views/seller/TodoView.vue') },
-      { path: 'analytics/sales',    name: 'SellerSales',      component: () => import('../views/seller/TodoView.vue') },
+      { path: 'analytics/sales',    name: 'SellerSales',      component: () => import('../views/seller/SalesReportView.vue') },
       { path: 'analytics/traffic',  name: 'SellerTraffic',    component: () => import('../views/seller/TodoView.vue') },
       { path: 'chat',               name: 'SellerChat',       component: () => import('../views/seller/TodoView.vue') },
     ],
@@ -183,6 +193,12 @@ export const routes: RouteRecordRaw[] = [
     path: '/checkout',
     name: 'checkout',
     component: () => import('../views/cart/CheckoutView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/payment/result',
+    name: 'payment-result',
+    component: () => import('../views/cart/PaymentResultView.vue'),
     meta: { requiresAuth: true }
   },
   {

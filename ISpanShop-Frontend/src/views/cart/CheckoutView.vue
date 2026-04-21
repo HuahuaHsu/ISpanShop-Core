@@ -5,6 +5,7 @@ import { ElMessage, ElLoading } from 'element-plus'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { checkoutApi, type CheckoutRequest } from '@/api/checkout'
+import { getMemberProfile } from '@/api/member'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -16,6 +17,7 @@ const recipient = ref({
   phone: '',
   address: ''
 })
+const paymentMethod = ref('ECPay')
 
 // 優惠券與點數
 const availableCoupons = ref<any[]>([])
@@ -62,19 +64,36 @@ onMounted(async () => {
   }
 
   try {
-    const [couponsRes, walletRes] = await Promise.all([
+    const memberId = authStore.memberInfo?.memberId || 0
+    const [couponsRes, walletRes, profileRes] = await Promise.all([
       checkoutApi.getAvailableCoupons(
         cartStore.items[0].storeId,
         subtotal.value,
         cartStore.items.map(i => i.productId)
       ),
-      checkoutApi.getWalletBalance()
+      checkoutApi.getWalletBalance(),
+      memberId ? getMemberProfile(memberId) : Promise.resolve({ data: null })
     ])
     console.log('Checkout Data JSON:', JSON.stringify({ coupons: couponsRes.data, wallet: walletRes.data }))
     
     availableCoupons.value = couponsRes.data
     // 支援 balance 或 pointBalance 欄位
     walletBalance.value = walletRes.data.pointBalance ?? walletRes.data.balance ?? 0
+    
+    // 自動帶入收件資訊
+    if (profileRes && profileRes.data) {
+      console.log('Member Profile Loaded:', profileRes.data)
+      recipient.value.name = profileRes.data.fullName || ''
+      recipient.value.phone = profileRes.data.phoneNumber || ''
+      
+      // 組合完整地址: 縣市 + 行政區 + 街道地址
+      const city = profileRes.data.city || ''
+      const region = profileRes.data.region || ''
+      const street = profileRes.data.address || ''
+      if (city || region || street) {
+        recipient.value.address = `${city}${region}${street}`
+      }
+    }
     
     // 同步更新 store 中的資料並持久化
     authStore.updatePoints(walletBalance.value)
@@ -141,7 +160,8 @@ async function handleSubmit() {
       })),
       recipientName: recipient.value.name,
       recipientPhone: recipient.value.phone,
-      recipientAddress: recipient.value.address
+      recipientAddress: recipient.value.address,
+      paymentMethod: paymentMethod.value
     }
 
     const res = await checkoutApi.createOrder(payload)
@@ -188,6 +208,15 @@ function formatPrice(val: number) {
             <el-input v-model="recipient.address" placeholder="請輸入詳細地址" />
           </el-form-item>
         </el-form>
+      </el-card>
+
+      <!-- 支付方式 -->
+      <el-card class="section-card">
+        <template #header><div class="card-header">💳 支付方式</div></template>
+        <el-radio-group v-model="paymentMethod">
+          <el-radio label="ECPay" border>綠界支付</el-radio>
+          <el-radio label="NewebPay" border>藍新支付</el-radio>
+        </el-radio-group>
       </el-card>
 
       <!-- 商品清單 -->

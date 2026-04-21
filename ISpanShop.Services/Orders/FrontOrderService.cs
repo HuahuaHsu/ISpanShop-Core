@@ -76,8 +76,91 @@ namespace ISpanShop.Services.Orders
                     CoverImage = GetFinalImage(od),
                     Price = od.Price ?? 0,
                     Quantity = od.Quantity
-                }).ToList()
+                }).ToList(),
+                
+                // 抓取最新的一筆退貨申請作為資訊展示
+                ReturnInfo = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).Select(r => new FrontReturnDetailDto
+                {
+                    ReasonCategory = r.ReasonCategory,
+                    ReasonDescription = r.ReasonDescription,
+                    RefundAmount = r.RefundAmount,
+                    Status = r.Status,
+                    CreatedAt = r.CreatedAt,
+                    ImageUrls = r.ReturnRequestImages.Select(img => img.ImageUrl).ToList()
+                }).FirstOrDefault()
             };
+        }
+
+        public async Task<bool> CancelOrderAsync(long orderId, int memberId)
+        {
+            var o = await _orderRepository.GetOrderByIdAsync(orderId);
+            if (o == null || o.UserId != memberId) return false;
+
+            // 只有待付款(0)或待出貨(1)可以取消
+            if (o.Status != 0 && o.Status != 1) return false;
+
+            await _orderRepository.UpdateStatusAsync(orderId, 4); // 4 = 已取消
+            return true;
+        }
+
+        public async Task<bool> ConfirmReceiptAsync(long orderId, int memberId)
+        {
+            var o = await _orderRepository.GetOrderByIdAsync(orderId);
+            if (o == null || o.UserId != memberId) return false;
+
+            // 只有運送中(2)可以確認收貨
+            if (o.Status != 2) return false;
+
+            await _orderRepository.UpdateStatusAsync(orderId, 3); // 3 = 已完成
+            return true;
+        }
+
+        public async Task<bool> RequestReturnAsync(long orderId, int memberId, FrontReturnRequestDto dto)
+        {
+            var o = await _orderRepository.GetOrderByIdAsync(orderId);
+            if (o == null || o.UserId != memberId) return false;
+
+            // 只有待出貨(1)、運送中(2)或已完成(3)可以申請退貨
+            if (o.Status != 1 && o.Status != 2 && o.Status != 3) return false;
+
+            // 計算退款金額
+            decimal totalRefund = 0;
+            foreach (var item in dto.Items)
+            {
+                var detail = o.OrderDetails.FirstOrDefault(od => od.Id == item.OrderDetailId);
+                if (detail != null)
+                {
+                    // 確保退貨數量不超過購買數量
+                    int returnQty = Math.Min(item.Quantity, detail.Quantity);
+                    totalRefund += (detail.Price ?? 0) * returnQty;
+                }
+            }
+
+            // 如果是部分退貨，我們把資訊寫在 ReasonDescription 中
+            var itemsInfo = string.Join("\n", dto.Items.Select(i => {
+                var d = o.OrderDetails.FirstOrDefault(od => od.Id == i.OrderDetailId);
+                return $"- {d?.ProductName ?? "未知"}: {i.Quantity} 件";
+            }));
+
+            var request = new ReturnRequest
+            {
+                OrderId = orderId,
+                ReasonCategory = dto.ReasonCategory,
+                ReasonDescription = $"{dto.ReasonDescription}\n\n退貨清單:\n{itemsInfo}",
+                RefundAmount = totalRefund,
+                Status = 0, // 待處理
+                CreatedAt = DateTime.Now,
+                ReturnRequestImages = dto.ImageUrls?.Select(url => new ReturnRequestImage
+                {
+                    ImageUrl = url,
+                    CreatedAt = DateTime.Now
+                }).ToList() ?? new List<ReturnRequestImage>()
+            };
+
+            await _orderRepository.CreateReturnRequestAsync(request);
+            await _orderRepository.UpdateStatusAsync(orderId, 5); // 5 = 退貨/款中
+
+            return true;
         }
 
         private string GetFinalImage(OrderDetail od)

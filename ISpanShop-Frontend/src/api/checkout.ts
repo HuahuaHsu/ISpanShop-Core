@@ -18,6 +18,7 @@ export interface CheckoutRequest {
   recipientName: string;
   recipientPhone: string;
   recipientAddress: string;
+  paymentMethod?: string;
 }
 
 export const checkoutApi = {

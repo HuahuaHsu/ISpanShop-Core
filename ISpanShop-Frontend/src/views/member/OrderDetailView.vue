@@ -14,16 +14,13 @@
           </div>
         </div>
         
-        <!-- 狀態進度 (模擬) -->
-        <div class="status-steps">
-          <el-steps :active="getStepActive(order?.status)" align-center finish-status="success">
-            <el-step title="訂單已成立" :description="formatDate(order?.createdAt)"></el-step>
-            <el-step title="待付款" v-if="order?.status === 0"></el-step>
-            <el-step title="付款成功" :description="formatDate(order?.paymentDate)"></el-step>
-            <el-step title="待出貨"></el-step>
-            <el-step title="訂單已完成" :description="formatDate(order?.completedAt)"></el-step>
-          </el-steps>
-        </div>
+        <!-- 狀態進度 -->
+        <OrderSteps 
+          :status="order?.status"
+          :created-at="order?.createdAt"
+          :payment-date="order?.paymentDate"
+          :completed-at="order?.completedAt"
+        />
       </div>
 
       <!-- 地址資訊與物流 -->
@@ -86,6 +83,16 @@
           </div>
         </div>
       </div>
+
+      <!-- 底部動作按鈕區 (獨立區塊) -->
+      <div class="actions-card" v-if="order">
+        <OrderActionButtons 
+          :order-id="order.id" 
+          :status="order.status" 
+          :is-detail="true"
+          @refresh="fetchOrderDetail"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -97,6 +104,8 @@ import { ArrowLeft } from '@element-plus/icons-vue';
 import { getOrderDetailApi } from '@/api/order';
 import type { OrderDetail } from '@/types/order';
 import { ElMessage } from 'element-plus';
+import OrderSteps from '@/components/order/OrderSteps.vue';
+import OrderActionButtons from '@/components/order/OrderActionButtons.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -108,49 +117,25 @@ const fetchOrderDetail = async () => {
   if (isNaN(id)) return;
 
   loading.value = true;
-      try {
+  try {
     const res = await getOrderDetailApi(id);
     order.value = res.data;
-      } catch (error) {
+  } catch (error) {
     console.error('獲取訂單詳情失敗', error);
     ElMessage.error('獲取訂單詳情失敗');
-      } finally {
+  } finally {
     loading.value = false;
-      }
+  }
 };
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('zh-TW').format(price);
 };
 
-const formatDate = (dateStr?: string | null) => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleString('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-const getStepActive = (status?: number) => {
-  if (status === undefined) return 0;
-  switch (status) {
-    case 0: return 1; // 待付款
-    case 1: return 3; // 待出貨 (假設付款完成)
-    case 2: return 4; // 運送中
-    case 3: return 5; // 已完成
-    default: return 1;
-  }
-};
-
 onMounted(() => {
   fetchOrderDetail();
 });
 </script>
-
 <style scoped lang="scss">
 .order-detail-page {
   background-color: #f5f5f5;
@@ -349,6 +334,17 @@ onMounted(() => {
       }
     }
   }
+} /* 這裡正確閉合 items-card */
+
+/* 底部動作按鈕區 (獨立區塊) */
+.actions-card {
+  background: #fff;
+  padding: 20px;
+  margin-top: 12px; /* 拉大間距，確保有感 */
+  border-radius: 2px;
+  box-shadow: 0 1px 1px 0 rgba(0,0,0,.05);
+  display: flex;
+  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {

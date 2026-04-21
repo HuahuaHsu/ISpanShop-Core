@@ -41,12 +41,16 @@ namespace ISpanShop.WebAPI.Controllers
 				return BadRequest(new { message = result.Message });
 			}
 
+			string paymentUrl = dto.PaymentMethod == "NewebPay"
+				? "/PaymentNewebPay/Pay?orderNumber=" + result.OrderNumber
+				: "/Payment/Pay?orderNumber=" + result.OrderNumber;
+
 			return Ok(new
 			{
 				success = true,
 				message = result.Message,
 				orderNumber = result.OrderNumber,
-				paymentUrl = "/Payment/Pay?orderNumber=" + result.OrderNumber
+				paymentUrl = paymentUrl
 			});
 		}
 	}

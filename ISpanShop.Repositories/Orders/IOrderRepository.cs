@@ -22,6 +22,9 @@ namespace ISpanShop.Repositories.Orders
 		// 更新訂單狀態
 		Task UpdateStatusAsync(long id, byte status);
 
+		// 建立退貨申請
+		Task CreateReturnRequestAsync(ReturnRequest request);
+
 		// 取得分頁與篩選後的訂單清單 (主要用於列表頁 A & B 需求)
 		Task<PagedResultDto<OrderListDto>> GetFilteredOrdersAsync(OrderSearchDto criteria);
 

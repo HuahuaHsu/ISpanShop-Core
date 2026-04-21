@@ -28,10 +28,10 @@ namespace ISpanShop.Services
 				{ "MerchantTradeNo", merchantTradeNo },
 				{ "MerchantTradeDate", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") },
 				{ "PaymentType", "aio" },
-				{ "TotalAmount", order.TotalAmount.ToString("F0") },
+				{ "TotalAmount", order.FinalAmount.ToString("F0") },
 				{ "TradeDesc", EcpayHelper.CleanString("訂單付款") },
 				{ "ItemName", string.IsNullOrEmpty(itemNames) ? "商品1" : itemNames },
-				{ "ReturnURL", "https://localhost:7028/api/PaymentCallback" }, // WebAPI 的非同步回傳
+				{ "ReturnURL", "https://localhost:7125/api/PaymentCallback" }, // WebAPI 的非同步回傳
 				{ "OrderResultURL", "https://localhost:7125/Payment/Return" }, // 使用者瀏覽器跳回的網址
 				{ "ChoosePayment", "ALL" }
 			};
