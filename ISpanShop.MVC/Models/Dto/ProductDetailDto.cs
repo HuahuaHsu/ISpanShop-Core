@@ -45,6 +45,7 @@ namespace ISpanShop.MVC.Models.Dto
     public class StoreInfoDto
     {
         public int Id { get; set; }
+        public int UserId { get; set; }
         public string Name { get; set; } = string.Empty;
         /// <summary>Store 目前無 LogoUrl 欄位，回 null</summary>
         public string? LogoUrl { get; set; }

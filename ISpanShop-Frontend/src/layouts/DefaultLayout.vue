@@ -196,11 +196,15 @@
         © 2026 HowBuy. All rights reserved. | Made with 🧡 in Taiwan
       </div>
     </footer>
+
+    <!-- 聊聊懸浮按鈕與視窗 -->
+    <ChatFloat />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import ChatFloat from '../components/chat/ChatFloat.vue'
 import {
   Search, ShoppingCart, Star, Promotion,
   Van, Lock, RefreshRight, Service, ChatDotRound, Share,

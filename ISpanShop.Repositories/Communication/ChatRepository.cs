@@ -3,78 +3,119 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using ISpanShop.Models.EfModels; // 引用你生成的實體模型
+using ISpanShop.Models.EfModels;
 
 namespace ISpanShop.Repositories.Communication
 {
-	// 1. 定義介面 (Interface)
-	public interface IChatRepository
-	{
-		// 取得使用者的未讀訊息總數 (用於導覽列紅點)
-		Task<int> GetUnreadCountAsync(int receiverId);
+    public interface IChatRepository
+    {
+        Task<int> GetUnreadCountAsync(int receiverId);
+        Task MarkAsReadAsync(int senderId, int receiverId);
+        Task AddMessageAsync(ChatMessage message);
+        Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id);
+        Task<List<ISpanShop.Models.DTOs.Common.ChatSessionDto>> GetChatSessionsAsync(int userId);
+    }
 
-		// 將特定對象傳來的訊息標記為「已讀」
-		Task MarkAsReadAsync(int senderId, int receiverId);
+    public class ChatRepository : IChatRepository
+    {
+        private readonly ISpanShopDBContext _context;
 
-		// 儲存新訊息
-		Task AddMessageAsync(ChatMessage message);
+        public ChatRepository(ISpanShopDBContext context)
+        {
+            _context = context;
+        }
 
-		// 取得買賣家雙方的歷史聊天紀錄
-		Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id);
-	}
+        public async Task<int> GetUnreadCountAsync(int receiverId)
+        {
+            return await _context.ChatMessages
+                .Where(m => m.ReceiverId == receiverId && m.IsRead == false)
+                .CountAsync();
+        }
 
-	// 2. 實作介面
-	public class ChatRepository : IChatRepository
-	{
-		// 這裡替換成你實際的 DbContext 名稱 (通常叫 ISpanShopContext 或 AppDbContext)
-		private readonly ISpanShopDBContext _context;
+        public async Task MarkAsReadAsync(int senderId, int receiverId)
+        {
+            var unreadMessages = await _context.ChatMessages
+                .Where(m => m.SenderId == senderId && m.ReceiverId == receiverId && m.IsRead == false)
+                .ToListAsync();
 
-		public ChatRepository(ISpanShopDBContext context)
-		{
-			_context = context;
-		}
+            if (unreadMessages.Any())
+            {
+                foreach (var msg in unreadMessages)
+                {
+                    msg.IsRead = true;
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
 
-		// 實作：計算未讀數量
-		public async Task<int> GetUnreadCountAsync(int receiverId)
-		{
-			// 利用 LINQ 去資料庫找：接收者是我，且 IsRead 為 false (0) 的數量
-			return await _context.ChatMessages
-				.Where(m => m.ReceiverId == receiverId && m.IsRead == false)
-				.CountAsync();
-		}
+        public async Task AddMessageAsync(ChatMessage message)
+        {
+            _context.ChatMessages.Add(message);
+            await _context.SaveChangesAsync();
+        }
 
-		// 實作：標記為已讀
-		public async Task MarkAsReadAsync(int senderId, int receiverId)
-		{
-			var unreadMessages = await _context.ChatMessages
-				.Where(m => m.SenderId == senderId && m.ReceiverId == receiverId && m.IsRead == false)
-				.ToListAsync();
+        public async Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id)
+        {
+            return await _context.ChatMessages
+                .Where(m => (m.SenderId == user1Id && m.ReceiverId == user2Id) ||
+                            (m.SenderId == user2Id && m.ReceiverId == user1Id))
+                .OrderBy(m => m.SentAt)
+                .ToListAsync();
+        }
 
-			if (unreadMessages.Any())
-			{
-				foreach (var msg in unreadMessages)
-				{
-					msg.IsRead = true;
-				}
-				await _context.SaveChangesAsync();
-			}
-		}
+        public async Task<List<ISpanShop.Models.DTOs.Common.ChatSessionDto>> GetChatSessionsAsync(int userId)
+        {
+            // 找出所有與該使用者有關的訊息
+            var allMessages = await _context.ChatMessages
+                .Where(m => m.SenderId == userId || m.ReceiverId == userId)
+                .OrderByDescending(m => m.SentAt)
+                .ToListAsync();
 
-		// 實作：儲存新訊息
-		public async Task AddMessageAsync(ChatMessage message)
-		{
-			_context.ChatMessages.Add(message);
-			await _context.SaveChangesAsync();
-		}
+            // 取得所有對話對象的 ID
+            var otherUserIds = allMessages
+                .Select(m => m.SenderId == userId ? m.ReceiverId : m.SenderId)
+                .Distinct()
+                .ToList();
 
-		// 實作：取得對話紀錄 (依時間排序)
-		public async Task<List<ChatMessage>> GetChatHistoryAsync(int user1Id, int user2Id)
-		{
-			return await _context.ChatMessages
-				.Where(m => (m.SenderId == user1Id && m.ReceiverId == user2Id) ||
-							(m.SenderId == user2Id && m.ReceiverId == user1Id))
-				.OrderBy(m => m.SentAt)
-				.ToListAsync();
-		}
-	}
+            // 一次撈出這些對象的姓名資訊 (優先顯示商店名稱，若無則顯示姓名)
+            var userInfos = await _context.Users
+                .Include(u => u.MemberProfile)
+                .Include(u => u.Products)
+                .Where(u => otherUserIds.Contains(u.Id))
+                .Select(u => new { 
+                    u.Id, 
+                    DisplayName = _context.Stores.Where(s => s.UserId == u.Id).Select(s => s.StoreName).FirstOrDefault() 
+                                 ?? u.MemberProfile.FullName 
+                                 ?? u.Account 
+                })
+                .ToDictionaryAsync(u => u.Id, u => u.DisplayName ?? "未知用戶");
+
+            // 依對象分組，取得最後一則訊息與未讀數
+            var sessions = allMessages
+                .GroupBy(m => m.SenderId == userId ? m.ReceiverId : m.SenderId)
+                .Select(g => {
+                    var lastMsg = g.First();
+                    // 根據訊息類型顯示對應的預覽文字
+                    string displayMsg = lastMsg.Type switch
+                    {
+                        1 => "[圖片]",
+                        2 => "[影片]",
+                        3 => "[檔案]",
+                        _ => lastMsg.Content
+                    };
+                    
+                    return new ISpanShop.Models.DTOs.Common.ChatSessionDto
+                    {
+                        OtherUserId = g.Key,
+                        OtherUserName = userInfos.ContainsKey(g.Key) ? userInfos[g.Key] : $"用戶 {g.Key}",
+                        LastMessage = displayMsg,
+                        SentAt = lastMsg.SentAt,
+                        UnreadCount = g.Count(m => m.ReceiverId == userId && m.IsRead == false)
+                    };
+                })
+                .ToList();
+
+            return sessions;
+        }
+    }
 }

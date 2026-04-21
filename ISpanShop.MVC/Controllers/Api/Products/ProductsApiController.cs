@@ -138,6 +138,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             var storeDto = new StoreInfoDto
             {
                 Id             = product.Store?.Id ?? 0,
+                UserId         = product.Store?.UserId ?? 0,
                 Name           = product.Store?.StoreName ?? string.Empty,
                 LogoUrl        = null,
                 Rating         = null,
