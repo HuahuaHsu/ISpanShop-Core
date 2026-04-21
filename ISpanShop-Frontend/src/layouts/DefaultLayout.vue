@@ -3,7 +3,7 @@
     <div class="top-bar">
       <div class="top-bar-inner">
         <div class="top-left">
-          <a href="#" @click.prevent="router.push('/member/mystore')">賣家中心</a>
+          <a href="#" @click.prevent="handleSellerCenterClick">賣家中心</a>
           <span class="divider">|</span>
           <span class="welcome">🎉 全站滿千免運中</span>
         </div>
@@ -254,6 +254,15 @@ function handleDropdownCommand(command: string) {
     ElMessage.success('已登出')
     router.push('/')
   }
+}
+
+/** 處理賣家中心點擊 */
+function handleSellerCenterClick() {
+  if (!authStore.isLoggedIn) {
+    authStore.openLoginDialog()
+    return
+  }
+  router.push('/member/mystore')
 }
 
 /** 處理需要登入的點擊動作 */
