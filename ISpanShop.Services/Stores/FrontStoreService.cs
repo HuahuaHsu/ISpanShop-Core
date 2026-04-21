@@ -161,5 +161,38 @@ namespace ISpanShop.Services.Stores
 
             return store.IsVerified.Value ? "Approved" : "Rejected";
         }
+
+        public async Task<UpdateStoreInfoRequestDto> GetStoreInfoAsync(int userId)
+        {
+            var store = await _context.Stores
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) throw new Exception("找不到賣場資訊");
+
+            return new UpdateStoreInfoRequestDto
+            {
+                StoreName = store.StoreName,
+                Description = store.Description,
+                LogoUrl = store.LogoUrl,
+                StoreStatus = store.StoreStatus
+            };
+        }
+
+        public async Task<bool> UpdateStoreInfoAsync(int userId, UpdateStoreInfoRequestDto dto)
+        {
+            var store = await _context.Stores
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) throw new Exception("找不到賣場資訊");
+            if (store.IsVerified != true) throw new Exception("賣場尚未通過審核或已被停權，無法修改資訊");
+
+            store.StoreName = dto.StoreName;
+            store.Description = dto.Description;
+            store.LogoUrl = dto.LogoUrl;
+            store.StoreStatus = (byte)dto.StoreStatus;
+
+            _context.Stores.Update(store);
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

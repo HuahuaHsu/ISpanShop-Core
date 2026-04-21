@@ -2,7 +2,9 @@ using ISpanShop.Models.DTOs.Stores;
 using ISpanShop.Services.Stores;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using System;
+using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -119,6 +121,46 @@ namespace ISpanShop.MVC.Controllers.Api
 
                 var data = await _storeService.GetDashboardDataAsync(userId);
                 return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 取得賣場資訊 (用於編輯頁面)
+        /// </summary>
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetStoreInfo()
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+                var info = await _storeService.GetStoreInfoAsync(userId);
+                return Ok(info);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 更新賣場資訊
+        /// </summary>
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateStoreInfo([FromBody] UpdateStoreInfoRequestDto dto)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+                var success = await _storeService.UpdateStoreInfoAsync(userId, dto);
+                return success ? Ok(new { message = "賣場資訊已更新" }) : BadRequest(new { message = "更新失敗" });
             }
             catch (Exception ex)
             {

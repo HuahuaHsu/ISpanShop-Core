@@ -147,6 +147,11 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('../views/seller/DashboardView.vue'),
       },
       {
+        path: 'profile',
+        name: 'SellerProfile',
+        component: () => import('../views/seller/StoreSettingsView.vue'),
+      },
+      {
         path: 'products',
         name: 'SellerProducts',
         component: () => import('../views/seller/ProductListView.vue'),

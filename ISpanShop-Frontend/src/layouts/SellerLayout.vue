@@ -45,15 +45,19 @@
           <!-- 首頁 -->
           <el-menu-item index="/seller">
             <el-icon><DataAnalysis /></el-icon>
-            <template #title>我的商店</template>
+            <template #title>我的賣場</template>
           </el-menu-item>
 
-          <!-- 商品管理 -->
+          <!-- 賣場管理 -->
           <el-sub-menu index="products">
             <template #title>
               <el-icon><Box /></el-icon>
-              <span>商品管理</span>
+              <span>賣場管理</span>
             </template>
+            <el-menu-item index="/seller/profile">
+              <el-icon><Setting /></el-icon>
+              <template #title>賣場介紹</template>
+            </el-menu-item>
             <el-menu-item index="/seller/products">
               <el-icon><List /></el-icon>
               <template #title>我的商品</template>
@@ -144,7 +148,7 @@ import {
   ArrowDown, House, SwitchButton,
   DataAnalysis, Box, List, Plus, Document, RefreshLeft,
   PriceTag, StarFilled, Ticket, TrendCharts, Histogram, DataLine,
-  ChatDotRound, DArrowLeft, DArrowRight
+  ChatDotRound, DArrowLeft, DArrowRight, Setting
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
 
