@@ -41,20 +41,25 @@ export const updateMemberProfile = (id: number, data: UpdateMemberProfileDto) =>
   return axios.put<{ message: string }>(`/api/front/profile/${id}`, data);
 };
 
+/** 點數紀錄 DTO */
+export interface PointHistory {
+  id: number;
+  changeAmount: number;
+  balanceAfter: number;
+  description: string;
+  createdAt: string;
+}
+
 /**
- * 上傳大頭照
+ * 取得錢包餘額
  */
-export const uploadAvatar = (file: File) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  return axios.post<{ url: string }>('/api/front/profile/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+export const getWalletBalance = () => {
+  return axios.get<any>('/api/member/wallet-balance');
 };
 
 /**
- * 變更密碼
+ * 取得點數變動紀錄
  */
-export const changePassword = (data: ChangePasswordRequest) => {
-  return axios.put<{ isSuccess: boolean; message: string }>('/api/front/member/password', data);
+export const getPointHistory = () => {
+  return axios.get<PointHistory[]>('/api/member/point-history');
 };

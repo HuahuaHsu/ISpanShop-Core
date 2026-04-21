@@ -77,7 +77,7 @@
             <div class="footer-right">
               <el-button v-if="order.status === 3" type="primary" plain size="default">再次購買</el-button>
               <el-button @click="goToDetail(order.id)" size="default" class="detail-btn">查看訂單詳情</el-button>
-              <el-button v-if="order.status === 0" type="primary" size="default">立即付款</el-button>
+              <el-button v-if="order.status === 0" type="primary" size="default" @click.stop="handlePay(order.orderNumber)">立即付款</el-button>
             </div>
           </div>
         </div>
@@ -137,6 +137,13 @@ const handleTabChange = () => {
 
 const goToDetail = (id: number) => {
   router.push(`/member/orders/${id}`);
+};
+
+const handlePay = (orderNumber: string) => {
+  const backendBase = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7125';
+  const targetUrl = `${backendBase.replace(/\/$/, '')}/PaymentNewebPay/Pay?orderNumber=${orderNumber}`;
+  console.log('Redirecting to Payment:', targetUrl);
+  window.location.href = targetUrl;
 };
 
 const formatPrice = (price: number) => {

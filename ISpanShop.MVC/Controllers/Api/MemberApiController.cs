@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System;
 using Microsoft.AspNetCore.Authorization;
 
-namespace ISpanShop.WebAPI.Controllers
+namespace ISpanShop.MVC.Controllers.Api
 {
     [ApiController]
     [Authorize(AuthenticationSchemes = "FrontendJwt")]
@@ -104,6 +104,28 @@ namespace ISpanShop.WebAPI.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "個人資料已修復", account = user.Account, fullName = profile.FullName });
+        }
+
+        [HttpGet("point-history")]
+        public async Task<IActionResult> GetMyPointHistory()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized(new { message = "未登入" });
+            int userId = int.Parse(userIdStr);
+
+            var history = await _context.PointHistories
+                .Where(ph => ph.UserId == userId)
+                .OrderByDescending(ph => ph.CreatedAt)
+                .Select(ph => new {
+                    ph.Id,
+                    ph.ChangeAmount,
+                    ph.BalanceAfter,
+                    ph.Description,
+                    ph.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(history);
         }
 
         [HttpGet("add-points-to-me")]
