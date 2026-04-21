@@ -108,6 +108,9 @@ namespace ISpanShop.Models.DTOs.Products
         public string   StatusText   { get; set; } = string.Empty;
         public string?  MainImageUrl { get; set; }
         public DateTime? CreatedAt   { get; set; }
+        public int      TotalStock   { get; set; }
+        public int?     TotalSales   { get; set; }
+        public int?     ViewCount    { get; set; }
     }
 
     /// <summary>商品詳情（含規格列表）</summary>

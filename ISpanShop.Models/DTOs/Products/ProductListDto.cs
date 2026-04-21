@@ -11,6 +11,7 @@ namespace ISpanShop.Models.DTOs.Products
         public int CategoryId { get; set; }
         public int? TotalSales { get; set; }
         public int TotalStock { get; set; }
+        public int? ViewCount { get; set; }
         public string? StoreName { get; set; }
         public required string CategoryName { get; set; }
         public string? BrandName { get; set; }

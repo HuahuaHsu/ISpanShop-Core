@@ -5,6 +5,7 @@ import type {
   ProductListResponse,
   ProductDetail,
   ProductListItem,
+  SellerProductListResponse,
 } from '@/types/product'
 
 export async function fetchProductList(
@@ -59,8 +60,8 @@ export async function getProductSuggestions(keyword: string, limit = 8): Promise
  */
 export async function fetchSellerProducts(
   params: FetchProductsParams = {},
-): Promise<ProductListResponse> {
-  const response = await request.get<ProductListResponse>('/api/seller/products', {
+): Promise<SellerProductListResponse> {
+  const response = await request.get<SellerProductListResponse>('/api/seller/products', {
     params,
   })
   return response.data

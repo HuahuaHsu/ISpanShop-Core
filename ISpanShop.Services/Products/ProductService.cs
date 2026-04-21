@@ -88,6 +88,11 @@ namespace ISpanShop.Services.Products
                 ReviewedBy   = p.ReviewedBy,
                 ReviewDate   = p.ReviewDate,
                 RejectReason = p.RejectReason,
+                TotalStock   = p.ProductVariants
+                    ?.Where(v => v.IsDeleted != true)
+                    .Sum(v => v.Stock ?? 0) ?? 0,
+                TotalSales   = p.TotalSales,
+                ViewCount    = p.ViewCount,
                 MainImageUrl = p.ProductImages
                     ?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
                     ?? p.ProductImages?.FirstOrDefault()?.ImageUrl

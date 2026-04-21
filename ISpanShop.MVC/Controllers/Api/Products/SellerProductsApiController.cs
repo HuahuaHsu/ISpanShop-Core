@@ -245,7 +245,10 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             Status       = dto.Status,
             StatusText   = ToStatusText(dto.Status),
             MainImageUrl = dto.MainImageUrl,
-            CreatedAt    = dto.CreatedAt
+            CreatedAt    = dto.CreatedAt,
+            TotalStock   = dto.TotalStock,
+            TotalSales   = dto.TotalSales,
+            ViewCount    = dto.ViewCount
         };
 
         private static ProductDetailResponse MapToDetail(ProductDetailDto dto) => new()

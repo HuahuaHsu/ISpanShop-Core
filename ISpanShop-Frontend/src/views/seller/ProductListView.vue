@@ -176,7 +176,7 @@
                   </template>
                 </el-image>
                 <div class="status-badge" :class="`badge-${product.status}`">
-                  {{ statusLabel(product.status) }}
+                  {{ product.statusText }}
                 </div>
               </div>
 
@@ -186,14 +186,16 @@
                 <div class="card-price">NT$ {{ getProductPrice(product) }}</div>
                 <div class="card-stock">
                   商品數量：
-                  <span :class="{ 'text-danger': (product.totalStock ?? 0) === 0 }">
-                    {{ product.totalStock ?? 0 }}
+                  <!-- TODO: totalStock 後端尚未回傳，補上後移除 ?? '--' -->
+                  <span :class="{ 'text-danger': product.totalStock === 0 }">
+                    {{ product.totalStock ?? '--' }}
                   </span>
                 </div>
                 <div class="card-stats">
-                  <span title="瀏覽數">👁 {{ product.viewCount ?? 0 }}</span>
-                  <span title="收藏數">❤️ {{ product.favoriteCount ?? 0 }}</span>
-                  <span title="訂單數">🛒 {{ product.soldCount ?? 0 }}</span>
+                  <!-- TODO: viewCount / totalSales / cartCount 後端尚未回傳，補上後移除 ?? '--' -->
+                  <span title="瀏覽次數"><el-icon><View /></el-icon> {{ product.viewCount ?? '--' }}</span>
+                  <span title="已售數量"><el-icon><Goods /></el-icon> {{ product.totalSales ?? '--' }}</span>
+                  <span title="加入購物車"><el-icon><ShoppingCart /></el-icon> {{ product.cartCount ?? '--' }}</span>
                 </div>
               </div>
 
@@ -276,16 +278,16 @@
             </el-table-column>
 
             <el-table-column prop="soldCount" label="已售出" width="90" align="center">
-              <template #default="{ row }">
-                {{ row.soldCount ?? 0 }}
+              <template #default>
+                <!-- TODO: soldCount 後端尚未回傳 -->
+                --
               </template>
             </el-table-column>
 
             <el-table-column label="商品數量" width="100" align="center">
-              <template #default="{ row }">
-                <span :class="{ 'text-danger': (row.totalStock ?? 0) === 0 }">
-                  {{ row.totalStock ?? 0 }}
-                </span>
+              <template #default>
+                <!-- TODO: totalStock 後端尚未回傳 -->
+                --
               </template>
             </el-table-column>
 
@@ -303,7 +305,7 @@
             <el-table-column label="狀態" width="90" align="center">
               <template #default="{ row }">
                 <el-tag :type="row.status === 'on' ? 'success' : 'info'" size="small">
-                  {{ statusLabel(row.status) }}
+                  {{ row.statusText }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -370,7 +372,7 @@
       </p>
       <div v-if="stockDialogProduct" class="dialog-product-row">
         <el-image
-          :src="stockDialogProduct.imageUrl || 'https://via.placeholder.com/48'"
+          :src="stockDialogProduct.mainImageUrl || defaultProductImage"
           fit="cover"
           class="dialog-img"
         />
@@ -427,47 +429,57 @@ import { ElMessage } from 'element-plus'
 import {
   Plus, Search, Edit, Delete, Grid, List,
   ArrowDown, ArrowUp, DCaret, CaretTop, CaretBottom,
-  MoreFilled, WarningFilled,
+  MoreFilled, WarningFilled, View, ShoppingCart, Goods,
 } from '@element-plus/icons-vue'
 import { fetchSellerProducts } from '@/api/product'
 import { fetchMainCategories } from '@/api/category'
-import type { ProductListItem } from '@/types/product'
+import type { SellerProductListItem } from '@/types/product'
 import type { Category } from '@/types/category'
 
 const router = useRouter()
 
 // ── 預設圖片 ──────────────────────────────────────────────────────
-const defaultProductImage = 'data:image/svg+xml;base64,' + btoa(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="#f0f0f0"><rect width="200" height="200"/><text x="50%" y="50%" font-size="14" fill="#999" text-anchor="middle" dy=".3em">暫無圖片</text></svg>'
-)
+const defaultProductImage = 'https://placehold.co/200x200/f5f5f5/999?text=No+Image'
 
-// 取得商品圖片 URL，優先順序：thumbnailUrl → imageUrl → 預設圖
-function getProductImageUrl(product: ProductListItem): string {
-  if (product.imageUrl && !product.imageUrl.includes('placeholder.com')) {
-    return product.imageUrl
-  }
+// 取得商品圖片 URL，優先使用 mainImageUrl
+function getProductImageUrl(product: SellerProduct): string {
+  if (product.mainImageUrl) return product.mainImageUrl
   return defaultProductImage
 }
 
-// 取得商品價格顯示文字
-function getProductPrice(product: ProductListItem | SellerProduct): string {
-  // 檢查是否有 price 欄位
-  const price = (product as any).price ?? 0
-  return (price).toLocaleString()
+// 取得商品價格顯示文字（不含 NT$，template 自行加前綴）
+function getProductPrice(product: SellerProduct): string {
+  const min = product.minPrice
+  const max = product.maxPrice
+  if (min === null || min === undefined) return '0'
+  if (max === null || max === undefined || min === max) return min.toLocaleString()
+  return `${min.toLocaleString()} ~ ${max.toLocaleString()}`
 }
 
 // ── 型別定義 ──────────────────────────────────────────────────────
 type ProductStatus = 'on' | 'off' | 'deleted' | 'review' | 'draft'
 type TabKey = 'all' | 'on' | 'deleted' | 'review' | 'draft'
 type SubTabKey = 'all' | 'restock' | 'optimize'
-type SortField = 'price' | 'totalStock' | 'soldCount'
+type SortField = 'minPrice' | 'createdAt'
 type SortDir = 'asc' | 'desc' | null
 
-/** 擴充 ProductListItem，加入賣家專用欄位 */
-interface SellerProduct extends ProductListItem {
+/** 將後端 status 數字對應至 tab key 字串 */
+function mapStatusToKey(status: number): ProductStatus {
+  switch (status) {
+    case 1: return 'on'
+    case 2: return 'review'
+    case 3: return 'deleted'
+    default: return 'draft'
+  }
+}
+
+/**
+ * 擴充 SellerProductListItem：
+ * - 覆寫 status 為 tab key 字串（原始數字已透過 mapStatusToKey 轉換）
+ * - 加入前端本地欄位（lowStockAlert 等，尚未串接後端）
+ */
+interface SellerProduct extends Omit<SellerProductListItem, 'status'> {
   status: ProductStatus
-  viewCount: number
-  favoriteCount: number
   lowStockAlert: boolean
   lowStockThreshold: number
 }
@@ -518,9 +530,9 @@ const level1Tabs: Array<{ key: TabKey; label: string }> = [
 ]
 
 const sortOptions: Array<{ field: string; label: string }> = [
-  { field: 'price',      label: '價格' },
-  { field: 'totalStock', label: '商品數量' },
-  { field: 'soldCount',  label: '月銷熱賣' },
+  { field: 'minPrice',   label: '價格' },
+  { field: 'createdAt',  label: '建立時間' },
+  // TODO: totalStock / soldCount 後端尚未回傳，排序暫時停用
 ]
 
 // ── Computed ──────────────────────────────────────────────────────
@@ -535,7 +547,8 @@ const tabFiltered = computed<SellerProduct[]>(() => {
 
   // 二級 tab — 重新補貨
   if (activeTab.value === 'on' && activeSubTab.value === 'restock') {
-    list = list.filter((p) => p.totalStock === 0)
+    // TODO: totalStock 後端尚未回傳，重新補貨篩選暫時停用
+    // list = list.filter((p) => p.totalStock === 0)
   }
   // TODO: 二級 tab — 商品內容優化，後端尚未提供優化建議資料
 
@@ -554,14 +567,17 @@ const filteredProducts = computed<SellerProduct[]>(() => {
   }
 
   if (searchCategoryId.value) {
-    list = list.filter((p) => p.categoryId === searchCategoryId.value)
+    const cat = categories.value.find((c) => c.id === searchCategoryId.value)
+    if (cat) {
+      list = list.filter((p) => p.categoryName === cat.name)
+    }
   }
 
   if (advMinPrice.value !== null) {
-    list = list.filter((p) => p.price >= (advMinPrice.value ?? 0))
+    list = list.filter((p) => (p.minPrice ?? 0) >= (advMinPrice.value ?? 0))
   }
   if (advMaxPrice.value !== null) {
-    list = list.filter((p) => p.price <= (advMaxPrice.value ?? Infinity))
+    list = list.filter((p) => (p.minPrice ?? 0) <= (advMaxPrice.value ?? Infinity))
   }
 
   // 排序
@@ -595,10 +611,8 @@ const tabCounts = computed<Record<TabKey, number>>(() => {
   return c as Record<TabKey, number>
 })
 
-/** 重新補貨計數（架上商品中 totalStock === 0）*/
-const restockCount = computed<number>(() =>
-  allProducts.value.filter((p) => p.status === 'on' && p.totalStock === 0).length,
-)
+/** 重新補貨計數（TODO: totalStock 後端尚未回傳，暫時顯示 0）*/
+const restockCount = computed<number>(() => 0)
 
 // ── Init ──────────────────────────────────────────────────────────
 onMounted(async () => {
@@ -617,26 +631,21 @@ async function loadCategories(): Promise<void> {
 async function loadProducts(): Promise<void> {
   loading.value = true
   try {
-    // 呼叫賣家商品列表 API（僅回傳當前登入賣家的商品）
-    // 後端直接回傳 { items, page, pageSize, totalCount, totalPages }
     const res = await fetchSellerProducts({ page: 1, pageSize: 100 })
 
-    // 印出第一筆商品的完整欄位，檢查實際資料結構
     if (res.items.length > 0) {
       console.log('第一筆商品:', res.items[0])
     }
 
-    // 模擬賣家商品狀態分佈（串接後端後移除此段，直接使用後端回傳的 status）
-    const statusPool: ProductStatus[] = ['on', 'on', 'on', 'off', 'draft', 'review']
-
-    allProducts.value = res.items.map((p: ProductListItem, idx: number): SellerProduct => ({
-      ...p,
-      status: statusPool[idx % statusPool.length] ?? 'on',
-      viewCount: Math.floor(Math.random() * 500),
-      favoriteCount: Math.floor(Math.random() * 100),
-      lowStockAlert: false,
-      lowStockThreshold: 5,
-    }))
+    allProducts.value = res.items.map((p): SellerProduct => {
+      const { status, ...rest } = p
+      return {
+        ...rest,
+        status: mapStatusToKey(status),
+        lowStockAlert: false,
+        lowStockThreshold: 5,
+      }
+    })
   } catch (err) {
     console.error('[API Error] loadProducts:', err)
     ElMessage.error('載入商品失敗，請稍後再試')
