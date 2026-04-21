@@ -5,25 +5,71 @@ using System.Text;
 using System.Security.Cryptography;
 using System.Linq;
 using System.Web;
+using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 namespace ISpanShop.Services
 {
     public class NewebPayService
     {
-        // 藍新測試帳號（官方提供，正式上線請換成自己的）
-        private const string MerchantID = "MS158831095"; // 這是藍新官方提供的測試 ID 範例，請確認你的 ID
-        private const string HashKey = "FmmCbKDf1ayNmzSv9dpcWjRhBFZW9qMD"; // 測試用的 Key
-        private const string HashIV = "CMct9Pw0iPfYVWcP"; // 測試用的 IV
+        private readonly string MerchantID;
+        private readonly string HashKey;
+        private readonly string HashIV;
+        private readonly string ReturnURL;
+        private readonly string ClientBackURL;
 
-        public string GenerateMerchantTradeNo(Order order)
+        public NewebPayService(IConfiguration configuration)
         {
-            // 產生唯一交易編號，藍新通常要求 20 字以內
-            return $"N{order.Id:D6}{DateTime.Now:HHmmss}";
+            var settings = configuration.GetSection("NewebPaySettings");
+            MerchantID = settings["MerchantID"] ?? "";
+            HashKey = settings["HashKey"] ?? "";
+            HashIV = settings["HashIV"] ?? "";
+            ReturnURL = settings["ReturnURL"] ?? "";
+            ClientBackURL = settings["ClientBackURL"] ?? "";
+        }
+
+        public string DecryptAES(string source)
+        {
+            if (string.IsNullOrEmpty(source)) return "";
+
+            // Hex 轉 Byte
+            byte[] sourceBytes = new byte[source.Length / 2];
+            for (int i = 0; i < source.Length; i += 2)
+            {
+                sourceBytes[i / 2] = Convert.ToByte(source.Substring(i, 2), 16);
+            }
+
+            using (var aes = Aes.Create())
+            {
+                aes.Key = Encoding.UTF8.GetBytes(HashKey);
+                aes.IV = Encoding.UTF8.GetBytes(HashIV);
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.None; // 藍新使用手動補位或特定填充
+
+                using (var decryptor = aes.CreateDecryptor())
+                {
+                    byte[] decrypted = decryptor.TransformFinalBlock(sourceBytes, 0, sourceBytes.Length);
+                    string result = Encoding.UTF8.GetString(decrypted);
+                    
+                    // 移除常見的 PKCS7 或空白補位
+                    int lastByte = result[result.Length - 1];
+                    if (lastByte > 0 && lastByte <= 32)
+                    {
+                        // 檢查最後幾個字元是否相同，符合 PKCS7 規範
+                        bool isPadding = true;
+                        for (int i = 1; i <= lastByte; i++)
+                        {
+                            if (result[result.Length - i] != lastByte) { isPadding = false; break; }
+                        }
+                        if (isPadding) result = result.Substring(0, result.Length - lastByte);
+                    }
+                    return result.Trim();
+                }
+            }
         }
 
         public Dictionary<string, string> GetNewebPayParameters(Order order, string merchantTradeNo)
         {
-            // 1. 準備交易參數 (TradeInfo 原型)
             var tradeParams = new Dictionary<string, string>
             {
                 { "MerchantID", MerchantID },
@@ -33,24 +79,22 @@ namespace ISpanShop.Services
                 { "MerchantOrderNo", merchantTradeNo },
                 { "Amt", ((int)order.TotalAmount).ToString() },
                 { "ItemDesc", "商品購買" },
-                { "Email", "test@example.com" }, // 建議傳入使用者的 Email
+                { "Email", "test@example.com" },
                 { "LoginType", "0" },
-                { "ReturnURL", "https://localhost:7230/PaymentNewebPay/Return" }, // 依照你的環境修改
-                { "NotifyURL", "https://your-domain.com/api/Payment/NewebPayNotify" },
-                { "ClientBackURL", "https://localhost:7230/" },
-                { "OrderComment", "測試訂單" }
+                { "ReturnURL", ReturnURL },
+                { "ClientBackURL", ClientBackURL }
             };
 
-            // 2. 將參數串接成 QueryString
+            string notifyUrl = ReturnURL.Replace("Return", "Notify");
+            if (!notifyUrl.Contains("localhost") && !notifyUrl.Contains(":"))
+            {
+                tradeParams.Add("NotifyURL", notifyUrl);
+            }
+
             string queryString = string.Join("&", tradeParams.Select(kv => $"{kv.Key}={kv.Value}"));
-
-            // 3. 進行 AES 加密 (TradeInfo)
             string tradeInfo = EncryptAES(queryString, HashKey, HashIV);
-
-            // 4. 進行 SHA256 加密 (TradeSha)
             string tradeSha = GenerateTradeSha(tradeInfo, HashKey, HashIV);
 
-            // 5. 回傳給 Controller 使用的最終參數
             return new Dictionary<string, string>
             {
                 { "MerchantID", MerchantID },
@@ -63,23 +107,17 @@ namespace ISpanShop.Services
         private string EncryptAES(string source, string key, string iv)
         {
             byte[] sourceBytes = Encoding.UTF8.GetBytes(source);
-            
-            // 補位 (PKCS7)
             int blockSize = 32;
             int padding = blockSize - (sourceBytes.Length % blockSize);
             Array.Resize(ref sourceBytes, sourceBytes.Length + padding);
-            for (int i = 0; i < padding; i++)
-            {
-                sourceBytes[sourceBytes.Length - padding + i] = (byte)padding;
-            }
+            for (int i = 0; i < padding; i++) sourceBytes[sourceBytes.Length - padding + i] = (byte)padding;
 
             using (var aes = Aes.Create())
             {
                 aes.Key = Encoding.UTF8.GetBytes(key);
                 aes.IV = Encoding.UTF8.GetBytes(iv);
                 aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.None; // 手動補位
-
+                aes.Padding = PaddingMode.None;
                 using (var encryptor = aes.CreateEncryptor())
                 {
                     byte[] encrypted = encryptor.TransformFinalBlock(sourceBytes, 0, sourceBytes.Length);
@@ -96,6 +134,21 @@ namespace ISpanShop.Services
                 byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(raw));
                 return BitConverter.ToString(bytes).Replace("-", "").ToUpper();
             }
+        }
+
+        public string GenerateMerchantTradeNo(Order order) => $"N{order.Id:D6}{DateTime.Now:HHmmss}";
+
+        public class NewebPayReturnDTO
+        {
+            public string Status { get; set; }
+            public string Message { get; set; }
+            public NewebPayResult Result { get; set; }
+        }
+
+        public class NewebPayResult
+        {
+            public string MerchantOrderNo { get; set; }
+            public string TradeNo { get; set; }
         }
     }
 }

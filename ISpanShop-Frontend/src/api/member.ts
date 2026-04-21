@@ -39,3 +39,26 @@ export const getMemberProfile = (id: number) => {
 export const updateMemberProfile = (id: number, data: UpdateMemberProfileDto) => {
   return axios.put<{ message: string }>(`/api/front/profile/${id}`, data);
 };
+
+/** 點數紀錄 DTO */
+export interface PointHistory {
+  id: number;
+  changeAmount: number;
+  balanceAfter: number;
+  description: string;
+  createdAt: string;
+}
+
+/**
+ * 取得錢包餘額
+ */
+export const getWalletBalance = () => {
+  return axios.get<any>('/api/member/wallet-balance');
+};
+
+/**
+ * 取得點數變動紀錄
+ */
+export const getPointHistory = () => {
+  return axios.get<PointHistory[]>('/api/member/point-history');
+};

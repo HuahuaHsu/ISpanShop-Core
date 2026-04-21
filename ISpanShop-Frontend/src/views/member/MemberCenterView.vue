@@ -28,18 +28,26 @@ const router = useRouter();
 // ── Lifecycle ──────────────────────────────────────
 import { onMounted, ref } from "vue";
 import { checkoutApi } from "@/api/checkout";
+import { getMyCoupons } from "@/api/coupon";
 
 const liveBalance = ref<number | null>(null);
+const liveCouponCount = ref<number>(0);
 
 onMounted(async () => {
   try {
-    const res = await checkoutApi.getWalletBalance();
-    console.log('Member Center Wallet Sync:', res.data);
-    liveBalance.value = res.data.pointBalance ?? res.data.balance ?? 0;
+    const [walletRes, couponsRes] = await Promise.all([
+      checkoutApi.getWalletBalance(),
+      getMyCoupons()
+    ]);
+    
+    console.log('Member Center Wallet Sync:', walletRes.data);
+    liveBalance.value = walletRes.data.pointBalance ?? walletRes.data.balance ?? 0;
+    liveCouponCount.value = couponsRes.data.length;
+
     // 同步更新 store 中的資料並持久化
     authStore.updatePoints(liveBalance.value);
   } catch (err) {
-    console.error('Failed to sync wallet balance', err);
+    console.error('Failed to sync member data', err);
   }
 });
 
@@ -130,7 +138,7 @@ const services = [
         </div>
         <div class="wallet-item" @click="go('優惠券')">
           <span class="wallet-icon">🎟</span>
-          <span class="wallet-value">99+ 張</span>
+          <span class="wallet-value">{{ liveCouponCount }} 張</span>
           <span class="wallet-label">優惠券</span>
         </div>
       </div>
