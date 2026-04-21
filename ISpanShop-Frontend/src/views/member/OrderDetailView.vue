@@ -89,6 +89,7 @@
         <OrderActionButtons 
           :order-id="order.id" 
           :status="order.status" 
+          :is-detail="true"
           @refresh="fetchOrderDetail"
         />
       </div>

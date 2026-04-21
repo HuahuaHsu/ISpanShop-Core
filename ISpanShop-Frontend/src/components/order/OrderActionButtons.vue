@@ -29,7 +29,7 @@
     </template>
 
     <!-- 狀態 5: 退貨/款中 -->
-    <template v-if="status === 5">
+    <template v-if="status === 5 && isDetail">
       <el-button size="default" @click="handleRefundDetail">查看退款進度</el-button>
     </template>
   </div>
@@ -44,9 +44,13 @@ import { cancelOrderApi, confirmReceiptApi } from '@/api/order';
 interface Props {
   orderId: number;
   status: number;
+  isDetail?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  isDetail: false
+});
+
 const emit = defineEmits(['refresh']);
 const router = useRouter();
 const loading = ref(false);

@@ -78,7 +78,7 @@
                 :status="order.status" 
                 @refresh="fetchOrders"
               />
-              <el-button v-if="order.status !== 5" @click="goToDetail(order.id)" size="default" class="detail-btn">
+              <el-button @click="goToDetail(order.id)" size="default" class="detail-btn">
                 查看訂單詳情
               </el-button>
             </div>
