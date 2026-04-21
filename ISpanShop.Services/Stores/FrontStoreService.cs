@@ -194,5 +194,29 @@ namespace ISpanShop.Services.Stores
             _context.Stores.Update(store);
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<StorePublicProfileDto?> GetPublicStoreProfileAsync(int storeId)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == storeId);
+
+            if (store == null) return null;
+
+            var productCount = await _context.Products
+                .CountAsync(p => p.StoreId == storeId && p.Status == 1 && p.IsDeleted != true);
+
+            return new StorePublicProfileDto
+            {
+                Id            = store.Id,
+                Name          = store.StoreName ?? string.Empty,
+                Description   = store.Description,
+                LogoUrl       = store.LogoUrl,
+                Rating        = null,
+                ProductCount  = productCount,
+                FollowerCount = 0,
+                CreatedAt     = store.CreatedAt
+            };
+        }
     }
 }

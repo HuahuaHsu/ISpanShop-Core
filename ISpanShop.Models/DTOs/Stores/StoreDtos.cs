@@ -22,6 +22,21 @@ namespace ISpanShop.Models.DTOs.Stores
         public int ProductCount { get; set; } // 商品數量
     }
 
+    /// <summary>前台公開賣場資訊（任何人可看）</summary>
+    public class StorePublicProfileDto
+    {
+        public int       Id            { get; set; }
+        public string    Name          { get; set; } = string.Empty;
+        public string?   Description   { get; set; }
+        public string?   LogoUrl       { get; set; }
+        /// <summary>平均評分（目前無評分機制，回傳 null）</summary>
+        public decimal?  Rating        { get; set; }
+        public int       ProductCount  { get; set; }
+        /// <summary>粉絲數（目前無追蹤機制，回傳 0）</summary>
+        public int       FollowerCount { get; set; }
+        public DateTime? CreatedAt     { get; set; }
+    }
+
     public class StoreDetailDto
     {
         public int StoreId { get; set; }
