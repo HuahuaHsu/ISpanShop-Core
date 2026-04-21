@@ -2,9 +2,10 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { ElMessage } from 'element-plus'
-import type { FormInstance, FormRules, UploadProps } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { User, Message, Iphone, Calendar } from '@element-plus/icons-vue'
-import { getMemberProfile, updateMemberProfile, type UpdateMemberProfileDto } from '../../api/member'
+import { getMemberProfile, updateMemberProfile, uploadAvatar, type UpdateMemberProfileDto, type MemberDto } from '../../api/member'
+import { storage } from '../../utils/storage'
 
 const authStore = useAuthStore()
 const profileFormRef = ref<FormInstance>()
@@ -25,10 +26,6 @@ const profileForm = reactive({
 
 // ── 表單驗證規則 ──────────────────────────────────
 const rules = reactive<FormRules>({
-  email: [
-    { required: true, message: '請輸入 Email', trigger: 'blur' },
-    { type: 'email', message: '請輸入正確的 Email 格式', trigger: 'blur' }
-  ],
   memberName: [
     { max: 50, message: '姓名長度不可超過 50 個字', trigger: 'blur' }
   ],
@@ -49,20 +46,20 @@ const fetchProfile = async () => {
   try {
     isLoading.value = true
     const response = await getMemberProfile(memberId)
-    const data = response.data as any
-    
+    const data = response.data as MemberDto
+
     // 補足其餘細節欄位 (相容大小寫)
-    profileForm.memberName = data.fullName ?? data.FullName ?? profileForm.memberName
-    profileForm.email = data.email ?? data.Email ?? profileForm.email
-    profileForm.phone = data.phoneNumber ?? data.PhoneNumber ?? profileForm.phone
-    profileForm.gender = data.gender ?? data.Gender ?? null
-    
-    const rawBirthday = data.birthday ?? data.Birthday ?? data.DateOfBirth ?? ''
-    profileForm.birthday = rawBirthday ? String(rawBirthday).split('T')[0] : ''
-    profileForm.avatarUrl = data.avatarUrl ?? data.AvatarUrl ?? ''
-  } catch (error: any) {
-    console.error('取得資料錯誤:', error)
-    const status = error.response?.status
+    profileForm.memberName = data.fullName ?? data.fullName ?? profileForm.memberName
+    profileForm.email = data.email ?? data.email ?? profileForm.email
+    profileForm.phone = data.phoneNumber ?? data.phoneNumber ?? profileForm.phone
+    profileForm.gender = data.gender ?? data.gender ?? null
+
+    const rawBirthday = data.birthday ?? ''
+    profileForm.birthday = rawBirthday ? (String(rawBirthday).split('T')[0] || '') : ''
+    profileForm.avatarUrl = (data.avatarUrl ?? data.avatarUrl ?? '') as string
+  } catch (error: unknown) {
+  const err = error as { response?: { status?: number; data?: { message?: string } } }
+  const status = err.response?.status
     if (status === 404) {
       ElMessage.error('找不到會員資料，會員 ID 可能不存在')
     } else {
@@ -73,6 +70,19 @@ const fetchProfile = async () => {
   }
 }
 
+// ── Email 遮罩邏輯 (前兩碼 + 固定星號 + 最後一碼) ──
+const maskEmail = (email: string) => {
+  if (!email) return ''
+  const [user, domain] = email.split('@')
+  if (!domain) return email
+  
+  if (user.length <= 2) return `${user}***@${domain}`
+  
+  const prefix = user.substring(0, 2)
+  const suffix = user.slice(-1)
+  return `${prefix}***${suffix}@${domain}`
+}
+
 onMounted(() => {
   fetchProfile()
 })
@@ -80,7 +90,7 @@ onMounted(() => {
 // ── 儲存按鈕 ──────────────────────────────────────
 const handleSave = async (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  
+
   const valid = await formEl.validate().catch(() => false)
   if (!valid) return
 
@@ -103,14 +113,17 @@ const handleSave = async (formEl: FormInstance | undefined) => {
 
     await updateMemberProfile(submitData.id, submitData)
     ElMessage.success('個人資料已成功更新')
-    
+
     // 同步更新 Pinia 與 LocalStorage
     authStore.memberInfo.email = profileForm.email
     authStore.memberInfo.memberName = profileForm.memberName
-  } catch (error: any) {
+    authStore.memberInfo.avatarUrl = profileForm.avatarUrl
+    storage.setUser(authStore.memberInfo)
+  } catch (error: unknown) {
     console.error('更新失敗:', error)
-    console.error('錯誤詳情:', error.response?.data) // 印出後端錯誤訊息
-    const msg = error.response?.data?.message || '更新失敗，請稍後再試'
+    const err = error as { response?: { data?: { message?: string } } }
+    console.error('錯誤詳情:', err.response?.data) // 印出後端錯誤訊息
+    const msg = err.response?.data?.message || '更新失敗，請稍後再試'
     ElMessage.error(msg)
   } finally {
     isSaving.value = false
@@ -118,15 +131,45 @@ const handleSave = async (formEl: FormInstance | undefined) => {
 }
 
 // ── 頭像處理 (預覽) ──────────────────────────────────
-const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
+// ── 上傳狀態 ──────────────────────────────────────
+const isUploading = ref(false)
+
+// ── 組合完整圖片 URL ───────────────────────────────
+// 後端回傳的是相對路徑 /uploads/avatars/xxx.jpg
+// 需要補上後端 base URL 才能正確顯示
+const getFullImageUrl = (url: string) => {
+  if (!url) return ''
+  if (url.startsWith('blob:') || url.startsWith('http')) return url
+  return `https://localhost:7125${url}`
+}
+
+// ── 頭像上傳（完整流程）──────────────────────────────
+const handleAvatarUpload = async (rawFile: File) => {
   const isImage = ['image/jpeg', 'image/png', 'image/jpg'].includes(rawFile.type)
   const isLt1M = rawFile.size / 1024 / 1024 < 1
 
-  if (!isImage) { ElMessage.error('頭像只能是 JPG 或 PNG 格式!'); return false }
-  if (!isLt1M) { ElMessage.error('頭像檔案大小不能超過 1MB!'); return false }
-  
+  if (!isImage) { ElMessage.error('頭像只能是 JPG 或 PNG 格式!'); return }
+  if (!isLt1M) { ElMessage.error('頭像檔案大小不能超過 1MB!'); return }
+
+  // 1. 先用 Blob URL 做即時預覽（讓使用者感覺流暢）
   profileForm.avatarUrl = URL.createObjectURL(rawFile)
-  return false 
+
+  try {
+    isUploading.value = true
+
+    // 2. 真正上傳到伺服器
+    const res = await uploadAvatar(rawFile)
+
+    // 3. 用伺服器回傳的真實路徑取代 Blob URL
+    profileForm.avatarUrl = res.data.url
+
+    ElMessage.success('頭像上傳成功，請記得點擊儲存')
+  } catch {
+  ElMessage.error('頭像上傳失敗，請稍後再試')
+    profileForm.avatarUrl = '' // 上傳失敗就清掉預覽
+  } finally {
+    isUploading.value = false
+  }
 }
 </script>
 
@@ -148,15 +191,14 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
         >
           <el-form-item label="帳號">
             <span class="read-only-text">{{ profileForm.account }}</span>
-            <span class="hint-text">帳號無法更改</span>
           </el-form-item>
 
           <el-form-item label="姓名" prop="memberName">
             <el-input v-model="profileForm.memberName" placeholder="請輸入姓名" :prefix-icon="User" />
           </el-form-item>
 
-          <el-form-item label="Email" prop="email">
-            <el-input v-model="profileForm.email" placeholder="請輸入 Email" :prefix-icon="Message" />
+          <el-form-item label="Email">
+            <span class="read-only-text">{{ maskEmail(profileForm.email) }}</span>
           </el-form-item>
 
           <el-form-item label="手機號碼" prop="phone">
@@ -193,8 +235,8 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
 
       <el-col :xs="24" :md="8" class="avatar-col">
         <div class="avatar-upload-section">
-          <div class="avatar-preview-wrap">
-            <el-avatar v-if="profileForm.avatarUrl" :size="120" :src="profileForm.avatarUrl" />
+          <div class="avatar-preview-wrap" v-loading="isUploading">
+            <el-avatar v-if="profileForm.avatarUrl" :size="120" :src="getFullImageUrl(profileForm.avatarUrl)" />
             <el-avatar v-else :size="120" :icon="User" />
           </div>
           <el-upload
@@ -202,13 +244,13 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
             action=""
             :auto-upload="false"
             :show-file-list="false"
-            :on-change="(file: any) => beforeAvatarUpload(file.raw)"
+            :on-change="(file: any) => handleAvatarUpload(file.raw)"
           >
             <el-button size="default">選擇圖片</el-button>
           </el-upload>
           <div class="upload-hint">
             <p>檔案大小：最大 1MB</p>
-            <p>檔案延伸：.JPEG, .PNG</p>
+            <p>檔案格式：.JPEG, .PNG</p>
           </div>
         </div>
       </el-col>

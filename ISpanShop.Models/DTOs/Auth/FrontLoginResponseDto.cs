@@ -9,5 +9,6 @@ namespace ISpanShop.Models.DTOs.Auth
         public string MemberName { get; set; } = string.Empty;
         public string LevelName { get; set; } = string.Empty;
         public int PointBalance { get; set; }
+        public bool IsSeller { get; set; }
     }
 }

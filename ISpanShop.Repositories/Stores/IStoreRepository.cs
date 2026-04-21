@@ -18,7 +18,7 @@ namespace ISpanShop.Repositories.Stores
             int pageSize,
             out int totalCount
         );
-        (int Total, int Verified, int Blocked) GetStoreStats();
+        (int Verified, int Pending, int Rejected, int Blocked) GetStoreStats();
         StoreDetailDto? GetStoreById(int storeId);
         Task<Store?> GetStoreByUserIdAsync(int userId);
         bool ToggleVerified(int storeId, bool isVerified);

@@ -3,16 +3,16 @@
     <div class="top-bar">
       <div class="top-bar-inner">
         <div class="top-left">
-          <a href="#" @click.prevent="router.push('/seller')">賣家中心</a>
+          <a href="#" @click.prevent="router.push('/member/mystore')">賣家中心</a>
           <span class="divider">|</span>
           <span class="welcome">🎉 全站滿千免運中</span>
         </div>
         <div class="top-right">
           <template v-if="!authStore.isLoggedIn">
-            <a href="#" @click.prevent="router.push('/member')">會員中心</a>
+            <a href="#" @click.prevent="authStore.openLoginDialog()">會員中心</a>
             <span class="divider">|</span>
             <a href="#" @click.prevent="router.push('/register')">註冊</a>
-            <a href="#" @click.prevent="router.push('/login')">登入</a>
+            <a href="#" @click.prevent="authStore.openLoginDialog()">登入</a>
           </template>
 
           <template v-else>
@@ -38,7 +38,8 @@
     <header class="main-header">
       <div class="main-header-inner">
         <div class="logo" @click="$router.push('/')">
-          <span class="logo-icon">🛍️</span>
+          <img src="@/assets/images/howbuyLogo.png" class="logo-icon" alt="HowBuy Logo">
+          <!-- <span data-v-75d0be1e="" class="logo-icon">🛍️</span> -->
           <span class="logo-text">HowBuy</span>
         </div>
 
@@ -73,7 +74,7 @@
         </div>
 
         <div class="header-actions">
-          <div class="action-icon" @click="$router.push('/member/favorites')">
+          <div class="action-icon" @click="handleActionClick('/member/favorites')">
             <el-icon :size="24"><Star /></el-icon>
             <div class="action-label">收藏</div>
           </div>
@@ -85,7 +86,7 @@
             :disabled="cartStore.totalCount === 0"
           >
             <template #reference>
-              <div class="action-icon cart" @click="$router.push('/cart')">
+              <div class="action-icon cart" @click="handleActionClick('/cart')">
                 <el-badge :value="cartStore.totalCount" :hidden="cartStore.totalCount === 0" :max="99">
                   <el-icon :size="24"><ShoppingCart /></el-icon>
                 </el-badge>
@@ -159,7 +160,10 @@
 
       <div class="footer-inner">
         <div class="footer-col footer-brand">
-          <div class="footer-logo">🛍️ HowBuy</div>
+          <div class="footer-logo">
+            <img src="@/assets/images/howbuyLogo.png" class="footer-logo-img" alt="HowBuy Logo">
+            HowBuy
+          </div>
           <p>讓購物變得更簡單、更美好</p>
           <div class="social-icons">
             <a href="#"><el-icon><ChatDotRound /></el-icon></a>
@@ -192,11 +196,15 @@
         © 2026 HowBuy. All rights reserved. | Made with 🧡 in Taiwan
       </div>
     </footer>
+
+    <!-- 聊聊懸浮按鈕與視窗 -->
+    <ChatFloat />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import ChatFloat from '../components/chat/ChatFloat.vue'
 import {
   Search, ShoppingCart, Star, Promotion,
   Van, Lock, RefreshRight, Service, ChatDotRound, Share,
@@ -244,7 +252,16 @@ function handleDropdownCommand(command: string) {
   } else if (command === 'logout') {
     authStore.logout()
     ElMessage.success('已登出')
-    router.push('/login')
+    router.push('/')
+  }
+}
+
+/** 處理需要登入的點擊動作 */
+function handleActionClick(path: string) {
+  if (authStore.isLoggedIn) {
+    router.push(path)
+  } else {
+    authStore.openLoginDialog()
   }
 }
 </script>
@@ -321,7 +338,11 @@ function handleDropdownCommand(command: string) {
   transition: transform 0.3s;
 }
 .logo:hover { transform: scale(1.05); }
-.logo-icon { font-size: 36px; }
+.logo-icon {
+  height: 70px;
+  width: auto;
+  object-fit: contain;
+}
 .logo-text {
   font-size: 32px;
   font-weight: 800;
@@ -453,10 +474,18 @@ function handleDropdownCommand(command: string) {
   padding: 50px 30px 30px;
 }
 .footer-brand .footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 26px;
   font-weight: 800;
   color: #EE4D2D;
   margin-bottom: 12px;
+}
+.footer-logo-img {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
 }
 .footer-brand p {
   color: #94a3b8;

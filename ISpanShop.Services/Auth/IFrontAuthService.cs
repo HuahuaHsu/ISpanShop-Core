@@ -4,7 +4,7 @@ namespace ISpanShop.Services.Auth
 {
     public interface IFrontAuthService
     {
-        Task<FrontLoginResponseDto?> LoginAsync(FrontLoginRequestDto request);
+        Task<FrontLoginResponseDto?> LoginAsync(FrontLoginRequestDto request, string ipAddress);
         Task<bool> RegisterAsync(FrontRegisterRequestDto request);
     }
 }

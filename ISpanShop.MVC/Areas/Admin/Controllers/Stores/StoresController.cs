@@ -26,12 +26,11 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Stores
         {
             var stores = _storeService.GetAllStores(
                 keyword, verifyStatus, blockStatus, storeStatusFilter, sortColumn, sortDirection, page, pageSize, out int totalCount).ToList();
-
-            var stats = _storeService.GetStoreStats();
+var stats = _storeService.GetStoreStats();
 
             var vm = new StoreIndexVm
             {
-                Stores = stores,
+                Stores = stores.ToList(),
                 Keyword = keyword,
                 VerifyStatus = verifyStatus,
                 BlockStatus = blockStatus,
@@ -41,8 +40,9 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Stores
                 TotalCount = totalCount,
                 CurrentPage = page,
                 PageSize = pageSize,
-                TotalStores = stats.Total,
                 VerifiedCount = stats.Verified,
+                PendingCount = stats.Pending,
+                RejectedCount = stats.Rejected,
                 BlockedCount = stats.Blocked,
                 Message = TempData["Message"]?.ToString()
             };

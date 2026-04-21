@@ -55,6 +55,21 @@ export const routes: RouteRecordRaw[] = [
             component: () => import('../views/member/ProfileView.vue'),
           },
           {
+            path: 'address',
+            name: 'member-address',
+            component: () => import('../views/member/AddressView.vue'),
+          },
+          {
+            path: 'password',
+            name: 'member-password',
+            component: () => import('../views/member/PasswordView.vue'),
+          },
+          {
+            path: 'privacy',
+            name: 'member-privacy',
+            component: () => import('../views/member/PrivacyView.vue'),
+          },
+          {
             path: 'orders',
             name: 'member-orders',
             component: () => import('../views/member/OrdersView.vue'),
@@ -85,10 +100,9 @@ export const routes: RouteRecordRaw[] = [
             component: () => import('../views/member/MyStoreView.vue'),
           },
           {
-            path: '/member/support',
-            name: 'member-support',
-            component: () => import('../views/member/SupportTicketsView.vue'),
-            meta: { requiresAuth: true }
+            path: 'seller-apply',
+            name: 'member-seller-apply',
+            component: () => import('../views/member/SellerApplyView.vue'),
           }
         ]
       }
@@ -108,6 +122,18 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('../views/auth/RegisterView.vue'),
     meta: { requiresAuth: false, hideForAuth: true }
   },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('../views/auth/ForgotPasswordView.vue'),
+    meta: { requiresAuth: false, hideForAuth: true }
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('../views/auth/ResetPasswordView.vue'),
+    meta: { requiresAuth: false, hideForAuth: true }
+  },
 
   // ── 賣家中心（獨立 Layout，與前台完全分離） ──
   {
@@ -119,6 +145,11 @@ export const routes: RouteRecordRaw[] = [
         path: '',
         name: 'SellerDashboard',
         component: () => import('../views/seller/DashboardView.vue'),
+      },
+      {
+        path: 'profile',
+        name: 'SellerProfile',
+        component: () => import('../views/seller/StoreSettingsView.vue'),
       },
       {
         path: 'products',
@@ -153,6 +184,12 @@ export const routes: RouteRecordRaw[] = [
     name: 'checkout',
     component: () => import('../views/cart/CheckoutView.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/cart',
+    name: 'cart',
+    component: () => import('../views/cart/CartView.vue'),
+     meta: { requiresAuth: true }
   },
   {
     path: '/wip',

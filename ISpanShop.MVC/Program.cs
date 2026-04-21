@@ -1,6 +1,7 @@
 using ISpanShop.Models.EfModels;
 using ISpanShop.Models.Seeding;
 using ISpanShop.MVC.Middleware;
+using ISpanShop.MVC.Hubs;
 
 // Repository namespaces
 using ISpanShop.Repositories.Admins;
@@ -15,6 +16,7 @@ using ISpanShop.Repositories.Support;
 using ISpanShop.Repositories.Stores;
 using ISpanShop.Repositories.Promotions;
 using ISpanShop.Repositories.Brands;
+using ISpanShop.Repositories.Communication;
 
 // Service namespaces
 using ISpanShop.Services.Admins;
@@ -31,10 +33,13 @@ using ISpanShop.Services.Promotions;
 using ISpanShop.Services.Brands;
 using ISpanShop.Services.Coupons;
 using ISpanShop.Services.Auth;
+using ISpanShop.Services.Communication;
 using ISpanShop.Services;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -61,7 +66,7 @@ namespace ISpanShop.MVC
 					policy.WithOrigins("http://localhost:5173")
 						  .AllowAnyHeader()
 						  .AllowAnyMethod()
-						  .AllowCredentials(); // 支援未來可能需要的 Cookie 傳遞
+						  .AllowCredentials();
 				});
 			});
 
@@ -96,7 +101,46 @@ namespace ISpanShop.MVC
 						ValidateIssuerSigningKey = true,
 						ValidIssuer = jwtSettings["Issuer"],
 						ValidAudience = jwtSettings["Audience"],
-						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
+						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!)),
+						ClockSkew = TimeSpan.Zero // 減少時間誤差導致的 401
+					};
+
+					// SignalR + API 的 JWT 事件處理 (來自聊天系統)
+					options.Events = new JwtBearerEvents
+					{
+						OnMessageReceived = context =>
+						{
+							var accessToken = context.Request.Query["access_token"];
+							if (string.IsNullOrEmpty(accessToken))
+							{
+								accessToken = context.Request.Query["token"];
+							}
+
+							var path = context.HttpContext.Request.Path;
+							if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/chatHub") || path.StartsWithSegments("/api/chat")))
+							{
+								context.Token = accessToken;
+							}
+							return Task.CompletedTask;
+						},
+						OnAuthenticationFailed = context =>
+						{
+							var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+							logger.LogWarning($"Authentication failed: {context.Exception.Message}");
+							return Task.CompletedTask;
+						},
+						OnChallenge = context =>
+						{
+							// 避免 API 請求被導向登入頁面，而是回傳 401
+							if (context.Request.Path.StartsWithSegments("/api"))
+							{
+								context.HandleResponse();
+								context.Response.StatusCode = 401;
+								context.Response.ContentType = "application/json";
+								return context.Response.WriteAsync("{\"message\":\"未授權，請先登入\"}");
+							}
+							return Task.CompletedTask;
+						}
 					};
 				});
 
@@ -104,7 +148,10 @@ namespace ISpanShop.MVC
 
 			// 核心身分與會員
 			builder.Services.AddScoped<IFrontAuthService, FrontAuthService>();
+			builder.Services.AddScoped<IAccountService, AccountService>();
+			builder.Services.AddScoped<IEmailService, EmailService>();
 			builder.Services.AddScoped<IUserRepository, UserRepository>();
+			builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 			builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 			builder.Services.AddScoped<IMemberService, MemberService>();
 			builder.Services.AddScoped<IPointRepository, PointRepository>();
@@ -152,6 +199,13 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<IStoreRepository, StoreRepository>();
 			builder.Services.AddScoped<IStoreService, StoreService>();
 			builder.Services.AddScoped<IFrontStoreService, FrontStoreService>();
+
+			// 聊天系統 (SignalR)
+			builder.Services.AddScoped<IChatRepository, ChatRepository>();
+			builder.Services.AddScoped<IChatService, ChatService>();
+			builder.Services.AddScoped<IBotService, MockBotService>();
+			builder.Services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
+			builder.Services.AddSignalR();
 
 			// ── 5. Swagger / OpenAPI ──
 			builder.Services.AddEndpointsApiExplorer();
@@ -220,6 +274,8 @@ namespace ISpanShop.MVC
 			}
 
 			// ── 7. 路由設定 ──
+			app.MapHub<ChatHub>("/chatHub");
+
 			app.MapControllerRoute(
 				name: "areas",
 				pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");

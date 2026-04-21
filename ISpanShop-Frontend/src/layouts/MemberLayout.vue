@@ -1,21 +1,6 @@
 <!-- src/layouts/MemberLayout.vue -->
 <template>
   <div class="layout">
-    <!-- 全域導覽 Header (同步首頁配色) -->
-    <header class="global-header">
-      <div class="header-inner">
-        <div class="logo" @click="router.push('/')">
-          <span class="logo-icon">🛍️</span>
-          <span class="logo-text">HowBuy</span>
-        </div>
-        <div class="header-right">
-          <el-button text class="nav-link" @click="router.push('/')">回首頁</el-button>
-          <span class="divider-text">|</span>
-          <el-button text class="nav-link" @click="logout">登出</el-button>
-        </div>
-      </div>
-    </header>
-
     <div class="body">
       <div class="body-inner">
         <!-- 側邊欄 -->
@@ -23,8 +8,13 @@
           <!-- 會員資訊區塊 -->
           <div class="sidebar-user-card" @click="router.push('/member/profile')">
             <div class="avatar">
+            <img v-if="authStore.memberInfo?.avatarUrl"
+            :src="`https://localhost:7125${authStore.memberInfo.avatarUrl}`"
+            style="width:100%; height:100%; border-radius:50%; object-fit:cover;"/>
+            <span v-else>
               {{ authStore.memberInfo?.account?.charAt(0).toUpperCase() || 'U' }}
-            </div>
+            </span>
+          </div>
             <div class="user-details">
               <span class="username">{{ authStore.memberInfo?.account || '正在讀取...' }}</span>
               <span class="level-badge">
@@ -38,10 +28,21 @@
               <el-icon><Menu /></el-icon>
               <span>會員中心</span>
             </el-menu-item>
-            <el-menu-item index="/member/profile">
-              <el-icon><User /></el-icon>
-              <span>個人資料</span>
-            </el-menu-item>
+
+            <!-- 我的帳戶 子選單 -->
+            <el-sub-menu index="my-account">
+              <template #title>
+                <div @click.stop="router.push('/member/profile')" style="display: flex; align-items: center; width: 100%; height: 100%;">
+                  <el-icon><User /></el-icon>
+                  <span>我的帳戶</span>
+                </div>
+              </template>
+              <el-menu-item index="/member/profile">個人資料</el-menu-item>
+              <el-menu-item index="/member/address">地址</el-menu-item>
+              <el-menu-item index="/member/password">更改密碼</el-menu-item>
+              <el-menu-item index="/member/privacy">帳號使用</el-menu-item>
+            </el-sub-menu>
+
             <el-menu-item index="/member/orders">
               <el-icon><Document /></el-icon>
               <span>我的訂單</span>
@@ -49,10 +50,6 @@
             <el-menu-item index="/member/wallet">
               <el-icon><Wallet /></el-icon>
               <span>我的錢包</span>
-            </el-menu-item>
-            <el-menu-item index="/member/settings">
-              <el-icon><Setting /></el-icon>
-              <span>帳號設定</span>
             </el-menu-item>
           </el-menu>
         </aside>
@@ -69,7 +66,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { User, Document, Wallet, Setting, Menu } from '@element-plus/icons-vue'
+import { User, Document, Wallet, Menu } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
@@ -77,10 +74,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const activeMenu = computed(() => route.path)
 
-function logout() {
-  authStore.logout()
-  router.push('/login')
-}
+
 </script>
 
 <style scoped>
@@ -224,6 +218,10 @@ function logout() {
   border-right: none;
   padding: 10px 0;
 }
+:deep(.el-sub-menu__icon-arrow) {
+  display: none !important;
+}
+:deep(.el-sub-menu__title),
 :deep(.el-menu-item) {
   height: 50px;
   line-height: 50px;
@@ -232,16 +230,23 @@ function logout() {
   color: #64748b;
   font-weight: 500;
 }
+:deep(.el-sub-menu__title:hover),
 :deep(.el-menu-item:hover) {
-  color: #EE4D2D;
-  background-color: #f8fafc;
+  color: #EE4D2D !important;
+  background-color: #f8fafc !important;
 }
-:deep(.el-menu-item.is-active) {
+:deep(.el-menu-item.is-active),
+:deep(.el-sub-menu.is-active > .el-sub-menu__title) {
   color: #EE4D2D !important;
   background-color: #fef2f2 !important;
   font-weight: 700;
 }
-:deep(.el-menu-item .el-icon) {
+:deep(.el-sub-menu .el-menu-item) {
+  margin-left: 20px;
+  margin-right: 12px;
+}
+:deep(.el-menu-item .el-icon),
+:deep(.el-sub-menu__title .el-icon) {
   font-size: 18px;
   margin-right: 12px;
 }

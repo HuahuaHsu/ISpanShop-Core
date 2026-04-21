@@ -21,6 +21,8 @@ public partial class Store
 
     public byte StoreStatus { get; set; }
 
+    public string LogoUrl { get; set; }
+
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
     public virtual ICollection<Coupon> Coupons { get; set; } = new List<Coupon>();

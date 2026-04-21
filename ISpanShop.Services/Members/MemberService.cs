@@ -8,9 +8,6 @@ using System;
 
 namespace ISpanShop.Services.Members
 {
-	/// <summary>
-	/// 會員服務實現 - 處理會員相關業務邏輯
-	/// </summary>
 	public class MemberService : IMemberService
 	{
 		private readonly IMemberRepository _repo;
@@ -24,7 +21,6 @@ namespace ISpanShop.Services.Members
 		{
 			var users = _repo.Search(keyword, status);
 			var levels = _repo.GetAllLevels().ToList();
-
 			return users.Select(u => MapToDto(u, levels));
 		}
 
@@ -32,7 +28,6 @@ namespace ISpanShop.Services.Members
 		{
 			var users = _repo.SearchPaged(criteria, out int totalCount);
 			var levels = _repo.GetAllLevels().ToList();
-
 			return new PagedResult<MemberDto>
 			{
 				Data = users.Select(u => MapToDto(u, levels)).ToList(),
@@ -51,7 +46,6 @@ namespace ISpanShop.Services.Members
 		{
 			var user = _repo.GetById(id);
 			if (user == null) return null;
-
 			var levels = _repo.GetAllLevels().ToList();
 			return MapToDto(user, levels);
 		}
@@ -60,24 +54,23 @@ namespace ISpanShop.Services.Members
 		{
 			var userInDb = _repo.GetById(dto.Id);
 			if (userInDb == null) throw new Exception("找不到該會員");
-
 			userInDb.IsBlacklisted = dto.IsBlacklisted;
 			_repo.Update(userInDb);
 		}
 
+		// ── 前台會員自行更新個人資料 ──────────────────────────
 		public void UpdateMemberProfile(UpdateMemberProfileDto dto)
 		{
 			var userInDb = _repo.GetById(dto.Id);
 			if (userInDb == null) throw new Exception("找不到該會員");
 
-			// 更新基本資訊 (Email, Account)
 			userInDb.Email = dto.Email;
-			
-			// 更新詳細資料 (MemberProfile)
+
 			if (userInDb.MemberProfile != null)
 			{
 				userInDb.MemberProfile.FullName = dto.FullName;
 				userInDb.MemberProfile.PhoneNumber = dto.PhoneNumber;
+				userInDb.MemberProfile.AvatarUrl = dto.AvatarUrl;
 				userInDb.MemberProfile.Gender = dto.Gender;
 				userInDb.MemberProfile.DateOfBirth = dto.Birthday;
 			}
@@ -85,32 +78,31 @@ namespace ISpanShop.Services.Members
 			_repo.Update(userInDb);
 		}
 
+		// ── 後台管理員更新會員資料 ────────────────────────────
 		public void UpdateMemberProfile(MemberDto dto)
 		{
 			var userInDb = _repo.GetById(dto.Id);
 			if (userInDb == null) throw new Exception("找不到該會員");
 
-			// 更新 Users 表中的基本資訊
 			userInDb.Email = dto.Email;
 			userInDb.IsBlacklisted = dto.IsBlacklisted;
 
-			// 更新 MemberProfiles 表
 			if (userInDb.MemberProfile != null)
 			{
 				userInDb.MemberProfile.FullName = dto.FullName;
 				userInDb.MemberProfile.PhoneNumber = dto.PhoneNumber;
+				userInDb.MemberProfile.AvatarUrl = dto.AvatarUrl;
 				userInDb.MemberProfile.Gender = dto.Gender;
 				userInDb.MemberProfile.DateOfBirth = dto.Birthday;
 			}
 
-			// 更新 Addresses 表中的預設地址
 			var defaultAddress = userInDb.Addresses.FirstOrDefault(a => a.IsDefault == true)
-								  ?? userInDb.Addresses.FirstOrDefault();
+								 ?? userInDb.Addresses.FirstOrDefault();
 			if (defaultAddress != null)
 			{
 				defaultAddress.City = dto.City;
 				defaultAddress.Region = dto.Region;
-				defaultAddress.Street = dto.Address; // 對應 Street 欄位
+				defaultAddress.Street = dto.Address;
 			}
 
 			_repo.Update(userInDb);
@@ -122,6 +114,13 @@ namespace ISpanShop.Services.Members
 			var address = u.Addresses.FirstOrDefault(a => a.IsDefault == true)
 						  ?? u.Addresses.FirstOrDefault();
 
+			string phoneNumber = profile?.PhoneNumber ?? "";
+			string avatarUrl = !string.IsNullOrEmpty(profile?.AvatarUrl)
+				? profile.AvatarUrl
+				: profile?.FullName != null
+					? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(profile.FullName)}&background=random&color=fff&size=128"
+					: null;
+
 			return new MemberDto
 			{
 				Id = u.Id,
@@ -130,22 +129,14 @@ namespace ISpanShop.Services.Members
 				IsBlacklisted = u.IsBlacklisted ?? false,
 				IsSeller = profile?.IsSeller ?? false,
 				RoleName = u.Role?.RoleName,
-
 				FullName = profile?.FullName ?? "未設定",
-				PhoneNumber = profile?.PhoneNumber ?? "未設定",
+				PhoneNumber = phoneNumber,
 				Gender = profile?.Gender,
 				Birthday = profile?.DateOfBirth,
 				PointBalance = profile?.PointBalance ?? 0,
 				TotalSpending = profile?.TotalSpending ?? 0,
-
-				// 根據累計消費金額動態計算等級名稱
 				LevelName = GetLevelNameBySpending(profile?.TotalSpending, levels),
-
-				// 如果有預設頭像 URL 生成邏輯
-				AvatarUrl = profile?.FullName != null 
-					? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(profile.FullName)}&background=random&color=fff&size=128"
-					: null,
-
+				AvatarUrl = avatarUrl,
 				City = address?.City ?? "",
 				Region = address?.Region ?? "",
 				Address = address?.Street ?? ""
@@ -155,16 +146,11 @@ namespace ISpanShop.Services.Members
 		private string GetLevelNameBySpending(decimal? spending, List<MembershipLevel> levels)
 		{
 			if (levels == null || !levels.Any()) return "一般會員";
-
-			// 確保 spending 有值，若無則視為 0
 			decimal currentSpending = spending ?? 0;
-
-			// 找符合條件且 MinSpending 最高的等級
 			var matchedLevel = levels
 				.Where(l => currentSpending >= l.MinSpending)
 				.OrderByDescending(l => l.MinSpending)
 				.FirstOrDefault();
-
 			return matchedLevel?.LevelName ?? "一般會員";
 		}
 	}

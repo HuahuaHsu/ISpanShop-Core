@@ -175,13 +175,17 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 				}
 
 				// ── 更新資料庫 ──
-				var dto = new UpdateMemberProfileDto
+				var dto = new MemberDto
 				{
 					Id = model.UserId,
 					Email = model.Email,
 					FullName = model.FullName,
 					PhoneNumber = model.PhoneNumber,
-					
+					IsBlacklisted = model.IsBlacklisted,
+					IsSeller = model.IsSeller,
+					City = model.City,
+					Region = model.Region,
+					Address = model.Street
 				};
 
 				_memberService.UpdateMemberProfile(dto);

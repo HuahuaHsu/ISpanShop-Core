@@ -16,7 +16,7 @@ namespace ISpanShop.Services.Stores
             int pageSize,
             out int totalCount
         );
-        (int Total, int Verified, int Blocked) GetStoreStats();
+        (int Verified, int Pending, int Rejected, int Blocked) GetStoreStats();
         StoreDetailDto? GetStoreById(int storeId);
         (bool IsSuccess, string Message) ToggleVerified(int storeId, bool isVerified);
         (bool IsSuccess, string Message) ToggleBlacklist(int storeId, bool isBlacklisted);

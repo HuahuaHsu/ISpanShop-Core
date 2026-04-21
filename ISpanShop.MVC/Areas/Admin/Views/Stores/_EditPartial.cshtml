@@ -20,7 +20,8 @@
         <div class="col-md-6">
             <label class="form-label text-muted small">審核狀態</label>
             <div>
-                @if (Model.Store.IsVerified) { <span class="badge bg-label-success">已審核</span> }
+                @if (Model.Store.IsVerified == true) { <span class="badge bg-label-success">已審核</span> }
+                else if (Model.Store.IsVerified == false) { <span class="badge bg-label-danger">審核退回</span> }
                 else { <span class="badge bg-label-warning">待審核</span> }
             </div>
         </div>
@@ -55,37 +56,66 @@
                 <input type="hidden" name="storeId" value="@Model.Store.StoreId" />
                 <div class="mb-3">
                     <label class="form-label fw-bold">變更營業狀態</label>
-                    <select id="storeStatusSelect" name="status" class="form-select" data-initial="@Model.Store.StoreStatus" @(Model.Store.IsVerified ? "" : "disabled")>
+                    <select id="storeStatusSelect" name="status" class="form-select" data-initial="@Model.Store.StoreStatus" @(Model.Store.IsVerified == true ? "" : "disabled")>
                         <option value="1" selected="@(Model.Store.StoreStatus == 1)">可營業</option>
                         @* <option value="2" selected="@(Model.Store.StoreStatus == 2)">休假中</option>管理員無權決定 *@
                         <option value="3" selected="@(Model.Store.StoreStatus == 3)">停權</option>
                     </select>
-                    @if (!Model.Store.IsVerified)
+                    @if (Model.Store.IsVerified != true)
                     {
                         <div class="form-text text-danger">
                             <i class="bx bx-info-circle me-1"></i>店家尚未通過審核，無法設定營業狀態
                         </div>
                     }
                 </div>
-                <button type="submit" class="btn btn-primary w-100" @(Model.Store.IsVerified ? "" : "disabled")>
+                <button type="submit" class="btn btn-primary w-100" @(Model.Store.IsVerified == true ? "" : "disabled")>
                     <i class="bx bx-save me-1"></i> 儲存營業狀態
                 </button>
             </form>
         </div>
 
-        <div class="col-12 mt-4 d-flex gap-2">
-            <!-- 審核操作 -->
-            <form id="toggleVerifiedForm" method="post" asp-area="Admin" asp-controller="Stores" asp-action="ToggleVerified" class="flex-fill">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="storeId" value="@Model.Store.StoreId" />
-                <input type="hidden" name="isVerified" value="@((!Model.Store.IsVerified).ToString().ToLower())" />
-                <button type="submit" id="toggleVerifiedBtn" class="btn btn-outline-@(Model.Store.IsVerified ? "danger" : "success") w-100" data-is-verified="@Model.Store.IsVerified.ToString().ToLower()">
-                    <i class="bx bx-@(Model.Store.IsVerified ? "undo" : "check") me-1"></i> 
-                    @(Model.Store.IsVerified ? "撤回審核" : "通過審核")
-                </button>
-            </form>
+        <div class="col-12 mt-4">
+            <label class="form-label fw-bold mb-2">審核操作</label>
+            <div class="d-flex flex-column gap-2">
+                @if (Model.Store.IsVerified == true)
+                {
+                    <div class="d-flex gap-2">
+                        <!-- 撤回審核 (變回 false 代表退回) -->
+                        <form id="toggleVerifiedForm" method="post" asp-area="Admin" asp-controller="Stores" asp-action="ToggleVerified" class="flex-fill">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="storeId" value="@Model.Store.StoreId" />
+                            <input type="hidden" name="isVerified" value="false" />
+                            <button type="submit" id="toggleVerifiedBtn" class="btn btn-outline-warning w-100" data-is-verified="true">
+                                <i class="bx bx-undo me-1"></i> 撤回並退回
+                            </button>
+                        </form>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex gap-2">
+                        <!-- 通過審核 (true) -->
+                        <form id="approveForm" method="post" asp-area="Admin" asp-controller="Stores" asp-action="ToggleVerified" class="flex-fill">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="storeId" value="@Model.Store.StoreId" />
+                            <input type="hidden" name="isVerified" value="true" />
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bx bx-check me-1"></i> 通過審核
+                            </button>
+                        </form>
 
-            
+                        <!-- 審核退回 (false) -->
+                        <form id="rejectForm" method="post" asp-area="Admin" asp-controller="Stores" asp-action="ToggleVerified" class="flex-fill">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="storeId" value="@Model.Store.StoreId" />
+                            <input type="hidden" name="isVerified" value="false" />
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="bx bx-x me-1"></i> 審核退回
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>

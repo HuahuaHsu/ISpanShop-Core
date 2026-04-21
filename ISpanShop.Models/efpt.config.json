@@ -67,7 +67,23 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[CouponCategories]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CouponProducts]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Coupons]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[LoginHistories]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MemberCoupons]",
          "ObjectType": 0
       },
       {
@@ -88,6 +104,10 @@
       },
       {
          "Name": "[dbo].[Orders]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PasswordResetTokens]",
          "ObjectType": 0
       },
       {

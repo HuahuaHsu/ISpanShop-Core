@@ -24,8 +24,9 @@ namespace ISpanShop.MVC.Areas.Admin.Models.Stores
         public int PageSize { get; set; } = 20;
 
         // ── 統計 ──
-        public int TotalStores { get; set; }
-        public int VerifiedCount { get; set; }
-        public int BlockedCount { get; set; }
+        public int VerifiedCount { get; set; }  // 已通過審核的店家
+        public int PendingCount { get; set; }   // 待審核 (NULL)
+        public int RejectedCount { get; set; }  // 審核退回 (False)
+        public int BlockedCount { get; set; }   // 已封鎖的店主
     }
 }

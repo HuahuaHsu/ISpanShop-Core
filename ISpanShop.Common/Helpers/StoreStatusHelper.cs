@@ -2,10 +2,11 @@ namespace ISpanShop.Common.Helpers
 {
     public static class StoreStatusHelper
     {
-        public static string GetDisplayName(int status, bool isVerified = true, bool isBlacklisted = false)
+        public static string GetDisplayName(int status, bool? isVerified = true, bool isBlacklisted = false)
         {
             if (isBlacklisted) return "已封鎖";
-            if (!isVerified) return "未審核";
+            if (isVerified == null) return "待審核";
+            if (isVerified == false) return "審核退回";
 
             return status switch
             {
@@ -16,10 +17,11 @@ namespace ISpanShop.Common.Helpers
             };
         }
 
-        public static string GetBadgeClass(int status, bool isVerified = true, bool isBlacklisted = false)
+        public static string GetBadgeClass(int status, bool? isVerified = true, bool isBlacklisted = false)
         {
             if (isBlacklisted) return "bg-label-danger";
-            if (!isVerified) return "bg-label-secondary";
+            if (isVerified == null) return "bg-label-warning";
+            if (isVerified == false) return "bg-label-danger";
 
             return status switch
             {

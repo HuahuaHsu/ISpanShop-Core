@@ -25,11 +25,11 @@ public partial class Category
 
     public virtual ICollection<CategoryAttributeMapping> CategoryAttributeMappings { get; set; } = new List<CategoryAttributeMapping>();
 
-    public virtual ICollection<CouponCategory> CouponCategories { get; set; } = new List<CouponCategory>();
-
     public virtual ICollection<Category> InverseParent { get; set; } = new List<Category>();
 
     public virtual Category Parent { get; set; }
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+
+    public virtual ICollection<Coupon> Coupons { get; set; } = new List<Coupon>();
 }

@@ -39,7 +39,7 @@ namespace ISpanShop.Models.DTOs.Members
 		public decimal TotalSpending { get; set; }
 
 		[Display(Name = "頭像")]
-		public string AvatarUrl { get; set; } // 資料庫無此欄位，需靠程式生成
+		public string AvatarUrl { get; set; } // 儲存於 MemberProfiles 表的頭像路徑
 
 		// --- 來自 MembershipLevels 表 ---
 		[Display(Name = "會員等級")]

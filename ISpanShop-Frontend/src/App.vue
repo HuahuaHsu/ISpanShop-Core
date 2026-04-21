@@ -1,10 +1,11 @@
 <template>
   <router-view />
+  <!-- 全域登入彈窗 -->
+  <AuthDialog />
 </template>
 
 <script setup lang="ts">
-// App.vue 作為根容器，只負責渲染路由
-// 實際的版型（header/footer）由各個 Layout 負責
+import AuthDialog from './components/common/AuthDialog.vue'
 </script>
 
 <style>

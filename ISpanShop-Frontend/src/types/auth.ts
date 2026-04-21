@@ -11,6 +11,8 @@ export interface LoginResponse {
   memberName: string;
   levelName: string;
   pointBalance: number;
+  isSeller: boolean;
+  avatarUrl?: string;
 }
 
 export interface RegisterRequest {
@@ -19,4 +21,20 @@ export interface RegisterRequest {
   email: string;
   fullName: string;
   phoneNumber?: string;
+}
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string; // 從 URL query 取得
+  newPassword: string;
+  confirmPassword: string;
 }

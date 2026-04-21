@@ -114,7 +114,8 @@ namespace ISpanShop.Repositories.Stores
 								StoreName = reader.GetString("StoreName"),
 								Description = reader.IsDBNull("Description")
 					? null : reader.GetString("Description"),
-								IsVerified = reader.GetBoolean("IsVerified"),
+								IsVerified = reader.IsDBNull("IsVerified") 
+                    ? (bool?)null : reader.GetBoolean("IsVerified"),
 								IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
 								StoreStatus = Convert.ToInt32(reader["StoreStatus"]), 
 								CreatedAt = reader.IsDBNull("CreatedAt")
@@ -128,19 +129,21 @@ namespace ISpanShop.Repositories.Stores
             return result;
         }
 
-        public (int Total, int Verified, int Blocked) GetStoreStats()
+        public (int Verified, int Pending, int Rejected, int Blocked) GetStoreStats()
         {
-            int total = 0, verified = 0, blocked = 0;
+            int verified = 0, pending = 0, rejected = 0, blocked = 0;
             var connectionString = _context.Database.GetDbConnection().ConnectionString;
 
             using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
                 string sql = @"
-                    SELECT COUNT(*) AS Total,
-                           SUM(CASE WHEN IsVerified = 1 THEN 1 ELSE 0 END) AS Verified,
-                           (SELECT COUNT(*) FROM Users U JOIN Stores S ON U.Id = S.UserId WHERE U.IsBlacklisted = 1) AS Blocked
-                    FROM Stores S";
+                    SELECT 
+                        SUM(CASE WHEN IsVerified = 1 THEN 1 ELSE 0 END) AS Verified,
+                        SUM(CASE WHEN IsVerified IS NULL THEN 1 ELSE 0 END) AS Pending,
+                        SUM(CASE WHEN IsVerified = 0 THEN 1 ELSE 0 END) AS Rejected,
+                        (SELECT COUNT(*) FROM Users U JOIN Stores S ON U.Id = S.UserId WHERE U.IsBlacklisted = 1) AS Blocked
+                    FROM Stores";
 
                 using (var cmd = new SqlCommand(sql, conn))
                 {
@@ -148,14 +151,15 @@ namespace ISpanShop.Repositories.Stores
                     {
                         if (reader.Read())
                         {
-                            total = reader.GetInt32("Total");
-                            verified = reader.IsDBNull("Verified") ? 0 : reader.GetInt32("Verified");
-                            blocked = reader.GetInt32("Blocked");
+                            verified = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                            pending = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                            rejected = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+                            blocked = reader.IsDBNull(3) ? 0 : reader.GetInt32(3);
                         }
                     }
                 }
             }
-            return (total, verified, blocked);
+            return (verified, pending, rejected, blocked);
         }
 
         public StoreDetailDto? GetStoreById(int storeId)
@@ -197,7 +201,8 @@ namespace ISpanShop.Repositories.Stores
                                 StoreName = reader.GetString("StoreName"),
                                 Description = reader.IsDBNull("Description")
                          ? null : reader.GetString("Description"),
-                                IsVerified = reader.GetBoolean("IsVerified"),
+                                IsVerified = reader.IsDBNull("IsVerified") 
+                    ? (bool?)null : reader.GetBoolean("IsVerified"),
                                 IsBlacklisted = reader.GetBoolean("IsBlacklisted"),
                                 StoreStatus = Convert.ToInt32(reader["StoreStatus"]),
                                 CreatedAt = reader.IsDBNull("CreatedAt")
@@ -264,7 +269,24 @@ namespace ISpanShop.Repositories.Stores
 
 		public bool ToggleBlacklist(int userId, bool isBlacklisted)
 		{
-			throw new NotImplementedException();
+			var connectionString = _context.Database.GetDbConnection().ConnectionString;
+
+			using (var conn = new SqlConnection(connectionString))
+			{
+				string sql = @"
+                    UPDATE Users
+                    SET    IsBlacklisted = @IsBlacklisted,
+                           UpdatedAt = GETDATE()
+                    WHERE  Id = @UserId";
+
+				using (var cmd = new SqlCommand(sql, conn))
+				{
+					cmd.Parameters.AddWithValue("@IsBlacklisted", isBlacklisted);
+					cmd.Parameters.AddWithValue("@UserId", userId);
+					conn.Open();
+					return cmd.ExecuteNonQuery() > 0;
+				}
+			}
 		}
 	}
 }

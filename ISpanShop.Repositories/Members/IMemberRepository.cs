@@ -20,6 +20,7 @@ namespace ISpanShop.Repositories.Members
 
 		// 更新
 		void Update(User user);
+		void UpdateIsSeller(int userId, bool isVerified);
 	}
 }
 	

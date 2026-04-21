@@ -1,4 +1,5 @@
 import axios from './axios';
+import type { ChangePasswordRequest } from '@/types/auth';
 
 /** 會員資料 DTO (用於讀取) */
 export interface MemberDto {
@@ -38,4 +39,22 @@ export const getMemberProfile = (id: number) => {
  */
 export const updateMemberProfile = (id: number, data: UpdateMemberProfileDto) => {
   return axios.put<{ message: string }>(`/api/front/profile/${id}`, data);
+};
+
+/**
+ * 上傳大頭照
+ */
+export const uploadAvatar = (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return axios.post<{ url: string }>('/api/front/profile/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
+/**
+ * 變更密碼
+ */
+export const changePassword = (data: ChangePasswordRequest) => {
+  return axios.put<{ isSuccess: boolean; message: string }>('/api/front/member/password', data);
 };

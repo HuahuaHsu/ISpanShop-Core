@@ -93,6 +93,7 @@ Product
 |---|---|---|---|
 | GET | `/api/products`           | `Controllers/Api/Products/ProductsApiController`      | 前台商品總覽（AllowAnonymous）；支援 categoryId / keyword / sortBy / page / pageSize |
 | GET | `/api/categories`         | `Controllers/Api/Categories/CategoryApiController`    | 前台主分類列表（AllowAnonymous）；回傳啟用中主分類 + 上架商品數 |
+| GET | `/api/categories/{categoryId}/attributes` | `Controllers/Api/Categories/CategoriesApiController` | 前台分類屬性（AllowAnonymous）；賣家建立商品時取得該分類綁定的規格屬性 |
 | GET | `/api/promotions/active`  | `Controllers/Api/Promotions/PromotionApiController`   | 前台進行中活動（AllowAnonymous）；支援 type / limit |
 | GET | `/api/products/{id}`      | `Controllers/Api/Products/ProductsApiController`      | 前台商品詳情（AllowAnonymous）；含規格/圖片/品牌/商店/分類路徑/評分 |
 | GET | `/api/products/{id}/related` | `Controllers/Api/Products/ProductsApiController`   | 前台相關商品（AllowAnonymous）；同子分類依銷量排序，支援 limit |

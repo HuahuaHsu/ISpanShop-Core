@@ -30,5 +30,25 @@ namespace ISpanShop.Repositories.Members
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
         }
+
+        public async Task<User?> GetByIdAsync(int userId)
+        {
+            return await _db.Users
+                .Include(u => u.MemberProfile)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+        }
+
+        public async Task<bool> UpdatePasswordHashAsync(int userId, string newHash)
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.Password = newHash;
+                user.UpdatedAt = DateTime.Now;
+                await _db.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
     }
 }

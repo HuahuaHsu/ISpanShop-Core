@@ -216,6 +216,7 @@
                                     <option value="all" selected="@(Model.VerifyStatus == "all")">所有狀態</option>
                                     <option value="verified" selected="@(Model.VerifyStatus == "verified")">已審核</option>
                                     <option value="unverified" selected="@(Model.VerifyStatus == "unverified")">待審核</option>
+                                    <option value="rejected" selected="@(Model.VerifyStatus == "rejected")">審核駁回</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -252,26 +253,34 @@
 
             @* ── 統計卡片 ── *@
             <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0 border-start border-primary border-4">
-                        <div class="card-body py-3">
-                            <span class="text-muted fs-7">總店家數</span>
-                            <h4 class="mb-0 fw-bold" style="color:#1e2d3d;">@Model.TotalStores</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="card shadow-sm border-0 border-start border-success border-4">
                         <div class="card-body py-3">
-                            <span class="text-muted fs-7">已審核</span>
+                            <span class="text-muted fs-7">已審核店家</span>
                             <h4 class="mb-0 fw-bold text-success">@Model.VerifiedCount</h4>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 border-start border-warning border-4">
+                        <div class="card-body py-3">
+                            <span class="text-muted fs-7">待審核</span>
+                            <h4 class="mb-0 fw-bold text-warning">@Model.PendingCount</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 border-start border-info border-4">
+                        <div class="card-body py-3">
+                            <span class="text-muted fs-7">審核退回</span>
+                            <h4 class="mb-0 fw-bold text-info">@Model.RejectedCount</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
                     <div class="card shadow-sm border-0 border-start border-danger border-4">
                         <div class="card-body py-3">
-                            <span class="text-muted fs-7">已封鎖</span>
+                            <span class="text-muted fs-7">已封鎖店主</span>
                             <h4 class="mb-0 fw-bold text-danger">@Model.BlockedCount</h4>
                         </div>
                     </div>
@@ -330,7 +339,8 @@
                                             @if (isBlocked) {
                                                 @* 黑名單時不顯示審核資訊 *@
                                             } else {
-                                                @if (store.IsVerified) { <span class="badge badge-soft bg-label-success" style="width:fit-content">已審核</span> }
+                                                @if (store.IsVerified == true) { <span class="badge badge-soft bg-label-success" style="width:fit-content">已審核</span> }
+                                                else if (store.IsVerified == false) { <span class="badge badge-soft bg-label-danger" style="width:fit-content">審核退回</span> }
                                                 else { <span class="badge badge-soft bg-label-warning" style="width:fit-content">待審核</span> }
                                             }
                                             
@@ -537,7 +547,8 @@
             const badgesCell = row.cells[4];
             if (badgesCell) {
                 let html = '';
-                if (store.isVerified) html += '<span class="badge badge-soft bg-label-success" style="width:fit-content">已審核</span> ';
+                if (store.isVerified === true) html += '<span class="badge badge-soft bg-label-success" style="width:fit-content">已審核</span> ';
+                else if (store.isVerified === false) html += '<span class="badge badge-soft bg-label-danger" style="width:fit-content">審核退回</span> ';
                 else html += '<span class="badge badge-soft bg-label-warning" style="width:fit-content">待審核</span> ';
                 
                 if (store.isBlacklisted) html += '<span class="badge badge-soft bg-label-danger" style="width:fit-content">已封鎖</span>';

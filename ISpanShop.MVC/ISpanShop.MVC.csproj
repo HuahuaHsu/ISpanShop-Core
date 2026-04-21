@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>ce0a4025-0b84-4952-b050-bca398f7551e</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,6 +39,10 @@
     <Folder Include="Areas\Admin\Models\Stores\" />
     <Folder Include="Areas\Admin\Views\Stores\" />
     <Folder Include="Models\Orders\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="efpt.config.json.user" />
   </ItemGroup>
 
 </Project>

@@ -13,7 +13,7 @@ namespace ISpanShop.Models.DTOs.Stores
         public string OwnerAccount { get; set; } // Users.Account（店主帳號）
         public string StoreName { get; set; } // Stores.StoreName
         public string? Description { get; set; } // Stores.Description
-        public bool IsVerified { get; set; } // Stores.IsVerified
+        public bool? IsVerified { get; set; } // Stores.IsVerified
         public bool IsBlacklisted { get; set; } // Users.IsBlacklisted
         public int StoreStatus { get; set; } // Stores.StoreStatus (1/2/3)
         public string? StoreStatusName { get; set; } // 顯示名稱
@@ -29,7 +29,7 @@ namespace ISpanShop.Models.DTOs.Stores
         public string OwnerAccount { get; set; }
         public string StoreName { get; set; }
         public string? Description { get; set; }
-        public bool IsVerified { get; set; }
+        public bool? IsVerified { get; set; }
         public bool IsBlacklisted { get; set; }
         public int StoreStatus { get; set; } // Stores.StoreStatus (1/2/3)
         public string? StoreStatusName { get; set; } // 顯示名稱

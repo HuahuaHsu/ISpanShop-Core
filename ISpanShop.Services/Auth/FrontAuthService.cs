@@ -14,26 +14,44 @@ namespace ISpanShop.Services.Auth
     public class FrontAuthService : IFrontAuthService
     {
         private readonly IUserRepository _userRepository;
+        private readonly ILoginHistoryRepository _loginHistoryRepository;
         private readonly IConfiguration _config;
 
-        public FrontAuthService(IUserRepository userRepository, IConfiguration config)
+        public FrontAuthService(
+            IUserRepository userRepository, 
+            ILoginHistoryRepository loginHistoryRepository,
+            IConfiguration config)
         {
             _userRepository = userRepository;
+            _loginHistoryRepository = loginHistoryRepository;
             _config = config;
         }
 
-        public async Task<FrontLoginResponseDto?> LoginAsync(FrontLoginRequestDto request)
+        public async Task<FrontLoginResponseDto?> LoginAsync(FrontLoginRequestDto request, string ipAddress)
         {
             // 1. 查詢使用者 (透過 Repository)
             var user = await _userRepository.GetByEmailOrAccountAsync(request.Account);
 
-            if (user == null || !SecurityHelper.Verify(request.Password, user.Password))
+            // 檢查密碼是否正確
+            bool isPasswordCorrect = user != null && SecurityHelper.Verify(request.Password, user.Password);
+
+            // 2. 記錄登入歷史 (不論成功失敗)
+            _loginHistoryRepository.Add(new ISpanShop.Models.DTOs.Members.LoginHistoryDto
+            {
+                UserId = isPasswordCorrect ? user!.Id : null,
+                AttemptedAccount = request.Account,
+                LoginTime = DateTime.Now,
+                Ipaddress = ipAddress,
+                IsSuccess = isPasswordCorrect
+            });
+
+            if (!isPasswordCorrect)
             {
                 throw new Exception("帳號或密碼錯誤");
             }
 
-            // 2. 簽發 JWT
-            var token = GenerateJwtToken(user);
+            // 3. 簽發 JWT
+            var token = GenerateJwtToken(user!);
 
             return new FrontLoginResponseDto
             {
@@ -43,7 +61,8 @@ namespace ISpanShop.Services.Auth
                 Account = user.Account,
                 MemberName = user.MemberProfile?.FullName ?? user.Account,
                 LevelName = user.MemberProfile?.Level?.LevelName ?? "一般會員",
-                PointBalance = user.MemberProfile?.PointBalance ?? 0
+                PointBalance = user.MemberProfile?.PointBalance ?? 0,
+                IsSeller = user.MemberProfile?.IsSeller ?? false
             };
         }
 

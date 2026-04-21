@@ -18,7 +18,13 @@ router.beforeEach((to, from) => {
     return { name: 'login', query: { redirect: to.fullPath } };
   }
 
-  // 2. 檢查是否為已登入不應進入的頁面 (例如登入後進 /login)
+  // 2. 檢查賣家身分
+  if (to.meta.requiresSeller && !authStore.memberInfo.isSeller) {
+    // 雖然已登入但不是賣家，進入賣家頁面 -> 導向賣場申請/狀態檢查頁
+    return { name: 'member-mystore' };
+  }
+
+  // 3. 檢查是否為已登入不應進入的頁面 (例如登入後進 /login)
   if (to.meta.hideForAuth && isLoggedIn) {
     // 已登入但進入 /login 或 /register -> 導向首頁
     return { name: 'home' };

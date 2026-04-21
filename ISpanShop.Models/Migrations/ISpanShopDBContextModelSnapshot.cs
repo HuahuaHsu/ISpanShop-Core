@@ -37,6 +37,36 @@ namespace ISpanShop.Models.Migrations
                     b.ToTable("AdminLevelPermissions", (string)null);
                 });
 
+            modelBuilder.Entity("CouponCategory", b =>
+                {
+                    b.Property<int>("CouponId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CouponId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("CouponCategories", (string)null);
+                });
+
+            modelBuilder.Entity("CouponProduct", b =>
+                {
+                    b.Property<int>("CouponId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CouponId", "ProductId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("CouponProducts", (string)null);
+                });
+
             modelBuilder.Entity("ISpanShop.Models.EfModels.Address", b =>
                 {
                     b.Property<int>("Id")
@@ -75,7 +105,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Addresse__3214EC0796443C33");
+                        .HasName("PK__Addresse__3214EC0720517029");
 
                     b.HasIndex("UserId");
 
@@ -134,7 +164,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("datetime");
 
                     b.HasKey("Id")
-                        .HasName("PK__Blacklis__3214EC07D9FCC9A1");
+                        .HasName("PK__Blacklis__3214EC07CC1F5DE7");
 
                     b.HasIndex("AdminUserId");
 
@@ -179,7 +209,7 @@ namespace ISpanShop.Models.Migrations
                         .HasDefaultValue(0);
 
                     b.HasKey("Id")
-                        .HasName("PK__Brands__3214EC07E55E295C");
+                        .HasName("PK__Brands__3214EC07EBF8F95E");
 
                     b.ToTable("Brands");
                 });
@@ -196,7 +226,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Carts__3214EC07BC7F87DF");
+                        .HasName("PK__Carts__3214EC07ADAFED9C");
 
                     b.HasIndex(new[] { "UserId" }, "UQ_Carts_UserId")
                         .IsUnique();
@@ -231,7 +261,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__CartItem__3214EC077FC82690");
+                        .HasName("PK__CartItem__3214EC073D89D384");
 
                     b.HasIndex("CartId");
 
@@ -283,7 +313,7 @@ namespace ISpanShop.Models.Migrations
                         .HasDefaultValue(0);
 
                     b.HasKey("Id")
-                        .HasName("PK__Categori__3214EC070CB4C273");
+                        .HasName("PK__Categori__3214EC07B271DEB5");
 
                     b.HasIndex("ParentId");
 
@@ -323,7 +353,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Category__3214EC07F7BA15E9");
+                        .HasName("PK__Category__3214EC07FB7FECCB");
 
                     b.ToTable("CategoryAttributes");
                 });
@@ -343,7 +373,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("CategoryId", "CategoryAttributeId")
-                        .HasName("PK__Category__2B1402DC3B5C54D4");
+                        .HasName("PK__Category__2B1402DCE86C9054");
 
                     b.HasIndex("CategoryAttributeId");
 
@@ -370,7 +400,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Category__3214EC0713F45311");
+                        .HasName("PK__Category__3214EC0795733785");
 
                     b.HasIndex("CategoryAttributeId");
 
@@ -411,13 +441,108 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("tinyint");
 
                     b.HasKey("Id")
-                        .HasName("PK__ChatMess__3214EC07AE07539C");
+                        .HasName("PK__ChatMess__3214EC072C0A50B3");
 
                     b.HasIndex("ReceiverId");
 
                     b.HasIndex("SenderId");
 
                     b.ToTable("ChatMessages");
+                });
+
+            modelBuilder.Entity("ISpanShop.Models.EfModels.Coupon", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("ApplyToAll")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("CouponCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<byte>("CouponType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<byte>("DistributionType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsExclusive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MaximumDiscount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<decimal>("MinimumSpend")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int>("PerUserLimit")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("SellerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<byte>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint")
+                        .HasDefaultValue((byte)1);
+
+                    b.Property<int>("StoreId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("TotalQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<int>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsedQuantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SellerId");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("Coupons");
                 });
 
             modelBuilder.Entity("ISpanShop.Models.EfModels.LoginHistory", b =>
@@ -450,11 +575,50 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__LoginHis__3214EC07B4209083");
+                        .HasName("PK__LoginHis__3214EC07A95A3CD4");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("LoginHistories");
+                });
+
+            modelBuilder.Entity("ISpanShop.Models.EfModels.MemberCoupon", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CouponId")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("OrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("ReceivedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<byte>("UsageStatus")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("MemberCoupons");
                 });
 
             modelBuilder.Entity("ISpanShop.Models.EfModels.MemberProfile", b =>
@@ -464,6 +628,10 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateOnly?>("DateOfBirth")
                         .HasColumnType("date");
@@ -508,7 +676,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__MemberPr__3214EC078A2BBE5A");
+                        .HasName("PK__MemberPr__3214EC07CBF77DA4");
 
                     b.HasIndex("LevelId");
 
@@ -538,7 +706,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Membersh__3214EC0707631A52");
+                        .HasName("PK__Membersh__3214EC077D283FA0");
 
                     b.ToTable("MembershipLevels");
                 });
@@ -553,6 +721,9 @@ namespace ISpanShop.Models.Migrations
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime");
+
+                    b.Property<int?>("CouponId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -618,7 +789,9 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Orders__3214EC07D594D25D");
+                        .HasName("PK__Orders__3214EC078F47CCEE");
+
+                    b.HasIndex("CouponId");
 
                     b.HasIndex("StoreId");
 
@@ -637,6 +810,9 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("bigint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal?>("AllocatedDiscountAmount")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<string>("CoverImage")
                         .HasMaxLength(500)
@@ -670,7 +846,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id")
-                        .HasName("PK__OrderDet__3214EC07E57B0E42");
+                        .HasName("PK__OrderDet__3214EC07D8EF013B");
 
                     b.HasIndex("OrderId");
 
@@ -715,13 +891,43 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__OrderRev__3214EC076CFA0E27");
+                        .HasName("PK__OrderRev__3214EC07EDA47055");
 
                     b.HasIndex("OrderId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("OrderReviews");
+                });
+
+            modelBuilder.Entity("ISpanShop.Models.EfModels.PasswordResetToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PasswordResetTokens");
                 });
 
             modelBuilder.Entity("ISpanShop.Models.EfModels.PaymentLog", b =>
@@ -769,7 +975,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("varchar(50)");
 
                     b.HasKey("Id")
-                        .HasName("PK__PaymentL__3214EC072F2D813F");
+                        .HasName("PK__PaymentL__3214EC076A05C45F");
 
                     b.HasIndex("OrderId");
 
@@ -839,7 +1045,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__PointHis__3214EC072BA1E7E1");
+                        .HasName("PK__PointHis__3214EC0748BD63DC");
 
                     b.HasIndex("UserId");
 
@@ -937,7 +1143,7 @@ namespace ISpanShop.Models.Migrations
                         .HasDefaultValue(0);
 
                     b.HasKey("Id")
-                        .HasName("PK__Products__3214EC0764C681F5");
+                        .HasName("PK__Products__3214EC079295A641");
 
                     b.HasIndex("BrandId");
 
@@ -980,7 +1186,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__ProductI__3214EC0773B4F88E");
+                        .HasName("PK__ProductI__3214EC0772EEB958");
 
                     b.HasIndex("ProductId");
 
@@ -1030,7 +1236,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id")
-                        .HasName("PK__ProductV__3214EC072470832B");
+                        .HasName("PK__ProductV__3214EC073A6575F7");
 
                     b.HasIndex("ProductId");
 
@@ -1095,7 +1301,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("datetime");
 
                     b.HasKey("Id")
-                        .HasName("PK__Promotio__3214EC07FA43E96D");
+                        .HasName("PK__Promotio__3214EC07CCFDDD24");
 
                     b.HasIndex("ReviewedBy");
 
@@ -1137,7 +1343,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Promotio__3214EC077A262F89");
+                        .HasName("PK__Promotio__3214EC07C9CDD985");
 
                     b.HasIndex("ProductId");
 
@@ -1170,7 +1376,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Promotio__3214EC073713AF6F");
+                        .HasName("PK__Promotio__3214EC07269B7A44");
 
                     b.HasIndex("PromotionId");
 
@@ -1265,7 +1471,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__ReviewIm__3214EC07843137EA");
+                        .HasName("PK__ReviewIm__3214EC074C21816B");
 
                     b.HasIndex("ReviewId");
 
@@ -1290,7 +1496,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Roles__3214EC071F8E1E55");
+                        .HasName("PK__Roles__3214EC07D7442CDF");
 
                     b.ToTable("Roles");
                 });
@@ -1326,7 +1532,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Sensitiv__3214EC0717CC74C4");
+                        .HasName("PK__Sensitiv__3214EC079DF73360");
 
                     b.HasIndex("CategoryId");
 
@@ -1347,7 +1553,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Sensitiv__3214EC074B794DCC");
+                        .HasName("PK__Sensitiv__3214EC07156B6588");
 
                     b.ToTable("SensitiveWordCategories");
                 });
@@ -1373,6 +1579,10 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("StoreName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1387,7 +1597,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Stores__3214EC076399D263");
+                        .HasName("PK__Stores__3214EC078D01D42D");
 
                     b.HasIndex("UserId");
 
@@ -1439,7 +1649,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__SupportT__3214EC07F5320F20");
+                        .HasName("PK__SupportT__3214EC075D10031D");
 
                     b.HasIndex("OrderId");
 
@@ -1516,7 +1726,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("datetime");
 
                     b.HasKey("Id")
-                        .HasName("PK__Users__3214EC078B3C986A");
+                        .HasName("PK__Users__3214EC071CE4420D");
 
                     b.HasIndex("AdminLevelId");
 
@@ -1544,6 +1754,36 @@ namespace ISpanShop.Models.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_ALP_Permissions");
+                });
+
+            modelBuilder.Entity("CouponCategory", b =>
+                {
+                    b.HasOne("ISpanShop.Models.EfModels.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .IsRequired()
+                        .HasConstraintName("FK_CouponCategories_Categories");
+
+                    b.HasOne("ISpanShop.Models.EfModels.Coupon", null)
+                        .WithMany()
+                        .HasForeignKey("CouponId")
+                        .IsRequired()
+                        .HasConstraintName("FK_CouponCategories_Coupons");
+                });
+
+            modelBuilder.Entity("CouponProduct", b =>
+                {
+                    b.HasOne("ISpanShop.Models.EfModels.Coupon", null)
+                        .WithMany()
+                        .HasForeignKey("CouponId")
+                        .IsRequired()
+                        .HasConstraintName("FK_CouponProducts_Coupons");
+
+                    b.HasOne("ISpanShop.Models.EfModels.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .IsRequired()
+                        .HasConstraintName("FK_CouponProducts_Products");
                 });
 
             modelBuilder.Entity("ISpanShop.Models.EfModels.Address", b =>
@@ -1685,12 +1925,57 @@ namespace ISpanShop.Models.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("ISpanShop.Models.EfModels.Coupon", b =>
+                {
+                    b.HasOne("ISpanShop.Models.EfModels.User", "Seller")
+                        .WithMany("Coupons")
+                        .HasForeignKey("SellerId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Coupons_Users");
+
+                    b.HasOne("ISpanShop.Models.EfModels.Store", "Store")
+                        .WithMany("Coupons")
+                        .HasForeignKey("StoreId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Coupons_Stores");
+
+                    b.Navigation("Seller");
+
+                    b.Navigation("Store");
+                });
+
             modelBuilder.Entity("ISpanShop.Models.EfModels.LoginHistory", b =>
                 {
                     b.HasOne("ISpanShop.Models.EfModels.User", "User")
                         .WithMany("LoginHistories")
                         .HasForeignKey("UserId")
                         .HasConstraintName("FK_LoginHistories_Users");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ISpanShop.Models.EfModels.MemberCoupon", b =>
+                {
+                    b.HasOne("ISpanShop.Models.EfModels.Coupon", "Coupon")
+                        .WithMany("MemberCoupons")
+                        .HasForeignKey("CouponId")
+                        .IsRequired()
+                        .HasConstraintName("FK_MemberCoupons_Coupons");
+
+                    b.HasOne("ISpanShop.Models.EfModels.Order", "Order")
+                        .WithMany("MemberCoupons")
+                        .HasForeignKey("OrderId")
+                        .HasConstraintName("FK_MemberCoupons_Orders");
+
+                    b.HasOne("ISpanShop.Models.EfModels.User", "User")
+                        .WithMany("MemberCoupons")
+                        .HasForeignKey("UserId")
+                        .IsRequired()
+                        .HasConstraintName("FK_MemberCoupons_Users");
+
+                    b.Navigation("Coupon");
+
+                    b.Navigation("Order");
 
                     b.Navigation("User");
                 });
@@ -1716,6 +2001,11 @@ namespace ISpanShop.Models.Migrations
 
             modelBuilder.Entity("ISpanShop.Models.EfModels.Order", b =>
                 {
+                    b.HasOne("ISpanShop.Models.EfModels.Coupon", "Coupon")
+                        .WithMany("Orders")
+                        .HasForeignKey("CouponId")
+                        .HasConstraintName("FK_Orders_Coupons");
+
                     b.HasOne("ISpanShop.Models.EfModels.Store", "Store")
                         .WithMany("Orders")
                         .HasForeignKey("StoreId")
@@ -1727,6 +2017,8 @@ namespace ISpanShop.Models.Migrations
                         .HasForeignKey("UserId")
                         .IsRequired()
                         .HasConstraintName("FK_Orders_Users");
+
+                    b.Navigation("Coupon");
 
                     b.Navigation("Store");
 
@@ -2036,6 +2328,13 @@ namespace ISpanShop.Models.Migrations
                     b.Navigation("CategoryAttributeOptions");
                 });
 
+            modelBuilder.Entity("ISpanShop.Models.EfModels.Coupon", b =>
+                {
+                    b.Navigation("MemberCoupons");
+
+                    b.Navigation("Orders");
+                });
+
             modelBuilder.Entity("ISpanShop.Models.EfModels.MembershipLevel", b =>
                 {
                     b.Navigation("MemberProfiles");
@@ -2043,6 +2342,8 @@ namespace ISpanShop.Models.Migrations
 
             modelBuilder.Entity("ISpanShop.Models.EfModels.Order", b =>
                 {
+                    b.Navigation("MemberCoupons");
+
                     b.Navigation("OrderDetails");
 
                     b.Navigation("OrderReviews");
@@ -2107,6 +2408,8 @@ namespace ISpanShop.Models.Migrations
                 {
                     b.Navigation("CartItems");
 
+                    b.Navigation("Coupons");
+
                     b.Navigation("Orders");
 
                     b.Navigation("Products");
@@ -2126,7 +2429,11 @@ namespace ISpanShop.Models.Migrations
 
                     b.Navigation("ChatMessageSenders");
 
+                    b.Navigation("Coupons");
+
                     b.Navigation("LoginHistories");
+
+                    b.Navigation("MemberCoupons");
 
                     b.Navigation("MemberProfile");
 

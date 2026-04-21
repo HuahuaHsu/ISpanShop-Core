@@ -17,8 +17,7 @@ public partial class User
 
     public string Email { get; set; }
 
-
-	public string Provider { get; set; }
+    public string Provider { get; set; }
 
     public string ProviderId { get; set; }
 
@@ -49,6 +48,8 @@ public partial class User
     public virtual ICollection<ChatMessage> ChatMessageReceivers { get; set; } = new List<ChatMessage>();
 
     public virtual ICollection<ChatMessage> ChatMessageSenders { get; set; } = new List<ChatMessage>();
+
+    public virtual ICollection<Coupon> Coupons { get; set; } = new List<Coupon>();
 
     public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
 

@@ -4,7 +4,7 @@
     <header class="seller-header">
       <div class="header-left">
         <div class="seller-logo" @click="router.push('/seller')">
-          <span class="logo-icon">🏪</span>
+          <img src="@/assets/images/howbuyLogo.png" class="logo-icon" alt="HowBuy Logo">
           <span class="logo-text">HowBuy <span class="logo-sub">賣家中心</span></span>
         </div>
       </div>
@@ -21,7 +21,7 @@
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="storefront">
-                <el-icon><House /></el-icon> 回到前台
+                <el-icon><House /></el-icon> 回到首頁
               </el-dropdown-item>
               <el-dropdown-item command="logout" divided>
                 <el-icon><SwitchButton /></el-icon> 登出
@@ -45,15 +45,19 @@
           <!-- 首頁 -->
           <el-menu-item index="/seller">
             <el-icon><DataAnalysis /></el-icon>
-            <template #title>首頁</template>
+            <template #title>我的賣場</template>
           </el-menu-item>
 
-          <!-- 商品管理 -->
+          <!-- 賣場管理 -->
           <el-sub-menu index="products">
             <template #title>
               <el-icon><Box /></el-icon>
-              <span>商品管理</span>
+              <span>賣場管理</span>
             </template>
+            <el-menu-item index="/seller/profile">
+              <el-icon><Setting /></el-icon>
+              <template #title>賣場介紹</template>
+            </el-menu-item>
             <el-menu-item index="/seller/products">
               <el-icon><List /></el-icon>
               <template #title>我的商品</template>
@@ -144,7 +148,7 @@ import {
   ArrowDown, House, SwitchButton,
   DataAnalysis, Box, List, Plus, Document, RefreshLeft,
   PriceTag, StarFilled, Ticket, TrendCharts, Histogram, DataLine,
-  ChatDotRound, DArrowLeft, DArrowRight
+  ChatDotRound, DArrowLeft, DArrowRight, Setting
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -204,7 +208,11 @@ function handleCommand(command: string): void {
   cursor: pointer;
   user-select: none;
 }
-.logo-icon { font-size: 22px; }
+.logo-icon {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
 .logo-text {
   font-size: 18px;
   font-weight: 700;

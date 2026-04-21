@@ -46,5 +46,11 @@ namespace ISpanShop.Services.Members
 		/// </summary>
 		/// <param name="dto">更新 DTO</param>
 		void UpdateMemberProfile(UpdateMemberProfileDto dto);
+
+		/// <summary>
+		/// 後台管理員更新會員資料 (完整 DTO)
+		/// </summary>
+		/// <param name="dto">會員 DTO</param>
+		void UpdateMemberProfile(MemberDto dto);
 	}
 }
