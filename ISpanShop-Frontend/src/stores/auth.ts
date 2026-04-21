@@ -99,6 +99,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** 更新賣家身分並同步持久化到 localStorage */
+  function updateSellerStatus(isSeller: boolean) {
+    if (memberInfo.value) {
+      memberInfo.value.isSeller = isSeller;
+      storage.setUser(memberInfo.value);
+    }
+  }
+
   function openLoginDialog() {
     isLoginDialogOpen.value = true;
   }
@@ -115,6 +123,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     updatePoints,
+    updateSellerStatus,
     openLoginDialog,
     closeLoginDialog
   };

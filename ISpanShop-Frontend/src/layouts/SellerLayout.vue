@@ -45,7 +45,7 @@
           <!-- 首頁 -->
           <el-menu-item index="/seller">
             <el-icon><DataAnalysis /></el-icon>
-            <template #title>首頁</template>
+            <template #title>我的商店</template>
           </el-menu-item>
 
           <!-- 商品管理 -->

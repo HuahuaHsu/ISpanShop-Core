@@ -34,56 +34,52 @@
             :closable="false"
           />
         </div>
-        <!-- ... 其餘表單內容 ... -->
 
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="100px"
-        label-position="top"
-      >
-        <el-form-item label="賣場標誌 (Logo)" prop="logoUrl">
-          <el-upload
-            class="logo-uploader"
-            action="#"
-            :show-file-list="false"
-            :auto-upload="false"
-            :on-change="handleLogoChange"
-          >
-            <img v-if="form.logoUrl" :src="baseUrl + form.logoUrl" class="logo-preview" />
-            <el-icon v-else class="logo-uploader-icon"><Plus /></el-icon>
-            <template #tip>
-              <div class="el-upload__tip">建議比例 1:1，檔案大小不超過 2MB</div>
-            </template>
-          </el-upload>
-        </el-form-item>
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-position="top"
+          class="apply-form"
+        >
+          <el-form-item label="賣場名稱" prop="storeName">
+            <el-input v-model="form.storeName" placeholder="請輸入您的賣場名稱 (例如: 阿明的小店)" />
+          </el-form-item>
 
-        <el-form-item label="賣場名稱" prop="storeName">
-          <el-input v-model="form.storeName" placeholder="請輸入賣場名稱 (例: 我的選物店)" />
-        </el-form-item>
+          <el-form-item label="賣場介紹" prop="description">
+            <el-input
+              v-model="form.description"
+              type="textarea"
+              :rows="4"
+              placeholder="簡單描述您的賣場經營理念或商品特色..."
+            />
+          </el-form-item>
 
-        <el-form-item label="賣場介紹" prop="description">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="4"
-            placeholder="請簡單介紹您的賣場，讓顧客更認識您..."
-          />
-        </el-form-item>
+          <el-form-item label="賣場 Logo (可選)">
+            <el-upload
+              class="logo-uploader"
+              action="#"
+              :auto-upload="false"
+              :show-file-list="false"
+              :on-change="handleLogoChange"
+            >
+              <img v-if="form.logoUrl" :src="form.logoUrl.startsWith('http') ? form.logoUrl : baseUrl + form.logoUrl" class="preview-logo" />
+              <el-icon v-else class="uploader-icon"><Plus /></el-icon>
+            </el-upload>
+            <div class="el-upload__tip">建議尺寸 200x200，大小不超過 2MB</div>
+          </el-form-item>
 
-        <div class="form-actions">
-          <el-button type="primary" :loading="submitting" @click="handleSubmit">
-            提交申請
-          </el-button>
-          <el-button @click="router.push('/member/mystore')">取消</el-button>
-        </div>
-      </el-form>
-    </el-card>
+          <div class="form-actions">
+            <el-button type="primary" :loading="submitting" @click="submitApply(formRef)">
+              提交申請
+            </el-button>
+            <el-button @click="router.back()">取消</el-button>
+          </div>
+        </el-form>
+      </el-card>
     </template>
   </div>
 </template>
-
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
@@ -148,22 +144,23 @@ const handleLogoChange = async (uploadFile: UploadFile) => {
     form.logoUrl = res.data.url
     ElMessage.success('圖片上傳成功')
   } catch (error) {
+    console.error('Logo 上傳失敗', error)
     ElMessage.error('圖片上傳失敗')
   }
 }
 
-const handleSubmit = async () => {
-  if (!formRef.value) return
+const submitApply = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return
 
-  await formRef.value.validate(async (valid) => {
+  await formEl.validate(async (valid) => {
     if (valid) {
+      submitting.value = true
       try {
-        submitting.value = true
         await applyStoreApi(form)
-        ElMessage.success('申請已成功提交，請靜候管理員審核')
-        // 提交成功後，重新整理狀態並顯示「審核中」
-        await checkStatus()
+        ElMessage.success('申請已提交，請靜候審核')
+        router.push('/member/mystore')
       } catch (error: any) {
+        console.error('提交失敗', error)
         ElMessage.error(error.response?.data?.message || '提交失敗，請稍後再試')
       } finally {
         submitting.value = false
@@ -177,7 +174,7 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .seller-apply-container {
   padding: 20px;
   max-width: 800px;
@@ -185,17 +182,15 @@ onMounted(() => {
 }
 
 .status-card, .apply-card {
-  margin-top: 20px;
   border-radius: 8px;
-}
-
-.card-header {
-  font-size: 1.25rem;
-  font-weight: bold;
 }
 
 .reject-alert {
   margin-bottom: 25px;
+}
+
+.apply-form {
+  padding: 10px 0;
 }
 
 .logo-uploader {
@@ -206,23 +201,22 @@ onMounted(() => {
   overflow: hidden;
   width: 120px;
   height: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   transition: border-color 0.3s;
+
+  &:hover {
+    border-color: #ee4d2d;
+  }
 }
 
-.logo-uploader:hover {
-  border-color: #409eff;
-}
-
-.logo-uploader-icon {
+.uploader-icon {
   font-size: 28px;
   color: #8c939d;
-  width: 120px;
-  height: 120px;
-  text-align: center;
-  line-height: 120px;
 }
 
-.logo-preview {
+.preview-logo {
   width: 120px;
   height: 120px;
   display: block;
