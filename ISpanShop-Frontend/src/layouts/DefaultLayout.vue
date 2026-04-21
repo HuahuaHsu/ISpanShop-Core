@@ -262,7 +262,14 @@ function handleSellerCenterClick() {
     authStore.openLoginDialog()
     return
   }
-  router.push('/member/mystore')
+  
+  // 優化：如果本地身分已經是賣家，直接去 /seller 避免 mystore 閃爍
+  // 如果不是，則去 mystore 進行即時檢查 (防止剛通過審核)
+  if (authStore.memberInfo.isSeller === true) {
+    router.push('/seller')
+  } else {
+    router.push('/member/mystore')
+  }
 }
 
 /** 處理需要登入的點擊動作 */

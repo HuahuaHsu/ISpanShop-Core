@@ -29,6 +29,11 @@ router.beforeEach((to, from) => {
     }
   }
 
+  // 2-1. 已登入且「本地資料顯示是賣家」的人試圖進入狀態檢查頁 -> 直接導向賣家中心
+  if (to.name === 'member-mystore' && isLoggedIn && authStore.memberInfo.isSeller === true) {
+    return { name: 'SellerDashboard' };
+  }
+
   // 3. 檢查是否為已登入不應進入的頁面 (例如登入後進 /login)
   if (to.meta.hideForAuth && isLoggedIn) {
     // 已登入但進入 /login 或 /register -> 導向首頁

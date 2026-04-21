@@ -110,15 +110,38 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Document, Box, WarningFilled,
   CaretTop, CaretBottom,
   Plus, List, StarFilled, DataLine
 } from '@element-plus/icons-vue'
+import { getStoreStatusApi } from '@/api/store'
+import { useAuthStore } from '@/stores/auth'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
+/** 安全性複核：確保使用者確實具備賣家身分 */
+const checkAccess = async () => {
+  try {
+    const res = await getStoreStatusApi()
+    if (res.data.status !== 'Approved') {
+      // 如果後端說你不是賣家，更新本地狀態並踢出去
+      authStore.updateSellerStatus(false)
+      ElMessage.warning('您的賣家權限已變更')
+      router.replace('/member/mystore')
+    }
+  } catch (error) {
+    console.error('身分複核失敗', error)
+  }
+}
+
+onMounted(() => {
+  checkAccess()
+})
 
 const todayStr = computed<string>(() => {
   const d = new Date()
