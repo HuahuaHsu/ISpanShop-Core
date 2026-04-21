@@ -10,6 +10,8 @@
           <el-tab-pane label="運送中" name="2"></el-tab-pane>
           <el-tab-pane label="已完成" name="3"></el-tab-pane>
           <el-tab-pane label="已取消" name="4"></el-tab-pane>
+          <el-tab-pane label="退貨/款中" name="5"></el-tab-pane>
+          <el-tab-pane label="已退款" name="6"></el-tab-pane>
         </el-tabs>
       </div>
 
@@ -162,6 +164,8 @@ const getStatusClass = (status: number) => {
     case 2: return 'status-shipped';
     case 3: return 'status-completed';
     case 4: return 'status-cancelled';
+    case 5: return 'status-returning';
+    case 6: return 'status-refunded';
     default: return '';
   }
 };
@@ -286,6 +290,8 @@ onMounted(() => {
         &.status-shipped { color: #26aa99; }
         &.status-completed { color: #ee4d2d; }
         &.status-cancelled { color: #929292; }
+        &.status-returning { color: #faad14; }
+        &.status-refunded { color: #929292; }
       }
 
       .status-subtext {
