@@ -59,8 +59,6 @@ public partial class Product
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
-    public virtual ICollection<CouponProduct> CouponProducts { get; set; } = new List<CouponProduct>();
-
     public virtual Category Category { get; set; }
 
     public virtual User ForceOffShelfByNavigation { get; set; }
@@ -74,4 +72,6 @@ public partial class Product
     public virtual ICollection<PromotionItem> PromotionItems { get; set; } = new List<PromotionItem>();
 
     public virtual Store Store { get; set; }
+
+    public virtual ICollection<Coupon> Coupons { get; set; } = new List<Coupon>();
 }

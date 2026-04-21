@@ -37,10 +37,6 @@ public partial class ISpanShopDBContext : DbContext
 
     public virtual DbSet<Coupon> Coupons { get; set; }
 
-    public virtual DbSet<CouponCategory> CouponCategories { get; set; }
-
-    public virtual DbSet<CouponProduct> CouponProducts { get; set; }
-
     public virtual DbSet<LoginHistory> LoginHistories { get; set; }
 
     public virtual DbSet<MemberCoupon> MemberCoupons { get; set; }
@@ -95,7 +91,7 @@ public partial class ISpanShopDBContext : DbContext
     {
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Addresse__3214EC0796443C33");
+            entity.HasKey(e => e.Id).HasName("PK__Addresse__3214EC07A2C5520D");
 
             entity.Property(e => e.City).HasMaxLength(20);
             entity.Property(e => e.IsDefault).HasDefaultValue(false);
@@ -139,7 +135,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<BlacklistRecord>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Blacklis__3214EC07D9FCC9A1");
+            entity.HasKey(e => e.Id).HasName("PK__Blacklis__3214EC071F86BB7F");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -160,7 +156,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<Brand>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Brands__3214EC07E55E295C");
+            entity.HasKey(e => e.Id).HasName("PK__Brands__3214EC071AB17D33");
 
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.IsVisible).HasDefaultValue(true);
@@ -173,7 +169,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Carts__3214EC07BC7F87DF");
+            entity.HasKey(e => e.Id).HasName("PK__Carts__3214EC0729AB5460");
 
             entity.HasIndex(e => e.UserId, "UQ_Carts_UserId").IsUnique();
 
@@ -185,7 +181,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<CartItem>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__CartItem__3214EC077FC82690");
+            entity.HasKey(e => e.Id).HasName("PK__CartItem__3214EC07361BE340");
 
             entity.Property(e => e.UnitPrice).HasColumnType("decimal(18, 2)");
 
@@ -211,7 +207,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Categori__3214EC070CB4C273");
+            entity.HasKey(e => e.Id).HasName("PK__Categori__3214EC07F44E02A1");
 
             entity.Property(e => e.Icon).HasMaxLength(255);
             entity.Property(e => e.IconUrl).HasMaxLength(500);
@@ -229,7 +225,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<CategoryAttribute>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Category__3214EC07F7BA15E9");
+            entity.HasKey(e => e.Id).HasName("PK__Category__3214EC07B86C33E1");
 
             entity.Property(e => e.InputType)
                 .IsRequired()
@@ -244,7 +240,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<CategoryAttributeMapping>(entity =>
         {
-            entity.HasKey(e => new { e.CategoryId, e.CategoryAttributeId }).HasName("PK__Category__2B1402DC3B5C54D4");
+            entity.HasKey(e => new { e.CategoryId, e.CategoryAttributeId }).HasName("PK__Category__2B1402DCAA403C65");
 
             entity.HasOne(d => d.CategoryAttribute).WithMany(p => p.CategoryAttributeMappings)
                 .HasForeignKey(d => d.CategoryAttributeId)
@@ -257,7 +253,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<CategoryAttributeOption>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Category__3214EC0713F45311");
+            entity.HasKey(e => e.Id).HasName("PK__Category__3214EC07F1BF9D66");
 
             entity.Property(e => e.OptionName)
                 .IsRequired()
@@ -270,7 +266,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<ChatMessage>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ChatMess__3214EC07AE07539C");
+            entity.HasKey(e => e.Id).HasName("PK__ChatMess__3214EC0779EA2CE0");
 
             entity.Property(e => e.IsRead).HasDefaultValue(false);
             entity.Property(e => e.SentAt)
@@ -290,39 +286,76 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<Coupon>(entity =>
         {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.CouponCode).IsRequired().HasMaxLength(50);
-            entity.Property(e => e.Title).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.ApplyToAll).HasDefaultValue(true);
+            entity.Property(e => e.CouponCode)
+                .IsRequired()
+                .HasMaxLength(50);
             entity.Property(e => e.DiscountValue).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.MinimumSpend).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.MaximumDiscount).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.StartTime).HasColumnType("datetime");
             entity.Property(e => e.EndTime).HasColumnType("datetime");
-            entity.Property(e => e.RowVersion).IsRowVersion();
+            entity.Property(e => e.MaximumDiscount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.MinimumSpend).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PerUserLimit).HasDefaultValue(1);
+            entity.Property(e => e.RowVersion)
+                .IsRequired()
+                .IsRowVersion()
+                .IsConcurrencyToken();
+            entity.Property(e => e.StartTime).HasColumnType("datetime");
+            entity.Property(e => e.Status).HasDefaultValue((byte)1);
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Seller).WithMany(p => p.Coupons)
+                .HasForeignKey(d => d.SellerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Coupons_Users");
 
             entity.HasOne(d => d.Store).WithMany(p => p.Coupons)
                 .HasForeignKey(d => d.StoreId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Coupons_Stores");
-        });
 
-        modelBuilder.Entity<CouponProduct>(entity =>
-        {
-            entity.HasKey(e => new { e.CouponId, e.ProductId });
-            entity.HasOne(d => d.Coupon).WithMany(p => p.CouponProducts).HasForeignKey(d => d.CouponId);
-            entity.HasOne(d => d.Product).WithMany(p => p.CouponProducts).HasForeignKey(d => d.ProductId);
-        });
+            entity.HasMany(d => d.Categories).WithMany(p => p.Coupons)
+                .UsingEntity<Dictionary<string, object>>(
+                    "CouponCategory",
+                    r => r.HasOne<Category>().WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_CouponCategories_Categories"),
+                    l => l.HasOne<Coupon>().WithMany()
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_CouponCategories_Coupons"),
+                    j =>
+                    {
+                        j.HasKey("CouponId", "CategoryId");
+                        j.ToTable("CouponCategories");
+                    });
 
-        modelBuilder.Entity<CouponCategory>(entity =>
-        {
-            entity.HasKey(e => new { e.CouponId, e.CategoryId });
-            entity.HasOne(d => d.Coupon).WithMany(p => p.CouponCategories).HasForeignKey(d => d.CouponId);
-            entity.HasOne(d => d.Category).WithMany(p => p.CouponCategories).HasForeignKey(d => d.CategoryId);
+            entity.HasMany(d => d.Products).WithMany(p => p.Coupons)
+                .UsingEntity<Dictionary<string, object>>(
+                    "CouponProduct",
+                    r => r.HasOne<Product>().WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_CouponProducts_Products"),
+                    l => l.HasOne<Coupon>().WithMany()
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_CouponProducts_Coupons"),
+                    j =>
+                    {
+                        j.HasKey("CouponId", "ProductId");
+                        j.ToTable("CouponProducts");
+                    });
         });
 
         modelBuilder.Entity<LoginHistory>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__LoginHis__3214EC07B4209083");
+            entity.HasKey(e => e.Id).HasName("PK__LoginHis__3214EC070AA96A43");
 
             entity.Property(e => e.AttemptedAccount).HasMaxLength(50);
             entity.Property(e => e.Ipaddress)
@@ -340,15 +373,29 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<MemberCoupon>(entity =>
         {
-            entity.HasKey(e => e.Id);
-            entity.HasOne(d => d.User).WithMany(p => p.MemberCoupons).HasForeignKey(d => d.UserId);
-            entity.HasOne(d => d.Coupon).WithMany(p => p.MemberCoupons).HasForeignKey(d => d.CouponId);
-            entity.HasOne(d => d.Order).WithMany(p => p.MemberCoupons).HasForeignKey(d => d.OrderId);
+            entity.Property(e => e.ReceivedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UsedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Coupon).WithMany(p => p.MemberCoupons)
+                .HasForeignKey(d => d.CouponId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_MemberCoupons_Coupons");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.MemberCoupons)
+                .HasForeignKey(d => d.OrderId)
+                .HasConstraintName("FK_MemberCoupons_Orders");
+
+            entity.HasOne(d => d.User).WithMany(p => p.MemberCoupons)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_MemberCoupons_Users");
         });
 
         modelBuilder.Entity<MemberProfile>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__MemberPr__3214EC078A2BBE5A");
+            entity.HasKey(e => e.Id).HasName("PK__MemberPr__3214EC0750A668DF");
 
             entity.HasIndex(e => e.UserId, "UQ_MemberProfiles_UserId").IsUnique();
 
@@ -376,7 +423,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<MembershipLevel>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Membersh__3214EC0707631A52");
+            entity.HasKey(e => e.Id).HasName("PK__Membersh__3214EC075D80D9A5");
 
             entity.Property(e => e.DiscountRate).HasColumnType("decimal(3, 2)");
             entity.Property(e => e.LevelName)
@@ -387,7 +434,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Orders__3214EC07D594D25D");
+            entity.HasKey(e => e.Id).HasName("PK__Orders__3214EC07937B1E28");
 
             entity.HasIndex(e => e.OrderNumber, "UQ_Orders_Number").IsUnique();
 
@@ -417,6 +464,10 @@ public partial class ISpanShopDBContext : DbContext
             entity.Property(e => e.Status).HasDefaultValue((byte)0);
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
 
+            entity.HasOne(d => d.Coupon).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.CouponId)
+                .HasConstraintName("FK_Orders_Coupons");
+
             entity.HasOne(d => d.Store).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.StoreId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -430,8 +481,9 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<OrderDetail>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__OrderDet__3214EC07E57B0E42");
+            entity.HasKey(e => e.Id).HasName("PK__OrderDet__3214EC07A5934850");
 
+            entity.Property(e => e.AllocatedDiscountAmount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.CoverImage).HasMaxLength(500);
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(200);
@@ -455,7 +507,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<OrderReview>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__OrderRev__3214EC076CFA0E27");
+            entity.HasKey(e => e.Id).HasName("PK__OrderRev__3214EC07D55D9E64");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -475,7 +527,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<PaymentLog>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__PaymentL__3214EC072F2D813F");
+            entity.HasKey(e => e.Id).HasName("PK__PaymentL__3214EC07B245D3C6");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -515,7 +567,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<PointHistory>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__PointHis__3214EC072BA1E7E1");
+            entity.HasKey(e => e.Id).HasName("PK__PointHis__3214EC078DA17ADA");
 
             entity.ToTable("PointHistory");
 
@@ -535,7 +587,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<Product>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Products__3214EC0764C681F5");
+            entity.HasKey(e => e.Id).HasName("PK__Products__3214EC073C280A8C");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -577,7 +629,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<ProductImage>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ProductI__3214EC0773B4F88E");
+            entity.HasKey(e => e.Id).HasName("PK__ProductI__3214EC077EA257F8");
 
             entity.Property(e => e.ImageUrl)
                 .IsRequired()
@@ -597,7 +649,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<ProductVariant>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ProductV__3214EC072470832B");
+            entity.HasKey(e => e.Id).HasName("PK__ProductV__3214EC07CA5D836A");
 
             entity.HasIndex(e => e.SkuCode, "UQ_ProductVariants_SkuCode").IsUnique();
 
@@ -616,7 +668,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<Promotion>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Promotio__3214EC07FA43E96D");
+            entity.HasKey(e => e.Id).HasName("PK__Promotio__3214EC07734FCC4F");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -643,7 +695,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<PromotionItem>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Promotio__3214EC077A262F89");
+            entity.HasKey(e => e.Id).HasName("PK__Promotio__3214EC0776259709");
 
             entity.Property(e => e.DiscountPrice).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.OriginalPrice).HasColumnType("decimal(18, 2)");
@@ -659,7 +711,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<PromotionRule>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Promotio__3214EC073713AF6F");
+            entity.HasKey(e => e.Id).HasName("PK__Promotio__3214EC079685B747");
 
             entity.Property(e => e.DiscountValue).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Threshold).HasColumnType("decimal(18, 2)");
@@ -701,7 +753,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<ReviewImage>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ReviewIm__3214EC07843137EA");
+            entity.HasKey(e => e.Id).HasName("PK__ReviewIm__3214EC07916BA86E");
 
             entity.Property(e => e.ImageUrl)
                 .IsRequired()
@@ -715,7 +767,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Roles__3214EC071F8E1E55");
+            entity.HasKey(e => e.Id).HasName("PK__Roles__3214EC0726669C13");
 
             entity.Property(e => e.Description).HasMaxLength(200);
             entity.Property(e => e.RoleName)
@@ -725,7 +777,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<SensitiveWord>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Sensitiv__3214EC0717CC74C4");
+            entity.HasKey(e => e.Id).HasName("PK__Sensitiv__3214EC072935FA7D");
 
             entity.Property(e => e.Category).HasMaxLength(50);
             entity.Property(e => e.CreatedTime)
@@ -743,7 +795,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<SensitiveWordCategory>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Sensitiv__3214EC074B794DCC");
+            entity.HasKey(e => e.Id).HasName("PK__Sensitiv__3214EC0721319B57");
 
             entity.Property(e => e.Name)
                 .IsRequired()
@@ -752,7 +804,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<Store>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Stores__3214EC076399D263");
+            entity.HasKey(e => e.Id).HasName("PK__Stores__3214EC07DB7C8087");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -771,7 +823,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<SupportTicket>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__SupportT__3214EC07F5320F20");
+            entity.HasKey(e => e.Id).HasName("PK__SupportT__3214EC07DDBC26D4");
 
             entity.Property(e => e.AttachmentUrl).HasMaxLength(500);
             entity.Property(e => e.CreatedAt)
@@ -793,7 +845,7 @@ public partial class ISpanShopDBContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC078B3C986A");
+            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC077065C5B1");
 
             entity.HasIndex(e => e.Account, "UQ_Users_Account").IsUnique();
 
