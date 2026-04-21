@@ -11,20 +11,23 @@
             <span class="order-no">訂單編號. {{ order?.orderNumber }}</span>
             <el-divider direction="vertical" />
             <span class="status-text">{{ order?.statusName }}</span>
+            <el-divider direction="vertical" v-if="order" />
+            <OrderActionButtons 
+              v-if="order"
+              :order-id="order.id" 
+              :status="order.status" 
+              @refresh="fetchOrderDetail"
+            />
           </div>
         </div>
         
         <!-- 狀態進度 -->
-        <div class="status-steps">
-          <el-steps :active="activeStep" align-center finish-status="success">
-            <el-step 
-              v-for="(step, index) in orderSteps" 
-              :key="index"
-              :title="step.title" 
-              :description="step.description"
-            ></el-step>
-          </el-steps>
-        </div>
+        <OrderSteps 
+          :status="order?.status"
+          :created-at="order?.createdAt"
+          :payment-date="order?.paymentDate"
+          :completed-at="order?.completedAt"
+        />
       </div>
 
       <!-- 地址資訊與物流 -->
@@ -92,127 +95,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft } from '@element-plus/icons-vue';
 import { getOrderDetailApi } from '@/api/order';
 import type { OrderDetail } from '@/types/order';
 import { ElMessage } from 'element-plus';
+import OrderSteps from '@/components/order/OrderSteps.vue';
+import OrderActionButtons from '@/components/order/OrderActionButtons.vue';
 
 const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
 const order = ref<OrderDetail | null>(null);
 
-/**
- * 訂單狀態說明:
- * 0: 待付款 (Pending Payment)
- * 1: 待出貨 (To Ship)
- * 2: 運送中 (Shipping)
- * 3: 已完成 (Completed)
- * 4: 已取消 (Cancelled)
- * 5: 退貨/款中 (Returning)
- * 6: 已退款 (Refunded)
- */
-
-// 根據訂單狀態動態生成進度條步驟
-const orderSteps = computed(() => {
-  if (!order.value) return [];
-  
-  const status = order.value.status;
-  
-  // 情況四：已取消
-  if (status === 4) {
-    return [
-      { title: '訂單已成立', description: formatDate(order.value.createdAt) },
-      { title: '已取消', description: formatDate(order.value.completedAt || order.value.paymentDate) }
-    ];
-  }
-  
-  // 情況三：退貨/退款中 或 已退款
-  if (status === 5 || status === 6) {
-    return [
-      { title: '訂單已成立', description: formatDate(order.value.createdAt) },
-      { title: '付款成功', description: formatDate(order.value.paymentDate) },
-      { title: '退貨/款中' },
-      { title: '已退款', description: formatDate(order.value.completedAt) }
-    ];
-  }
-  
-  // 情況二：運送中 (未完成前)
-  if (status === 2) {
-    return [
-      { title: '訂單已成立', description: formatDate(order.value.createdAt) },
-      { title: '付款成功', description: formatDate(order.value.paymentDate) },
-      { title: '待出貨' },
-      { title: '運送中' }
-    ];
-  }
-  
-  // 情況一：預設情況 (待付款、待出貨、已完成)
-  return [
-    { title: '訂單已成立', description: formatDate(order.value.createdAt) },
-    { title: '付款成功', description: formatDate(order.value.paymentDate) },
-    { title: '待出貨' },
-    { title: '訂單已完成', description: formatDate(order.value.completedAt) }
-  ];
-});
-
-// 計算當前活耀的步驟索引
-const activeStep = computed(() => {
-  if (!order.value) return 0;
-  
-  const status = order.value.status;
-  
-  switch (status) {
-    case 0: return 1; // 待付款 -> 停在「訂單已成立」之後
-    case 1: return 2; // 待出貨 -> 「付款成功」已完成
-    case 2: return 3; // 運送中 -> 「待出貨」已完成
-    case 3: return 4; // 已完成 -> 全部完成
-    case 4: return 1; // 已取消 -> 「訂單已成立」已完成
-    case 5: return 2; // 退貨中 -> 「付款成功」已完成
-    case 6: return 4; // 已退款 -> 全部完成
-    default: return 0;
-  }
-});
-
 const fetchOrderDetail = async () => {
   const id = Number(route.params.id);
   if (isNaN(id)) return;
 
   loading.value = true;
-      try {
+  try {
     const res = await getOrderDetailApi(id);
     order.value = res.data;
-      } catch (error) {
+  } catch (error) {
     console.error('獲取訂單詳情失敗', error);
     ElMessage.error('獲取訂單詳情失敗');
-      } finally {
+  } finally {
     loading.value = false;
-      }
+  }
 };
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('zh-TW').format(price);
 };
 
-const formatDate = (dateStr?: string | null) => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleString('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
 onMounted(() => {
   fetchOrderDetail();
 });
 </script>
-
 <style scoped lang="scss">
 .order-detail-page {
   background-color: #f5f5f5;
