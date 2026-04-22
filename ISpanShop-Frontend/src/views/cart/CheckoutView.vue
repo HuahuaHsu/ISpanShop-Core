@@ -344,18 +344,18 @@ function formatPrice(val: number) {
         </div>
         
         <!-- 顯示折扣資訊 -->
-        <div v-if="couponDiscount > 0" class="summary-row discount">
+        <div v-if="couponDiscount > 0" class="summary-row">
           <span>
             優惠券折抵
             <small v-if="isPaymentMode && existingOrderData?.couponTitle" class="coupon-name">
               ({{ existingOrderData.couponTitle }})
             </small>
           </span>
-          <span>- NT$ {{ formatPrice(couponDiscount) }}</span>
+          <span class="discount">- NT$ {{ formatPrice(couponDiscount) }}</span>
         </div>
-        <div v-if="pointDiscount > 0" class="summary-row discount">
+        <div v-if="pointDiscount > 0" class="summary-row">
           <span>點數折抵</span>
-          <span>- NT$ {{ formatPrice(pointDiscount) }}</span>
+          <span class="discount">- NT$ {{ formatPrice(pointDiscount) }}</span>
         </div>
 
         <div class="summary-row final">
