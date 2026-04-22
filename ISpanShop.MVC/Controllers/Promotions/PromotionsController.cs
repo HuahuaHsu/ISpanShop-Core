@@ -80,12 +80,153 @@ namespace ISpanShop.MVC.Controllers.Promotions
         public IActionResult Create() { TempData["Warning"] = "新增功能開發中"; return RedirectToAction(nameof(Index)); }
         [HttpGet("Edit/{id}")]
         public IActionResult Edit(int id) { TempData["Warning"] = "編輯功能開發中"; return RedirectToAction(nameof(Index)); }
+
         [HttpPost("Approve/{id}")]
-        public IActionResult Approve(int id) { TempData["Warning"] = "審核功能開發中"; return RedirectToAction(nameof(Index)); }
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var p = await _context.Promotions.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+            if (p == null)
+                return Json(new { success = false, message = "找不到此活動" });
+            if (p.Status != 0 && p.Status != 4)
+                return Json(new { success = false, message = "只能核准待審核的活動" });
+
+            var adminId = int.TryParse(
+                User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid)
+                ? uid : (int?)null;
+
+            p.Status     = 1;
+            p.ReviewedAt = DateTime.Now;
+            p.ReviewedBy = adminId;
+            p.RejectReason = null;
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = $"活動「{p.Name}」已核准" });
+        }
+
         [HttpPost("Reject/{id}")]
-        public IActionResult Reject(int id, string? reason) { TempData["Warning"] = "拒絕功能開發中"; return RedirectToAction(nameof(Index)); }
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reject(int id, string? reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+                return Json(new { success = false, message = "請填寫拒絕原因" });
+
+            var p = await _context.Promotions.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+            if (p == null)
+                return Json(new { success = false, message = "找不到此活動" });
+            if (p.Status != 0 && p.Status != 4)
+                return Json(new { success = false, message = "只能拒絕待審核的活動" });
+
+            var adminId = int.TryParse(
+                User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid)
+                ? uid : (int?)null;
+
+            p.Status       = 2;
+            p.ReviewedAt   = DateTime.Now;
+            p.ReviewedBy   = adminId;
+            p.RejectReason = reason.Trim();
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = $"活動「{p.Name}」已拒絕" });
+        }
+
+        [HttpPost("SimulateSellerResubmit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SimulateSellerResubmit(int id)
+        {
+            var p = await _context.Promotions.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+            if (p == null)
+                return Json(new { success = false, message = "找不到此活動" });
+            if (p.Status != 2)
+                return Json(new { success = false, message = "只能對已拒絕的活動執行重新送審" });
+
+            p.Status       = 0;
+            p.ReviewedAt   = null;
+            p.ReviewedBy   = null;
+            p.RejectReason = null;
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = $"活動「{p.Name}」已重新送審，進入待審核列表" });
+        }
+
         [HttpPost("Delete/{id}")]
         public IActionResult Delete(int id) { TempData["Warning"] = "刪除功能開發中"; return RedirectToAction(nameof(Index)); }
+
+        [HttpGet("GetPromotionDetailsPartial")]
+        public async Task<IActionResult> GetPromotionDetailsPartial(int id, bool isReviewMode = false)
+        {
+            var p = await _context.Promotions
+                .Include(x => x.Seller).ThenInclude(u => u.Stores)
+                .Include(x => x.PromotionItems).ThenInclude(i => i.Product)
+                .Include(x => x.PromotionRules)
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+
+            if (p == null) return NotFound("找不到此活動");
+
+            var sellerStatuses = await _context.Promotions
+                .Where(x => x.SellerId == p.SellerId && !x.IsDeleted)
+                .Select(x => x.Status)
+                .ToListAsync();
+
+            var totalPromos   = sellerStatuses.Count;
+            var approvedCount = sellerStatuses.Count(s => s == 1);
+            var approvalRate  = totalPromos > 0 ? (int)Math.Round((double)approvedCount / totalPromos * 100) : 0;
+
+            var storeIds = p.Seller.Stores.Select(s => s.Id).ToList();
+            double sellerRating = 4.0;
+            if (storeIds.Any())
+            {
+                var avg = await _context.OrderReviews
+                    .Where(r => storeIds.Contains(r.Order.StoreId))
+                    .AverageAsync(r => (double?)r.Rating);
+                if (avg.HasValue) sellerRating = Math.Round(avg.Value, 1);
+            }
+
+            var sellerName = p.Seller.Stores.FirstOrDefault(s => s.StoreStatus == 1)?.StoreName
+                             ?? p.Seller.Account;
+
+            var vm = new ISpanShop.MVC.Models.Promotions.PromotionDetailVm
+            {
+                Id            = p.Id,
+                Name          = p.Name,
+                Description   = p.Description,
+                PromotionType = p.PromotionType,
+                StartTime     = p.StartTime,
+                EndTime       = p.EndTime,
+                Status        = p.Status,
+                SellerName    = sellerName,
+                RejectReason  = p.RejectReason,
+                ReviewedAt    = p.ReviewedAt,
+                CreatedAt     = p.CreatedAt,
+
+                SellerRating       = sellerRating,
+                SellerApprovalRate = approvalRate,
+                SellerViolations   = 0,
+                SellerTotalPromos  = totalPromos,
+
+                Items = p.PromotionItems.Select(i => new ISpanShop.MVC.Models.Promotions.PromotionItemDetailVm
+                {
+                    ProductId     = i.ProductId,
+                    ProductName   = i.Product?.Name ?? $"商品 #{i.ProductId}",
+                    OriginalPrice = i.OriginalPrice,
+                    DiscountPrice = i.DiscountPrice,
+                    QuantityLimit = i.QuantityLimit,
+                    StockLimit    = i.StockLimit,
+                    SoldCount     = i.SoldCount
+                }).ToList(),
+
+                Rules = p.PromotionRules.Select(r => new ISpanShop.MVC.Models.Promotions.PromotionRuleDetailVm
+                {
+                    RuleType      = r.RuleType,
+                    Threshold     = r.Threshold,
+                    DiscountType  = r.DiscountType,
+                    DiscountValue = r.DiscountValue
+                }).ToList()
+            };
+
+            ViewBag.IsReviewMode = isReviewMode;
+            return PartialView("_PromotionDetailsPartial", vm);
+        }
 
         [HttpGet("SearchProducts")]
         public IActionResult SearchProducts(string? keyword, int page = 1, int pageSize = 5) {

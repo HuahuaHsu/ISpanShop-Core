@@ -166,16 +166,98 @@
             <el-option label="新品優惠" :value="4" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="discountLabel" prop="discountValue">
-          <el-input-number
-            v-model="formData.discountValue"
-            :min="0"
-            :max="formData.promotionType === 1 ? 100 : 999999"
-            :precision="0"
-            style="width: 100%;"
-          />
-          <span class="form-hint">{{ discountHint }}</span>
-        </el-form-item>
+        
+        <!-- 滿額折扣：顯示滿額門檻 + 折扣金額 -->
+        <template v-if="formData.promotionType === 2">
+          <el-form-item label="滿額門檻" prop="minimumAmount">
+            <el-input-number
+              v-model="formData.minimumAmount"
+              :min="0"
+              :precision="0"
+              :controls="true"
+              :step="100"
+              placeholder="例如：1000 代表消費滿 1000 元"
+              style="width: 100%;"
+            />
+            <span class="form-hint">消費滿多少元才能使用此折扣</span>
+          </el-form-item>
+          <el-form-item label="折扣金額" prop="discountValue">
+            <el-input-number
+              v-model="formData.discountValue"
+              :min="0"
+              :max="999999"
+              :precision="0"
+              :controls="true"
+              :step="10"
+              placeholder="例如：100 代表折扣 100 元"
+              style="width: 100%;"
+            />
+            <span class="form-hint">例如：100 代表滿額折 100 元</span>
+          </el-form-item>
+        </template>
+        
+        <!-- 限時特賣：顯示折扣比例 -->
+        <template v-else-if="formData.promotionType === 1">
+          <el-form-item label="折扣(%off)" prop="discountValue">
+            <el-input-number
+              v-model="formData.discountValue"
+              :min="1"
+              :max="99"
+              :precision="0"
+              :controls="true"
+              :step="5"
+              placeholder="例如：20 代表打 8 折"
+              style="width: 100%;"
+            />
+            <span class="form-hint">例如：20 代表打 8 折（20% off）</span>
+          </el-form-item>
+        </template>
+        
+        <!-- 限量搶購：顯示限量數量 + 折扣金額 -->
+        <template v-else-if="formData.promotionType === 3">
+          <el-form-item label="限量數量" prop="limitQuantity">
+            <el-input-number
+              v-model="formData.limitQuantity"
+              :min="1"
+              :precision="0"
+              :controls="true"
+              :step="10"
+              placeholder="例如：100 代表限量 100 件"
+              style="width: 100%;"
+            />
+            <span class="form-hint">此活動限量多少件商品</span>
+          </el-form-item>
+          <el-form-item label="折扣金額" prop="discountValue">
+            <el-input-number
+              v-model="formData.discountValue"
+              :min="0"
+              :max="999999"
+              :precision="0"
+              :controls="true"
+              :step="10"
+              placeholder="例如：100 代表每件折 100 元"
+              style="width: 100%;"
+            />
+            <span class="form-hint">例如：100 代表每件折 100 元</span>
+          </el-form-item>
+        </template>
+        
+        <!-- 新品優惠或其他類型：只顯示折扣金額 -->
+        <template v-else-if="formData.promotionType === 4 || formData.promotionType > 0">
+          <el-form-item label="折扣金額" prop="discountValue">
+            <el-input-number
+              v-model="formData.discountValue"
+              :min="0"
+              :max="999999"
+              :precision="0"
+              :controls="true"
+              :step="10"
+              placeholder="請輸入折扣金額"
+              style="width: 100%;"
+            />
+            <span class="form-hint">折扣金額（元）</span>
+          </el-form-item>
+        </template>
         <el-form-item label="開始時間" prop="startTime">
           <el-date-picker
             v-model="formData.startTime"
@@ -221,13 +303,28 @@ import {
 
 // ─── 介面定義 ─────────────────────────────────────────────────────
 
+// TODO: 後端 GET /api/seller/promotions 回傳的活動物件目前缺少以下欄位：
+// - discountValue (折扣值)
+// - minimumAmount (滿額門檻，滿額折扣用)
+// - limitQuantity (限量數量，限量搶購用)
+// 
+// 目前後端只回傳：
+// {
+//   id, name, description, promotionType, promotionTypeLabel,
+//   startTime, endTime, status, statusText, rejectReason, createdAt, reviewedAt
+// }
+//
+// 需要請後端補上折扣相關欄位，否則編輯時無法帶入原本的折扣值
+
 interface SellerPromotion {
   id: number
   name: string
   description: string | null
   promotionType: number
   promotionTypeLabel: string
-  discountValue?: number
+  discountValue?: number       // TODO: 後端需補此欄位
+  minimumAmount?: number       // TODO: 後端需補此欄位 (滿額折扣用)
+  limitQuantity?: number       // TODO: 後端需補此欄位 (限量搶購用)
   startTime: string
   endTime: string
   status: number
@@ -242,6 +339,8 @@ interface PromotionFormData {
   description: string
   promotionType: number
   discountValue: number
+  minimumAmount: number  // 滿額門檻
+  limitQuantity: number  // 限量數量
   startTime: string
   endTime: string
 }
@@ -304,6 +403,8 @@ const formData = ref<PromotionFormData>({
   description: '',
   promotionType: 0,
   discountValue: 0,
+  minimumAmount: 0,
+  limitQuantity: 0,
   startTime: '',
   endTime: '',
 })
@@ -311,20 +412,65 @@ const formData = ref<PromotionFormData>({
 const formRules: FormRules = {
   name: [{ required: true, message: '請輸入活動名稱', trigger: 'blur' }],
   promotionType: [{ required: true, message: '請選擇活動類型', trigger: 'change' }],
-  discountValue: [{ required: true, message: '請輸入折扣值', trigger: 'blur' }],
+  discountValue: [
+    { required: true, message: '請輸入折扣值', trigger: 'blur' },
+    { 
+      validator: (_rule, value, callback) => {
+        if (formData.value.promotionType === 1 && (value < 1 || value > 99)) {
+          callback(new Error('折扣比例需在 1-99 之間'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  minimumAmount: [
+    { 
+      validator: (_rule, value, callback) => {
+        if (formData.value.promotionType === 2 && (!value || value <= 0)) {
+          callback(new Error('請輸入滿額門檻'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  limitQuantity: [
+    { 
+      validator: (_rule, value, callback) => {
+        if (formData.value.promotionType === 3 && (!value || value <= 0)) {
+          callback(new Error('請輸入限量數量'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
   startTime: [{ required: true, message: '請選擇開始時間', trigger: 'change' }],
   endTime: [{ required: true, message: '請選擇結束時間', trigger: 'change' }],
 }
 
 const discountLabel = computed(() => {
-  if (formData.value.promotionType === 1) return '折扣百分比'
+  if (formData.value.promotionType === 1) return '折扣比例(%)'
   if (formData.value.promotionType === 2) return '折扣金額'
+  if (formData.value.promotionType === 3) return '折扣金額'
   return '折扣值'
+})
+
+const discountPlaceholder = computed(() => {
+  if (formData.value.promotionType === 1) return '請輸入折扣比例（0-100）'
+  if (formData.value.promotionType === 2) return '請輸入折扣金額（例如：100）'
+  if (formData.value.promotionType === 3) return '請輸入折扣金額'
+  return '請輸入折扣值'
 })
 
 const discountHint = computed(() => {
   if (formData.value.promotionType === 1) return '例如：20 代表打 8 折（20% off）'
   if (formData.value.promotionType === 2) return '例如：100 代表滿額折 100 元'
+  if (formData.value.promotionType === 3) return '例如：100 代表每件折 100 元'
   return ''
 })
 
@@ -374,6 +520,8 @@ function openCreateDialog(): void {
     description: '',
     promotionType: 0,
     discountValue: 0,
+    minimumAmount: 0,
+    limitQuantity: 0,
     startTime: '',
     endTime: '',
   }
@@ -383,14 +531,40 @@ function openCreateDialog(): void {
 function openEditDialog(row: SellerPromotion): void {
   isEdit.value = true
   editingId.value = row.id
+  
+  // Debug: 印出原始資料確認欄位
+  console.log('=== 編輯活動 DEBUG ===')
+  console.log('編輯活動原始資料 (完整物件):', JSON.stringify(row, null, 2))
+  console.log('活動名稱:', row.name)
+  console.log('promotionType:', row.promotionType)
+  console.log('discountValue:', row.discountValue)
+  console.log('minimumAmount:', row.minimumAmount)
+  console.log('limitQuantity:', row.limitQuantity)
+  
+  // TODO: 後端目前沒有回傳 discountValue, minimumAmount, limitQuantity 欄位
+  // 需要請後端在 GET /api/seller/promotions 的回傳 DTO 中補上這些欄位
+  // 目前暫時設為 0，等後端補充
+  
   formData.value = {
     name: row.name,
     description: row.description || '',
     promotionType: row.promotionType,
-    discountValue: row.discountValue || 0,
+    discountValue: row.discountValue ?? 0,      // TODO: 後端需補此欄位
+    minimumAmount: row.minimumAmount ?? 0,      // TODO: 後端需補此欄位
+    limitQuantity: row.limitQuantity ?? 0,      // TODO: 後端需補此欄位
     startTime: row.startTime,
     endTime: row.endTime,
   }
+  
+  // Debug: 印出帶入表單的值
+  console.log('帶入表單的值:', formData.value)
+  console.log('=== DEBUG 結束 ===')
+  
+  // 如果沒有折扣相關欄位，提示使用者
+  if (row.discountValue === undefined && row.minimumAmount === undefined) {
+    ElMessage.warning('後端未回傳折扣資訊，編輯時請重新輸入折扣值')
+  }
+  
   dialogVisible.value = true
 }
 
@@ -402,14 +576,32 @@ async function handleSubmit(): Promise<void> {
     
     submitting.value = true
     try {
+      // 準備送出的資料
+      const submitData = {
+        name: formData.value.name,
+        description: formData.value.description,
+        promotionType: formData.value.promotionType,
+        discountValue: formData.value.discountValue,
+        minimumAmount: formData.value.minimumAmount,
+        limitQuantity: formData.value.limitQuantity,
+        startTime: formData.value.startTime,
+        endTime: formData.value.endTime,
+      }
+      
       // 記錄要送出的資料，方便 debug
-      console.log('準備送出活動資料:', formData.value)
+      console.log('準備送出活動資料:', submitData)
+      
+      // TODO: 如果後端 DTO 沒有 minimumAmount 和 limitQuantity 欄位
+      // 暫時在 description 裡補充說明，例如：
+      // if (formData.value.promotionType === 2 && formData.value.minimumAmount > 0) {
+      //   submitData.description = `消費滿${formData.value.minimumAmount}折${formData.value.discountValue}\n${formData.value.description}`
+      // }
       
       if (isEdit.value && editingId.value !== null) {
-        await updateSellerPromotion(editingId.value, formData.value)
+        await updateSellerPromotion(editingId.value, submitData)
         ElMessage.success('活動更新成功')
       } else {
-        const response = await createSellerPromotion(formData.value)
+        const response = await createSellerPromotion(submitData)
         console.log('新增活動成功，後端回傳:', response)
         ElMessage.success('活動已送出審核')
       }

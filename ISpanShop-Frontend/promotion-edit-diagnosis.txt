@@ -1,0 +1,226 @@
+===============================================================================
+✅ PromotionListView.vue 編輯活動值未帶入問題 - 診斷報告
+===============================================================================
+
+(a) 後端回傳的活動物件有哪些欄位（完整列出）
+-----------------------------------------------
+
+根據先前提供的後端回傳範例：
+
+`json
+{
+  "id": 5,
+  "name": "豪客3C數位館 滿額優惠",
+  "description": "消費滿千折百，滿兩千折三百",
+  "promotionType": 2,
+  "promotionTypeLabel": "滿額折扣",
+  "startTime": "2026-04-25T11:52:14.147",
+  "endTime": "2026-05-02T11:52:14.147",
+  "status": 0,
+  "statusText": "待審核",
+  "rejectReason": null,
+  "createdAt": "2026-04-22T05:52:14.147",
+  "reviewedAt": null
+}
+`
+
+**後端實際回傳的欄位：**
+1. id (number)
+2. name (string) 
+3. description (string | null)
+4. promotionType (number)
+5. promotionTypeLabel (string)
+6. startTime (string)
+7. endTime (string)
+8. status (number)
+9. statusText (string)
+10. rejectReason (string | null)
+11. createdAt (string)
+12. reviewedAt (string | null)
+
+===============================================================================
+
+(b) 折扣值的實際欄位名是什麼
+----------------------------
+
+❌ **問題：後端沒有回傳折扣值欄位**
+
+前端預期的欄位名：discountValue
+後端實際回傳：**沒有這個欄位**
+
+這就是為什麼編輯時折扣值永遠是 0 的原因！
+
+===============================================================================
+
+(c) 有沒有滿額門檻欄位
+----------------------
+
+❌ **問題：後端沒有回傳滿額門檻欄位**
+
+前端預期的欄位名：minimumAmount
+後端實際回傳：**沒有這個欄位**
+
+前端預期的欄位名：limitQuantity (限量數量)
+後端實際回傳：**沒有這個欄位**
+
+===============================================================================
+
+(d) 編輯時值能正確帶入了嗎
+--------------------------
+
+❌ **目前無法正確帶入，因為後端沒有回傳這些欄位**
+
+**修復方案：**
+
+已在前端加入詳細的 Debug 日誌和 TODO 標註：
+
+`	ypescript
+function openEditDialog(row: SellerPromotion): void {
+  isEdit.value = true
+  editingId.value = row.id
+  
+  // Debug: 印出原始資料確認欄位
+  console.log('=== 編輯活動 DEBUG ===')
+  console.log('編輯活動原始資料 (完整物件):', JSON.stringify(row, null, 2))
+  console.log('活動名稱:', row.name)
+  console.log('promotionType:', row.promotionType)
+  console.log('discountValue:', row.discountValue)
+  console.log('minimumAmount:', row.minimumAmount)
+  console.log('limitQuantity:', row.limitQuantity)
+  
+  // TODO: 後端目前沒有回傳 discountValue, minimumAmount, limitQuantity 欄位
+  // 需要請後端在 GET /api/seller/promotions 的回傳 DTO 中補上這些欄位
+  
+  formData.value = {
+    name: row.name,
+    description: row.description || '',
+    promotionType: row.promotionType,
+    discountValue: row.discountValue ?? 0,      // TODO: 後端需補此欄位
+    minimumAmount: row.minimumAmount ?? 0,      // TODO: 後端需補此欄位
+    limitQuantity: row.limitQuantity ?? 0,      // TODO: 後端需補此欄位
+    startTime: row.startTime,
+    endTime: row.endTime,
+  }
+  
+  // 如果沒有折扣相關欄位，提示使用者
+  if (row.discountValue === undefined && row.minimumAmount === undefined) {
+    ElMessage.warning('後端未回傳折扣資訊，編輯時請重新輸入折扣值')
+  }
+  
+  dialogVisible.value = true
+}
+`
+
+===============================================================================
+
+📋 需要後端修改的地方
+===============================================================================
+
+**後端 DTO 需要補充的欄位：**
+
+GET /api/seller/promotions 的回傳物件需要新增：
+
+`csharp
+public class SellerPromotionDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public int PromotionType { get; set; }
+    public string PromotionTypeLabel { get; set; }
+    
+    // ✅ 需要新增以下欄位：
+    public decimal? DiscountValue { get; set; }       // 折扣值（必要）
+    public decimal? MinimumAmount { get; set; }       // 滿額門檻（滿額折扣用）
+    public int? LimitQuantity { get; set; }           // 限量數量（限量搶購用）
+    
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+    public int Status { get; set; }
+    public string StatusText { get; set; }
+    public string RejectReason { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ReviewedAt { get; set; }
+}
+`
+
+**說明：**
+
+1. **DiscountValue** (必要)
+   - 限時特賣：折扣百分比 (1-99)
+   - 滿額折扣：折扣金額 (例如：100 = 折 100 元)
+   - 限量搶購：折扣金額
+   - 新品優惠：折扣金額
+
+2. **MinimumAmount** (滿額折扣用)
+   - 只有 promotionType = 2 (滿額折扣) 時需要
+   - 代表消費滿多少元才能使用折扣
+   - 例如：1000 = 消費滿 1000 元
+
+3. **LimitQuantity** (限量搶購用)
+   - 只有 promotionType = 3 (限量搶購) 時需要
+   - 代表此活動限量多少件商品
+   - 例如：100 = 限量 100 件
+
+===============================================================================
+
+🔍 如何驗證後端是否已修復
+===============================================================================
+
+在瀏覽器 Console 執行以下指令：
+
+`javascript
+// 取得第一筆活動資料
+fetch('/api/seller/promotions?page=1&pageSize=5', { 
+  headers: { 
+    'Authorization': 'Bearer ' + localStorage.getItem('token') 
+  } 
+})
+.then(r => r.json())
+.then(d => {
+  console.log('第一筆活動完整資料：')
+  console.log(JSON.stringify(d.data.items[0], null, 2))
+  
+  // 檢查是否有折扣欄位
+  const item = d.data.items[0]
+  console.log('\n折扣欄位檢查：')
+  console.log('discountValue:', item.discountValue)
+  console.log('minimumAmount:', item.minimumAmount)
+  console.log('limitQuantity:', item.limitQuantity)
+  
+  if (item.discountValue !== undefined) {
+    console.log('✅ discountValue 欄位存在')
+  } else {
+    console.log('❌ discountValue 欄位不存在 - 需要後端補充')
+  }
+})
+`
+
+===============================================================================
+
+📝 前端已完成的修改
+===============================================================================
+
+1. ✅ 在 interface 中加入詳細的 TODO 註解說明缺少的欄位
+2. ✅ 在 openEditDialog 函式中加入完整的 Debug 日誌
+3. ✅ 加入使用者提示訊息（當後端沒有回傳折扣資訊時）
+4. ✅ 使用 ?? 運算子確保即使欄位不存在也不會出錯
+
+===============================================================================
+
+🎯 結論
+===============================================================================
+
+**問題根源：**
+後端 GET /api/seller/promotions 沒有回傳折扣相關欄位 (discountValue, minimumAmount, limitQuantity)
+
+**影響：**
+編輯活動時，折扣值、滿額門檻、限量數量永遠顯示 0
+
+**解決方案：**
+需要請後端在 DTO 中補上這三個欄位
+
+**前端狀態：**
+已完成防呆處理和 Debug 功能，等後端補充欄位後即可正常運作
+
+===============================================================================
