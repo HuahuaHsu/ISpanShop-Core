@@ -68,6 +68,22 @@ const usePoints = ref(false)
 const walletBalance = ref(0)
 const showCouponModal = ref(false)
 
+// ── 結帳模式（從路由 query 取得）────────────────────────────────
+// mode=payment&orderId=123  → 付款舊訂單
+// type=direct               → 直接購買（商品詳情頁「立即購買」）
+// 無 query                  → 一般購物車結帳
+const existingOrderId = computed<number | null>(() =>
+  route.query.orderId ? Number(route.query.orderId) : null
+)
+const isPaymentMode = computed<boolean>(() =>
+  route.query.mode === 'payment' && !!existingOrderId.value
+)
+const isDirectBuyMode = computed<boolean>(() =>
+  route.query.type === 'direct'
+)
+const existingOrderData = ref<any>(null)
+const directBuyData = ref<any[]>([])
+
 // ── 核心數據切換 ──
 const checkoutItems = computed(() => {
   if (isPaymentMode.value) return existingOrderData.value?.items || []
