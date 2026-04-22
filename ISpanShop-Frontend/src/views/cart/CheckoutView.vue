@@ -251,6 +251,19 @@ function formatPrice(val: number) {
     <div class="checkout-container">
       <h1 class="page-title">{{ isPaymentMode ? '訂單支付' : '結帳' }}</h1>
 
+      <!-- 商品清單 -->
+      <el-card class="section-card">
+        <template #header><div class="card-header">🛒 訂單商品</div></template>
+        <div v-for="item in (isPaymentMode ? existingOrderData?.items : cartStore.selectedItems)" :key="item.productId" class="item-row">
+          <el-image :src="isPaymentMode ? item.coverImage : item.image" class="item-img" />
+          <div class="item-info">
+            <div class="item-name">{{ isPaymentMode ? item.productName : item.name }}</div>
+            <div class="item-price">NT$ {{ formatPrice(item.price) }} x {{ item.quantity }}</div>
+          </div>
+          <div class="item-total">NT$ {{ formatPrice(item.price * item.quantity) }}</div>
+        </div>
+      </el-card>
+
       <!-- 收件資訊 -->
       <el-card class="section-card">
         <template #header><div class="card-header">📍 收件資訊</div></template>
@@ -265,28 +278,6 @@ function formatPrice(val: number) {
             <el-input v-model="recipient.address" :disabled="isPaymentMode" placeholder="請輸入詳細地址" />
           </el-form-item>
         </el-form>
-      </el-card>
-
-      <!-- 支付方式 -->
-      <el-card class="section-card">
-        <template #header><div class="card-header">💳 支付方式</div></template>
-        <el-radio-group v-model="paymentMethod">
-          <el-radio label="ECPay" border>綠界支付</el-radio>
-          <el-radio label="NewebPay" border>藍新支付</el-radio>
-        </el-radio-group>
-      </el-card>
-
-      <!-- 商品清單 -->
-      <el-card class="section-card">
-        <template #header><div class="card-header">🛒 訂單商品</div></template>
-        <div v-for="item in (isPaymentMode ? existingOrderData?.items : cartStore.selectedItems)" :key="item.productId" class="item-row">
-          <el-image :src="isPaymentMode ? item.coverImage : item.image" class="item-img" />
-          <div class="item-info">
-            <div class="item-name">{{ isPaymentMode ? item.productName : item.name }}</div>
-            <div class="item-price">NT$ {{ formatPrice(item.price) }} x {{ item.quantity }}</div>
-          </div>
-          <div class="item-total">NT$ {{ formatPrice(item.price * item.quantity) }}</div>
-        </div>
       </el-card>
 
       <!-- 折抵選項 (支付模式) -->
@@ -304,7 +295,7 @@ function formatPrice(val: number) {
         </div>
 
         <div class="discount-row" v-if="pointDiscount > 0">
-          <div class="label">點數/蝦幣折抵</div>
+          <div class="label">點數折抵</div>
           <div class="value discount">- NT$ {{ formatPrice(pointDiscount) }}</div>
         </div>
       </el-card>
@@ -330,6 +321,15 @@ function formatPrice(val: number) {
             <el-switch v-model="usePoints" :disabled="walletBalance <= 0" />
           </div>
         </div>
+      </el-card>
+
+      <!-- 支付方式 -->
+      <el-card class="section-card">
+        <template #header><div class="card-header">💳 支付方式</div></template>
+        <el-radio-group v-model="paymentMethod">
+          <el-radio label="ECPay" border>綠界支付</el-radio>
+          <el-radio label="NewebPay" border>藍新支付</el-radio>
+        </el-radio-group>
       </el-card>
 
       <!-- 總計資訊 -->
