@@ -218,25 +218,40 @@
         <el-card v-if="safeProduct.store" class="pd-detail-card pd-store-card" shadow="never">
           <template #header><span class="card-title">賣家資訊</span></template>
           <div class="pd-store-inner">
-            <div class="store-avatar-wrap">
-              <el-avatar v-if="safeProduct.store.logoUrl" :src="safeProduct.store.logoUrl" :size="72" />
-              <el-avatar v-else :size="72" class="store-avatar-fallback">{{ safeProduct.store.name.charAt(0) }}</el-avatar>
-            </div>
-            <div class="store-meta">
-              <div class="store-name">{{ safeProduct.store.name }}</div>
-              <div class="store-stats">
-                <span>評分 {{ safeProduct.store.rating ? safeProduct.store.rating.toFixed(1) : '—' }}</span>
-                <el-divider direction="vertical" />
-                <span>商品 {{ safeProduct.store.productCount || 0 }} 件</span>
-                <el-divider direction="vertical" />
-                <span>粉絲 {{ safeProduct.store.followerCount || 0 }}</span>
-                <el-divider direction="vertical" />
-                <span>{{ (safeProduct.store.joinedYearsAgo ?? 0) === 0 ? '新加入' : `加入 ${safeProduct.store.joinedYearsAgo} 年` }}</span>
+            <!-- 左側區塊 -->
+            <div class="store-left">
+              <div class="store-avatar-wrap">
+                <el-avatar v-if="safeProduct.store.logoUrl" :src="safeProduct.store.logoUrl" :size="64" />
+                <el-avatar v-else :size="64" class="store-avatar-fallback">{{ safeProduct.store.name.charAt(0) }}</el-avatar>
+              </div>
+              <div class="store-info">
+                <div class="store-name">{{ safeProduct.store.name }}</div>
+                <div class="store-online">{{ formatRelativeTime(safeProduct.createdAt) }}上線</div>
+                <div class="store-actions">
+                  <button class="chat-btn" @click="handleOpenChat">
+                    <el-icon><ChatDotRound /></el-icon>好聊
+                  </button>
+                  <button class="store-btn" @click="handleViewStore">
+                    <el-icon><Shop /></el-icon>查看賣場
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="store-action">
-              <el-button type="primary" plain icon="ChatDotRound" @click="handleOpenChat" style="margin-right: 10px;">好聊</el-button>
-              <el-button @click="handleViewStore">查看賣場</el-button>
+            
+            <!-- 右側區塊 -->
+            <div class="store-right">
+              <div class="store-stat-item">
+                <span class="stat-label">商品評價</span>
+                <span class="stat-value">{{ safeProduct.reviewCount !== null ? safeProduct.reviewCount : '—' }} <span class="stat-unit">筆</span></span>
+              </div>
+              <div class="store-stat-item">
+                <span class="stat-label">商品</span>
+                <span class="stat-value">{{ safeProduct.store.productCount || 0 }} <span class="stat-unit">件</span></span>
+              </div>
+              <div class="store-stat-item">
+                <span class="stat-label">加入時間</span>
+                <span class="stat-value">{{ formatJoinedTime(safeProduct.store.joinedYearsAgo) }}</span>
+              </div>
             </div>
           </div>
         </el-card>
@@ -267,13 +282,13 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Picture, Check, ChatDotRound } from '@element-plus/icons-vue'
+import { Picture, Check, ChatDotRound, Shop } from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
 import { fetchProductDetail, fetchRelatedProducts } from '@/api/product'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
-import { formatPrice, formatSoldCount } from '@/utils/format'
+import { formatPrice, formatSoldCount, formatRelativeTime } from '@/utils/format'
 import type {
   ProductDetail,
   ProductListItem,
@@ -459,6 +474,22 @@ function handleOpenChat() {
   }
 }
 
+/**
+ * 格式化加入時間顯示
+ * 修正 0 年前的問題，改為顯示月或天的精度
+ */
+function formatJoinedTime(years: number | null | undefined): string {
+  const y = years ?? 0
+  if (y === 0) return '新加入'
+  if (y < 1) {
+    // 小於 1 年，轉換成月份顯示（假設 joinedYearsAgo 可能有小數）
+    const months = Math.floor(y * 12)
+    if (months < 1) return '新加入'
+    return `${months}個月前`
+  }
+  return `${y}年前`
+}
+
 onMounted(() => {
   const id = Number(route.params.id)
   if (id) loadProduct(id)
@@ -506,9 +537,94 @@ watch(() => route.params.id, (newId) => {
 .pd-spec-item { display: flex; gap: 12px; }
 .spec-key { flex: 0 0 60px; font-size: 13px; color: #94a3b8; }
 .spec-val { font-size: 13px; color: #334155; }
-.pd-store-inner { display: flex; align-items: center; gap: 20px; }
-.store-name { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
-.store-stats { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #64748b; }
+.pd-store-inner { display: flex; align-items: flex-start; gap: 32px; padding: 8px 0; }
+
+/* 左側區塊 */
+.store-left { display: flex; gap: 16px; flex: 1; }
+.store-avatar-wrap { flex-shrink: 0; }
+.store-avatar-fallback { background: linear-gradient(135deg, #EE4D2D 0%, #F3826C 100%); color: white; font-size: 24px; font-weight: 700; }
+.store-info { flex: 1; }
+.store-name { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+.store-online { font-size: 13px; color: #64748b; margin-bottom: 12px; }
+.store-actions { display: flex; gap: 8px; }
+
+/* 好聊按鈕 */
+.chat-btn {
+  background-color: #EE4D2D;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+  height: 40px;
+  justify-content: center;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+.chat-btn:hover {
+  background-color: #d63c1f;
+}
+
+/* 查看賣場按鈕 */
+.store-btn {
+  background-color: white;
+  color: #555;
+  border: 1px solid #999;
+  padding: 10px 24px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+  height: 40px;
+  justify-content: center;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+.store-btn:hover {
+  border-color: #EE4D2D;
+  color: #EE4D2D;
+}
+
+/* 右側區塊 */
+.store-right { 
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 24px; 
+  flex: 1;
+  border-left: 1px solid #e2e8f0;
+  padding-left: 32px;
+}
+.store-stat-item { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center;
+  text-align: center;
+}
+.stat-label { 
+  font-size: 13px; 
+  color: #94a3b8; 
+  margin-bottom: 6px; 
+}
+.stat-value { 
+  font-size: 18px; 
+  font-weight: 700; 
+  color: #EE4D2D; 
+}
+.stat-unit { 
+  font-size: 13px; 
+  font-weight: 400; 
+  color: #64748b; 
+  margin-left: 2px;
+}
+
 .pd-description { white-space: pre-wrap; font-size: 14px; color: #334155; line-height: 1.8; margin: 0; font-family: inherit; }
 .pd-related-section { margin-top: 24px; }
 .related-title { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 16px; padding-bottom: 12px; border-bottom: 2px solid #EE4D2D; display: inline-block; }
