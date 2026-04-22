@@ -11,6 +11,7 @@ public interface ICouponService
     Task<bool> LockCouponAsync(int userId, int couponId, long orderId);
     Task<bool> MarkAsUsedAsync(long orderId);
     Task<bool> ReleaseLockedCouponsAsync(long orderId);
+    Task<bool> ReleaseUsedCouponAsync(long orderId);
     
     // 新增：強制解除所有異常鎖定（測試開發用）
     Task<int> ForceReleaseAllExpiredLocksAsync();

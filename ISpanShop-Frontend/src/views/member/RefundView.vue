@@ -46,9 +46,24 @@
         </div>
       </el-card>
 
-      <!-- 2. 退款資訊 -->
+      <!-- 2. 退貨/款設定 -->
       <el-card class="section-card" shadow="never">
         <el-form :model="form" label-position="top">
+          <div v-if="hasDiscounts" class="discount-info-box">
+            <div class="discount-title">本訂單折抵紀錄</div>
+            <div class="discount-row" v-if="order?.pointDiscount">
+              <span class="label">點數折抵:</span>
+              <span class="value">-${{ formatPrice(order.pointDiscount) }}</span>
+            </div>
+            <div class="discount-row" v-if="order?.discountAmount">
+              <span class="label">優惠券折抵 <span v-if="order.couponTitle" class="text-xs">({{ order.couponTitle }})</span>:</span>
+              <span class="value">-${{ formatPrice(order.discountAmount) }}</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-2">
+              註：全額退貨將退還最終實付金額。部分退款將依商品金額比例扣除折抵。
+            </div>
+          </div>
+
           <el-form-item label="退款類型" required>
             <el-select v-model="form.type" placeholder="請選擇退款類型" class="w-full">
               <el-option label="退貨退款" value="ReturnAndRefund" />
@@ -161,15 +176,40 @@ const handleItemChange = () => {
   isIndeterminate.value = count > 0 && count < total;
 };
 
+const hasDiscounts = computed(() => {
+  return (order.value?.pointDiscount || 0) > 0 || (order.value?.discountAmount || 0) > 0;
+});
+
 const totalRefundAmount = computed(() => {
   if (!order.value) return 0;
-  return selectedItems.value.reduce((sum, id) => {
+
+  // 計算所選商品的原價總和
+  const itemsOriginalTotal = selectedItems.value.reduce((sum, id) => {
     const item = order.value?.items.find(i => i.id === id);
     if (item) {
       return sum + (item.price * (returnQuantities[id] || 0));
     }
     return sum;
   }, 0);
+
+  // 如果全選，直接退 finalAmount (包含運費、扣除折抵等最終實付金額)
+  if (checkAll.value || (order.value.items.length === selectedItems.value.length && 
+      selectedItems.value.every(id => returnQuantities[id] === order.value?.items.find(i => i.id === id)?.quantity))) {
+    return order.value.finalAmount;
+  }
+
+  // 若為部分退貨，按比例分配折抵金額
+  const orderTotal = order.value.totalAmount; // 商品總原價
+  if (orderTotal === 0) return 0;
+
+  const ratio = itemsOriginalTotal / orderTotal;
+  
+  const totalDiscount = (order.value.pointDiscount || 0) + (order.value.discountAmount || 0);
+  const proportionDiscount = Math.round(totalDiscount * ratio);
+  
+  const refundAmount = itemsOriginalTotal - proportionDiscount;
+  
+  return refundAmount > 0 ? refundAmount : 0;
 });
 
 const isFormValid = computed(() => {
@@ -323,6 +363,35 @@ onMounted(fetchOrder);
 }
 
 .w-full { width: 100%; }
+
+.discount-info-box {
+  background-color: #fafafa;
+  border: 1px dashed #e4e4e4;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+
+  .discount-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 10px;
+  }
+
+  .discount-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 14px;
+
+    .label { color: #666; }
+    .value { color: #ee4d2d; }
+  }
+
+  .text-xs { font-size: 12px; }
+  .text-gray-400 { color: #999; }
+  .mt-2 { margin-top: 10px; }
+}
 
 .refund-footer {
   margin-top: 30px;

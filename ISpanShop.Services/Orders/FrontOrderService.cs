@@ -127,16 +127,37 @@ namespace ISpanShop.Services.Orders
             // 只有待出貨(1)、運送中(2)或已完成(3)可以申請退貨
             if (o.Status != 1 && o.Status != 2 && o.Status != 3) return false;
 
-            // 計算退款金額
-            decimal totalRefund = 0;
+            // 計算退款金額 (含折抵比例)
+            decimal itemsOriginalTotal = 0;
             foreach (var item in dto.Items)
             {
                 var detail = o.OrderDetails.FirstOrDefault(od => od.Id == item.OrderDetailId);
                 if (detail != null)
                 {
-                    // 確保退貨數量不超過購買數量
                     int returnQty = Math.Min(item.Quantity, detail.Quantity);
-                    totalRefund += (detail.Price ?? 0) * returnQty;
+                    itemsOriginalTotal += (detail.Price ?? 0) * returnQty;
+                }
+            }
+
+            decimal totalRefund = 0;
+            bool isFullReturn = dto.Items.Count == o.OrderDetails.Count && 
+                                dto.Items.All(i => i.Quantity == o.OrderDetails.First(od => od.Id == i.OrderDetailId).Quantity);
+
+            if (isFullReturn)
+            {
+                totalRefund = o.FinalAmount;
+            }
+            else
+            {
+                decimal orderTotal = o.TotalAmount; // 商品總原價
+                if (orderTotal > 0)
+                {
+                    decimal ratio = itemsOriginalTotal / orderTotal;
+                    decimal totalDiscount = (o.PointDiscount ?? 0) + (o.DiscountAmount ?? 0);
+                    decimal proportionDiscount = Math.Round(totalDiscount * ratio);
+                    
+                    totalRefund = itemsOriginalTotal - proportionDiscount;
+                    if (totalRefund < 0) totalRefund = 0;
                 }
             }
 

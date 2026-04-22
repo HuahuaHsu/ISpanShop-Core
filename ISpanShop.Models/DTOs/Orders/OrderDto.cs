@@ -17,7 +17,11 @@ namespace ISpanShop.Models.DTOs.Orders
 		public string StoreName { get; set; } // 關聯商店名稱
 		public decimal TotalAmount { get; set; }
 		public decimal? ShippingFee { get; set; }
+		public int? PointDiscount { get; set; }
+		public decimal? DiscountAmount { get; set; }
 		public decimal FinalAmount { get; set; }
+		public int? CouponId { get; set; }
+		public string CouponName { get; set; }
 		public OrderStatus Status { get; set; }
 		public string RecipientName { get; set; }
 		public string RecipientPhone { get; set; }
