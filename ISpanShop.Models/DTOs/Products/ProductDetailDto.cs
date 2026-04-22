@@ -9,6 +9,7 @@ namespace ISpanShop.Models.DTOs.Products
         public required string Name { get; set; }
         public int StoreId { get; set; }
         public string? StoreName { get; set; }
+        public int StoreStatus { get; set; } // 1: 營業中, 2: 休假中
         public int CategoryId { get; set; }
         public string? CategoryName { get; set; }
         public int? BrandId { get; set; }

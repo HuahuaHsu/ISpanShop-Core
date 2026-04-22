@@ -17,6 +17,7 @@ namespace ISpanShop.Repositories.Members
             return await _db.Users
                 .Include(u => u.MemberProfile)
                     .ThenInclude(mp => mp.Level)
+                .Include(u => u.Stores)
                 .FirstOrDefaultAsync(u => u.Email == emailOrAccount || u.Account == emailOrAccount);
         }
 

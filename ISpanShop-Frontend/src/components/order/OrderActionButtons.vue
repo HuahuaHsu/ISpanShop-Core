@@ -2,7 +2,7 @@
   <div class="order-actions">
     <!-- 狀態 0: 待付款 -->
     <template v-if="status === 0">
-      <el-button type="primary" size="default">立即付款</el-button>
+      <el-button type="primary" size="default" @click="handlePay" :loading="loading">立即付款</el-button>
       <el-button @click="handleCancel" :loading="loading" size="default">取消訂單</el-button>
     </template>
 
@@ -19,8 +19,8 @@
 
     <!-- 狀態 3: 已完成 -->
     <template v-if="status === 3">
-      <el-button @click="handleRefund" :loading="loading" size="default">申請退貨/退款</el-button>
       <el-button type="primary" plain size="default" @click="handleRebuy">再次購買</el-button>
+      <el-button @click="handleRefund" :loading="loading" size="default">申請退貨/退款</el-button>
     </template>
 
     <!-- 狀態 4: 已取消 -->
@@ -39,10 +39,13 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { cancelOrderApi, confirmReceiptApi } from '@/api/order';
+import { cancelOrderApi, confirmReceiptApi, getOrderDetailApi } from '@/api/order';
+import { useCartStore } from '@/stores/cart';
+import type { CartItem } from '@/stores/cart';
 
 interface Props {
   orderId: number;
+  orderNumber: string;
   status: number;
   isDetail?: boolean;
 }
@@ -54,8 +57,18 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['refresh']);
 const router = useRouter();
 const loading = ref(false);
+const cartStore = useCartStore();
 
 // ── 動作處理 ──
+
+const handlePay = async () => {
+  // 對於已存在的訂單，我們導向結帳頁並帶入 orderId 參數
+  // 讓結帳頁進入「支付確認模式」，而非「建立訂單模式」
+  router.push({
+    path: '/checkout',
+    query: { orderId: props.orderId }
+  });
+};
 
 const handleCancel = async () => {
   try {
@@ -120,5 +133,9 @@ const handleRebuy = () => {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+}
+
+:deep(.el-button + .el-button) {
+  margin-left: 0;
 }
 </style>

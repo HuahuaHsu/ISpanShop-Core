@@ -154,6 +154,8 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 			builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 			builder.Services.AddScoped<IMemberService, MemberService>();
+			builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+			builder.Services.AddScoped<IAddressService, AddressService>();
 			builder.Services.AddScoped<IPointRepository, PointRepository>();
 			builder.Services.AddScoped<PointService>();
 

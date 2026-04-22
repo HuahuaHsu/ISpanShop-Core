@@ -186,5 +186,109 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Coupons
             await _couponService.DeleteCouponAsync(id);
             return Json(new { success = true });
         }
+
+        [HttpPost]
+        public async Task<IActionResult> Seed()
+        {
+            var store = await _context.Stores.FirstOrDefaultAsync();
+            if (store == null) return Json(new { success = false, message = "找不到商店資料" });
+
+            var adminIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            int adminId = string.IsNullOrEmpty(adminIdStr) ? store.UserId : int.Parse(adminIdStr);
+
+            var now = DateTime.Now;
+            var seedCoupons = new List<Coupon>
+            {
+                new Coupon
+                {
+                    Title = "全站開幕大禮包",
+                    CouponCode = "WELCOME88",
+                    ApplyToAll = true,
+                    StoreId = store.Id,
+                    SellerId = store.UserId,
+                    DistributionType = 1, // 公開領取
+                    CouponType = 1, // 固定金額
+                    DiscountValue = 100,
+                    MinimumSpend = 500,
+                    StartTime = now.AddDays(-1),
+                    EndTime = now.AddDays(30),
+                    TotalQuantity = 1000,
+                    PerUserLimit = 1,
+                    Status = 1,
+                    UpdatedAt = now,
+                    UpdatedBy = adminId
+                },
+                new Coupon
+                {
+                    Title = "滿千折百限時送",
+                    CouponCode = "SAVE100",
+                    ApplyToAll = true,
+                    StoreId = store.Id,
+                    SellerId = store.UserId,
+                    DistributionType = 1,
+                    CouponType = 1,
+                    DiscountValue = 100,
+                    MinimumSpend = 1000,
+                    StartTime = now.AddDays(-7),
+                    EndTime = now.AddDays(7),
+                    TotalQuantity = 500,
+                    PerUserLimit = 1,
+                    Status = 1,
+                    UpdatedAt = now,
+                    UpdatedBy = adminId
+                },
+                new Coupon
+                {
+                    Title = "九折優惠券",
+                    CouponCode = "OFF90",
+                    ApplyToAll = true,
+                    StoreId = store.Id,
+                    SellerId = store.UserId,
+                    DistributionType = 1,
+                    CouponType = 2, // 百分比
+                    DiscountValue = 10, // 打 9 折 (10% off)
+                    MinimumSpend = 0,
+                    MaximumDiscount = 200,
+                    StartTime = now.AddDays(-2),
+                    EndTime = now.AddDays(60),
+                    TotalQuantity = 2000,
+                    PerUserLimit = 2,
+                    Status = 1,
+                    UpdatedAt = now,
+                    UpdatedBy = adminId
+                },
+                new Coupon
+                {
+                    Title = "新會員專屬禮",
+                    CouponCode = "NEWUSER",
+                    ApplyToAll = true,
+                    StoreId = store.Id,
+                    SellerId = store.UserId,
+                    DistributionType = 2, // 指定發送
+                    CouponType = 1,
+                    DiscountValue = 50,
+                    MinimumSpend = 1,
+                    StartTime = now.AddDays(-30),
+                    EndTime = now.AddDays(365),
+                    TotalQuantity = 9999,
+                    PerUserLimit = 1,
+                    Status = 1,
+                    UpdatedAt = now,
+                    UpdatedBy = adminId
+                }
+            };
+
+            foreach (var coupon in seedCoupons)
+            {
+                // 檢查是否已存在同名的標題或代碼以避免重複
+                if (!await _context.Coupons.AnyAsync(c => c.CouponCode == coupon.CouponCode))
+                {
+                    _context.Coupons.Add(coupon);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "成功生成 4 筆測試優惠券" });
+        }
     }
 }

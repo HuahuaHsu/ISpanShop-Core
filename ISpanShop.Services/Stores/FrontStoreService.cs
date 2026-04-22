@@ -9,8 +9,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ISpanShop.Services.Stores
 {
-    public class FrontStoreService : IFrontStoreService
-    {
+
+    public class FrontStoreService: IFrontStoreService
+	{
         private readonly ISpanShopDBContext _context;
 
         public FrontStoreService(ISpanShopDBContext context)
@@ -194,5 +195,42 @@ namespace ISpanShop.Services.Stores
             _context.Stores.Update(store);
             return await _context.SaveChangesAsync() > 0;
         }
-    }
+
+        public async Task<int> GetPendingOrdersCountAsync(int userId)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) return 0;
+
+            // Status 1 為待出貨
+            return await _context.Orders
+                .CountAsync(o => o.StoreId == store.Id && o.Status == 1);
+        }
+
+		public async Task<StorePublicProfileDto?> GetPublicStoreProfileAsync(int storeId)
+		{
+			var store = await _context.Stores
+				.AsNoTracking()
+				.FirstOrDefaultAsync(s => s.Id == storeId);
+
+			if (store == null) return null;
+
+			var productCount = await _context.Products
+				.CountAsync(p => p.StoreId == storeId && p.Status == 1 && p.IsDeleted != true);
+
+			return new StorePublicProfileDto
+			{
+				Id = store.Id,
+				Name = store.StoreName ?? string.Empty,
+				Description = store.Description,
+				LogoUrl = store.LogoUrl,
+				Rating = null,
+				ProductCount = productCount,
+				FollowerCount = 0,
+				CreatedAt = store.CreatedAt
+			};
+		}
+	}
 }

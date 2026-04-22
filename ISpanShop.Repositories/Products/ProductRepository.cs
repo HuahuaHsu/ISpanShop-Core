@@ -179,6 +179,7 @@ namespace ISpanShop.Repositories.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.ProductImages)
+                .Include(p => p.ProductVariants)
                 .Where(p => p.IsDeleted != true)
                 .AsQueryable();
 
@@ -1162,6 +1163,17 @@ namespace ISpanShop.Repositories.Products
                         ?? p.ProductImages.Select(img => img.ImageUrl).FirstOrDefault()
                         ?? string.Empty
                 })
+                .ToListAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<string>> GetHotKeywordsAsync(int limit)
+        {
+            return await _context.Products
+                .Where(p => p.Status == 1 && p.IsDeleted == false)
+                .OrderByDescending(p => p.ViewCount)
+                .Take(limit)
+                .Select(p => p.Name.Length > 10 ? p.Name.Substring(0, 10) : p.Name)
                 .ToListAsync();
         }
     }

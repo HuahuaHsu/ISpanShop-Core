@@ -130,6 +130,21 @@ public class CouponService : ICouponService
         return true;
     }
 
+    public async Task<bool> ReturnCouponAsync(long orderId)
+    {
+        var memberCoupon = await _context.MemberCoupons
+            .FirstOrDefaultAsync(mc => mc.OrderId == orderId && (mc.UsageStatus == 1 || mc.UsageStatus == 3));
+
+        if (memberCoupon == null) return false;
+
+        memberCoupon.UsageStatus = 0; // 還原為未使用
+        memberCoupon.OrderId = null;
+        memberCoupon.UsedAt = null;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<int> ForceReleaseAllExpiredLocksAsync()
     {
         // 暴力解除：只要是狀態為 3 (鎖定中) 的，通通改回 0 (未使用)

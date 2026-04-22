@@ -140,6 +140,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 Id             = product.Store?.Id ?? 0,
                 UserId         = product.Store?.UserId ?? 0,
                 Name           = product.Store?.StoreName ?? string.Empty,
+                Status         = product.Store?.StoreStatus ?? 1,
                 LogoUrl        = null,
                 Rating         = null,
                 ProductCount   = storeProductCount,
@@ -308,6 +309,23 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             }).ToList();
 
             return Ok(new { success = true, data = items, message = "" });
+        }
+
+        // ──────────────────────────────────────────────────────────
+        // GET /api/hot-keywords
+        // 熱搜關鍵字（取瀏覽次數最高的上架商品名稱）
+        // ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// 取得熱搜關鍵字（瀏覽次數最高的前 8 筆上架商品名稱，超過 10 字截斷）
+        /// </summary>
+        [HttpGet("/api/hot-keywords")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetHotKeywords()
+        {
+            var keywords = await _productService.GetHotKeywordsAsync();
+            return Ok(new { success = true, data = keywords });
         }
     }
 }

@@ -93,9 +93,10 @@ export interface ProductListItem {
 /** 對應後端 ProductListResponseDto */
 export interface ProductListResponse {
   items: ProductListItem[]
-  total: number
   page: number
   pageSize: number
+  totalCount: number
+  totalPages: number
 }
 
 /** 統一 API 回傳包裝 */
@@ -103,6 +104,36 @@ export interface ApiResponse<T> {
   success: boolean
   data: T
   message: string
+}
+
+/** 賣家商品列表項目（對應後端 GET /api/seller/products 回傳）
+ *  status: 0=未上架, 1=已上架, 2=待審核, 3=審核退回
+ */
+export interface SellerProductListItem {
+  id: number
+  name: string
+  storeName: string
+  categoryName: string
+  brandName: string
+  minPrice: number | null
+  maxPrice: number | null
+  status: number
+  statusText: string
+  mainImageUrl: string | null
+  createdAt: string | null
+  // TODO: 以下欄位後端尚未回傳，補上後移除 nullable
+  viewCount: number | null
+  totalSales: number | null
+  cartCount: number | null
+  totalStock: number | null
+}
+
+export interface SellerProductListResponse {
+  items: SellerProductListItem[]
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
 }
 
 /** GET /api/products 查詢參數 */

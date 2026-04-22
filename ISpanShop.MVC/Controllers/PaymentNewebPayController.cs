@@ -29,6 +29,15 @@ namespace ISpanShop.MVC.Controllers
                 .Include(o => o.OrderDetails)
                 .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
 
+            // 如果找不到，且 orderNumber 以 "ORD" 開頭，嘗試去過濾掉 "ORD" 再找一次 (相容舊資料)
+            if (order == null && !string.IsNullOrEmpty(orderNumber) && orderNumber.StartsWith("ORD"))
+            {
+                string originalNumber = orderNumber.Substring(3);
+                order = await _context.Orders
+                    .Include(o => o.OrderDetails)
+                    .FirstOrDefaultAsync(o => o.OrderNumber == originalNumber);
+            }
+
             if (order == null) return NotFound("訂單不存在");
 
             string merchantTradeNo = _newebPayService.GenerateMerchantTradeNo(order);
@@ -117,7 +126,7 @@ namespace ISpanShop.MVC.Controllers
             // 最後保險：如果真的都沒有，就傳回原始交易代碼
             if (string.IsNullOrEmpty(orderNumber)) orderNumber = merchantOrderNo;
 
-            string frontendUrl = $"http://localhost:5173/payment/result?orderNumber={orderNumber}&status={status}";
+            string frontendUrl = "http://localhost:5173/member/orders";
             return Redirect(frontendUrl);
         }
     }

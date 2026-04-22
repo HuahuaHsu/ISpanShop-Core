@@ -34,5 +34,74 @@ namespace ISpanShop.Repositories.Promotions
                 .Take(limit)
                 .ToListAsync();
         }
+
+        /// <inheritdoc/>
+        public async Task<(IEnumerable<Promotion> Items, int TotalCount)> GetSellerPromotionsPagedAsync(
+            int sellerId, string? statusFilter, int page, int pageSize)
+        {
+            var query = _db.Promotions
+                .AsNoTracking()
+                .Where(p => !p.IsDeleted && p.SellerId == sellerId);
+
+            var now = DateTime.Now;
+
+            query = statusFilter?.ToLowerInvariant() switch
+            {
+                "pending" => query.Where(p => p.Status == 0),
+                "active" => query.Where(p => p.Status == 1 && p.StartTime <= now && p.EndTime >= now),
+                "upcoming" => query.Where(p => p.Status == 1 && p.StartTime > now),
+                "rejected" => query.Where(p => p.Status == 2),
+                "ended" => query.Where(p => p.Status == 1 && p.EndTime < now),
+                _ => query
+            };
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Include(p => p.PromotionRules)
+                .Include(p => p.PromotionItems)
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        /// <inheritdoc/>
+        public async Task<Promotion?> GetByIdAsync(int id)
+        {
+            return await _db.Promotions
+                .Include(p => p.PromotionItems)
+                .Include(p => p.PromotionRules)
+                .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+        }
+
+        /// <inheritdoc/>
+        public async Task<Promotion> AddPromotionAsync(Promotion promotion)
+        {
+            _db.Promotions.Add(promotion);
+            await _db.SaveChangesAsync();
+            return promotion;
+        }
+
+        /// <inheritdoc/>
+        public async Task UpdatePromotionAsync(Promotion promotion)
+        {
+            _db.Promotions.Update(promotion);
+            await _db.SaveChangesAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task DeletePromotionAsync(int id)
+        {
+            var promotion = await _db.Promotions.FindAsync(id);
+            if (promotion != null)
+            {
+                promotion.IsDeleted = true;
+                promotion.UpdatedAt = DateTime.Now;
+                await _db.SaveChangesAsync();
+            }
+        }
     }
 }

@@ -6,16 +6,26 @@ using ISpanShop.Common.Enums;
 using ISpanShop.Models.DTOs.Orders;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Orders;
+using ISpanShop.Services.Coupons;
+using ISpanShop.Services.Payments;
+using ISpanShop.Models.DTOs.Members;
 
 namespace ISpanShop.Services.Orders
 {
     public class FrontOrderService : IFrontOrderService
     {
         private readonly IOrderRepository _orderRepository;
+        private readonly PointService _pointService;
+        private readonly ICouponService _couponService;
 
-        public FrontOrderService(IOrderRepository orderRepository)
+        public FrontOrderService(
+            IOrderRepository orderRepository,
+            PointService pointService,
+            ICouponService couponService)
         {
             _orderRepository = orderRepository;
+            _pointService = pointService;
+            _couponService = couponService;
         }
 
         public async Task<List<FrontOrderListDto>> GetMemberOrdersAsync(int memberId)
@@ -27,7 +37,7 @@ namespace ISpanShop.Services.Orders
                 return new FrontOrderListDto
                 {
                     Id = o.Id,
-                    OrderNumber = o.OrderNumber,
+                    OrderNumber = o.OrderNumber.StartsWith("ORD") ? o.OrderNumber : "ORD" + o.OrderNumber,
                     CreatedAt = o.CreatedAt,
                     FinalAmount = o.FinalAmount,
                     Status = (OrderStatus)(o.Status ?? 0),
@@ -52,12 +62,16 @@ namespace ISpanShop.Services.Orders
             return new FrontOrderDetailDto
             {
                 Id = o.Id,
-                OrderNumber = o.OrderNumber,
+                OrderNumber = o.OrderNumber.StartsWith("ORD") ? o.OrderNumber : "ORD" + o.OrderNumber,
                 CreatedAt = o.CreatedAt,
                 PaymentDate = o.PaymentDate,
                 CompletedAt = o.CompletedAt,
                 TotalAmount = o.TotalAmount,
                 ShippingFee = o.ShippingFee,
+                PointDiscount = o.PointDiscount,
+                DiscountAmount = o.DiscountAmount,
+                CouponId = o.CouponId,
+                CouponTitle = o.Coupon?.Title ?? (o.CouponId.HasValue ? "優惠券" : null),
                 FinalAmount = o.FinalAmount,
                 Status = (OrderStatus)(o.Status ?? 0),
                 StatusName = GetStatusName(o.Status),
@@ -99,6 +113,9 @@ namespace ISpanShop.Services.Orders
             // 只有待付款(0)或待出貨(1)可以取消
             if (o.Status != 0 && o.Status != 1) return false;
 
+            // 退回點數與優惠券
+            await ReturnOrderAssetsAsync(o);
+
             await _orderRepository.UpdateStatusAsync(orderId, 4); // 4 = 已取消
             return true;
         }
@@ -123,16 +140,37 @@ namespace ISpanShop.Services.Orders
             // 只有待出貨(1)、運送中(2)或已完成(3)可以申請退貨
             if (o.Status != 1 && o.Status != 2 && o.Status != 3) return false;
 
-            // 計算退款金額
-            decimal totalRefund = 0;
+            // 計算退款金額 (含折抵比例)
+            decimal itemsOriginalTotal = 0;
             foreach (var item in dto.Items)
             {
                 var detail = o.OrderDetails.FirstOrDefault(od => od.Id == item.OrderDetailId);
                 if (detail != null)
                 {
-                    // 確保退貨數量不超過購買數量
                     int returnQty = Math.Min(item.Quantity, detail.Quantity);
-                    totalRefund += (detail.Price ?? 0) * returnQty;
+                    itemsOriginalTotal += (detail.Price ?? 0) * returnQty;
+                }
+            }
+
+            decimal totalRefund = 0;
+            bool isFullReturn = dto.Items.Count == o.OrderDetails.Count && 
+                                dto.Items.All(i => i.Quantity == o.OrderDetails.First(od => od.Id == i.OrderDetailId).Quantity);
+
+            if (isFullReturn)
+            {
+                totalRefund = o.FinalAmount;
+            }
+            else
+            {
+                decimal orderTotal = o.TotalAmount; // 商品總原價
+                if (orderTotal > 0)
+                {
+                    decimal ratio = itemsOriginalTotal / orderTotal;
+                    decimal totalDiscount = (o.PointDiscount ?? 0) + (o.DiscountAmount ?? 0);
+                    decimal proportionDiscount = Math.Round(totalDiscount * ratio);
+                    
+                    totalRefund = itemsOriginalTotal - proportionDiscount;
+                    if (totalRefund < 0) totalRefund = 0;
                 }
             }
 
@@ -160,7 +198,31 @@ namespace ISpanShop.Services.Orders
             await _orderRepository.CreateReturnRequestAsync(request);
             await _orderRepository.UpdateStatusAsync(orderId, 5); // 5 = 退貨/款中
 
+            // 退回點數與優惠券 (假設發起退貨就先退回，或可依需求改為管理員核准後才退)
+            await ReturnOrderAssetsAsync(o);
+
             return true;
+        }
+
+        private async Task ReturnOrderAssetsAsync(Order o)
+        {
+            // 1. 退回點數
+            if (o.PointDiscount.HasValue && o.PointDiscount.Value > 0)
+            {
+                await _pointService.UpdatePointsAsync(new PointUpdateDTO
+                {
+                    UserId = o.UserId,
+                    ChangeAmount = o.PointDiscount.Value,
+                    Description = $"訂單取消/退貨退回 (訂單編號: {o.OrderNumber})",
+                    OrderNumber = o.OrderNumber
+                });
+            }
+
+            // 2. 退回優惠券
+            if (o.CouponId.HasValue)
+            {
+                await _couponService.ReturnCouponAsync(o.Id);
+            }
         }
 
         private string GetFinalImage(OrderDetail od)

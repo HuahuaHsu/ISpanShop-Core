@@ -367,7 +367,7 @@ async function loadProducts(): Promise<void> {
     const res = await fetchProductList(params)
     if (res.success) {
       products.value = res.data.items
-      total.value = res.data.total
+      total.value = res.data.totalCount
     } else {
       ElMessage.error(res.message || '載入失敗')
     }

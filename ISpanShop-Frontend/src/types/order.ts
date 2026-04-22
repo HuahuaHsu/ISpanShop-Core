@@ -30,6 +30,10 @@ export interface OrderDetail {
   completedAt: string | null;
   totalAmount: number;
   shippingFee: number | null;
+  pointDiscount: number | null;
+  discountAmount: number | null;
+  couponId: number | null;
+  couponTitle: string | null;
   finalAmount: number;
   status: number;
   statusName: string;

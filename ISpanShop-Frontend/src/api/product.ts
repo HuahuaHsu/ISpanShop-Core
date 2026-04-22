@@ -5,6 +5,7 @@ import type {
   ProductListResponse,
   ProductDetail,
   ProductListItem,
+  SellerProductListResponse,
 } from '@/types/product'
 
 export async function fetchProductList(
@@ -48,4 +49,30 @@ export async function getProductSuggestions(keyword: string, limit = 8): Promise
     // 靜默失敗：autocomplete 建議失敗不影響主流程
   }
   return []
+}
+
+/**
+ * 取得賣家商品列表（僅回傳當前登入賣家的商品）
+ * GET /api/seller/products
+ * 自動帶入 JWT token，後端從 token 解析賣家 ID
+ * 
+ * 後端直接回傳分頁資料，不包在 ApiResponse 裡
+ */
+export async function fetchSellerProducts(
+  params: FetchProductsParams = {},
+): Promise<SellerProductListResponse> {
+  const response = await request.get<SellerProductListResponse>('/api/seller/products', {
+    params,
+  })
+  return response.data
+}
+
+/**
+ * 新增賣家商品
+ * POST /api/seller/products
+ * 不需要前端傳 StoreId，後端從 JWT token 解析
+ */
+export async function createSellerProduct(data: unknown): Promise<ApiResponse<unknown>> {
+  const response = await request.post<ApiResponse<unknown>>('/api/seller/products', data)
+  return response.data
 }

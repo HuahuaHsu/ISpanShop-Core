@@ -47,7 +47,7 @@ namespace ISpanShop.Services.Payments
 						decimal couponDiscountAmount = 0;
 						Coupon? coupon = null;
 
-						var orderNumber = DateTime.Now.ToString("yyyyMMddHHmmss") + dto.UserId.ToString().PadLeft(4, '0');
+						var orderNumber = "ORD" + DateTime.Now.ToString("yyyyMMddHHmmss") + dto.UserId.ToString().PadLeft(4, '0');
 
 						// --- B. 處理優惠券驗證與試算 ---
 						if (dto.CouponId.HasValue)
@@ -106,6 +106,13 @@ namespace ISpanShop.Services.Payments
 						{
 							var firstProduct = await _context.Products.FindAsync(dto.Items[0].ProductId);
 							if (firstProduct != null) effectiveStoreId = firstProduct.StoreId;
+						}
+
+						// 檢查賣場狀態
+						var store = await _context.Stores.AsNoTracking().FirstOrDefaultAsync(s => s.Id == effectiveStoreId);
+						if (store != null && store.StoreStatus == 2)
+						{
+							return (false, "該賣場目前休假中，暫時無法接受下單", null);
 						}
 
 						var order = new Order

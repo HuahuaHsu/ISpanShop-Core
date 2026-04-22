@@ -182,5 +182,8 @@ namespace ISpanShop.Services.Products
 
         /// <summary>[Async] 取得同子分類相關商品（排除自身、只取上架中、依銷量排序）。</summary>
         Task<IEnumerable<ProductListDto>> GetRelatedProductsAsync(int productId, int categoryId, int limit);
+
+        /// <summary>[Async] 取得熱搜關鍵字（瀏覽次數最高的前 N 筆上架商品名稱，超過 10 字截斷）。</summary>
+        Task<List<string>> GetHotKeywordsAsync(int limit = 8);
     }
 }

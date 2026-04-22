@@ -167,5 +167,25 @@ namespace ISpanShop.MVC.Controllers.Api
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// 取得待出貨訂單數量
+        /// </summary>
+        [HttpGet("pending-orders")]
+        public async Task<IActionResult> GetPendingOrders()
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+                var count = await _storeService.GetPendingOrdersCountAsync(userId);
+                return Ok(new { count });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

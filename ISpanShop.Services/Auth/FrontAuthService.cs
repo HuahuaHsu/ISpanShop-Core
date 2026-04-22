@@ -114,6 +114,13 @@ namespace ISpanShop.Services.Auth
                 new Claim("RoleId", user.RoleId.ToString())
             };
 
+            // 如果使用者有店家，將第一個店家的 ID 加入 claims
+            var store = user.Stores?.FirstOrDefault();
+            if (store != null)
+            {
+                claims.Add(new Claim("StoreId", store.Id.ToString()));
+            }
+
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],

@@ -393,10 +393,76 @@
          位置：src/views/member/SellerApplyView.vue
          說明：使用 Element Plus 製作申請表單。包含賣場名稱、描述與提交按鈕。
 
-  [ ] 7. 實作 MyStoreView.vue 進入邏輯 (入口控管)
+【賣家申請與後台審核流程】
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 1：後端 — 模型與 DTO (ISpanShop.Models)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 1. 建立 StoreReviewDto
+         位置：ISpanShop.Models 專案 -> DTOs -> Stores 資料夾 -> StoreReviewDto.cs
+         內容：StoreId (int)、IsPassed (bool)、ReviewNote (string, 駁回原因)
+
+  [ ] 2. 建立 StoreDetailDto (管理後台用)
+         位置：ISpanShop.Models 專案 -> DTOs -> Stores 資料夾 -> StoreDetailDto.cs
+         說明：顯示申請內容供管理員審核。
+         內容：StoreId、MemberName、StoreName、Description、ApplyTime、IsVerified
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 2：後端 — 管理後台實作 (ISpanShop.MVC / Services)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 3. 更新 IStoreService 與 StoreService (後台版)
+         位置：ISpanShop.Services 專案 -> Stores 資料夾
+         新增方法：
+         - GetPendingStoresAsync()：取得所有 IsVerified 為 null 的申請案。
+         - ReviewStoreAsync(StoreReviewDto dto)：執行審核。
+           邏輯：
+           - 若 IsPassed 為 true：
+             - 更新 Store.IsVerified = true。
+             - 更新 MemberProfile.IsSeller = true。
+           - 若 IsPassed 為 false：
+             - 更新 Store.IsVerified = false。
+             - 更新 Store.ReviewNote = dto.ReviewNote (需在 EfModel 新增此欄位)。
+
+  [ ] 4. 實作 Admin StoreController
+         位置：ISpanShop.MVC 專案 -> Areas -> Admin -> Controllers -> StoreController.cs
+         動作：
+         - Index：列表顯示所有 Pending 狀態的賣場。
+         - Review (POST)：接收審核結果並呼叫 Service。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 3：後端 — 前台 API 調整
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 5. 調整 FrontStoreService.ApplyStoreAsync
+         位置：ISpanShop.Services 專案 -> Stores -> FrontStoreService.cs
+         邏輯優化：
+         - 如果該會員已存在 Store 紀錄且狀態為「Rejected (IsVerified=false)」：
+           - 允許「更新」現有紀錄（StoreName, Description, Logo）並將 IsVerified 重設為 null。
+           - 這樣就不會重複產生多筆 Store 紀錄，達成「重新申請」功能。
+
+  [ ] 6. 調整 FrontStoreController.GetStoreStatus
+         位置：ISpanShop.MVC 專案 -> Controllers -> Api -> FrontStoreController.cs
+         說明：回傳資料需包含 ReviewNote，讓使用者知道為何被駁回。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 4：前端 — 狀態跳轉與重新申請 (Vue)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 7. 強化 MyStoreView.vue
          位置：src/views/member/MyStoreView.vue
-         說明：在頁面掛載時 (onMounted) 檢查申請狀態：
-         - NotApplied -> 顯示申請按鈕或導向 SellerApplyView。
-         - Pending    -> 顯示「申請審核中」提示訊息。
-         - Approved   -> 進入賣家管理介面 (儀表板)。
-         - Rejected   -> 顯示駁回訊息並允許修正後重新申請。
+         邏輯處理：
+         - `status === 'NotApplied'`：顯示「成為賣家」大按鈕。
+         - `status === 'Pending'`：顯示「申請審核中，請耐心等候」提示。
+         - `status === 'Rejected'`：
+           - 顯示「申請未通過：[原因]」。
+           - 提供「重新編輯申請」按鈕，點擊後跳轉至申請頁面並帶入原有資料。
+         - `status === 'Approved'`：渲染賣家儀表板 (Dashboard)。
+
+  [ ] 8. 優化 SellerApplyView.vue
+         位置：src/views/member/SellerApplyView.vue
+         功能：
+         - 進入頁面時先檢查是否為「重新申請」。
+         - 若為重新申請，先取得上次申請的內容填入表單。
+         - 提交按鈕根據狀態判斷是呼叫「新增」還是「更新」API。

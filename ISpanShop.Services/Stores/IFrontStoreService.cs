@@ -10,5 +10,8 @@ namespace ISpanShop.Services.Stores
         Task<string> GetStoreStatusAsync(int userId); // 回傳狀態：NotApplied, Pending, Approved, Rejected
         Task<UpdateStoreInfoRequestDto> GetStoreInfoAsync(int userId);
         Task<bool> UpdateStoreInfoAsync(int userId, UpdateStoreInfoRequestDto dto);
-    }
+        Task<int> GetPendingOrdersCountAsync(int userId);
+		Task<StorePublicProfileDto?> GetPublicStoreProfileAsync(int storeId);
+
+	}
 }

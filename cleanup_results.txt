@@ -1,0 +1,3 @@
+Sqlcmd: 錯誤: Microsoft ODBC Driver 18 for SQL Server : SSL 提供者: 此憑證鏈結是由不受信任的授權單位發出的。
+。
+Sqlcmd: 錯誤: Microsoft ODBC Driver 18 for SQL Server : 用戶端無法建立連線。如需與加密錯誤相關的解決方案，請參閱 https://go.microsoft.com/fwlink/?linkid=2226722。

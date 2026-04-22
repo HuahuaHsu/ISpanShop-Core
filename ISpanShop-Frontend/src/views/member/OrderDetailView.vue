@@ -73,6 +73,19 @@
             <span class="label">運費</span>
             <span class="value">${{ formatPrice(order?.shippingFee || 0) }}</span>
           </div>
+          <div v-if="order?.pointDiscount" class="summary-row">
+            <span class="label">點數折抵</span>
+            <span class="value discount">-${{ formatPrice(order.pointDiscount) }}</span>
+          </div>
+          <div v-if="order?.discountAmount && order.discountAmount > 0" class="summary-row">
+            <span class="label">
+              優惠券折抵
+              <span v-if="order.couponTitle || (order as any).CouponTitle" class="coupon-name">
+                ({{ order.couponTitle || (order as any).CouponTitle }})
+              </span>
+            </span>
+            <span class="value discount">-${{ formatPrice(order.discountAmount) }}</span>
+          </div>
           <div class="summary-row total">
             <span class="label">訂單總金額</span>
             <span class="value final-price">${{ formatPrice(order?.finalAmount || 0) }}</span>
@@ -88,6 +101,7 @@
       <div class="actions-card" v-if="order">
         <OrderActionButtons 
           :order-id="order.id" 
+          :order-number="order.orderNumber"
           :status="order.status" 
           :is-detail="true"
           @refresh="fetchOrderDetail"
@@ -303,13 +317,26 @@ onMounted(() => {
       margin-bottom: 12px;
       
       .label {
-        width: 150px;
+        min-width: 150px;
+        width: auto;
+        white-space: nowrap;
         text-align: right;
         color: rgba(0,0,0,.54);
         font-size: 14px;
         padding-right: 20px;
         border-right: 1px solid #e1e1e1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
 }
+
+      .coupon-name {
+        margin-left: 4px;
+        color: #ee4d2d;
+        font-size: 12px;
+        font-weight: normal;
+      }
 
       .value {
         width: 150px;
@@ -317,6 +344,10 @@ onMounted(() => {
         padding-left: 20px;
         font-size: 14px;
         color: rgba(0,0,0,.8);
+
+        &.discount {
+          color: #ee4d2d;
+        }
 }
 
       &.total {

@@ -47,6 +47,7 @@ namespace ISpanShop.MVC.Models.Dto
         public int Id { get; set; }
         public int UserId { get; set; }
         public string Name { get; set; } = string.Empty;
+        public int Status { get; set; } // 1: 營業中, 2: 休假中
         /// <summary>Store 目前無 LogoUrl 欄位，回 null</summary>
         public string? LogoUrl { get; set; }
         /// <summary>Store 目前無 Rating 欄位，回 null</summary>

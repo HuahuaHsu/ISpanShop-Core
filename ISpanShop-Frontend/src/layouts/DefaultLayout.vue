@@ -3,7 +3,7 @@
     <div class="top-bar">
       <div class="top-bar-inner">
         <div class="top-left">
-          <a href="#" @click.prevent="router.push('/member/mystore')">賣家中心</a>
+          <a href="#" @click.prevent="handleSellerCenterClick">賣家中心</a>
           <span class="divider">|</span>
           <span class="welcome">🎉 全站滿千免運中</span>
         </div>
@@ -66,18 +66,16 @@
 
           <div class="hot-keywords">
             <span class="hot-label">🔥 熱搜:</span>
-            <a href="#" @click.prevent="router.push({ path: '/products', query: { keyword: 'iPhone 16' } })">iPhone 16</a>
-            <a href="#" @click.prevent="router.push({ path: '/products', query: { keyword: '無線耳機' } })">無線耳機</a>
-            <a href="#" @click.prevent="router.push({ path: '/products', query: { keyword: '機械鍵盤' } })">機械鍵盤</a>
-            <a href="#" @click.prevent="router.push({ path: '/products', query: { keyword: '運動鞋' } })">運動鞋</a>
+            <a 
+              v-for="keyword in hotKeywords" 
+              :key="keyword" 
+              href="#" 
+              @click.prevent="handleHotKeywordClick(keyword)"
+            >{{ keyword }}</a>
           </div>
         </div>
 
         <div class="header-actions">
-          <div class="action-icon" @click="handleActionClick('/member/favorites')">
-            <el-icon :size="24"><Star /></el-icon>
-            <div class="action-label">收藏</div>
-          </div>
           <el-popover
             placement="bottom-end"
             :width="400"
@@ -203,10 +201,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import ChatFloat from '../components/chat/ChatFloat.vue'
 import {
-  Search, ShoppingCart, Star, Promotion,
+  Search, ShoppingCart, Promotion,
   Van, Lock, RefreshRight, Service, ChatDotRound, Share,
   User, ArrowDown
 } from '@element-plus/icons-vue'
@@ -214,12 +212,13 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
 import { useCartStore } from '../stores/cart'
-import { getProductSuggestions } from '../api/product'
+import { getProductSuggestions, fetchProductList } from '../api/product'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
 const searchText = ref('')
+const hotKeywords = ref<string[]>(['iPhone 16', '無線耳機', '機械鍵盤', '運動鞋'])
 
 /** 導向搜尋結果頁 */
 function handleSearch(): void {
@@ -231,6 +230,12 @@ function handleSearch(): void {
 function handleAutoSelect(item: { value: string }): void {
   searchText.value = item.value
   void router.push({ path: '/products', query: { keyword: item.value } })
+}
+
+/** 點擊熱搜關鍵字 */
+function handleHotKeywordClick(keyword: string): void {
+  searchText.value = keyword
+  void router.push({ path: '/products', query: { keyword } })
 }
 
 /** el-autocomplete fetch-suggestions callback（使用 debounce 由 el-autocomplete 內建處理） */
@@ -256,6 +261,22 @@ function handleDropdownCommand(command: string) {
   }
 }
 
+/** 處理賣家中心點擊 */
+function handleSellerCenterClick() {
+  if (!authStore.isLoggedIn) {
+    authStore.openLoginDialog()
+    return
+  }
+  
+  // 優化：如果本地身分已經是賣家，直接去 /seller 避免 mystore 閃爍
+  // 如果不是，則去 mystore 進行即時檢查 (防止剛通過審核)
+  if (authStore.memberInfo.isSeller === true) {
+    router.push('/seller')
+  } else {
+    router.push('/member/mystore')
+  }
+}
+
 /** 處理需要登入的點擊動作 */
 function handleActionClick(path: string) {
   if (authStore.isLoggedIn) {
@@ -264,6 +285,34 @@ function handleActionClick(path: string) {
     authStore.openLoginDialog()
   }
 }
+
+/** 載入熱搜關鍵字（依據商品瀏覽次數）
+ * 方案 B：從商品 API 取得資料，前端排序後取前 5 筆商品名稱
+ * TODO: 後端可新增 GET /api/hot-keywords 專用端點，直接回傳熱搜關鍵字陣列
+ */
+async function loadHotKeywords(): Promise<void> {
+  try {
+    // 取得較多筆商品資料，以便前端排序
+    const res = await fetchProductList({ pageSize: 50, page: 1 })
+    if (res.success && res.data.items.length > 0) {
+      // 前端依 soldCount（銷量）降序排序，作為瀏覽熱度的替代指標
+      // TODO: 如後端商品新增 viewCount 欄位，改用該欄位排序會更準確
+      const sorted = [...res.data.items].sort((a, b) => b.soldCount - a.soldCount)
+      
+      // 取前 5 筆，商品名稱截取前 6 字作為熱搜關鍵字
+      hotKeywords.value = sorted
+        .slice(0, 5)
+        .map(p => p.name.length > 6 ? p.name.substring(0, 6) : p.name)
+    }
+  } catch {
+    // 靜默失敗，維持預設關鍵字
+    console.warn('熱搜關鍵字載入失敗，使用預設值')
+  }
+}
+
+onMounted(() => {
+  void loadHotKeywords()
+})
 </script>
 
 <style scoped>

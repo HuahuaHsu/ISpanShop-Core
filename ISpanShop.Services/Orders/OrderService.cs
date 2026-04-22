@@ -1,8 +1,9 @@
-﻿using ISpanShop.Common.Enums;
+using ISpanShop.Common.Enums;
 using ISpanShop.Models.DTOs.Orders;
 using ISpanShop.Models.DTOs.Members;
 using ISpanShop.Repositories.Orders;
 using ISpanShop.Services.Payments;
+using ISpanShop.Services.Coupons;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,11 +16,13 @@ namespace ISpanShop.Services.Orders
 	{
 		private readonly IOrderRepository _orderRepository;
 		private readonly PointService _pointService;
+		private readonly ICouponService _couponService;
 
-		public OrderService(IOrderRepository orderRepository, PointService pointService)
+		public OrderService(IOrderRepository orderRepository, PointService pointService, ICouponService couponService)
 		{
 			_orderRepository = orderRepository;
 			_pointService = pointService;
+			_couponService = couponService;
 		}
 
 		public async Task<IDictionary<byte, int>> GetOrderStatusCountsAsync()
@@ -34,7 +37,6 @@ namespace ISpanShop.Services.Orders
 
 		public async Task<OrderFullDto> GetOrderDetailAsync(long id)
 		{
-            // ... (rest of method stays the same)
 			var o = await _orderRepository.GetOrderByIdAsync(id);
 			if (o == null) return null;
 
@@ -48,7 +50,11 @@ namespace ISpanShop.Services.Orders
 				StoreName = o.Store?.StoreName,
 				TotalAmount = o.TotalAmount,
 				ShippingFee = o.ShippingFee,
+				PointDiscount = o.PointDiscount,
+				DiscountAmount = o.DiscountAmount,
 				FinalAmount = o.FinalAmount,
+				CouponId = o.CouponId,
+				CouponName = o.Coupon?.Title,
 				Status = (OrderStatus)(o.Status ?? 0),
 				RecipientName = o.RecipientName,
 				RecipientPhone = o.RecipientPhone,
@@ -114,6 +120,30 @@ namespace ISpanShop.Services.Orders
 						OrderNumber = order.OrderNumber,
 						Description = "訂單完成贈點"
 					});
+				}
+			}
+			else if (status == OrderStatus.Refunded)
+			{
+				var order = await _orderRepository.GetOrderByIdAsync(id);
+				if (order != null)
+				{
+					// 1. 退還點數
+					if (order.PointDiscount.HasValue && order.PointDiscount.Value > 0)
+					{
+						await _pointService.UpdatePointsAsync(new PointUpdateDTO
+						{
+							UserId = order.UserId,
+							ChangeAmount = order.PointDiscount.Value,
+							OrderNumber = order.OrderNumber,
+							Description = $"訂單退款點數退還 (訂單號: {order.OrderNumber})"
+						});
+					}
+
+					// 2. 退還優惠券
+					if (order.CouponId.HasValue)
+					{
+						await _couponService.ReturnCouponAsync(order.Id);
+					}
 				}
 			}
 		}

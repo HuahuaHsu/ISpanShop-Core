@@ -23,7 +23,7 @@
             </div>
           </div>
 
-          <el-menu :default-active="activeMenu" router>
+          <el-menu :default-active="activeMenu" :default-openeds="['my-account']" router>
             <el-menu-item index="/member">
               <el-icon><Menu /></el-icon>
               <span>會員中心</span>
@@ -32,10 +32,8 @@
             <!-- 我的帳戶 子選單 -->
             <el-sub-menu index="my-account">
               <template #title>
-                <div @click.stop="router.push('/member/profile')" style="display: flex; align-items: center; width: 100%; height: 100%;">
-                  <el-icon><User /></el-icon>
-                  <span>我的帳戶</span>
-                </div>
+                <el-icon><User /></el-icon>
+                <span>我的帳戶</span>
               </template>
               <el-menu-item index="/member/profile">個人資料</el-menu-item>
               <el-menu-item index="/member/address">地址</el-menu-item>

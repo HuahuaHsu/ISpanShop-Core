@@ -462,7 +462,9 @@
         // ================================================================
         function initDrawerForm() {
             const statusForm = document.getElementById('storeStatusForm');
-            const verifiedForm = document.getElementById('toggleVerifiedForm');
+            const verifiedForm = document.getElementById('toggleVerifiedForm'); // 撤回按鈕
+            const approveForm = document.getElementById('approveForm');       // 通過按鈕
+            const rejectForm = document.getElementById('rejectForm');         // 退回按鈕
 
             // 1. 營業狀態表單
             if (statusForm) {
@@ -483,22 +485,20 @@
                 });
             }
 
-            // 2. 審核狀態表單
-            if (verifiedForm) {
-                verifiedForm.addEventListener('submit', function (e) {
+            // 2. 審核狀態表單 (處理所有審核相關表單)
+            const handleVerifySubmit = (form, confirmMsg) => {
+                if (!form) return;
+                form.addEventListener('submit', function (e) {
                     e.preventDefault();
-                    const btn = verifiedForm.querySelector('#toggleVerifiedBtn');
-                    const isVerified = btn.getAttribute('data-is-verified') === 'true';
-                    
-                    const msg = isVerified 
-                        ? '確定要「撤回」此店家的審核狀態嗎？\n撤回後店家將無法繼續在平台銷售。'
-                        : '確定要「通過」此店家的審核嗎？\n通過後店家將正式上架。';
-
-                    showConfirm(msg, () => {
-                        executeStoreFormSubmit(verifiedForm);
+                    showConfirm(confirmMsg, () => {
+                        executeStoreFormSubmit(form);
                     });
                 });
-            }
+            };
+
+            handleVerifySubmit(verifiedForm, '確定要「撤回」此店家的審核狀態嗎？\n撤回後店家將無法繼續在平台銷售。');
+            handleVerifySubmit(approveForm, '確定要「通過」此店家的審核嗎？\n通過後店家將正式上架。');
+            handleVerifySubmit(rejectForm, '確定要「退回」此店家的申請嗎？');
         }
 
         async function executeStoreFormSubmit(form) {

@@ -30,8 +30,10 @@ namespace ISpanShop.Repositories.Orders
 		public async Task<Order> GetOrderByIdAsync(long id)
 		{
 			return await _context.Orders
+				.AsNoTracking()
 				.Include(o => o.User)
 				.Include(o => o.Store)
+				.Include(o => o.Coupon)
 				.Include(o => o.OrderDetails)
 					.ThenInclude(od => od.Product)
 						.ThenInclude(p => p.ProductImages)
@@ -41,6 +43,7 @@ namespace ISpanShop.Repositories.Orders
 							.ThenInclude(pv => pv.ProductImages)
 				.Include(o => o.ReturnRequests)
 					.ThenInclude(rr => rr.ReturnRequestImages)
+				.AsSplitQuery()
 				.FirstOrDefaultAsync(o => o.Id == id);
 		}
 

@@ -50,5 +50,57 @@ namespace ISpanShop.Services.Promotions
             3 => "限量搶購",
             _ => "其他"
         };
+
+        public static string GetStatusText(int status, DateTime startTime, DateTime endTime)
+        {
+            var now = DateTime.Now;
+            return status switch
+            {
+                0 => "待審核",
+                1 when startTime > now => "即將開始",
+                1 when endTime < now => "已結束",
+                1 => "進行中",
+                2 => "已拒絕",
+                3 => "已結束",
+                _ => "未知"
+            };
+        }
+
+        /// <summary>取得賣家活動列表（分頁）</summary>
+        public async Task<(IEnumerable<Promotion> Items, int TotalCount)> GetSellerPromotionsAsync(
+            int sellerId, string? statusFilter, int page, int pageSize)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 50);
+            return await _repo.GetSellerPromotionsPagedAsync(sellerId, statusFilter, page, pageSize);
+        }
+
+        /// <summary>取得單一活動（含賣家驗證）</summary>
+        public async Task<Promotion?> GetPromotionByIdAsync(int id)
+        {
+            return await _repo.GetByIdAsync(id);
+        }
+
+        /// <summary>新增活動</summary>
+        public async Task<Promotion> CreatePromotionAsync(Promotion promotion)
+        {
+            promotion.CreatedAt = DateTime.Now;
+            promotion.Status = 0;
+            promotion.IsDeleted = false;
+            return await _repo.AddPromotionAsync(promotion);
+        }
+
+        /// <summary>更新活動</summary>
+        public async Task UpdatePromotionAsync(Promotion promotion)
+        {
+            promotion.UpdatedAt = DateTime.Now;
+            await _repo.UpdatePromotionAsync(promotion);
+        }
+
+        /// <summary>刪除活動（軟刪除）</summary>
+        public async Task DeletePromotionAsync(int id)
+        {
+            await _repo.DeletePromotionAsync(id);
+        }
     }
 }

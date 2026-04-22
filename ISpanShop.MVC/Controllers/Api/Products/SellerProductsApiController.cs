@@ -2,6 +2,7 @@
 using ISpanShop.Models.DTOs.Inventories;
 using ISpanShop.Services.Products;
 using ISpanShop.Services.Inventories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ISpanShop.MVC.Controllers.Api.Products
@@ -10,6 +11,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
     [ApiController]
     [Route("api/seller/products")]
     [Produces("application/json")]
+    [Authorize(AuthenticationSchemes = "FrontendJwt")]
     public class SellerProductsApiController : ControllerBase
     {
         private readonly IProductService _productService;
@@ -20,29 +22,39 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         }
 
         // ──────────────────────────────────────────────────────────
-        // GET api/admin/seller/products
-        // 分頁取得商品列表（暫不過濾賣家，之後加身份驗證再限制）
+        // GET api/seller/products
+        // 取得該賣家的商品列表（從 JWT 的 StoreId 過濾）
         // ──────────────────────────────────────────────────────────
         [HttpGet]
         [ProducesResponseType(typeof(PagedResultDto<ProductListItemResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public ActionResult<PagedResultDto<ProductListItemResponse>> GetProducts(
             [FromQuery] string? keyword      = null,
             [FromQuery] int?    categoryId   = null,
             [FromQuery] int?    parentCatId  = null,
             [FromQuery] int?    brandId      = null,
-            [FromQuery] int?    storeId      = null,
             [FromQuery] int?    status       = null,
             [FromQuery] string? sortBy       = null,
             [FromQuery] int     page         = 1,
             [FromQuery] int     pageSize     = 20)
         {
+            // 從 JWT token 取得 StoreId (支援多種 claim type 格式)
+            var storeIdClaim = User.FindFirst("StoreId")?.Value 
+                            ?? User.FindFirst(c => c.Type.EndsWith("/StoreId"))?.Value
+                            ?? User.FindFirst(c => c.Type.EndsWith("StoreId"))?.Value;
+            
+            if (string.IsNullOrEmpty(storeIdClaim) || !int.TryParse(storeIdClaim, out var storeId))
+            {
+                return Unauthorized(new { success = false, message = "無法識別賣家身份，請確認您已開通店家" });
+            }
+
             var criteria = new ProductSearchCriteria
             {
                 Keyword          = keyword,
                 CategoryId       = categoryId,
                 ParentCategoryId = parentCatId,
                 BrandId          = brandId,
-                StoreId          = storeId,
+                StoreId          = storeId,  // 強制使用 JWT 中的 StoreId
                 Status           = status,
                 SortOrder        = sortBy ?? "date_desc",
                 PageNumber       = page,
@@ -64,35 +76,59 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         }
 
         // ──────────────────────────────────────────────────────────
-        // GET api/admin/seller/products/{id}
+        // GET api/seller/products/{id}
+        // 取得單一商品詳情（需驗證是否為該賣家的商品）
         // ──────────────────────────────────────────────────────────
         [HttpGet("{id:int}")]
         [ProducesResponseType(typeof(ProductDetailResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public ActionResult<ProductDetailResponse> GetProduct(int id)
         {
+            // 從 JWT token 取得 StoreId
+            var storeIdClaim = User.FindFirst("StoreId")?.Value;
+            if (string.IsNullOrEmpty(storeIdClaim) || !int.TryParse(storeIdClaim, out var storeId))
+            {
+                return Unauthorized(new { success = false, message = "無法識別賣家身份" });
+            }
+
             var dto = _productService.GetProductDetail(id);
             if (dto == null) return NotFound(new { message = "商品不存在" });
+
+            // 驗證商品是否屬於該賣家
+            if (dto.StoreId != storeId)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "無權存取此商品" });
+            }
 
             return Ok(MapToDetail(dto));
         }
 
         // ──────────────────────────────────────────────────────────
-        // POST api/admin/seller/products
+        // POST api/seller/products
         // 新增商品（multipart/form-data，支援圖片上傳）
+        // StoreId 從 JWT token 自動取得，防止前端偽造
         // ──────────────────────────────────────────────────────────
         [HttpPost]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public IActionResult CreateProduct([FromForm] CreateProductRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // 從 JWT token 取得 StoreId
+            var storeIdClaim = User.FindFirst("StoreId")?.Value;
+            if (string.IsNullOrEmpty(storeIdClaim) || !int.TryParse(storeIdClaim, out var storeId))
+            {
+                return Unauthorized(new { success = false, message = "無法識別賣家身份，請確認您已開通店家" });
+            }
+
             var dto = new ProductCreateDto
             {
-                StoreId            = request.StoreId,
+                StoreId            = storeId,  // 使用 JWT 中的 StoreId，忽略前端傳入的值
                 CategoryId         = request.CategoryId,
                 BrandId            = request.BrandId ?? 0,
                 Name               = request.Name,
@@ -109,20 +145,35 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         }
 
         // ──────────────────────────────────────────────────────────
-        // PUT api/admin/seller/products/{id}
+        // PUT api/seller/products/{id}
+        // 更新商品（需驗證是否為該賣家的商品）
         // ──────────────────────────────────────────────────────────
         [HttpPut("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public IActionResult UpdateProduct(int id, [FromBody] UpdateProductRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // 從 JWT token 取得 StoreId
+            var storeIdClaim = User.FindFirst("StoreId")?.Value;
+            if (string.IsNullOrEmpty(storeIdClaim) || !int.TryParse(storeIdClaim, out var storeId))
+            {
+                return Unauthorized(new { success = false, message = "無法識別賣家身份" });
+            }
+
             var existing = _productService.GetProductDetail(id);
             if (existing == null)
                 return NotFound(new { message = "商品不存在" });
+
+            // 驗證商品是否屬於該賣家
+            if (existing.StoreId != storeId)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "無權修改此商品" });
+            }
 
             var dto = new ProductUpdateDto
             {
@@ -140,16 +191,31 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         }
 
         // ──────────────────────────────────────────────────────────
-        // DELETE api/admin/seller/products/{id}
+        // DELETE api/seller/products/{id}
+        // 刪除商品（需驗證是否為該賣家的商品）
         // ──────────────────────────────────────────────────────────
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public IActionResult DeleteProduct(int id)
         {
+            // 從 JWT token 取得 StoreId
+            var storeIdClaim = User.FindFirst("StoreId")?.Value;
+            if (string.IsNullOrEmpty(storeIdClaim) || !int.TryParse(storeIdClaim, out var storeId))
+            {
+                return Unauthorized(new { success = false, message = "無法識別賣家身份" });
+            }
+
             var existing = _productService.GetProductDetail(id);
             if (existing == null)
                 return NotFound(new { message = "商品不存在" });
+
+            // 驗證商品是否屬於該賣家
+            if (existing.StoreId != storeId)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "無權刪除此商品" });
+            }
 
             _productService.SoftDeleteProduct(id);
             return Ok(new { message = "商品已刪除" });
@@ -179,7 +245,10 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             Status       = dto.Status,
             StatusText   = ToStatusText(dto.Status),
             MainImageUrl = dto.MainImageUrl,
-            CreatedAt    = dto.CreatedAt
+            CreatedAt    = dto.CreatedAt,
+            TotalStock   = dto.TotalStock,
+            TotalSales   = dto.TotalSales,
+            ViewCount    = dto.ViewCount
         };
 
         private static ProductDetailResponse MapToDetail(ProductDetailDto dto) => new()

@@ -1,173 +1,157 @@
-//以下為已完成的MVC後台功能專案資料夾//
+﻿//以下為後台功能所使用所有專案資料夾//
 
 **ISpanShop.sln (解決方案)**
-├── ISpanShop.Models       # 類別庫 (專放**EfModels**、**DTOs**)
-├── ISpanShop.Repositories   # 類別庫 (專注於寫 LINQ、CRUD 資料庫操作)
-├── ISpanShop.Services       # 類別庫 (核心商業邏輯，例如結帳計算、檢查庫存)
-├── ISpanShop.Common         # 類別庫 (放共用工具：檔案上傳服務、常數、擴充方法)
-├── ISpanShop.MVC             ASP.NET Core MVC (後台管理系統)，內部原生**Models**可寫**ViewModel**
+├── ISpanShop.Common         # 類別庫 (基礎建設)
+│   ├── Enums/              # 全專案共用列舉 (OrderStatus, MemberLevel, Role)
+│   ├── Helpers/            # 輔助工具 (SecurityHelper, ClaimsExtensions, EmailService)
+│   └── EcpayHelper.cs      # 綠界支付輔助類別
+│
+├── ISpanShop.Models         # 類別庫 (資料模型定義)
+│   ├── EfModels/           # Entity Framework Core 資料庫實體 (DB First 生成)
+│   ├── DTOs/               # 資料傳輸物件 (依功能分資料夾)
+│   │   ├── Auth/           # 登入、註冊、變更密碼 DTO
+│   │   ├── Members/        # 會員、錢包、點數相關 DTO
+│   │   ├── Products/       # 商品資訊、分類、規格 DTO
+│   │   └── Orders/         # 訂單相關、支付請求 DTO
+│   └── Seeding/            # 資料初始化 Seed Data
+│
+├── ISpanShop.Repositories   # 類別庫 (資料存存取層)
+│   ├── Members/            # 會員、使用者倉儲 (IUserRepository)
+│   ├── Products/           # 商品、分類、庫存倉儲
+│   ├── Orders/             # 訂單、評論倉儲
+│   └── Stores/             # 賣場、申請紀錄倉儲
+│
+├── ISpanShop.Services       # 類別庫 (商業邏輯層)
+│   ├── Auth/               # 認證邏輯 (IFrontAuthService)、JWT 簽發
+│   ├── Members/            # 會員帳號邏輯 (IAccountService)、錢包
+│   ├── Products/           # 商品邏輯、分類管理、庫存控管
+│   ├── Orders/             # 結帳流程、訂單狀態管理
+│   └── Payments/           # 金流串接 (綠界、藍新)
+│
+├── ISpanShop.MVC            # ASP.NET Core MVC (管理後台 + API 介面)
+│   ├── Areas/Admin/        # 管理員後台系統
+│   ├── Controllers/Api/    # 前台專用 API 控制器 (與 Vue 3 對接)
+│   │   ├── FrontAuthController.cs    # 會員認證
+│   │   ├── FrontMemberController.cs  # 會員中心
+│   │   └── FrontStoreController.cs   # 賣場申請
+│   ├── Hubs/               # SignalR 即時通訊 (ChatHub)
+│   ├── Middleware/         # 全域例外處理、身分驗證攔截
+│   ├── Models/             # 後台 ViewModel (**Vm)
+│   └── Program.cs          # 程式啟動與 DI 服務註冊中心
 
 **注意** : 關於Model，請依照位置創建檔案⇒
 
 ISpanShop.Models ⇒ **EfModels**、**DTOs**
-ISpanShop.MVC ⇒ **Models ⇒ ViewModel**
+ISpanShop.MVC ⇒ **Models ⇒ ViewModel (依功能分資料夾，命名為 **Vm)**
 
 **ISpanShop 全專案開發流程規範表**
 
-| **專案名稱** | **資料夾路徑** | **推薦命名規則 (以產品功能為例)** | **職責與開發重點** |
-| --- | --- | --- | --- |
-| **ISpanShop.Common** | **Enums/**
-**Helpers/**
-**Extensions/** | `StatusEnum.cs`
-`SecurityHelper.cs`
-`DateExtensions.cs` | **基礎建設**：定義全專案共用的狀態、工具與擴充方法。不依賴其他專案。 |
-| **ISpanShop.Models** | **EfModels/**
-**DTOs/** | `Product.cs`
-`ProductDto.cs` | **模型定義**：先建立與資料庫對應的 Entity，再定義要在各層間傳遞的 DTO。 |
-| **ISpanShop.Repositories** | **Interfaces/**
-(根目錄) | `IProductRepository.cs`
-`ProductRepository.cs` | **資料存取**：定義介面並實作 CRUD。這是最直接接觸 DbContext 的地方。 |
-| **ISpanShop.Services** | **Interfaces/**
-(根目錄) | `IProductService.cs`
-`ProductService.cs` | **邏輯處理**：呼叫 Repository 拿 Entity，在此進行商業運算並轉換為 DTO 回傳。 |
-| **ISpanShop.MVC** | **Models/**`{功能}/`
-**Controllers/**
-**Views/**`{功能}/` | `Products/ProductIndex**Vm**.cs`
-`ProductsController.cs`
-`Products/Index.cshtml` | **網頁展示**：將 Dto 包裝進 Vm，由 Controller 交給 View 渲染畫面。**Vm 請依功能分資料夾。** |
-
-**注意** : **MVC內Models資料夾跟Views資料夾在裡面創建檔案前請幫我創建自己的資料夾⇒像我是要寫產品就是創**`Products` 主要依據你們的功能去命名資料夾
-
-**我們的命名ViewModel => 一律寫Vm
-
-注意 : interfaces 如果你們有需要 Interfaces 請依照這個命名幫我創建資料夾**
-
- **專案都已經做好參考，可以直接呼叫 (寫出表單主要是讓大家可以看一下我加好的參考有哪些) :**
-
-| **專案名稱** | **需要參考的專案(組長已加好，組員不用做)** | **原因說明** |
+| **專案名稱** | **職責與開發重點** | **關鍵技術/目錄** |
 | --- | --- | --- |
-| **1. ISpanShop.Common** | (無) |  |
-| **2. ISpanShop.Models** | (無) |  |
-| **3. ISpanShop.Repositories** | `ISpanShop.Models`
-`ISpanShop.Common` | **資料存取層**。需要引用 `EfModels` 來操作資料庫實體。 |
-| **4. ISpanShop.Services** | `ISpanShop.Repositories`
-`ISpanShop.Models`
-`ISpanShop.Common` | **商務邏輯層**。需要 Repository 的介面，並將實體轉成 `DTOs`。 |
-| **5. ISpanShop.MVC** | `ISpanShop.Services`
-`ISpanShop.Models`
-`ISpanShop.Common` | **展示層**。需要 Service 拿資料，並將 `DTOs` 包裝進內部的 `ViewModels`。 |
-| **6. ISpanShop.WebAPI** | `ISpanShop.Services`
-`ISpanShop.Models`
-`ISpanShop.Common` | **API 接口**。需要 Service 拿資料並直接回傳 `DTOs`。 |
+| **ISpanShop.Common** | 基礎建設與工具類 | `Enums/`, `Helpers/` |
+| **ISpanShop.Models** | 實體與資料傳輸物件 | `EfModels/`, `DTOs/` |
+| **ISpanShop.Repositories** | 直接存取資料庫，不含商業邏輯 | `Interfaces/`, `Implementations/` |
+| **ISpanShop.Services** | 核心邏輯處理，呼叫 Repo 並轉換為 DTO | `Interfaces/`, `Services/` |
+| **ISpanShop.MVC** | 後台介面 (Razor) 與 前台 API (WebAPI) | `Areas/Admin/`, `Controllers/Api/` |
 
-//以上為已完成的MVC後台功能專案資料夾//
+**專案參考關係說明** :
+- `MVC/WebAPI` -> `Services` -> `Repositories` -> `Models`
+- `Common` 被所有專案參考。
+
+//以上為後台功能所使用所有專案資料夾//
 
 
 
 //以下為前台功能所使用之ISpanShop-Frontend專案資料夾//
 
-完整結構範例⇒
-
 src/
-├── api/                    # API 呼叫層
-│   ├── axios.ts           # axios 實例 + 攔截器設定
-│   ├── product.ts         # 商品相關 API
-│   ├── cart.ts            # 購物車 API
-│   ├── order.ts           # 訂單 API
-│   ├── member.ts          # 會員 API
-│   └── auth.ts            # 登入註冊 API
+├── api/                    # API 呼叫層 (Axios 封裝)
+│   ├── auth.ts            # 登入、註冊、密碼重設
+│   ├── member.ts          # 個人資料、地址、點數錢包
+│   ├── product.ts         # 商品列表、詳情、評價
+│   ├── cart.ts            # 購物車管理
+│   ├── order.ts           # 訂單查詢、下單、退貨
+│   ├── store.ts           # 賣場資訊、賣家申請
+│   ├── seller.ts          # 賣家後台管理 (商品、報表)
+│   ├── chat.ts            # 聊天系統 API
+│   └── axios.ts           # Axios 實例與攔截器設定
 │
-├── assets/
-│   ├── images/
-│   ├── icons/
-│   └── styles/
-│       ├── main.scss      # 全站樣式入口
-│       ├── _variables.scss # 顏色、字級變數
-│       └── _reset.scss
+├── components/             # 共用元件庫
+│   ├── common/            # 通用：AuthDialog, Loading, Empty
+│   ├── product/           # 商品相關：ProductCard, FilterSidebar
+│   ├── order/             # 訂單相關：OrderAction, StatusSteps
+│   ├── chat/              # 聊天系統：ChatFloating, MessageList
+│   └── seller/            # 賣家組件：CategorySelector, ImageUploader
 │
-├── components/             # 共用元件（不是頁面）
-│   ├── common/            # 通用：按鈕、Modal、Loading
-│   ├── product/           # 商品相關：ProductCard、ProductGallery
-│   ├── cart/              # 購物車相關：CartItem、CartBadge
-│   └── form/              # 表單：InputField、SelectField
+├── layouts/                # 頁面佈局版型
+│   ├── DefaultLayout.vue  # 前台通用版型 (含 Header/Footer)
+│   ├── MemberLayout.vue   # 會員中心版型 (側邊選單)
+│   ├── SellerLayout.vue   # 賣家中心專用版型
+│   └── BlankLayout.vue    # 獨立頁面 (登入/註冊/重設密碼)
 │
-├── composables/            # ⭐ 補充：Vue 3 的 Composition API 邏輯複用
-│   ├── useCart.ts
-│   ├── usePagination.ts
-│   └── useDebounce.ts
+├── stores/                 # Pinia 狀態管理
+│   ├── auth.ts            # 登入狀態、Token、權限
+│   ├── cart.ts            # 購物車暫存
+│   └── chat.ts            # 聊天訊息、未讀通知
 │
-├── layouts/
-│   ├── DefaultLayout.vue  # 前台版型（Header + Footer）
-│   ├── MemberLayout.vue   # 會員中心版型（含側邊欄）
-│   └── BlankLayout.vue    # 空白版型（登入、註冊頁用）
+├── views/                  # 頁面主體 (依功能分類)
+│   ├── auth/               # 認證相關
+│   │   ├── LoginView.vue           # 登入頁
+│   │   ├── RegisterView.vue        # 註冊頁
+│   │   ├── ForgotPasswordView.vue  # 忘記密碼
+│   │   └── ResetPasswordView.vue   # 重設密碼
+│   ├── member/             # 會員中心 (需登入)
+│   │   ├── MemberCenterView.vue    # 會員中心主頁
+│   │   ├── ProfileView.vue         # 個人資料修改
+│   │   ├── PasswordView.vue        # 修改密碼
+│   │   ├── AddressView.vue         # 收件地址管理
+│   │   ├── OrdersView.vue          # 訂單列表
+│   │   ├── OrderDetailView.vue     # 訂單詳情
+│   │   ├── RefundView.vue          # 退貨/退款申請
+│   │   ├── RefundDetailView.vue    # 退貨詳情
+│   │   ├── WalletView.vue          # 我的錢包 (點數/餘額)
+│   │   ├── MemberCouponView.vue    # 我的優惠券
+│   │   ├── SupportTicketView.vue   # 客服諮詢單
+│   │   ├── MyStoreView.vue         # 我的賣場狀態 (跳轉進入賣家中心)
+│   │   ├── SellerApplyView.vue     # 賣家資格申請
+│   │   ├── SettingsView.vue        # 帳號設定
+│   │   └── PrivacyView.vue         # 隱私權設定
+│   ├── seller/             # 賣家管理後台 (需賣家身分)
+│   │   ├── DashboardView.vue       # 賣家儀表板 (概況)
+│   │   ├── ProductListView.vue     # 商品管理列表
+│   │   ├── ProductEditView.vue     # 新增/編輯商品
+│   │   ├── SalesReportView.vue     # 銷售統計報表
+│   │   ├── StoreSettingView.vue    # 賣場資訊設定
+│   │   └── TodoView.vue            # 待辦事項清單
+│   ├── cart/               # 購物流程
+│   │   ├── CartView.vue            # 購物車清單
+│   │   ├── CheckoutView.vue        # 結帳確認頁
+│   │   └── PaymentResultView.vue   # 支付結果導向 (綠界/藍新)
+│   ├── error/              # 錯誤處理
+│   │   ├── NotFoundView.vue        # 404 頁面
+│   │   └── WipView.vue             # 功能開發中 (Work In Progress)
+│   ├── HomeView.vue        # 商城首頁
+│   ├── ProductsView.vue    # 全站商品列表 / 搜尋結果
+│   ├── ProductDetailView.vue # 商品詳情頁
+│   ├── CouponsView.vue     # 領券中心
+│   └── AboutView.vue       # 關於我們
 │
-├── router/
-│   ├── index.ts
-│   └── routes.ts          # 路由清單可以拆出來
-│ 
-├── stores/                 # Pinia 全域狀態管理
-│   ├── cart.ts            # 購物車（電商最重要）
-│   ├── auth.ts            # 登入狀態、token
-│   ├── member.ts          # 會員資料
-│   └── product.ts         # 商品快取（看需求）
-│
-├── types/                  # TypeScript 型別
-│   ├── product.ts
-│   ├── order.ts
-│   ├── member.ts
-│   ├── cart.ts
-│   └── api.ts             # API 共用回應格式
-│
-├── utils/
-│   ├── format.ts          # 千分位、日期、價格格式化
-│   ├── validator.ts       # 表單驗證
-│   └── storage.ts         # localStorage 封裝
-│
-├── views/                  # 頁面元件
-│   ├── home/
-│   │   └── HomeView.vue
-│   ├── product/
-│   │   ├── ProductListView.vue
-│   │   └── ProductDetailView.vue
-│   ├── cart/
-│   │   └── CartView.vue
-│   ├── checkout/
-│   │   ├── CheckoutView.vue
-│   │   └── PaymentResultView.vue
-│   ├── member/
-│   │   ├── MemberCenterView.vue
-│   │   ├── OrderHistoryView.vue
-│   │   └── ProfileView.vue
-│   ├── auth/
-│   │   ├── LoginView.vue
-│   │   └── RegisterView.vue
-│   └── error/
-│       └── NotFoundView.vue
-│
-├── constants/              # 補充：常數
-│   ├── apiPaths.ts        # API 路徑常數
-│   └── orderStatus.ts     # 訂單狀態列舉
-│
-├── App.vue
-└── main.ts
+├── types/                  # TypeScript 型別定義 (與後端 DTO 一致)
+├── utils/                  # 工具函式 (storage, format, validator)
+├── styles/                 # 全域樣式與主題 (Element Plus 定制)
+└── router/                 # 路由設定 (路由守衛、權限校驗)
 
+總整理表 (功能對照)
 
-總整理表(說明)
-
-| 資料夾 | 說明 | 範例 |
+| 資料夾 | 說明 | 關鍵實作範例 |
 | --- | --- | --- |
-| `api/` | 呼叫後端 API 的程式碼 | 取得商品、加入購物車 |
-| `assets/` | 圖片和 CSS | logo、商品預設圖 |
-| `components/` | 可重複使用的小元件 | 商品卡片、導覽列 |
-| `layouts/` | 頁面的外框版型 | 前台版型、會員中心版型 |
-| `router/` | 網址對應頁面的設定 | `/cart` → 購物車頁 |
-| `stores/` | 全域共享的資料 | 購物車、登入狀態 |
-| `types/` | 資料的型別定義 | 商品長什麼樣、訂單長什麼樣 |
-| `utils/` | 共用工具函式 | 價格格式化、日期格式化 |
-| `views/` | 完整的頁面 | 首頁、商品列表頁 |
-| `composables/` | 可複用的邏輯 | 分頁邏輯 |
-| `constants/` | 固定常數 | 訂單狀態列舉 |
-
+| `api/` | 呼叫後端 API 的程式碼 | `auth.ts` (登入), `order.ts` (下單) |
+| `components/` | 可重複使用的小元件 | `ProductCard.vue`, `ChatFloating.vue` |
+| `layouts/` | 頁面的外框版型 | `MemberLayout.vue` (會員中心側邊欄) |
+| `stores/` | 全域共享的資料 | `auth.ts` (Token), `cart.ts` (購物車內容) |
+| `views/` | 完整的頁面元件 | `member/OrdersView.vue`, `seller/DashboardView.vue` |
+| `types/` | 資料的型別定義 | `product.ts`, `auth.ts` (與後端 DTO 對應) |
+| `utils/` | 共用工具函式 | `storage.ts` (localStorage), `format.ts` (價格格式化) |
 
 //以上為前台功能所使用之ISpanShop-Frontend專案資料夾//
 
@@ -202,9 +186,46 @@ src/
 ===============================
 
 
+//以下為專案資料庫結構 (參考EfModel並在每個檔案備註所有欄位)//
 
+- **Address.cs**: `Id` (int), `UserId` (int), `RecipientName` (string), `RecipientPhone` (string), `City` (string), `Region` (string), `Street` (string), `IsDefault` (bool?)
+- **AdminLevel.cs**: `Id` (int), `LevelName` (string), `Description` (string)
+- **BlacklistRecord.cs**: `Id` (int), `BlockedUserId` (int), `AdminUserId` (int), `Reason` (string), `CreatedAt` (DateTime?), `UnblockAt` (DateTime?)
+- **Brand.cs**: `Id` (int), `Name` (string), `Description` (string), `LogoUrl` (string), `Sort` (int?), `IsVisible` (bool?), `IsDeleted` (bool?)
+- **Cart.cs**: `Id` (int), `UserId` (int)
+- **CartItem.cs**: `Id` (int), `CartId` (int), `StoreId` (int), `ProductId` (int), `VariantId` (int), `Quantity` (int), `UnitPrice` (decimal?)
+- **Category.cs**: `Id` (int), `Name` (string), `ParentId` (int?), `IconUrl` (string), `Sort` (int?), `IsVisible` (bool?), `Icon` (string), `NameEn` (string)
+- **CategoryAttribute.cs**: `Id` (int), `Name` (string), `InputType` (string), `IsRequired` (bool), `IsActive` (bool), `AllowCustomInput` (bool)
+- **CategoryAttributeMapping.cs**: `CategoryId` (int), `CategoryAttributeId` (int), `IsFilterable` (bool), `Sort` (int)
+- **CategoryAttributeOption.cs**: `Id` (int), `CategoryAttributeId` (int), `OptionName` (string), `SortOrder` (int)
+- **ChatMessage.cs**: `Id` (long), `SessionId` (Guid), `SenderId` (int), `ReceiverId` (int), `Content` (string), `Type` (byte), `IsRead` (bool?), `SentAt` (DateTime?)
+- **Coupon.cs**: `Id` (int), `StoreId` (int), `SellerId` (int), `CouponCode` (string), `Title` (string), `DistributionType` (byte), `CouponType` (byte), `DiscountValue` (decimal), `MinimumSpend` (decimal), `MaximumDiscount` (decimal?), `StartTime` (DateTime), `EndTime` (DateTime), `TotalQuantity` (int), `UsedQuantity` (int), `PerUserLimit` (int), `ApplyToAll` (bool), `IsExclusive` (bool), `Status` (byte), `IsDeleted` (bool), `UpdatedBy` (int), `UpdatedAt` (DateTime)
+- **CouponCategory.cs**: `CouponId` (int), `CategoryId` (int)
+- **LoginHistory.cs**: `Id` (int), `UserId` (int?), `AttemptedAccount` (string), `Ipaddress` (string), `LoginTime` (DateTime), `IsSuccess` (bool)
+- **MemberCoupon.cs**: `Id` (int), `UserId` (int), `CouponId` (int), `UsageStatus` (byte), `OrderId` (long?), `ReceivedAt` (DateTime), `UsedAt` (DateTime?)
+- **MemberProfile.cs**: `Id` (int), `UserId` (int), `LevelId` (int), `FullName` (string), `Gender` (byte?), `DateOfBirth` (DateOnly?), `PhoneNumber` (string), `TotalSpending` (decimal?), `PointBalance` (int?), `EmailNotification` (bool?), `UpdatedAt` (DateTime?), `IsSeller` (bool?), `AvatarUrl` (string)
+- **MembershipLevel.cs**: `Id` (int), `LevelName` (string), `MinSpending` (decimal), `DiscountRate` (decimal)
+- **Order.cs**: `Id` (long), `OrderNumber` (string), `UserId` (int), `StoreId` (int), `TotalAmount` (decimal), `ShippingFee` (decimal?), `PointDiscount` (int?), `DiscountAmount` (decimal?), `FinalAmount` (decimal), `Status` (byte?), `PaymentDate` (DateTime?), `RecipientName` (string), `RecipientPhone` (string), `RecipientAddress` (string), `Note` (string), `CreatedAt` (DateTime?), `CompletedAt` (DateTime?), `CouponId` (int?)
+- **OrderDetail.cs**: `Id` (long), `OrderId` (long), `ProductId` (int), `VariantId` (int?), `ProductName` (string), `VariantName` (string), `SkuCode` (string), `CoverImage` (string), `Price` (decimal?), `Quantity` (int), `AllocatedDiscountAmount` (decimal?)
+- **OrderReview.cs**: `Id` (int), `UserId` (int), `OrderId` (long), `Rating` (byte), `Comment` (string), `StoreReply` (string), `IsHidden` (bool?), `CreatedAt` (DateTime?)
+- **PasswordResetToken.cs**: `Id` (int), `UserId` (int), `Token` (string), `ExpiryDate` (DateTime), `IsUsed` (bool), `CreatedAt` (DateTime)
+- **PaymentLog.cs**: `Id` (long), `OrderId` (long), `MerchantTradeNo` (string), `TradeNo` (string), `RtnCode` (int?), `RtnMsg` (string), `TradeAmt` (decimal?), `PaymentType` (string), `PaymentDate` (DateTime?), `CreatedAt` (DateTime?)
+- **Permission.cs**: `Id` (int), `PermissionKey` (string), `DisplayName` (string), `Description` (string)
+- **PointHistory.cs**: `Id` (long), `UserId` (int), `OrderNumber` (string), `ChangeAmount` (int), `BalanceAfter` (int), `Description` (string), `CreatedAt` (DateTime?)
+- **Product.cs**: `Id` (int), `StoreId` (int), `CategoryId` (int), `BrandId` (int?), `Name` (string), `Description` (string), `VideoUrl` (string), `SpecDefinitionJson` (string), `MinPrice` (decimal?), `MaxPrice` (decimal?), `TotalSales` (int?), `ViewCount` (int?), `Status` (byte?), `CreatedAt` (DateTime?), `UpdatedAt` (DateTime?), `RejectReason` (string), `IsDeleted` (bool), `ReviewStatus` (int), `ReviewedBy` (string), `ReviewDate` (DateTime?), `ForceOffShelfReason` (string), `ForceOffShelfDate` (DateTime?), `ForceOffShelfBy` (int?), `ReApplyDate` (DateTime?)
+- **ProductImage.cs**: `Id` (int), `ProductId` (int), `VariantId` (int?), `ImageUrl` (string), `IsMain` (bool?), `SortOrder` (int?)
+- **ProductVariant.cs**: `Id` (int), `ProductId` (int), `SkuCode` (string), `VariantName` (string), `SpecValueJson` (string), `Price` (decimal), `Stock` (int?), `SafetyStock` (int?), `IsDeleted` (bool?)
+- **Promotion.cs**: `Id` (int), `Name` (string), `Description` (string), `PromotionType` (int), `StartTime` (DateTime), `EndTime` (DateTime), `Status` (int), `SellerId` (int), `ReviewedBy` (int?), `ReviewedAt` (DateTime?), `RejectReason` (string), `CreatedAt` (DateTime), `UpdatedAt` (DateTime?), `IsDeleted` (bool)
+- **PromotionItem.cs**: `Id` (int), `PromotionId` (int), `ProductId` (int), `OriginalPrice` (decimal), `DiscountPrice` (decimal?), `DiscountPercent (int?)`, `QuantityLimit` (int?), `StockLimit` (int?), `SoldCount` (int)
+- **PromotionRule.cs**: `Id` (int), `PromotionId` (int), `RuleType` (int), `Threshold (decimal)`, `DiscountType` (int), `DiscountValue` (decimal)
+- **ReturnRequest.cs**: `Id` (long), `OrderId` (long), `ReasonCategory` (string), `ReasonDescription` (string), `RefundAmount` (decimal), `Status` (byte), `AdminRemark` (string), `CreatedAt` (DateTime), `UpdatedAt` (DateTime?)
+- **ReturnRequestImage.cs**: `Id` (long), `ReturnRequestId` (long), `ImageUrl` (string), `CreatedAt` (DateTime)
+- **ReviewImage.cs**: `Id` (int), `ReviewId` (int), `ImageUrl` (string)
+- **Role.cs**: `Id` (int), `RoleName` (string), `Description` (string)
+- **SensitiveWord.cs**: `Id` (int), `Word` (string), `Category` (string), `IsActive` (bool?), `CreatedTime` (DateTime?), `CategoryId` (int?)
+- **SensitiveWordCategory.cs**: `Id` (int), `Name` (string)
+- **Store.cs**: `Id` (int), `UserId` (int), `StoreName` (string), `Description` (string), `IsVerified` (bool?), `CreatedAt` (DateTime?), `StoreStatus` (byte), `LogoUrl` (string)
+- **SupportTicket.cs**: `Id` (int), `UserId` (int), `OrderId` (long?), `Category` (byte), `Subject` (string), `Description` (string), `AttachmentUrl` (string), `Status` (byte?), `AdminReply` (string), `CreatedAt` (DateTime?), `ResolvedAt` (DateTime?)
+- **User.cs**: `Id` (int), `RoleId` (int), `Account` (string), `Password` (string), `Email` (string), `Provider` (string), `ProviderId` (string), `IsConfirmed` (bool?), `ConfirmCode` (string), `IsBlacklisted` (bool?), `CreatedAt` (DateTime?), `UpdatedAt` (DateTime?), `AdminLevelId` (int?), `IsFirstLogin` (bool)
 
-
-
-
-
+//以上為專案資料庫結構 (參考EfModel並在每個檔案備註所有欄位)//

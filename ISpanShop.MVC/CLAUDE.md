@@ -97,3 +97,9 @@ Product
 | GET | `/api/promotions/active`  | `Controllers/Api/Promotions/PromotionApiController`   | 前台進行中活動（AllowAnonymous）；支援 type / limit |
 | GET | `/api/products/{id}`      | `Controllers/Api/Products/ProductsApiController`      | 前台商品詳情（AllowAnonymous）；含規格/圖片/品牌/商店/分類路徑/評分 |
 | GET | `/api/products/{id}/related` | `Controllers/Api/Products/ProductsApiController`   | 前台相關商品（AllowAnonymous）；同子分類依銷量排序，支援 limit |
+| GET | `/api/hot-keywords`       | `Controllers/Api/Products/ProductsApiController`      | 前台熱搜關鍵字（AllowAnonymous）；取瀏覽次數最高的前 8 筆上架商品名稱（超過 10 字截斷）|
+| GET | `/api/seller/promotions`  | `Controllers/Api/Promotions/SellerPromotionsApiController` | 賣家活動列表（需 JWT）；支援 status / page / pageSize |
+| GET | `/api/seller/promotions/{id}` | `Controllers/Api/Promotions/SellerPromotionsApiController` | 賣家單一活動詳情（需 JWT + 權限驗證）|
+| POST | `/api/seller/promotions` | `Controllers/Api/Promotions/SellerPromotionsApiController` | 賣家新增活動（需 JWT）；Status 自動設為待審核 |
+| PUT | `/api/seller/promotions/{id}` | `Controllers/Api/Promotions/SellerPromotionsApiController` | 賣家編輯活動（需 JWT + 權限驗證）；只能編輯待審核或已拒絕的活動 |
+| DELETE | `/api/seller/promotions/{id}` | `Controllers/Api/Promotions/SellerPromotionsApiController` | 賣家刪除活動（需 JWT + 權限驗證）；只能刪除待審核的活動 |

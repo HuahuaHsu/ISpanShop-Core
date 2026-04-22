@@ -27,6 +27,12 @@ export const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: false }
       },
       {
+        path: 'store/:id',
+        name: 'StorePage',
+        component: () => import('../views/StorePage.vue'),
+        meta: { requiresAuth: false }
+      },
+      {
         path: 'cart',
         name: 'cart',
         component: () => import('../views/cart/CartView.vue'),
@@ -136,13 +142,13 @@ export const routes: RouteRecordRaw[] = [
     path: '/forgot-password',
     name: 'forgot-password',
     component: () => import('../views/auth/ForgotPasswordView.vue'),
-    meta: { requiresAuth: false, hideForAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/reset-password',
     name: 'reset-password',
     component: () => import('../views/auth/ResetPasswordView.vue'),
-    meta: { requiresAuth: false, hideForAuth: true }
+    meta: { requiresAuth: false }
   },
 
   // ── 賣家中心（獨立 Layout，與前台完全分離） ──
@@ -180,7 +186,7 @@ export const routes: RouteRecordRaw[] = [
       { path: 'orders',             name: 'SellerOrders',     component: () => import('../views/seller/TodoView.vue') },
       { path: 'orders/batch',       name: 'SellerOrdersBatch', component: () => import('../views/seller/TodoView.vue') },
       { path: 'returns',            name: 'SellerReturns',    component: () => import('../views/seller/TodoView.vue') },
-      { path: 'promotions',         name: 'SellerPromotions', component: () => import('../views/seller/TodoView.vue') },
+      { path: 'promotions',         name: 'SellerPromotions', component: () => import('../views/seller/PromotionListView.vue') },
       { path: 'coupons',            name: 'SellerCoupons',    component: () => import('../views/seller/TodoView.vue') },
       { path: 'analytics/sales',    name: 'SellerSales',      component: () => import('../views/seller/SalesReportView.vue') },
       { path: 'analytics/traffic',  name: 'SellerTraffic',    component: () => import('../views/seller/TodoView.vue') },

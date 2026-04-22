@@ -29,6 +29,15 @@ namespace ISpanShop.MVC.Controllers
 				.Include(o => o.OrderDetails)
 				.FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
 
+			// 如果找不到，且 orderNumber 以 "ORD" 開頭，嘗試去過濾掉 "ORD" 再找一次 (相容舊資料)
+			if (order == null && !string.IsNullOrEmpty(orderNumber) && orderNumber.StartsWith("ORD"))
+			{
+				string originalNumber = orderNumber.Substring(3);
+				order = await _context.Orders
+					.Include(o => o.OrderDetails)
+					.FirstOrDefaultAsync(o => o.OrderNumber == originalNumber);
+			}
+
 			if (order == null) return NotFound("訂單不存在");
 
 			// 產生交易編號
