@@ -93,7 +93,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Camera, VideoPlay, CoffeeCup } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules, UploadFile } from 'element-plus'
-import { getStoreProfileApi, updateStoreProfileApi, uploadStoreLogoApi } from '@/api/store'
+import { getStoreProfileApi, updateStoreProfileApi, uploadStoreLogoApi, getPendingOrdersCountApi } from '@/api/store'
 import type { StoreProfileData } from '@/types/store'
 
 const formRef = ref<FormInstance>()
@@ -107,6 +107,9 @@ const form = reactive<StoreProfileData>({
   logoUrl: '',
   storeStatus: 1
 })
+
+// 用於記錄初始狀態
+const originalStatus = ref<number>(1)
 
 const rules = reactive<FormRules>({
   storeName: [
@@ -128,6 +131,7 @@ const fetchStoreInfo = async () => {
   try {
     const res = await getStoreProfileApi()
     Object.assign(form, res.data)
+    originalStatus.value = res.data.storeStatus
   } catch (error: any) {
     console.error('獲取賣場資訊失敗', error)
     ElMessage.error('無法載入賣場資訊')
@@ -160,15 +164,48 @@ const handleSave = async (formEl: FormInstance | undefined) => {
   await formEl.validate(async (valid) => {
     if (valid) {
       try {
-        await ElMessageBox.confirm('確定要儲存賣場資訊的變更嗎？', '確認更新', {
-          confirmButtonText: '儲存',
-          cancelButtonText: '取消',
-          type: 'info'
-        })
+        // 如果是要切換到休假模式 (2)
+        if (form.storeStatus === 2) {
+          submitting.value = true
+          // 檢查是否有未出貨訂單
+          const { data } = await getPendingOrdersCountApi()
+          const pendingCount = data.count
+          submitting.value = false
+
+          if (pendingCount > 0) {
+            await ElMessageBox.confirm(
+              `您目前還有 ${pendingCount} 筆訂單尚未出貨，休假期間仍需完成出貨，確定要切換為休假模式嗎？`,
+              '休假提醒',
+              {
+                confirmButtonText: '確定切換',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }
+            )
+          } else {
+            await ElMessageBox.confirm(
+              '更改休假狀態後賣場將無法下單，確定要切換為休假模式嗎？',
+              '休假提醒',
+              {
+                confirmButtonText: '確定切換',
+                cancelButtonText: '取消',
+                type: 'info'
+              }
+            )
+          }
+        } else {
+          // 一般儲存確認
+          await ElMessageBox.confirm('確定要儲存賣場資訊的變更嗎？', '確認更新', {
+            confirmButtonText: '儲存',
+            cancelButtonText: '取消',
+            type: 'info'
+          })
+        }
 
         submitting.value = true
         await updateStoreProfileApi(form)
         ElMessage.success('賣場資訊已更新成功')
+        originalStatus.value = form.storeStatus
       } catch (error: any) {
         if (error !== 'cancel') {
           console.error('更新失敗', error)

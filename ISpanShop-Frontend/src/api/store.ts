@@ -47,3 +47,10 @@ export const getStoreProfileApi = () => {
 export const updateStoreProfileApi = (data: StoreProfileData) => {
   return axios.put<ApiResponse>('/api/front/store/profile', data)
 }
+
+/**
+ * 取得待出貨訂單數量
+ */
+export const getPendingOrdersCountApi = () => {
+  return axios.get<{ count: number }>('/api/front/store/pending-orders')
+}

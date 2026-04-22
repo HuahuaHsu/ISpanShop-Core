@@ -194,5 +194,18 @@ namespace ISpanShop.Services.Stores
             _context.Stores.Update(store);
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<int> GetPendingOrdersCountAsync(int userId)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) return 0;
+
+            // Status 1 為待出貨
+            return await _context.Orders
+                .CountAsync(o => o.StoreId == store.Id && o.Status == 1);
+        }
     }
 }
