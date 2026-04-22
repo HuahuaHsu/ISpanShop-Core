@@ -132,9 +132,9 @@ const services = [
       </div>
       <div class="wallet-grid">
         <div class="wallet-item" @click="go('紅利點數')">
-          <span class="wallet-icon">🪙</span>
+          <span class="wallet-icon">💎</span>
           <span class="wallet-value">{{ (liveBalance ?? authStore.memberInfo?.pointBalance ?? 0).toLocaleString() }}</span>
-          <span class="wallet-label">我的蝦幣</span>
+          <span class="wallet-label">我的點數</span>
         </div>
         <div class="wallet-item" @click="go('優惠券')">
           <span class="wallet-icon">🎟</span>

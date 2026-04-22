@@ -13,9 +13,9 @@ const authStore = useAuthStore()
 
 // 表單資料
 const recipient = ref({
-  name: '',
-  phone: '',
-  address: ''
+  name: '資展國際',
+  phone: '03-4533013#6524',
+  address: '桃園市中壢區新生路二段421號'
 })
 const paymentMethod = ref('ECPay')
 
@@ -79,21 +79,6 @@ onMounted(async () => {
     availableCoupons.value = couponsRes.data
     // 支援 balance 或 pointBalance 欄位
     walletBalance.value = walletRes.data.pointBalance ?? walletRes.data.balance ?? 0
-    
-    // 自動帶入收件資訊
-    if (profileRes && profileRes.data) {
-      console.log('Member Profile Loaded:', profileRes.data)
-      recipient.value.name = profileRes.data.fullName || ''
-      recipient.value.phone = profileRes.data.phoneNumber || ''
-      
-      // 組合完整地址: 縣市 + 行政區 + 街道地址
-      const city = profileRes.data.city || ''
-      const region = profileRes.data.region || ''
-      const street = profileRes.data.address || ''
-      if (city || region || street) {
-        recipient.value.address = `${city}${region}${street}`
-      }
-    }
     
     // 同步更新 store 中的資料並持久化
     authStore.updatePoints(walletBalance.value)
@@ -192,7 +177,10 @@ function formatPrice(val: number) {
 <template>
   <div class="checkout-page">
     <div class="checkout-container">
-      <h1 class="page-title">結帳</h1>
+      <div class="page-header">
+        <el-button @click="router.back()" circle icon="ArrowLeft" class="back-btn" />
+        <h1 class="page-title">結帳</h1>
+      </div>
 
       <!-- 收件資訊 -->
       <el-card class="section-card">
@@ -246,7 +234,7 @@ function formatPrice(val: number) {
 
         <div class="discount-row">
           <div class="label">
-            蝦幣折抵
+            點數折抵
             <small class="hint">可用 {{ walletBalance }} 點</small>
           </div>
           <div class="value">
@@ -270,7 +258,7 @@ function formatPrice(val: number) {
           <span>- NT$ {{ formatPrice(couponDiscount) }}</span>
         </div>
         <div v-if="pointDiscount > 0" class="summary-row discount">
-          <span>蝦幣折抵</span>
+          <span>點數折抵</span>
           <span>- NT$ {{ formatPrice(pointDiscount) }}</span>
         </div>
         <div class="summary-row final">
@@ -318,10 +306,19 @@ function formatPrice(val: number) {
   max-width: 800px;
   margin: 0 auto;
 }
-.page-title {
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
+}
+.page-title {
+  margin: 0;
   font-size: 24px;
   font-weight: bold;
+}
+.back-btn {
+  font-size: 18px;
 }
 .section-card {
   margin-bottom: 16px;

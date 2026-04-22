@@ -9,9 +9,14 @@
         <h4 class="fw-bold py-3 mb-0">
             <span class="text-muted fw-light">行銷管理 /</span> 優惠券管理
         </h4>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bx bx-plus me-1"></i> 新增優惠券
-        </a>
+        <div>
+            <button type="button" class="btn btn-outline-secondary me-2" onclick="seedCoupons()">
+                <i class="bx bx-data me-1"></i> 生成測試資料
+            </button>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bx bx-plus me-1"></i> 新增優惠券
+            </a>
+        </div>
     </div>
 
     <div class="card">
@@ -103,6 +108,43 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        function seedCoupons() {
+            Swal.fire({
+                title: '生成測試資料？',
+                text: "系統將自動建立 4 筆常用的測試優惠券（包含全站折扣與新會員禮）。",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#696cff',
+                cancelButtonColor: '#8592a3',
+                confirmButtonText: '立即生成',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: '處理中...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading()
+                        }
+                    });
+
+                    $.post('@Url.Action("Seed")', function (res) {
+                        if (res.success) {
+                            Swal.fire(
+                                '完成！',
+                                res.message,
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('錯誤', res.message, 'error');
+                        }
+                    });
+                }
+            })
+        }
+
         function deleteCoupon(id) {
             Swal.fire({
                 title: '確定要刪除嗎？',

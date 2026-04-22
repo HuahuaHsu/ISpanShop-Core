@@ -263,7 +263,7 @@ namespace ISpanShop.Models.Seeding
 						{
 							UserId = users.First().Id,
 							StoreId = store.Id,
-							OrderNumber = "SEED" + DateTime.Now.ToString("yyyyMMddHHmmss") + j,
+							OrderNumber = "ORD" + DateTime.Now.ToString("yyyyMMddHHmmss") + j,
 							Status = 1,
 							TotalAmount = 1000,
 							FinalAmount = 1000,

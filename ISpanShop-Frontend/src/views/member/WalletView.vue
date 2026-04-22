@@ -55,9 +55,9 @@ onMounted(() => {
 
     <div class="wallet-summary">
       <el-card class="balance-card">
-        <div class="balance-label">當前蝦幣餘額</div>
+        <div class="balance-label">當前點數餘額</div>
         <div class="balance-value">
-          <span class="currency">💰</span>
+          <span class="currency">💎</span>
           {{ balance.toLocaleString() }}
         </div>
         <div class="balance-actions">

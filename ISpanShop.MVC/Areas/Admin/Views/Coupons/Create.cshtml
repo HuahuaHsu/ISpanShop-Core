@@ -19,10 +19,9 @@
                         
                         <div class="row">
                             <div class="mb-3 col-md-6">
-                                <label asp-for="StoreId" class="form-label">商家</label>
-                                <select asp-for="StoreId" class="form-select" asp-items="ViewBag.Stores">
-                                    <option value="">-- 請選擇商家 --</option>
-                                </select>
+                                <label class="form-label">商家</label>
+                                <input class="form-control" value="--- 全站通用 ---" readonly disabled />
+                                <input type="hidden" asp-for="StoreId" value="0" />
                                 <span asp-validation-for="StoreId" class="text-danger"></span>
                             </div>
                             <div class="mb-3 col-md-6">
@@ -88,10 +87,7 @@
                                 <span asp-validation-for="PerUserLimit" class="text-danger"></span>
                             </div>
                             <div class="mb-3 col-md-4 d-flex align-items-end">
-                                <div class="form-check mb-2">
-                                    <input asp-for="ApplyToAll" class="form-check-input" type="checkbox" />
-                                    <label asp-for="ApplyToAll" class="form-check-label">適用於全店商品</label>
-                                </div>
+                                <input type="hidden" asp-for="ApplyToAll" value="true" />
                             </div>
                         </div>
                         

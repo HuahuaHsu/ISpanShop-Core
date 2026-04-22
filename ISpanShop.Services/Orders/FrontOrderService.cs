@@ -6,16 +6,26 @@ using ISpanShop.Common.Enums;
 using ISpanShop.Models.DTOs.Orders;
 using ISpanShop.Models.EfModels;
 using ISpanShop.Repositories.Orders;
+using ISpanShop.Services.Coupons;
+using ISpanShop.Services.Payments;
+using ISpanShop.Models.DTOs.Members;
 
 namespace ISpanShop.Services.Orders
 {
     public class FrontOrderService : IFrontOrderService
     {
         private readonly IOrderRepository _orderRepository;
+        private readonly PointService _pointService;
+        private readonly ICouponService _couponService;
 
-        public FrontOrderService(IOrderRepository orderRepository)
+        public FrontOrderService(
+            IOrderRepository orderRepository,
+            PointService pointService,
+            ICouponService couponService)
         {
             _orderRepository = orderRepository;
+            _pointService = pointService;
+            _couponService = couponService;
         }
 
         public async Task<List<FrontOrderListDto>> GetMemberOrdersAsync(int memberId)
@@ -27,7 +37,7 @@ namespace ISpanShop.Services.Orders
                 return new FrontOrderListDto
                 {
                     Id = o.Id,
-                    OrderNumber = o.OrderNumber,
+                    OrderNumber = o.OrderNumber.StartsWith("ORD") ? o.OrderNumber : "ORD" + o.OrderNumber,
                     CreatedAt = o.CreatedAt,
                     FinalAmount = o.FinalAmount,
                     Status = (OrderStatus)(o.Status ?? 0),
@@ -52,7 +62,7 @@ namespace ISpanShop.Services.Orders
             return new FrontOrderDetailDto
             {
                 Id = o.Id,
-                OrderNumber = o.OrderNumber,
+                OrderNumber = o.OrderNumber.StartsWith("ORD") ? o.OrderNumber : "ORD" + o.OrderNumber,
                 CreatedAt = o.CreatedAt,
                 PaymentDate = o.PaymentDate,
                 CompletedAt = o.CompletedAt,
@@ -98,6 +108,9 @@ namespace ISpanShop.Services.Orders
 
             // 只有待付款(0)或待出貨(1)可以取消
             if (o.Status != 0 && o.Status != 1) return false;
+
+            // 退回點數與優惠券
+            await ReturnOrderAssetsAsync(o);
 
             await _orderRepository.UpdateStatusAsync(orderId, 4); // 4 = 已取消
             return true;
@@ -160,7 +173,31 @@ namespace ISpanShop.Services.Orders
             await _orderRepository.CreateReturnRequestAsync(request);
             await _orderRepository.UpdateStatusAsync(orderId, 5); // 5 = 退貨/款中
 
+            // 退回點數與優惠券 (假設發起退貨就先退回，或可依需求改為管理員核准後才退)
+            await ReturnOrderAssetsAsync(o);
+
             return true;
+        }
+
+        private async Task ReturnOrderAssetsAsync(Order o)
+        {
+            // 1. 退回點數
+            if (o.PointDiscount.HasValue && o.PointDiscount.Value > 0)
+            {
+                await _pointService.UpdatePointsAsync(new PointUpdateDTO
+                {
+                    UserId = o.UserId,
+                    ChangeAmount = o.PointDiscount.Value,
+                    Description = $"訂單取消/退貨退回 (訂單編號: {o.OrderNumber})",
+                    OrderNumber = o.OrderNumber
+                });
+            }
+
+            // 2. 退回優惠券
+            if (o.CouponId.HasValue)
+            {
+                await _couponService.ReturnCouponAsync(o.Id);
+            }
         }
 
         private string GetFinalImage(OrderDetail od)
