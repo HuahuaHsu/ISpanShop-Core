@@ -59,6 +59,11 @@
               <span class="label">優惠券折抵 <span v-if="order.couponTitle" class="text-xs">({{ order.couponTitle }})</span>:</span>
               <span class="value">-${{ formatPrice(order.discountAmount) }}</span>
             </div>
+            <div class="divider"></div>
+            <div class="discount-row refund-total">
+              <span class="label fw-bold">預計退款金額:</span>
+              <span class="value fw-bold fs-5 text-danger">${{ formatPrice(totalRefundAmount) }}</span>
+            </div>
             <div class="text-xs text-gray-400 mt-2">
               註：全額退貨將退還最終實付金額。部分退款將依商品金額比例扣除折抵。
             </div>
@@ -153,10 +158,15 @@ const fetchOrder = async () => {
   try {
     const res = await getOrderDetailApi(id);
     order.value = res.data;
-    // 初始化退貨數量
+    // 初始化退貨數量與全選狀態
     order.value.items.forEach(item => {
       returnQuantities[item.id] = item.quantity;
     });
+    
+    // 預設全選所有商品
+    checkAll.value = true;
+    selectedItems.value = order.value.items.map(i => i.id);
+    isIndeterminate.value = false;
   } catch (error) {
     ElMessage.error('獲取訂單資訊失敗');
   } finally {
@@ -391,6 +401,25 @@ onMounted(fetchOrder);
   .text-xs { font-size: 12px; }
   .text-gray-400 { color: #999; }
   .mt-2 { margin-top: 10px; }
+
+  .divider {
+    height: 1px;
+    background-color: #e4e4e4;
+    margin: 12px 0;
+  }
+
+  .refund-total {
+    margin-top: 10px;
+    
+    .label { 
+      font-weight: 600; 
+      color: #333; 
+    }
+    .value { 
+      font-weight: bold; 
+      font-size: 18px; 
+    }
+  }
 }
 
 .refund-footer {
