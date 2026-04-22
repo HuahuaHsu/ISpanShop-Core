@@ -15,6 +15,8 @@ namespace ISpanShop.Models.DTOs.Orders
         public decimal? ShippingFee { get; set; }
         public int? PointDiscount { get; set; }
         public decimal? DiscountAmount { get; set; }
+        public int? CouponId { get; set; }
+        public string CouponTitle { get; set; }
         public decimal FinalAmount { get; set; }
         public OrderStatus Status { get; set; }
         public string StatusName { get; set; }

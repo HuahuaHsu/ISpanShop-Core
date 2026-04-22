@@ -60,6 +60,8 @@ namespace ISpanShop.Services.Orders
                 ShippingFee = o.ShippingFee,
                 PointDiscount = o.PointDiscount,
                 DiscountAmount = o.DiscountAmount,
+                CouponId = o.CouponId,
+                CouponTitle = o.Coupon?.Title ?? (o.CouponId.HasValue ? "優惠券" : null),
                 FinalAmount = o.FinalAmount,
                 Status = (OrderStatus)(o.Status ?? 0),
                 StatusName = GetStatusName(o.Status),

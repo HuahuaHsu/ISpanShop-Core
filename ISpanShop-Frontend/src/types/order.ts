@@ -32,6 +32,8 @@ export interface OrderDetail {
   shippingFee: number | null;
   pointDiscount: number | null;
   discountAmount: number | null;
+  couponId: number | null;
+  couponTitle: string | null;
   finalAmount: number;
   status: number;
   statusName: string;

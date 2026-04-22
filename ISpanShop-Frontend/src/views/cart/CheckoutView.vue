@@ -294,7 +294,12 @@ function formatPrice(val: number) {
         <template #header><div class="card-header">🧧 原始訂單折抵資訊</div></template>
         
         <div class="discount-row" v-if="couponDiscount > 0">
-          <div class="label">優惠券折抵</div>
+          <div class="label">
+            優惠券折抵
+            <small v-if="isPaymentMode && existingOrderData?.couponTitle" class="coupon-name">
+              ({{ existingOrderData.couponTitle }})
+            </small>
+          </div>
           <div class="value discount">- NT$ {{ formatPrice(couponDiscount) }}</div>
         </div>
 
@@ -340,11 +345,16 @@ function formatPrice(val: number) {
         
         <!-- 顯示折扣資訊 -->
         <div v-if="couponDiscount > 0" class="summary-row discount">
-          <span>優惠券折抵</span>
+          <span>
+            優惠券折抵
+            <small v-if="isPaymentMode && existingOrderData?.couponTitle" class="coupon-name">
+              ({{ existingOrderData.couponTitle }})
+            </small>
+          </span>
           <span>- NT$ {{ formatPrice(couponDiscount) }}</span>
         </div>
         <div v-if="pointDiscount > 0" class="summary-row discount">
-          <span>點數/蝦幣折抵</span>
+          <span>點數折抵</span>
           <span>- NT$ {{ formatPrice(pointDiscount) }}</span>
         </div>
 
@@ -432,6 +442,7 @@ function formatPrice(val: number) {
 .discount-row:last-child { border-bottom: none; }
 .clickable { cursor: pointer; color: #ee4d2d; }
 .hint { color: #999; margin-left: 8px; font-weight: normal; }
+.coupon-name { color: #ee4d2d; margin-left: 4px; font-weight: normal; }
 
 .summary-section {
   background: white;
