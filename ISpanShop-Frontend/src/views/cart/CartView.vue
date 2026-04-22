@@ -255,12 +255,17 @@ function handleCheckout(): void {
   flex-shrink: 0;
 }
 .cart-footer {
+  position: sticky;
+  bottom: 20px; /* Leave some space from bottom or set to 0 for full width */
+  z-index: 100;
   background: white;
   border-radius: 8px;
   padding: 16px 20px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  margin-top: 20px;
 }
 .footer-right {
   display: flex;
