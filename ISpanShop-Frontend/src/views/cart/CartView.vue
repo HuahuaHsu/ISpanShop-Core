@@ -66,12 +66,22 @@ function handleCheckout(): void {
 
       <!-- 購物車清單 -->
       <template v-else>
+        <!-- 全選列 -->
+        <div class="cart-selection-header">
+          <el-checkbox v-model="cartStore.isAllSelected" class="select-all-checkbox">
+            全選
+          </el-checkbox>
+        </div>
+
         <div class="cart-list">
           <div
             v-for="item in cartStore.items"
             :key="`${item.productId}-${item.variantId}`"
             class="cart-item"
           >
+            <!-- 勾選框 -->
+            <el-checkbox v-model="item.selected" class="item-checkbox" />
+
             <!-- 商品圖片 -->
             <el-image
               :src="item.image"
@@ -131,10 +141,10 @@ function handleCheckout(): void {
         <!-- 底部結帳列 -->
         <div class="cart-footer">
           <div class="footer-right">
-            <span class="total-label">合計：</span>
-            <span class="total-price">NT$ {{ formatPrice(cartStore.totalPrice) }}</span>
-            <el-button type="primary" size="large" @click="handleCheckout">
-              結帳（{{ cartStore.totalQuantity }} 件）
+            <span class="total-label">合計 ({{ cartStore.selectedQuantity }} 件)：</span>
+            <span class="total-price">NT$ {{ formatPrice(cartStore.selectedPrice) }}</span>
+            <el-button type="primary" size="large" @click="handleCheckout" :disabled="cartStore.selectedQuantity === 0">
+              結帳
             </el-button>
           </div>
         </div>
@@ -170,6 +180,14 @@ function handleCheckout(): void {
   color: #909399;
   font-size: 15px;
 }
+.cart-selection-header {
+  background: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
 .cart-empty {
   background: white;
   border-radius: 8px;
@@ -191,6 +209,9 @@ function handleCheckout(): void {
 }
 .cart-item:last-child { border-bottom: none; }
 .cart-item:hover { background: #fafafa; }
+.item-checkbox {
+  margin-right: 4px;
+}
 .item-image {
   width: 80px;
   height: 80px;
@@ -255,12 +276,17 @@ function handleCheckout(): void {
   flex-shrink: 0;
 }
 .cart-footer {
+  position: sticky;
+  bottom: 20px; /* Leave some space from bottom or set to 0 for full width */
+  z-index: 100;
   background: white;
   border-radius: 8px;
   padding: 16px 20px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  margin-top: 20px;
 }
 .footer-right {
   display: flex;

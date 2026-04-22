@@ -193,8 +193,37 @@
                 </div>
                 <div class="card-footer bg-light py-3 border-top-0">
                     <div class="row align-items-center">
-                        <div class="col text-end">
-                            <span class="text-muted fw-bold me-3">應退款總額 (含運費)</span>
+                        <div class="col-md-7">
+                            <div class="d-flex flex-column gap-1">
+                                <div class="small text-muted d-flex justify-content-between w-50">
+                                    <span>商品總計:</span>
+                                    <span>@Model.TotalAmount.ToString("C0")</span>
+                                </div>
+                                @if (Model.ShippingFee > 0)
+                                {
+                                    <div class="small text-muted d-flex justify-content-between w-50">
+                                        <span>運費:</span>
+                                        <span>+@Model.ShippingFee?.ToString("C0")</span>
+                                    </div>
+                                }
+                                @if (Model.PointDiscount > 0)
+                                {
+                                    <div class="small text-danger d-flex justify-content-between w-50">
+                                        <span>點數折抵 (@Model.PointDiscount 點):</span>
+                                        <span>-@Model.PointDiscount?.ToString("C0")</span>
+                                    </div>
+                                }
+                                @if (Model.DiscountAmount > 0)
+                                {
+                                    <div class="small text-danger d-flex justify-content-between w-50">
+                                        <span>優惠券折抵 @(string.IsNullOrEmpty(Model.CouponName) ? "" : $"({Model.CouponName})"):</span>
+                                        <span>-@Model.DiscountAmount?.ToString("C0")</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-5 text-end">
+                            <span class="text-muted fw-bold me-3">應退款總額 (折抵後)</span>
                             <span class="h4 fw-black text-danger mb-0">@Model.FinalAmount.ToString("C0")</span>
                         </div>
                     </div>
