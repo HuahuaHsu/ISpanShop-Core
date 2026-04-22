@@ -29,7 +29,7 @@ public partial class MemberProfile
 
     public DateTime? UpdatedAt { get; set; }
 
-    public bool IsSeller { get; set; }
+    public bool? IsSeller { get; set; }
 
     public string AvatarUrl { get; set; }
 

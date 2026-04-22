@@ -111,7 +111,7 @@ const handleSubmit = async () => {
         submitting.value = true
         
         const response = await changePassword({
-          currentPassword: passwordForm.oldPassword,
+          oldPassword: passwordForm.oldPassword,
           newPassword: passwordForm.newPassword,
           confirmPassword: passwordForm.confirmPassword
         })
