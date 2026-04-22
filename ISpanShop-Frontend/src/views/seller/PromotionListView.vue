@@ -114,6 +114,11 @@
           <span v-else class="text-muted">—</span>
         </template>
       </el-table-column>
+      <el-table-column label="商品數" width="80" align="center">
+        <template #default="{ row }">
+          {{ row.productCount ?? '--' }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="150" fixed="right">
         <template #default="{ row }">
           <el-button
@@ -292,11 +297,97 @@
             style="width: 100%;"
           />
         </el-form-item>
+
+        <!-- 活動商品 -->
+        <el-divider content-position="left" style="margin: 16px 0 12px;">活動商品</el-divider>
+        <el-form-item label-width="0" style="margin-bottom: 0;">
+          <div style="width: 100%;">
+            <el-button size="small" type="primary" plain @click="openProductSelector">
+              <el-icon><Plus /></el-icon>&nbsp;新增商品
+            </el-button>
+            <!-- 已選商品卡片 -->
+            <div v-if="selectedProducts.length > 0" class="selected-products">
+              <div v-for="p in selectedProducts" :key="p.productId" class="product-card">
+                <img :src="p.imageUrl ?? ''" class="product-thumb" />
+                <div class="product-info">
+                  <div class="product-name">{{ p.productName }}</div>
+                  <div class="product-price">NT$ {{ p.minPrice ?? p.originalPrice }}</div>
+                </div>
+                <el-button link type="danger" size="small" @click="removeProduct(p.productId)">移除</el-button>
+              </div>
+            </div>
+            <div v-else class="no-products-hint">尚未選擇商品（選填）</div>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="submitting" @click="handleSubmit">
           {{ isEdit ? '更新活動' : '送出審核' }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 商品選擇器 Dialog -->
+    <el-dialog
+      v-model="selectorVisible"
+      title="選擇活動商品"
+      width="720px"
+      :close-on-click-modal="false"
+      append-to-body
+    >
+      <div class="selector-toolbar">
+        <el-input
+          v-model="selectorKeyword"
+          placeholder="搜尋商品名稱"
+          clearable
+          style="width: 240px;"
+          @change="onSelectorSearch"
+          @clear="onSelectorSearch"
+        />
+      </div>
+      <el-table
+        ref="selectorTableRef"
+        v-loading="selectorLoading"
+        :data="selectorProducts"
+        @selection-change="handleSelectorSelectionChange"
+        max-height="400"
+        style="width: 100%; margin-top: 12px;"
+        row-key="id"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column label="商品" min-width="280">
+          <template #default="{ row }">
+            <div class="selector-product-row">
+              <img :src="row.imageUrl ?? ''" class="selector-thumb" />
+              <span>{{ row.name }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="售價" width="120">
+          <template #default="{ row }">
+            NT$ {{ row.minPrice ?? '--' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="庫存" width="80" align="center">
+          <template #default="{ row }">
+            {{ row.totalStock ?? '--' }}
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="selector-pagination">
+        <el-pagination
+          v-model:current-page="selectorPage"
+          :total="selectorTotal"
+          :page-size="selectorPageSize"
+          layout="prev, pager, next, total"
+          @current-change="loadSelectorProducts"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="selectorVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmProductSelection">
+          確認（已選 {{ pendingSelection.length }} 件）
         </el-button>
       </template>
     </el-dialog>
@@ -307,12 +398,17 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules, ElTable } from 'element-plus'
 import {
   fetchSellerPromotions,
   createSellerPromotion,
   updateSellerPromotion,
   deleteSellerPromotion,
+  fetchPromotionProducts,
+  bindPromotionProducts,
+  unbindPromotionProduct,
+  fetchAvailableProductsForPromotion,
+  fetchSellerProductsSimple,
 } from '@/api/promotion'
 
 // ─── 介面定義 ─────────────────────────────────────────────────────
@@ -323,9 +419,10 @@ interface SellerPromotion {
   description: string | null
   promotionType: number
   promotionTypeLabel: string
-  discountValue?: number       // from PromotionRule.DiscountValue
-  minimumAmount?: number       // from PromotionRule.Threshold (滿額折扣用)
-  limitQuantity?: number       // 限量搶購用，目前後端未存此欄位
+  discountValue?: number
+  minimumAmount?: number
+  limitQuantity?: number
+  productCount?: number
   startTime: string
   endTime: string
   status: number
@@ -333,6 +430,25 @@ interface SellerPromotion {
   rejectReason: string | null
   createdAt: string
   reviewedAt: string | null
+}
+
+interface AvailableProduct {
+  id: number
+  name: string
+  imageUrl: string | null
+  minPrice: number | null
+  maxPrice: number | null
+  totalStock: number | null
+  status: number
+}
+
+interface PromotionProduct {
+  productId: number
+  productName: string
+  imageUrl: string | null
+  minPrice: number | null
+  originalPrice: number
+  discountPrice: number | null
 }
 
 interface PromotionFormData {
@@ -398,6 +514,20 @@ const isEdit = ref(false)
 const editingId = ref<number | null>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
+
+// ─── 商品選擇器狀態 ───────────────────────────────────────────────
+
+const selectedProducts = ref<PromotionProduct[]>([])
+const originalBoundIds = ref<number[]>([])
+const selectorVisible = ref(false)
+const selectorLoading = ref(false)
+const selectorKeyword = ref('')
+const selectorProducts = ref<AvailableProduct[]>([])
+const selectorPage = ref(1)
+const selectorPageSize = 10
+const selectorTotal = ref(0)
+const pendingSelection = ref<AvailableProduct[]>([])
+const selectorTableRef = ref<InstanceType<typeof ElTable>>()
 
 const formData = ref<PromotionFormData>({
   name: '',
@@ -526,10 +656,12 @@ function openCreateDialog(): void {
     startTime: '',
     endTime: '',
   }
+  selectedProducts.value = []
+  originalBoundIds.value = []
   dialogVisible.value = true
 }
 
-function openEditDialog(row: SellerPromotion): void {
+async function openEditDialog(row: SellerPromotion): Promise<void> {
   isEdit.value = true
   editingId.value = row.id
 
@@ -544,6 +676,19 @@ function openEditDialog(row: SellerPromotion): void {
     limitQuantity: row.limitQuantity ?? 0,
     startTime: row.startTime,
     endTime: row.endTime,
+  }
+
+  // 載入已綁定商品
+  selectedProducts.value = []
+  originalBoundIds.value = []
+  try {
+    const res = await fetchPromotionProducts(row.id)
+    if (res.success && Array.isArray(res.data)) {
+      selectedProducts.value = res.data as PromotionProduct[]
+      originalBoundIds.value = (res.data as PromotionProduct[]).map(p => p.productId)
+    }
+  } catch {
+    console.error('載入已綁定商品失敗')
   }
 
   dialogVisible.value = true
@@ -580,10 +725,35 @@ async function handleSubmit(): Promise<void> {
       
       if (isEdit.value && editingId.value !== null) {
         await updateSellerPromotion(editingId.value, submitData)
+
+        // 計算商品增減差異
+        const currentIds = new Set(selectedProducts.value.map(p => p.productId))
+        const originalIds = new Set(originalBoundIds.value)
+        const toAdd = [...currentIds].filter(id => !originalIds.has(id))
+        const toRemove = [...originalIds].filter(id => !currentIds.has(id))
+        if (toAdd.length > 0) {
+          await bindPromotionProducts(editingId.value, toAdd)
+        }
+        for (const pid of toRemove) {
+          await unbindPromotionProduct(editingId.value, pid)
+        }
+
         ElMessage.success('活動更新成功')
       } else {
         const response = await createSellerPromotion(submitData)
         console.log('新增活動成功，後端回傳:', response)
+
+        // 綁定商品到新建立的活動
+        if (response?.success && selectedProducts.value.length > 0) {
+          const newId = response.data?.id as number
+          const ids = selectedProducts.value.map(p => p.productId)
+          try {
+            await bindPromotionProducts(newId, ids)
+          } catch {
+            ElMessage.warning('活動已建立，但商品綁定失敗，請稍後在編輯頁補綁')
+          }
+        }
+
         ElMessage.success('活動已送出審核')
       }
       dialogVisible.value = false
@@ -609,6 +779,89 @@ async function handleSubmit(): Promise<void> {
       submitting.value = false
     }
   })
+}
+
+// ─── 商品選擇器 ───────────────────────────────────────────────────
+
+function openProductSelector(): void {
+  selectorKeyword.value = ''
+  selectorPage.value = 1
+  pendingSelection.value = []
+  selectorVisible.value = true
+  void loadSelectorProducts()
+}
+
+async function loadSelectorProducts(): Promise<void> {
+  selectorLoading.value = true
+  try {
+    if (isEdit.value && editingId.value) {
+      // 編輯模式：後端已排除已綁定商品
+      const res = await fetchAvailableProductsForPromotion(editingId.value, {
+        keyword: selectorKeyword.value || undefined,
+        page: selectorPage.value,
+        pageSize: selectorPageSize,
+      })
+      if (res.success) {
+        selectorProducts.value = res.data.items as AvailableProduct[]
+        selectorTotal.value = res.data.totalCount as number
+      }
+    } else {
+      // 新增模式：用賣家商品列表，前端排除已選
+      const res = await fetchSellerProductsSimple({
+        keyword: selectorKeyword.value || undefined,
+        page: selectorPage.value,
+        pageSize: selectorPageSize,
+      })
+      const selectedIds = new Set(selectedProducts.value.map(p => p.productId))
+      selectorProducts.value = (res.items ?? [])
+        .filter(p => !selectedIds.has(p.id))
+        .map(p => ({
+          id: p.id,
+          name: p.name,
+          imageUrl: p.mainImageUrl,
+          minPrice: p.minPrice,
+          maxPrice: p.maxPrice,
+          totalStock: p.totalStock,
+          status: p.status,
+        }))
+      selectorTotal.value = res.totalCount ?? 0
+    }
+  } catch {
+    ElMessage.error('載入商品列表失敗')
+  } finally {
+    selectorLoading.value = false
+  }
+}
+
+function onSelectorSearch(): void {
+  selectorPage.value = 1
+  void loadSelectorProducts()
+}
+
+function handleSelectorSelectionChange(rows: AvailableProduct[]): void {
+  pendingSelection.value = rows
+}
+
+function confirmProductSelection(): void {
+  const selectedIds = new Set(selectedProducts.value.map(p => p.productId))
+  for (const p of pendingSelection.value) {
+    if (!selectedIds.has(p.id)) {
+      selectedProducts.value.push({
+        productId: p.id,
+        productName: p.name,
+        imageUrl: p.imageUrl,
+        minPrice: p.minPrice,
+        originalPrice: p.minPrice ?? 0,
+        discountPrice: null,
+      })
+    }
+  }
+  pendingSelection.value = []
+  selectorVisible.value = false
+}
+
+function removeProduct(productId: number): void {
+  selectedProducts.value = selectedProducts.value.filter(p => p.productId !== productId)
 }
 
 async function handleDelete(id: number): Promise<void> {
@@ -792,5 +1045,80 @@ onMounted(() => {
   font-size: 12px;
   color: #94a3b8;
   margin-top: 4px;
+}
+
+/* 已選商品卡片列表 */
+.selected-products {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.product-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+.product-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: #e2e8f0;
+}
+.product-info {
+  flex: 1;
+  min-width: 0;
+}
+.product-name {
+  font-size: 13px;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.product-price {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+.no-products-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* 商品選擇器 Dialog */
+.selector-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.selector-product-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.selector-thumb {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+.selector-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
 }
 </style>

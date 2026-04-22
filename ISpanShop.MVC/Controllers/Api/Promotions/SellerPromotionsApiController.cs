@@ -98,6 +98,7 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                         PromotionTypeLabel = PromotionService.GetTypeLabel(p.PromotionType),
                         DiscountValue = rule?.DiscountValue,
                         MinimumAmount = rule?.Threshold,
+                        ProductCount = p.PromotionItems?.Count ?? 0,
                         StartTime = p.StartTime,
                         EndTime = p.EndTime,
                         Status = p.Status,

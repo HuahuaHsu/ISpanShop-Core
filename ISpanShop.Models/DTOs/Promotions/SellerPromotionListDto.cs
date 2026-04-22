@@ -11,6 +11,7 @@ namespace ISpanShop.Models.DTOs.Promotions
         public string PromotionTypeLabel { get; set; } = string.Empty;
         public decimal? DiscountValue { get; set; }
         public decimal? MinimumAmount { get; set; }
+        public int ProductCount { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public int Status { get; set; }

@@ -59,6 +59,7 @@ namespace ISpanShop.Repositories.Promotions
 
             var items = await query
                 .Include(p => p.PromotionRules)
+                .Include(p => p.PromotionItems)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
