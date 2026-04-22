@@ -323,7 +323,7 @@ function formatPrice(val: number) {
 
         <div class="discount-row">
           <div class="label">
-            蝦幣折抵
+            點數折抵
             <small class="hint">可用 {{ walletBalance }} 點</small>
           </div>
           <div class="value">
