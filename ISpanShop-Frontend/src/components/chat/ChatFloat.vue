@@ -21,11 +21,12 @@
           </div>
           <div class="session-list">
           <div 
-            v-for="session in sessions" 
+            v-for="session in filteredSessions" 
             :key="session.otherUserId" 
             class="session-item"
             :class="{ active: chatStore.currentChatUser?.id === session.otherUserId }"
             @click="selectUser(session)"
+            @contextmenu.prevent="showSessionContextMenu($event, session)"
           >
             <el-avatar :size="40" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
             <div class="session-info">
@@ -85,7 +86,8 @@
             <div v-if="contextMenu.show" 
                  class="custom-context-menu" 
                  :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
-              <div class="menu-item" v-if="contextMenu.msg?.type === 0" @click="copyText">複製文字</div>
+              <div class="menu-item" v-if="contextMenu.type === 'message' && contextMenu.msg?.type === 0" @click="copyText">複製文字</div>
+              <div class="menu-item" v-if="contextMenu.type === 'session'" @click="handleHideSession">隱藏對話</div>
             </div>
 
             <div class="chat-footer">
@@ -157,7 +159,14 @@ const contextMenu = ref({
   show: false,
   x: 0,
   y: 0,
-  msg: null as any
+  type: 'message' as 'message' | 'session',
+  msg: null as any,
+  session: null as any
+});
+
+const filteredSessions = computed(() => {
+  if (!sessions.value) return [];
+  return sessions.value.filter(s => !chatStore.hiddenUserIds.has(s.otherUserId));
 });
 
 const showContextMenu = (e: MouseEvent, msg: any) => {
@@ -165,13 +174,41 @@ const showContextMenu = (e: MouseEvent, msg: any) => {
     show: true,
     x: e.clientX,
     y: e.clientY,
-    msg: msg
+    type: 'message',
+    msg: msg,
+    session: null
   };
+  setupCloseMenu();
+};
+
+const showSessionContextMenu = (e: MouseEvent, session: any) => {
+  contextMenu.value = {
+    show: true,
+    x: e.clientX,
+    y: e.clientY,
+    type: 'session',
+    msg: null,
+    session: session
+  };
+  setupCloseMenu();
+};
+
+const setupCloseMenu = () => {
   const closeMenu = () => {
     contextMenu.value.show = false;
     document.removeEventListener('click', closeMenu);
   };
   setTimeout(() => document.addEventListener('click', closeMenu), 0);
+};
+
+const handleHideSession = () => {
+  if (contextMenu.value.session) {
+    chatStore.hideSession(contextMenu.value.session.otherUserId);
+    if (chatStore.currentChatUser?.id === contextMenu.value.session.otherUserId) {
+      chatStore.currentChatUser = { id: null, name: '' };
+    }
+    ElMessage.success('已隱藏對話');
+  }
 };
 
 const copyText = () => {
@@ -250,7 +287,9 @@ const toggleChat = () => {
 };
 
 const selectUser = async (session: any) => {
+  // 先切換使用者，這會讓標題立刻改變
   chatStore.openChatWithUser(session.otherUserId, session.otherUserName);
+  // fetchHistory 內部現在會清空訊息，所以畫面會立刻變空白
   await fetchHistory(session.otherUserId);
   scrollToBottom();
   fetchSessions();
@@ -284,6 +323,14 @@ watch(() => chatStore.isChatOpen, (newVal) => {
   if (newVal) {
     fetchSessions();
     if (chatStore.currentChatUser?.id) fetchHistory(chatStore.currentChatUser.id);
+  }
+});
+
+// --- 新增：監聽聊天對象 ID 的變化 ---
+watch(() => chatStore.currentChatUser?.id, (newId) => {
+  if (newId && chatStore.isChatOpen) {
+    fetchHistory(newId);
+    scrollToBottom();
   }
 });
 

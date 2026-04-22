@@ -2,10 +2,12 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import * as signalR from '@microsoft/signalr';
 import axios from 'axios';
 import { useAuthStore } from '../stores/auth';
+import { useChatStore } from '../stores/chat';
 import type { ChatMessage } from '../types/chat';
 
 export function useChat() {
   const authStore = useAuthStore();
+  const chatStore = useChatStore(); // 確保可以使用 chatStore
   const connection = ref<signalR.HubConnection | null>(null);
   const messages = ref<ChatMessage[]>([]);
   const sessions = ref<any[]>([]);
@@ -27,6 +29,12 @@ export function useChat() {
     // 監聽接收訊息
     connection.value.on('ReceiveMessage', (senderId: number, content: string, type: number) => {
       console.log('SignalR ReceiveMessage:', { senderId, content });
+
+      // --- 新增：收到新訊息時解除隱藏 ---
+      if (chatStore.hiddenUserIds.has(senderId)) {
+        chatStore.hiddenUserIds.delete(senderId);
+      }
+
       messages.value.push({
         senderId,
         receiverId: authStore.memberInfo.memberId, 
@@ -48,6 +56,7 @@ export function useChat() {
   };
 
   const fetchHistory = async (otherUserId: number) => {
+    messages.value = []; // --- 新增：切換時立即清空舊訊息 ---
     try {
       const response = await axios.get(`https://localhost:7125/api/chat/history/${otherUserId}`, {
         headers: { Authorization: `Bearer ${authStore.token}` }
