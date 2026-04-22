@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { getMyTickets, createTicket } from '@/api/support';
 import { SUPPORT_CATEGORIES, TICKET_STATUS, type SupportTicket } from '@/types/support';
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 import { ChatDotSquare, Plus, Refresh } from '@element-plus/icons-vue';
 
+const route = useRoute();
 // 列表資料
 const tickets = ref<SupportTicket[]>([]);
 const loading = ref(false);
@@ -87,7 +89,17 @@ const formatDate = (dateStr?: string) => {
   return new Date(dateStr).toLocaleString('zh-TW');
 };
 
-onMounted(fetchTickets);
+onMounted(() => {
+  fetchTickets();
+  
+  // 處理從訂單詳情跳轉過來的申訴
+  if (route.query.orderId) {
+    formModel.value.orderId = Number(route.query.orderId);
+    formModel.value.category = 0; // 預設為訂單問題
+    formModel.value.subject = `關於訂單 #${route.query.orderId} 的申訴`;
+    dialogVisible.value = true;
+  }
+});
 </script>
 
 <template>
