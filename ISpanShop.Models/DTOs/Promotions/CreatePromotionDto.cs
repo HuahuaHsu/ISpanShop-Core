@@ -21,5 +21,16 @@ namespace ISpanShop.Models.DTOs.Promotions
 
         [Required(ErrorMessage = "結束時間為必填")]
         public DateTime EndTime { get; set; }
+
+        /// <summary>折扣值（Type1=百分比 off；Type2=折抵金額；Type3=每件折抵金額）</summary>
+        [Range(0, 9999999, ErrorMessage = "折扣值不能為負數")]
+        public decimal? DiscountValue { get; set; }
+
+        /// <summary>滿額門檻（Type2 滿額折扣用）</summary>
+        [Range(0, 9999999, ErrorMessage = "滿額門檻不能為負數")]
+        public decimal? MinimumAmount { get; set; }
+
+        /// <summary>限量數量（Type3 限量搶購用，前端顯示用，目前不持久化到獨立欄位）</summary>
+        public int? LimitQuantity { get; set; }
     }
 }

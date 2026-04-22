@@ -84,6 +84,20 @@
           <el-tag :type="getTypeTagColor(row.promotionType)" size="small">{{ row.promotionTypeLabel }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="折扣資訊" min-width="150">
+        <template #default="{ row }">
+          <div v-if="row.promotionType === 1">
+            折扣：{{ row.discountValue ?? '--' }}% off
+          </div>
+          <div v-else-if="row.promotionType === 2">
+            <div>滿 {{ row.minimumAmount ?? '--' }} 折 {{ row.discountValue ?? '--' }} 元</div>
+          </div>
+          <div v-else-if="row.promotionType === 3">
+            折扣：{{ row.discountValue ?? '--' }} 元
+          </div>
+          <div v-else>--</div>
+        </template>
+      </el-table-column>
       <el-table-column label="時間區間" min-width="280">
         <template #default="{ row }">
           {{ formatDateRange(row.startTime, row.endTime) }}
@@ -303,28 +317,15 @@ import {
 
 // ─── 介面定義 ─────────────────────────────────────────────────────
 
-// TODO: 後端 GET /api/seller/promotions 回傳的活動物件目前缺少以下欄位：
-// - discountValue (折扣值)
-// - minimumAmount (滿額門檻，滿額折扣用)
-// - limitQuantity (限量數量，限量搶購用)
-// 
-// 目前後端只回傳：
-// {
-//   id, name, description, promotionType, promotionTypeLabel,
-//   startTime, endTime, status, statusText, rejectReason, createdAt, reviewedAt
-// }
-//
-// 需要請後端補上折扣相關欄位，否則編輯時無法帶入原本的折扣值
-
 interface SellerPromotion {
   id: number
   name: string
   description: string | null
   promotionType: number
   promotionTypeLabel: string
-  discountValue?: number       // TODO: 後端需補此欄位
-  minimumAmount?: number       // TODO: 後端需補此欄位 (滿額折扣用)
-  limitQuantity?: number       // TODO: 後端需補此欄位 (限量搶購用)
+  discountValue?: number       // from PromotionRule.DiscountValue
+  minimumAmount?: number       // from PromotionRule.Threshold (滿額折扣用)
+  limitQuantity?: number       // 限量搶購用，目前後端未存此欄位
   startTime: string
   endTime: string
   status: number
@@ -531,40 +532,20 @@ function openCreateDialog(): void {
 function openEditDialog(row: SellerPromotion): void {
   isEdit.value = true
   editingId.value = row.id
-  
-  // Debug: 印出原始資料確認欄位
-  console.log('=== 編輯活動 DEBUG ===')
-  console.log('編輯活動原始資料 (完整物件):', JSON.stringify(row, null, 2))
-  console.log('活動名稱:', row.name)
-  console.log('promotionType:', row.promotionType)
-  console.log('discountValue:', row.discountValue)
-  console.log('minimumAmount:', row.minimumAmount)
-  console.log('limitQuantity:', row.limitQuantity)
-  
-  // TODO: 後端目前沒有回傳 discountValue, minimumAmount, limitQuantity 欄位
-  // 需要請後端在 GET /api/seller/promotions 的回傳 DTO 中補上這些欄位
-  // 目前暫時設為 0，等後端補充
-  
+
+  console.log('editing item:', JSON.stringify(row))
+
   formData.value = {
     name: row.name,
     description: row.description || '',
     promotionType: row.promotionType,
-    discountValue: row.discountValue ?? 0,      // TODO: 後端需補此欄位
-    minimumAmount: row.minimumAmount ?? 0,      // TODO: 後端需補此欄位
-    limitQuantity: row.limitQuantity ?? 0,      // TODO: 後端需補此欄位
+    discountValue: row.discountValue ?? 0,
+    minimumAmount: row.minimumAmount ?? 0,
+    limitQuantity: row.limitQuantity ?? 0,
     startTime: row.startTime,
     endTime: row.endTime,
   }
-  
-  // Debug: 印出帶入表單的值
-  console.log('帶入表單的值:', formData.value)
-  console.log('=== DEBUG 結束 ===')
-  
-  // 如果沒有折扣相關欄位，提示使用者
-  if (row.discountValue === undefined && row.minimumAmount === undefined) {
-    ElMessage.warning('後端未回傳折扣資訊，編輯時請重新輸入折扣值')
-  }
-  
+
   dialogVisible.value = true
 }
 

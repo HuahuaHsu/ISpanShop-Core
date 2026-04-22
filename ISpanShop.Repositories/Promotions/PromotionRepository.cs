@@ -58,6 +58,7 @@ namespace ISpanShop.Repositories.Promotions
             var totalCount = await query.CountAsync();
 
             var items = await query
+                .Include(p => p.PromotionRules)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

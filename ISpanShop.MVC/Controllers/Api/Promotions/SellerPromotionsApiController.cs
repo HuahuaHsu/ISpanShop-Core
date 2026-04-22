@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using ISpanShop.Models.EfModels;
 using ISpanShop.Services.Promotions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ISpanShop.MVC.Controllers.Api.Promotions
 {
@@ -18,10 +20,32 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
     public class SellerPromotionsApiController : ControllerBase
     {
         private readonly PromotionService _promotionService;
+        private readonly ISpanShopDBContext _db;
 
-        public SellerPromotionsApiController(PromotionService promotionService)
+        public SellerPromotionsApiController(PromotionService promotionService, ISpanShopDBContext db)
         {
             _promotionService = promotionService;
+            _db = db;
+        }
+
+        /// <summary>
+        /// 根據活動類型與前端傳入的折扣值建立 PromotionRule 清單。
+        /// Type1（限時特賣）→ DiscountType=2（百分比）；Type2（滿額折扣）→ DiscountType=1（金額）+ Threshold；
+        /// Type3（限量搶購）→ DiscountType=1（金額）。
+        /// </summary>
+        private static List<PromotionRule> BuildRules(int promotionType, decimal? discountValue, decimal? minimumAmount)
+        {
+            var rules = new List<PromotionRule>();
+            if (discountValue is null or <= 0) return rules;
+
+            rules.Add(new PromotionRule
+            {
+                RuleType      = 1,
+                Threshold     = (promotionType == 2 ? minimumAmount : null) ?? 0,
+                DiscountType  = promotionType == 1 ? 2 : 1,   // 1=限時特賣 → 百分比(2)；其他 → 金額(1)
+                DiscountValue = discountValue.Value
+            });
+            return rules;
         }
 
         private int GetCurrentUserId()
@@ -62,20 +86,26 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                 var (items, totalCount) = await _promotionService.GetSellerPromotionsAsync(
                     sellerId, statusFilter, page, pageSize);
 
-                var dtoItems = items.Select(p => new SellerPromotionListDto
+                var dtoItems = items.Select(p =>
                 {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    PromotionType = p.PromotionType,
-                    PromotionTypeLabel = PromotionService.GetTypeLabel(p.PromotionType),
-                    StartTime = p.StartTime,
-                    EndTime = p.EndTime,
-                    Status = p.Status,
-                    StatusText = PromotionService.GetStatusText(p.Status, p.StartTime, p.EndTime),
-                    RejectReason = p.RejectReason,
-                    CreatedAt = p.CreatedAt,
-                    ReviewedAt = p.ReviewedAt
+                    var rule = p.PromotionRules?.FirstOrDefault();
+                    return new SellerPromotionListDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        PromotionType = p.PromotionType,
+                        PromotionTypeLabel = PromotionService.GetTypeLabel(p.PromotionType),
+                        DiscountValue = rule?.DiscountValue,
+                        MinimumAmount = rule?.Threshold,
+                        StartTime = p.StartTime,
+                        EndTime = p.EndTime,
+                        Status = p.Status,
+                        StatusText = PromotionService.GetStatusText(p.Status, p.StartTime, p.EndTime),
+                        RejectReason = p.RejectReason,
+                        CreatedAt = p.CreatedAt,
+                        ReviewedAt = p.ReviewedAt
+                    };
                 }).ToList();
 
                 var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -134,7 +164,8 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                     Description = dto.Description ?? string.Empty,
                     PromotionType = dto.PromotionType,
                     StartTime = dto.StartTime,
-                    EndTime = dto.EndTime
+                    EndTime = dto.EndTime,
+                    PromotionRules = BuildRules(dto.PromotionType, dto.DiscountValue, dto.MinimumAmount)
                 };
 
                 var created = await _promotionService.CreatePromotionAsync(promotion);
@@ -185,6 +216,7 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                     return StatusCode(403, new { success = false, message = "無權存取此活動" });
                 }
 
+                var detailRule = promotion.PromotionRules?.FirstOrDefault();
                 return Ok(new
                 {
                     success = true,
@@ -195,6 +227,8 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                         Description = promotion.Description,
                         PromotionType = promotion.PromotionType,
                         PromotionTypeLabel = PromotionService.GetTypeLabel(promotion.PromotionType),
+                        DiscountValue = detailRule?.DiscountValue,
+                        MinimumAmount = detailRule?.Threshold,
                         StartTime = promotion.StartTime,
                         EndTime = promotion.EndTime,
                         Status = promotion.Status,
@@ -265,6 +299,17 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                 promotion.RejectReason = null;
 
                 await _promotionService.UpdatePromotionAsync(promotion);
+
+                // 替換折扣規則：先刪除舊規則，再寫入新規則
+                var oldRules = await _db.PromotionRules.Where(r => r.PromotionId == id).ToListAsync();
+                _db.PromotionRules.RemoveRange(oldRules);
+                var newRules = BuildRules(dto.PromotionType, dto.DiscountValue, dto.MinimumAmount);
+                foreach (var rule in newRules)
+                {
+                    rule.PromotionId = id;
+                    _db.PromotionRules.Add(rule);
+                }
+                await _db.SaveChangesAsync();
 
                 return Ok(new { success = true, message = "活動更新成功，重新送審中" });
             }
