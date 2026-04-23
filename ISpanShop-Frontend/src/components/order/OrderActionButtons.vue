@@ -68,7 +68,7 @@ const handlePay = async () => {
   // 讓結帳頁進入「支付確認模式」，而非「建立訂單模式」
   router.push({
     path: '/checkout',
-    query: { orderId: props.orderId }
+    query: { orderId: props.orderId, mode: 'payment' }
   });
 };
 
@@ -124,20 +124,41 @@ const handleRefundDetail = () => {
   router.push(`/member/orders/${props.orderId}/refund/detail`);
 };
 
-const handleReview = () => {
-  router.push(`/member/orders/${props.orderId}/review`);
-};
+const handleRebuy = async () => {
+  try {
+    loading.value = true;
+    const res = await getOrderDetailApi(props.orderId);
+    const order = res.data;
+    
+    if (!order.items || order.items.length === 0) {
+      ElMessage.warning('無法取得訂單商品資訊');
+      return;
+    }
 
-const handleAppeal = () => {
-  router.push({
-    path: '/member/support',
-    query: { orderId: props.orderId.toString() }
-  });
-};
+    // 將訂單中的所有商品加入購物車
+    for (const item of order.items) {
+      cartStore.addItem({
+        productId: item.productId,
+        variantId: item.variantId || null,
+        name: item.productName,
+        image: item.coverImage || '',
+        price: item.price,
+        quantity: item.quantity,
+        specLabel: item.variantName || '',
+        storeId: order.storeId,
+        storeName: order.storeName,
+        storeStatus: 1, // 預設正常，實際可能需要從商品詳情再確認
+      });
+    }
 
-const handleRebuy = () => {
-  // 再次購買邏輯，通常是導向商品頁或直接加購物車
-  ElMessage.info('再次購買功能開發中...');
+    ElMessage.success('已將商品重新加入購物車');
+    router.push('/cart');
+  } catch (error) {
+    console.error('再次購買失敗', error);
+    ElMessage.error('操作失敗，請稍後再試');
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 

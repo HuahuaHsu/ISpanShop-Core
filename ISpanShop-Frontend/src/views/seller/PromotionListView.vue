@@ -515,6 +515,29 @@ const editingId = ref<number | null>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
 
+// 輔助函式：格式化日期為 YYYY-MM-DDTHH:mm:ss
+const getFormattedDate = (date: Date) => {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}`;
+};
+
+const getDefaultDates = () => {
+  const now = new Date();
+  const nextMonth = new Date();
+  nextMonth.setMonth(now.getMonth() + 1);
+  return {
+    start: getFormattedDate(now),
+    end: getFormattedDate(nextMonth)
+  };
+};
+
+const defaultDates = getDefaultDates();
+
 // ─── 商品選擇器狀態 ───────────────────────────────────────────────
 
 const selectedProducts = ref<PromotionProduct[]>([])
@@ -536,8 +559,8 @@ const formData = ref<PromotionFormData>({
   discountValue: 0,
   minimumAmount: 0,
   limitQuantity: 0,
-  startTime: '',
-  endTime: '',
+  startTime: defaultDates.start,
+  endTime: defaultDates.end,
 })
 
 const formRules: FormRules = {
@@ -646,6 +669,7 @@ async function loadPromotions(): Promise<void> {
 function openCreateDialog(): void {
   isEdit.value = false
   editingId.value = null
+  const dates = getDefaultDates()
   formData.value = {
     name: '',
     description: '',
@@ -653,8 +677,8 @@ function openCreateDialog(): void {
     discountValue: 0,
     minimumAmount: 0,
     limitQuantity: 0,
-    startTime: '',
-    endTime: '',
+    startTime: dates.start,
+    endTime: dates.end,
   }
   selectedProducts.value = []
   originalBoundIds.value = []
