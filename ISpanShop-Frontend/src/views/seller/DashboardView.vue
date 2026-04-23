@@ -89,20 +89,20 @@
       </template>
       <!-- TODO: 呼叫後端 GET /api/seller/orders?pageSize=5&page=1 取得真實訂單 -->
       <el-table :data="recentOrders" stripe class="orders-table">
-        <el-table-column prop="orderNumber" label="訂單編號" width="160" />
-        <el-table-column prop="buyerName" label="買家" width="100" />
+        <el-table-column prop="orderNumber" label="訂單編號" width="190" class-name="no-wrap" />
+        <el-table-column prop="buyerName" label="買家" width="140" class-name="no-wrap" />
         <el-table-column prop="productName" label="商品" show-overflow-tooltip />
-        <el-table-column prop="amount" label="金額" width="100">
+        <el-table-column prop="amount" label="金額" width="110">
           <template #default="{ row }">
-            NT$ {{ row.amount.toLocaleString() }}
+            <span class="no-wrap">NT$ {{ row.amount.toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="狀態" width="100">
+        <el-table-column prop="status" label="狀態" width="85">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)" size="small">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="建立時間" width="140" />
+        <el-table-column prop="createdAt" label="建立時間" width="150" />
       </el-table>
       <el-empty v-if="recentOrders.length === 0" description="暫無訂單" :image-size="60" />
     </el-card>
@@ -384,4 +384,10 @@ function statusTagType(status: string): 'success' | 'warning' | 'danger' | 'info
   border-radius: 12px !important;
 }
 .orders-table { width: 100%; }
+
+:deep(.no-wrap),
+:deep(.no-wrap .cell) {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
 </style>
