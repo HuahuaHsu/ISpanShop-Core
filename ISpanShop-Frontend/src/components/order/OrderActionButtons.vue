@@ -19,6 +19,8 @@
 
     <!-- 狀態 3: 已完成 -->
     <template v-if="status === 3">
+      <el-button type="success" size="default" @click="handleReview">評價回饋</el-button>
+      <el-button type="warning" size="default" @click="handleAppeal">訂單申訴</el-button>
       <el-button type="primary" plain size="default" @click="handleRebuy">再次購買</el-button>
       <el-button @click="handleRefund" :loading="loading" size="default">申請退貨/退款</el-button>
     </template>
@@ -77,7 +79,7 @@ const handleCancel = async () => {
       cancelButtonText: '再想想',
       type: 'warning'
     });
-    
+
     loading.value = true;
     await cancelOrderApi(props.orderId);
     ElMessage.success('訂單已取消');
@@ -99,7 +101,7 @@ const handleConfirmReceipt = async () => {
       cancelButtonText: '取消',
       type: 'success'
     });
-    
+
     loading.value = true;
     await confirmReceiptApi(props.orderId);
     ElMessage.success('訂單已完成，感謝您的購物！');
@@ -120,6 +122,17 @@ const handleRefund = () => {
 
 const handleRefundDetail = () => {
   router.push(`/member/orders/${props.orderId}/refund/detail`);
+};
+
+const handleReview = () => {
+  router.push(`/member/orders/${props.orderId}/review`);
+};
+
+const handleAppeal = () => {
+  router.push({
+    path: '/member/support',
+    query: { orderId: props.orderId.toString() }
+  });
 };
 
 const handleRebuy = () => {
