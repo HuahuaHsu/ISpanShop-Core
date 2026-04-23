@@ -325,5 +325,82 @@ namespace ISpanShop.Services.Stores
             _context.Orders.Update(order);
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<SellerOrderDetailDto> GetSellerOrderDetailAsync(int userId, long orderId)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) throw new Exception("找不到您的賣場");
+
+            var order = await _context.Orders
+                .Include(o => o.User)
+                    .ThenInclude(u => u.MemberProfile)
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.StoreId == store.Id);
+
+            if (order == null) throw new Exception("找不到該筆訂單或該訂單不屬於您的賣場");
+
+            return new SellerOrderDetailDto
+            {
+                Id = order.Id,
+                OrderNumber = order.OrderNumber,
+                CreatedAt = order.CreatedAt ?? DateTime.MinValue,
+                PaymentDate = order.PaymentDate,
+                CompletedAt = order.CompletedAt,
+                Status = (OrderStatus)order.Status,
+                StatusName = ((OrderStatus)order.Status).GetDisplayName(),
+                
+                // 買家資訊
+                UserId = order.UserId,
+                BuyerAccount = order.User?.Account ?? "未知",
+                BuyerName = order.User?.MemberProfile?.FullName ?? order.User?.Account ?? "未知",
+                BuyerPhone = order.User?.MemberProfile?.PhoneNumber ?? "未填寫",
+                BuyerEmail = order.User?.Email ?? "未填寫",
+
+                // 收件資訊
+                RecipientName = order.RecipientName,
+                RecipientPhone = order.RecipientPhone,
+                RecipientAddress = order.RecipientAddress,
+                Note = order.Note,
+
+                // 金額
+                TotalAmount = order.TotalAmount,
+                ShippingFee = order.ShippingFee,
+                DiscountAmount = order.DiscountAmount,
+                PointDiscount = order.PointDiscount,
+                FinalAmount = order.FinalAmount,
+
+                Items = order.OrderDetails.Select(od => {
+                    string image = od.CoverImage;
+                    if (string.IsNullOrEmpty(image))
+                    {
+                        image = _context.ProductImages
+                            .Where(pi => pi.ProductId == od.ProductId && pi.IsMain == true)
+                            .Select(pi => pi.ImageUrl)
+                            .FirstOrDefault();
+                    }
+
+                    if (!string.IsNullOrEmpty(image) && !image.StartsWith("http") && !image.StartsWith("/"))
+                    {
+                        image = "/" + image;
+                    }
+
+                    return new SellerOrderItemDto
+                    {
+                        Id = od.Id,
+                        ProductId = od.ProductId,
+                        VariantId = od.VariantId,
+                        ProductName = od.ProductName,
+                        VariantName = od.VariantName,
+                        SkuCode = od.SkuCode,
+                        CoverImage = image,
+                        Price = od.Price ?? 0,
+                        Quantity = od.Quantity
+                    };
+                }).ToList()
+            };
+        }
     }
 }

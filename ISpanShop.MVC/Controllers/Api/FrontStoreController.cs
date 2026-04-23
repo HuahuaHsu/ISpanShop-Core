@@ -45,6 +45,26 @@ namespace ISpanShop.MVC.Controllers.Api
         }
 
         /// <summary>
+        /// 取得賣家視角的訂單詳情
+        /// </summary>
+        [HttpGet("orders/{orderId}")]
+        public async Task<IActionResult> GetSellerOrderDetail(long orderId)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+                var detail = await _storeService.GetSellerOrderDetailAsync(userId, orderId);
+                return Ok(detail);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// 更新訂單狀態 (例如出貨)
         /// </summary>
         [HttpPut("orders/{orderId}/status")]

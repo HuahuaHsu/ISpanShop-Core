@@ -227,7 +227,7 @@ const handleCancel = (orderId: number) => {
 };
 
 const goToDetail = (id: number) => {
-  ElMessage.info('訂單詳情開發中...');
+  router.push(`/seller/orders/${id}`);
 };
 
 const formatDate = (dateStr: string) => {

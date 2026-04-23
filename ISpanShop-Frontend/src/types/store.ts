@@ -63,3 +63,45 @@ export interface SellerOrder {
   firstProductImage: string
   totalItemCount: number
 }
+
+export interface SellerOrderDetail {
+  id: number
+  orderNumber: string
+  createdAt: string
+  paymentDate: string | null
+  completedAt: string | null
+  status: number
+  statusName: string
+  
+  userId: number
+  buyerAccount: string
+  buyerName: string
+  buyerPhone: string
+  buyerEmail: string
+
+  recipientName: string
+  recipientPhone: string
+  recipientAddress: string
+  note: string
+
+  totalAmount: number
+  shippingFee: number
+  discountAmount: number
+  pointDiscount: number
+  finalAmount: number
+
+  items: SellerOrderItem[]
+}
+
+export interface SellerOrderItem {
+  id: number
+  productId: number
+  variantId: number | null
+  productName: string
+  variantName: string
+  skuCode: string
+  coverImage: string
+  price: number
+  quantity: number
+  subtotal: number
+}

@@ -44,6 +44,13 @@ export const getSellerOrdersApi = (params: { status?: number, page?: number, pag
 }
 
 /**
+ * 取得賣家視角的訂單詳情
+ */
+export const getSellerOrderDetailApi = (orderId: string | number) => {
+  return axios.get<SellerOrderDetail>(`/api/front/store/orders/${orderId}`)
+}
+
+/**
  * 更新賣家訂單狀態 (如：安排出貨)
  */
 export const updateSellerOrderStatusApi = (orderId: number, status: number) => {
