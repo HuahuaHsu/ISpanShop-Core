@@ -26,23 +26,41 @@ const authStore = useAuthStore();
 const router = useRouter();
 
 // ── Lifecycle ──────────────────────────────────────
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { checkoutApi } from "@/api/checkout";
 import { getMyCoupons } from "@/api/coupon";
+import { getMyOrdersApi } from "@/api/order";
 
 const liveBalance = ref<number | null>(null);
 const liveCouponCount = ref<number>(0);
+const orderCounts = ref({
+  pending: 0,
+  processing: 0,
+  shipped: 0,
+  completed: 0
+});
 
 onMounted(async () => {
   try {
-    const [walletRes, couponsRes] = await Promise.all([
+    const [walletRes, couponsRes, ordersRes] = await Promise.all([
       checkoutApi.getWalletBalance(),
-      getMyCoupons()
+      getMyCoupons(),
+      getMyOrdersApi()
     ]);
     
-    console.log('Member Center Wallet Sync:', walletRes.data);
+    console.log('Member Center Data Sync:', { wallet: walletRes.data, orders: ordersRes.data });
+    
     liveBalance.value = walletRes.data.pointBalance ?? walletRes.data.balance ?? 0;
     liveCouponCount.value = couponsRes.data.length;
+
+    // 計算訂單各狀態數量
+    const allOrders = ordersRes.data;
+    orderCounts.value = {
+      pending: allOrders.filter(o => o.status === 0).length,
+      processing: allOrders.filter(o => o.status === 1).length,
+      shipped: allOrders.filter(o => o.status === 2).length,
+      completed: allOrders.filter(o => o.status === 3).length
+    };
 
     // 同步更新 store 中的資料並持久化
     authStore.updatePoints(liveBalance.value);
@@ -57,11 +75,19 @@ const go = (name: string) => {
       router.push('/member/settings');
       break;
     case '所有訂單':
-    case '待付款':
-    case '待出貨':
-    case '待收貨':
-    case '評價':
       router.push('/member/orders');
+      break;
+    case '待付款':
+      router.push({ path: '/member/orders', query: { tab: '0' } });
+      break;
+    case '待出貨':
+      router.push({ path: '/member/orders', query: { tab: '1' } });
+      break;
+    case '待收貨':
+      router.push({ path: '/member/orders', query: { tab: '2' } });
+      break;
+    case '評價':
+      router.push({ path: '/member/orders', query: { tab: '3' } });
       break;
     case '紅利點數':
       router.push('/member/wallet');
@@ -83,13 +109,13 @@ const go = (name: string) => {
   }
 };
 
-// ── Mock Data ──────────────────────────────────────
-const orders = [
-  { label: "待付款", icon: "💳", badge: 2 },
-  { label: "待出貨", icon: "📦", badge: 0 },
-  { label: "待收貨", icon: "🚚", badge: 1 },
-  { label: "評價",   icon: "⭐", badge: 0 },
-];
+// ── UI Data ──────────────────────────────────────
+const orders = computed(() => [
+  { label: "待付款", icon: "💳", badge: orderCounts.value.pending },
+  { label: "待出貨", icon: "📦", badge: orderCounts.value.processing },
+  { label: "待收貨", icon: "🚚", badge: orderCounts.value.shipped },
+  { label: "評價",   icon: "⭐", badge: orderCounts.value.completed },
+]);
 
 const services = [
   { label: "我的賣場", icon: "🏪", bg: "#FFF0EB" },
