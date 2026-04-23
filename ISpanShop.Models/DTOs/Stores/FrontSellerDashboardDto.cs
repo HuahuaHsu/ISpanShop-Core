@@ -8,6 +8,18 @@ namespace ISpanShop.Models.DTOs.Stores
         public SellerKpiDto Kpis { get; set; }
         public ApexChartDataDto SalesTrend { get; set; }
         public List<TopProductSalesDto> TopProducts { get; set; }
+        public List<RecentOrderDto> RecentOrders { get; set; }
+    }
+
+    public class RecentOrderDto
+    {
+        public long OrderId { get; set; }
+        public string OrderNumber { get; set; }
+        public string BuyerName { get; set; }
+        public string ProductName { get; set; } // 顯示第一件商品或摘要
+        public decimal Amount { get; set; }
+        public string Status { get; set; }
+        public string CreatedAt { get; set; }
     }
 
     public class SellerKpiDto

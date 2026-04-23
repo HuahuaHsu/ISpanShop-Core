@@ -37,4 +37,15 @@ export interface SellerDashboardData {
     salesVolume: number
     salesRevenue: number
   }>
+  recentOrders: RecentOrder[]
+}
+
+export interface RecentOrder {
+  orderId: number
+  orderNumber: string
+  buyerName: string
+  productName: string
+  amount: number
+  status: string
+  createdAt: string
 }

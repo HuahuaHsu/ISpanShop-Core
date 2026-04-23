@@ -7,6 +7,8 @@ using ISpanShop.Models.DTOs.Stores;
 using ISpanShop.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 
+using ISpanShop.Common.Enums;
+
 namespace ISpanShop.Services.Stores
 {
 
@@ -35,20 +37,20 @@ namespace ISpanShop.Services.Stores
             var kpis = new SellerKpiDto
             {
                 TotalRevenue = await _context.Orders
-                    .Where(o => o.StoreId == storeId && o.Status == 3) // 已完成
+                    .Where(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Completed) 
                     .SumAsync(o => o.FinalAmount),
                 
                 TotalOrders = await _context.Orders
                     .CountAsync(o => o.StoreId == storeId),
                 
                 PendingOrders = await _context.Orders
-                    .CountAsync(o => o.StoreId == storeId && o.Status == 1), // 待出貨
+                    .CountAsync(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Processing), // 待出貨
                 
                 TotalProducts = await _context.Products
                     .CountAsync(p => p.StoreId == storeId && p.IsDeleted != true),
                 
                 LowStockCount = await _context.ProductVariants
-                    .CountAsync(v => v.Product.StoreId == storeId && v.IsDeleted != true && v.Stock <= 10) // 假設低於10為低庫存
+                    .CountAsync(v => v.Product.StoreId == storeId && v.IsDeleted != true && v.Stock <= 10) 
             };
 
             // 2. 銷售趨勢 (近 7 日)
@@ -56,13 +58,13 @@ namespace ISpanShop.Services.Stores
             var startDate = DateTime.Today.AddDays(-6);
             
             var dailySales = await _context.Orders
-                .Where(o => o.StoreId == storeId && o.Status == 3 && o.CreatedAt >= startDate && o.CreatedAt < endDate)
+                .Where(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt < endDate)
                 .GroupBy(o => o.CreatedAt.Value.Date)
                 .Select(g => new { Date = g.Key, Amount = g.Sum(o => o.FinalAmount) })
                 .ToListAsync();
 
             var salesTrend = new ApexChartDataDto();
-            var series = new ChartSeriesDto { Name = "營收" };
+            var series = new ChartSeriesDto { Name = "營營收" };
             
             for (int i = 0; i < 7; i++)
             {
@@ -76,7 +78,7 @@ namespace ISpanShop.Services.Stores
             // 3. 熱銷商品排行 (前 5 名)
             var topProducts = await _context.OrderDetails
                 .Include(od => od.Order)
-                .Where(od => od.Order.StoreId == storeId && od.Order.Status == 3)
+                .Where(od => od.Order.StoreId == storeId && od.Order.Status == (byte)OrderStatus.Completed)
                 .GroupBy(od => od.ProductName)
                 .Select(g => new TopProductSalesDto
                 {
@@ -88,11 +90,31 @@ namespace ISpanShop.Services.Stores
                 .Take(5)
                 .ToListAsync();
 
+            // 4. 近期訂單 (前 5 筆)
+            var recentOrders = await _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                .Where(o => o.StoreId == storeId)
+                .OrderByDescending(o => o.CreatedAt)
+                .Take(5)
+                .Select(o => new RecentOrderDto
+                {
+                    OrderId = o.Id,
+                    OrderNumber = o.OrderNumber,
+                    BuyerName = o.User.Account, // 或使用 FullName
+                    ProductName = o.OrderDetails.FirstOrDefault().ProductName + (o.OrderDetails.Count > 1 ? " 等..." : ""),
+                    Amount = o.FinalAmount,
+                    Status = ((OrderStatus)o.Status).GetDisplayName(),
+                    CreatedAt = o.CreatedAt.Value.ToString("yyyy/MM/dd HH:mm")
+                })
+                .ToListAsync();
+
             return new FrontSellerDashboardDto
             {
                 Kpis = kpis,
                 SalesTrend = salesTrend,
-                TopProducts = topProducts
+                TopProducts = topProducts,
+                RecentOrders = recentOrders
             };
         }
 
