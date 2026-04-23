@@ -43,22 +43,38 @@ namespace ISpanShop.Services.Stores
             var ordersPrev7Days = await _context.Orders
                 .CountAsync(o => o.StoreId == storeId && o.CreatedAt >= prev7DaysStart && o.CreatedAt < last7DaysStart);
 
-            string growthRateStr = "0%";
-            string growthType = "neutral";
+            var revenueLast7Days = await _context.Orders
+                .Where(o => o.StoreId == storeId && o.CreatedAt >= last7DaysStart && o.CreatedAt < now && o.Status == (byte)OrderStatus.Completed)
+                .SumAsync(o => o.FinalAmount);
 
+            var revenuePrev7Days = await _context.Orders
+                .Where(o => o.StoreId == storeId && o.CreatedAt >= prev7DaysStart && o.CreatedAt < last7DaysStart && o.Status == (byte)OrderStatus.Completed)
+                .SumAsync(o => o.FinalAmount);
+
+            string orderGrowthRateStr = "0%";
+            string orderGrowthType = "neutral";
             if (ordersPrev7Days == 0)
             {
-                if (ordersLast7Days > 0)
-                {
-                    growthRateStr = "100%";
-                    growthType = "up";
-                }
+                if (ordersLast7Days > 0) { orderGrowthRateStr = "100%"; orderGrowthType = "up"; }
             }
             else
             {
                 double rate = (double)(ordersLast7Days - ordersPrev7Days) / ordersPrev7Days;
-                growthRateStr = Math.Abs(rate).ToString("P0");
-                growthType = rate > 0 ? "up" : (rate < 0 ? "down" : "neutral");
+                orderGrowthRateStr = Math.Abs(rate).ToString("P0");
+                orderGrowthType = rate > 0 ? "up" : (rate < 0 ? "down" : "neutral");
+            }
+
+            string revGrowthRateStr = "0%";
+            string revGrowthType = "neutral";
+            if (revenuePrev7Days == 0)
+            {
+                if (revenueLast7Days > 0) { revGrowthRateStr = "100%"; revGrowthType = "up"; }
+            }
+            else
+            {
+                decimal rate = (revenueLast7Days - revenuePrev7Days) / revenuePrev7Days;
+                revGrowthRateStr = Math.Abs(rate).ToString("P0");
+                revGrowthType = rate > 0 ? "up" : (rate < 0 ? "down" : "neutral");
             }
 
             // 1. 取得 KPI
@@ -68,15 +84,22 @@ namespace ISpanShop.Services.Stores
                     .Where(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Completed)
                     .SumAsync(o => o.FinalAmount),
 
+                RevenueLast7Days = revenueLast7Days,
+                RevenueGrowthRate = revGrowthRateStr,
+                RevenueGrowthType = revGrowthType,
+
                 TotalOrders = await _context.Orders
                     .CountAsync(o => o.StoreId == storeId),
 
                 OrdersLast7Days = ordersLast7Days,
-                OrdersGrowthRate = growthRateStr,
-                OrdersGrowthType = growthType,
+                OrdersGrowthRate = orderGrowthRateStr,
+                OrdersGrowthType = orderGrowthType,
 
                 PendingOrders = await _context.Orders
                     .CountAsync(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Processing), // 待出貨
+
+                PendingRefundCount = await _context.Orders
+                    .CountAsync(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Returning && o.ReturnRequests.Any(r => r.Status == 0)), // 待審核退貨 (Status 0 代表申請待審核)
 
                 TotalProducts = await _context.Products
                     .CountAsync(p => p.StoreId == storeId && p.IsDeleted != true),

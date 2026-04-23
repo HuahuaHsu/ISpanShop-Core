@@ -38,56 +38,46 @@
       <div v-else-if="status === 'Approved' && dashboardData" class="report-content">
         <!-- KPI 數據卡片 -->
         <el-row :gutter="16" class="stat-cards">
-          <el-col :xs="24" :sm="12" :lg="6">
+          <el-col :xs="24" :sm="12" :lg="12">
             <el-card class="stat-card" shadow="never">
               <div class="stat-inner">
                 <div class="stat-icon revenue">
                   <el-icon :size="22"><Money /></el-icon>
                 </div>
                 <div class="stat-content">
-                  <div class="stat-value">${{ formatPrice(dashboardData.kpis.totalRevenue) }}</div>
-                  <div class="stat-label">總累積營收</div>
+                  <div class="stat-main">
+                    <div class="stat-value">${{ formatPrice(dashboardData.kpis.revenueLast7Days) }}</div>
+                    <div class="stat-change" :class="dashboardData.kpis.revenueGrowthType">
+                      <el-icon :size="12" v-if="dashboardData.kpis.revenueGrowthType !== 'neutral'">
+                        <component :is="dashboardData.kpis.revenueGrowthType === 'up' ? CaretTop : CaretBottom" />
+                      </el-icon>
+                      <el-icon :size="12" v-else><Minus /></el-icon>
+                      {{ dashboardData.kpis.revenueGrowthRate }}
+                    </div>
+                  </div>
+                  <div class="stat-label">近 7 天營收</div>
                 </div>
               </div>
             </el-card>
           </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
+          <el-col :xs="24" :sm="12" :lg="12">
             <el-card class="stat-card" shadow="never">
               <div class="stat-inner">
                 <div class="stat-icon orders">
                   <el-icon :size="22"><Document /></el-icon>
                 </div>
                 <div class="stat-content">
-                  <div class="stat-value">{{ dashboardData.kpis.totalOrders }}</div>
-                  <div class="stat-label">總訂單數</div>
-                </div>
-              </div>
-            </el-card>
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <el-card class="stat-card" shadow="never">
-              <div class="stat-inner">
-                <div class="stat-icon products">
-                  <el-icon :size="22"><Goods /></el-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-value">{{ dashboardData.kpis.totalProducts }}</div>
-                  <div class="stat-label">架上商品數</div>
-                </div>
-              </div>
-            </el-card>
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <el-card class="stat-card" shadow="never">
-              <div class="stat-inner">
-                <div class="stat-icon warning">
-                  <el-icon :size="22"><Warning /></el-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-value" :class="{ 'warning-text': dashboardData.kpis.lowStockCount > 0 }">
-                    {{ dashboardData.kpis.lowStockCount }}
+                  <div class="stat-main">
+                    <div class="stat-value">{{ dashboardData.kpis.ordersLast7Days }}</div>
+                    <div class="stat-change" :class="dashboardData.kpis.ordersGrowthType">
+                      <el-icon :size="12" v-if="dashboardData.kpis.ordersGrowthType !== 'neutral'">
+                        <component :is="dashboardData.kpis.ordersGrowthType === 'up' ? CaretTop : CaretBottom" />
+                      </el-icon>
+                      <el-icon :size="12" v-else><Minus /></el-icon>
+                      {{ dashboardData.kpis.ordersGrowthRate }}
+                    </div>
                   </div>
-                  <div class="stat-label">低庫存警告</div>
+                  <div class="stat-label">近 7 天訂單數</div>
                 </div>
               </div>
             </el-card>
@@ -260,9 +250,13 @@ onMounted(() => {
   border: 1px solid #e8eaf0 !important;
   border-radius: 12px !important;
   margin-bottom: 16px;
+  height: 100px;
+  display: flex;
+  align-items: center;
   
   :deep(.el-card__body) {
     padding: 20px;
+    width: 100%;
   }
 }
 .stat-inner {
@@ -270,9 +264,14 @@ onMounted(() => {
   align-items: center;
   gap: 16px;
 }
+.stat-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
 .stat-icon {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -288,15 +287,26 @@ onMounted(() => {
   flex: 1;
 }
 .stat-value {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: #1e293b;
-  line-height: 1.2;
+  line-height: 1;
 }
 .stat-label {
   font-size: 13px;
   color: #64748b;
-  margin-top: 2px;
+  margin-top: 6px;
+}
+.stat-change {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  
+  &.up    { color: #22c55e; }
+  &.down  { color: #ef4444; }
+  &.neutral { color: #94a3b8; }
 }
 .warning-text {
   color: #ef4444;

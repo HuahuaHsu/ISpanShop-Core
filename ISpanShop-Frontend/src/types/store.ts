@@ -25,6 +25,7 @@ export interface SellerDashboardData {
     ordersGrowthRate: string
     ordersGrowthType: 'up' | 'down' | 'neutral'
     pendingOrders: number
+    pendingRefundCount: number
     totalProducts: number
     lowStockCount: number
   }

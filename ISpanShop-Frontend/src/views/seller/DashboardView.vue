@@ -168,7 +168,7 @@ const statCards = computed(() => {
   const kpis = dashboardData.value?.kpis
   return [
     {
-      label: '待處理訂單',
+      label: '待出貨訂單',
       value: kpis?.pendingOrders?.toString() || '0',
       showChange: false,
       icon: Document,
@@ -176,11 +176,9 @@ const statCards = computed(() => {
       iconColor: '#ee4d2d',
     },
     {
-      label: '近 7 天訂單數',
-      value: kpis?.ordersLast7Days?.toString() || '0',
-      showChange: true,
-      change: kpis?.ordersGrowthRate || '0%',
-      changeType: (kpis?.ordersGrowthType || 'neutral') as ChangeType,
+      label: '待審核退貨',
+      value: kpis?.pendingRefundCount?.toString() || '0',
+      showChange: false,
       icon: List,
       iconBg: '#f0fdf4',
       iconColor: '#22c55e',
