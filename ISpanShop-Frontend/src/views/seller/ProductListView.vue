@@ -800,21 +800,23 @@ async function handleDeleteProduct(product: SellerProduct): Promise<void> {
 
 // ── 上/下架切換 ───────────────────────────────────────────────────
 async function handleToggleShelf(product: SellerProduct): Promise<void> {
-  // 只有已上架(status=1)或已下架(status=0)的商品可以切換
-  // 待審核(status=2)、已退回(status=3)等狀態不能直接上下架
-  if (product.status !== 'on' && product.status !== 'off') {
+  // 只有已上架('on') 或 未上架('draft', 對應後端 status=0) 可以切換
+  // 'off' 在本系統不使用（mapStatusToKey: 0 → 'draft'）
+  if (product.status !== 'on' && product.status !== 'draft') {
     ElMessage.warning('此商品狀態無法進行上下架操作')
     return
   }
 
-  const newStatus: ProductStatus = product.status === 'on' ? 'off' : 'on'
+  // 下架後 status key 必須用 'draft'（對應後端 status=0），而非 'off'
+  // 否則 tabCounts['draft'] 不會增加，商品也不會出現在「未上架」tab
+  const newStatus: ProductStatus = product.status === 'on' ? 'draft' : 'on'
   const newStatusNumber = newStatus === 'on' ? 1 : 0
   const actionText = newStatus === 'on' ? '上架' : '下架'
 
   try {
     await ElMessageBox.confirm(
-      `確定要${actionText}此商品嗎？`,
-      '提示',
+      `確定要${actionText}「${product.name}」嗎？`,
+      `${actionText}確認`,
       {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
@@ -823,10 +825,17 @@ async function handleToggleShelf(product: SellerProduct): Promise<void> {
     )
 
     await updateProductStatus(product.id, newStatusNumber)
-    
-    // 更新本地狀態
-    product.status = newStatus
-    
+
+    // 本地即時更新：替換陣列元素，確保 tabFiltered / tabCounts 兩個 computed 正確重算
+    const idx = allProducts.value.findIndex(p => p.id === product.id)
+    if (idx !== -1) {
+      allProducts.value[idx] = {
+        ...allProducts.value[idx],
+        status: newStatus,
+        statusText: newStatus === 'on' ? '上架' : '下架',
+      }
+    }
+
     ElMessage.success(`商品已${actionText}`)
   } catch (error) {
     if (error !== 'cancel') {
