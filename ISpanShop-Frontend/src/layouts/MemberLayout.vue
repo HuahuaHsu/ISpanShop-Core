@@ -7,7 +7,10 @@
         <aside class="sidebar">
           <!-- 會員資訊區塊 -->
           <div class="sidebar-user-card" @click="router.push('/member/profile')">
-            <div class="avatar">
+            <div class="avatar" :style="{ 
+              background: `linear-gradient(135deg, ${levelStyle.color} 0%, ${levelStyle.darker} 100%)`,
+              boxShadow: `0 4px 12px ${levelStyle.shadow}`
+            }">
             <img v-if="authStore.memberInfo?.avatarUrl"
             :src="`https://localhost:7125${authStore.memberInfo.avatarUrl}`"
             style="width:100%; height:100%; border-radius:50%; object-fit:cover;"/>
@@ -17,7 +20,7 @@
           </div>
             <div class="user-details">
               <span class="username">{{ authStore.memberInfo?.account || '正在讀取...' }}</span>
-              <span class="level-badge">
+              <span class="level-badge" :style="{ color: levelStyle.color }">
                 ★ {{ authStore.memberInfo?.levelName || '一般會員' }}
               </span>
             </div>
@@ -62,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { User, Document, Wallet, Menu } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
@@ -71,6 +74,34 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const activeMenu = computed(() => route.path)
+
+// 根據等級名稱決定顏色 (對應 LevelView.vue 的設定)
+const levelStyle = computed(() => {
+  const level = authStore.memberInfo?.levelName || '一般會員'
+  if (level.includes('金卡')) {
+    return { 
+      color: '#f59e0b', 
+      darker: '#d97706', 
+      shadow: 'rgba(245, 158, 11, 0.4)' 
+    }
+  } else if (level.includes('銀卡')) {
+    return { 
+      color: '#64748b', 
+      darker: '#475569', 
+      shadow: 'rgba(100, 116, 139, 0.4)' 
+    }
+  }
+  // 預設品牌橘 (一般會員)
+  return { 
+    color: '#EE4D2D', 
+    darker: '#BE3E24', 
+    shadow: 'rgba(238, 77, 45, 0.3)' 
+  }
+})
+
+onMounted(() => {
+  authStore.fetchUserInfo()
+})
 
 
 </script>

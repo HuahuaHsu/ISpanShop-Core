@@ -105,7 +105,9 @@ import { ref, computed, onMounted } from 'vue'
 import { Trophy, InfoFilled } from '@element-plus/icons-vue'
 import { getLevelInfo } from '@/api/member'
 import { ElMessage } from 'element-plus'
+import { useAuthStore } from '@/stores/auth'
 
+const authStore = useAuthStore()
 // 修改 Interface 以符合 API 回傳的 camelCase
 interface MembershipLevel {
   id: number;
@@ -171,7 +173,14 @@ const currentLevel = computed(() => {
   if (levelRules.value.length === 0) return { levelName: '載入中...', color: '#94a3b8' }
   const spending = Number(realTotalSpending.value)
   const sorted = [...levelRules.value].sort((a, b) => Number(b.minSpending) - Number(a.minSpending))
-  return sorted.find(l => spending >= Number(l.minSpending)) || levelRules.value[0]
+  const level = sorted.find(l => spending >= Number(l.minSpending)) || levelRules.value[0]
+  
+  // 同步更新 authStore 的等級資訊，讓側邊欄同步
+  if (level.levelName && level.levelName !== '載入中...') {
+    authStore.updateLevel(level.levelName)
+  }
+  
+  return level
 })
 
 const nextLevel = computed(() => {

@@ -99,11 +99,40 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** 更新等級名稱並同步持久化到 localStorage */
+  function updateLevel(levelName: string) {
+    if (memberInfo.value) {
+      memberInfo.value.levelName = levelName;
+      storage.setUser(memberInfo.value);
+    }
+  }
+
   /** 更新賣家身分並同步持久化到 localStorage */
   function updateSellerStatus(isSeller: boolean) {
     if (memberInfo.value) {
       memberInfo.value.isSeller = isSeller;
       storage.setUser(memberInfo.value);
+    }
+  }
+
+  /** 獲取最新會員資料並同步到 store 與 localStorage */
+  async function fetchUserInfo() {
+    if (!memberInfo.value?.memberId) return;
+    try {
+      const response = await getMemberProfile(memberInfo.value.memberId);
+      const { data } = response;
+      memberInfo.value = {
+        ...memberInfo.value,
+        email: data.email,
+        account: data.account,
+        memberName: data.fullName,
+        levelName: data.levelName || '一般會員',
+        pointBalance: data.pointBalance ?? memberInfo.value.pointBalance,
+        avatarUrl: data.avatarUrl || null,
+      };
+      storage.setUser(memberInfo.value);
+    } catch (error) {
+      console.error('獲取會員資料失敗:', error);
     }
   }
 
@@ -123,7 +152,9 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     updatePoints,
+    updateLevel,
     updateSellerStatus,
+    fetchUserInfo,
     openLoginDialog,
     closeLoginDialog
   };
