@@ -78,20 +78,24 @@ const activeMenu = computed(() => route.path)
 // 根據等級名稱決定顏色 (對應 LevelView.vue 的設定)
 const levelStyle = computed(() => {
   const level = authStore.memberInfo?.levelName || '一般會員'
-  if (level.includes('金卡')) {
+  
+  // 金牌 / 黃金
+  if (level.includes('金')) {
     return { 
       color: '#f59e0b', 
       darker: '#d97706', 
       shadow: 'rgba(245, 158, 11, 0.4)' 
     }
-  } else if (level.includes('銀卡')) {
+  } 
+  // 銀牌
+  else if (level.includes('銀')) {
     return { 
       color: '#64748b', 
       darker: '#475569', 
       shadow: 'rgba(100, 116, 139, 0.4)' 
     }
   }
-  // 預設品牌橘 (一般會員)
+  // 銅牌 / 一般會員 / 預設品牌橘
   return { 
     color: '#EE4D2D', 
     darker: '#BE3E24', 
