@@ -32,20 +32,32 @@ const rules: FormRules = {
 const fetchTickets = async () => {
   loading.value = true;
   try {
-    const response = await getMyTickets();
-    // 後端回傳可能是大寫開頭，轉為前端使用的小寫開頭
-    tickets.value = response.map((t: any) => ({
-      id: t.id ?? t.Id,
-      userId: t.userId ?? t.UserId,
-      category: t.category ?? t.Category,
-      subject: t.subject ?? t.Subject,
-      description: t.description ?? t.Description,
-      status: t.status ?? t.Status,
-      adminReply: t.adminReply ?? t.AdminReply,
-      createdAt: t.createdAt ?? t.CreatedAt,
-      resolvedAt: t.resolvedAt ?? t.ResolvedAt,
-      orderId: t.orderId ?? t.OrderId
-    }));
+    const res = await getMyTickets();
+    // Axios 回傳的是物件，真正的資料在 res.data
+    const responseData = (res as any).data || res;
+    
+    if (Array.isArray(responseData)) {
+      // 後端回傳可能是大寫開頭 (C#) 或小寫開頭 (JSON)，統一轉為前端使用的小寫
+      tickets.value = responseData.map((t: any) => ({
+        id: t.id ?? t.Id,
+        userId: t.userId ?? t.UserId,
+        category: t.category ?? t.Category,
+        subject: t.subject ?? t.Subject,
+        description: t.description ?? t.Description,
+        status: t.status ?? t.Status ?? 0,
+        adminReply: t.adminReply ?? t.AdminReply,
+        createdAt: t.createdAt ?? t.CreatedAt,
+        resolvedAt: t.resolvedAt ?? t.ResolvedAt,
+        orderId: t.orderId ?? t.OrderId
+      }));
+      
+      // 確保最新的在最上面
+      tickets.value.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+    }
   } catch (error) {
     console.error('獲取工單列表失敗', error);
   } finally {
@@ -61,14 +73,49 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true;
       try {
-        await createTicket(formModel.value);
+        const payload = {
+          userId: 0, // 後端會自動覆蓋
+          userName: "",
+          category: formModel.value.category,
+          subject: formModel.value.subject,
+          description: formModel.value.description,
+          orderId: formModel.value.orderId || null,
+          attachmentUrl: "",
+          status: 0,
+          adminReply: "",
+          createdAt: new Date().toISOString()
+        };
+
+        await createTicket(payload);
         ElMessage.success('提交成功，我們將儘速處理您的問題');
         dialogVisible.value = false;
         // 重置表單並重新整理列表
         formModel.value = { category: 0, subject: '', description: '', orderId: null };
         fetchTickets();
-      } catch (error) {
-        ElMessage.error('提交失敗，請稍後再試');
+      } catch (error: any) {
+        console.error('提交申訴失敗:', error);
+        
+        let errorMsg = '提交失敗，請稍後再試';
+        const responseData = error.response?.data;
+        
+        if (responseData) {
+          if (responseData.errors) {
+            // 取得 ASP.NET Core 的驗證錯誤
+            const firstErrorKey = Object.keys(responseData.errors)[0];
+            const firstErrorVal = responseData.errors[firstErrorKey];
+            errorMsg = `${firstErrorKey}: ${Array.isArray(firstErrorVal) ? firstErrorVal[0] : firstErrorVal}`;
+          } else if (responseData.message) {
+            errorMsg = responseData.message;
+          } else if (responseData.title) {
+            errorMsg = responseData.title;
+          }
+        }
+        
+        ElMessage.error({
+          message: errorMsg,
+          duration: 5000,
+          showClose: true
+        });
       } finally {
         submitLoading.value = false;
       }

@@ -101,7 +101,7 @@ export const routes: RouteRecordRaw[] = [
             component: () => import('../views/member/OrderReviewView.vue'),
           },
           {
-            path: 'support-tickets',
+            path: 'support',
             name: 'member-support-tickets',
             component: () => import('../views/member/SupportTicketsView.vue'),
           },

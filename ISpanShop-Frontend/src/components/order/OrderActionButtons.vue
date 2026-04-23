@@ -130,7 +130,7 @@ const handleReview = () => {
 
 const handleAppeal = () => {
   router.push({
-    path: '/member/support-tickets',
+    path: '/member/support',
     query: { orderId: props.orderId.toString() }
   });
 };

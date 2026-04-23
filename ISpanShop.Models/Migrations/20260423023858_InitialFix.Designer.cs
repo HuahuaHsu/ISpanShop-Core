@@ -4,6 +4,7 @@ using ISpanShop.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ISpanShop.Models.Migrations
 {
     [DbContext(typeof(ISpanShopDBContext))]
-    partial class ISpanShopDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260423023858_InitialFix")]
+    partial class InitialFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

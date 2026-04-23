@@ -93,6 +93,19 @@
                                 <span class="badge bg-warning text-dark mb-1"><i class="fas fa-exclamation-triangle"></i> 系統偵測到敏感字</span><br />
                             }
                             @item.Comment 
+                            
+                            @if (item.ImageUrls != null && item.ImageUrls.Any())
+                            {
+                                <div class="review-images mt-2 d-flex flex-wrap gap-2">
+                                    @foreach (var imgUrl in item.ImageUrls)
+                                    {
+                                        <a href="@imgUrl" target="_blank" class="review-image-link">
+                                            <img src="@imgUrl" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;" onerror="this.src='/images/no-image.png';" />
+                                        </a>
+                                    }
+                                </div>
+                            }
+
                             @if (!string.IsNullOrEmpty(item.StoreReply))
                             {
                                 <div class="text-success small mt-1"><strong>賣家回覆：</strong> @item.StoreReply</div>

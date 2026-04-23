@@ -50,11 +50,11 @@
 
           <el-form-item label="上傳圖片 (選填)">
             <el-upload
-              action="/api/upload"
+              action="#"
               list-type="picture-card"
+              :http-request="handleCustomUpload"
               :on-preview="handlePictureCardPreview"
               :on-remove="handleRemove"
-              :on-success="handleUploadSuccess"
               :before-upload="beforeUpload"
               multiple
             >
@@ -80,10 +80,9 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, Plus } from '@element-plus/icons-vue';
-import { getOrderDetailApi } from '@/api/order';
+import { getOrderDetailApi, submitReviewApi, uploadImagesApi } from '@/api/order';
 import type { OrderDetail } from '@/types/order';
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
-import axios from '@/api/axios';
+import { ElMessage, type FormInstance, type FormRules, type UploadRequestOptions } from 'element-plus';
 
 const route = useRoute();
 const router = useRouter();
@@ -122,8 +121,10 @@ const fetchOrderDetail = async () => {
 };
 
 const handleRemove = (uploadFile: any) => {
-  const url = uploadFile.response?.url || uploadFile.url;
-  form.value.imageUrls = form.value.imageUrls.filter(u => u !== url);
+  const url = uploadFile.url || (uploadFile.response && uploadFile.response.urls && uploadFile.response.urls[0]);
+  if (url) {
+    form.value.imageUrls = form.value.imageUrls.filter(u => u !== url);
+  }
 };
 
 const handlePictureCardPreview = (uploadFile: any) => {
@@ -131,9 +132,20 @@ const handlePictureCardPreview = (uploadFile: any) => {
   dialogVisible.value = true;
 };
 
-const handleUploadSuccess = (response: any) => {
-  if (response && response.url) {
-    form.value.imageUrls.push(response.url);
+const handleCustomUpload = async (options: UploadRequestOptions) => {
+  const formData = new FormData();
+  formData.append('files', options.file);
+  
+  try {
+    const res = await uploadImagesApi(formData);
+    if (res.data && res.data.urls && res.data.urls.length > 0) {
+      const url = res.data.urls[0];
+      form.value.imageUrls.push(url);
+      options.onSuccess(res.data);
+    }
+  } catch (error) {
+    options.onError(error as any);
+    ElMessage.error('圖片上傳失敗');
   }
 };
 
@@ -157,17 +169,47 @@ const submitReview = async () => {
     if (valid) {
       submitting.value = true;
       try {
-        await axios.post(`/api/front/orders/${orderId}/review`, {
-          orderId: orderId,
-          rating: form.value.rating,
-          comment: form.value.comment,
-          imageUrls: form.value.imageUrls,
-          createdAt: new Date().toISOString()
-        });
+        const payload = {
+          OrderId: orderId,
+          Rating: Math.floor(form.value.rating),
+          Comment: form.value.comment,
+          ImageUrls: form.value.imageUrls,
+          CreatedAt: new Date().toISOString(),
+          // 補上後端 DTO 可能要求的必填欄位
+          StoreReply: "",
+          ProductMainImage: "",
+          IsHidden: false,
+          IsAutoFlagged: false
+        };
+        
+        await submitReviewApi(orderId, payload);
         ElMessage.success('評價提交成功！感謝您的分享');
         router.push('/member/orders');
-      } catch (error) {
-        ElMessage.error('提交失敗，請稍後再試');
+      } catch (error: any) {
+        console.error('提交評價出錯:', error);
+        
+        // 解析 ASP.NET Core 的驗證錯誤訊息 (400 Bad Request)
+        let errorMsg = '提交失敗，請稍後再試';
+        const responseData = error.response?.data;
+        
+        if (responseData) {
+          if (responseData.errors) {
+            // 取得第一條驗證錯誤
+            const firstErrorKey = Object.keys(responseData.errors)[0];
+            const firstErrorVal = responseData.errors[firstErrorKey];
+            errorMsg = `${firstErrorKey}: ${Array.isArray(firstErrorVal) ? firstErrorVal[0] : firstErrorVal}`;
+          } else if (responseData.message) {
+            errorMsg = responseData.message;
+          } else if (responseData.title) {
+            errorMsg = responseData.title;
+          }
+        }
+        
+        ElMessage.error({
+          message: errorMsg,
+          duration: 5000,
+          showClose: true
+        });
       } finally {
         submitting.value = false;
       }

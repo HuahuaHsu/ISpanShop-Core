@@ -65,7 +65,11 @@ namespace ISpanShop.Services
                 Comment = dto.Comment,
                 // 如果有敏感字，寫入當下就直接被「隱藏」
                 IsHidden = hasSensitiveWord, 
-                CreatedAt = dto.CreatedAt
+                CreatedAt = dto.CreatedAt,
+                ReviewImages = dto.ImageUrls.Select(url => new ISpanShop.Models.EfModels.ReviewImage
+                {
+                    ImageUrl = url
+                }).ToList()
             };
 
             await _repo.CreateAsync(entity);
