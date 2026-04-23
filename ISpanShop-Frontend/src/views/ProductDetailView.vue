@@ -275,6 +275,9 @@
           <pre class="pd-description">{{ safeProduct.description }}</pre>
         </el-card>
 
+        <!-- 商品評價 -->
+        <ProductReview v-if="safeProduct.id" :product-id="safeProduct.id" />
+
         <!-- 逛逛賣場其他好物 -->
         <div v-if="relatedLoading || relatedProducts.length > 0" class="pd-related-section">
           <h2 class="related-title">逛逛賣場其他好物</h2>
@@ -297,6 +300,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Picture, Check, ChatDotRound, Shop } from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
+import ProductReview from '@/components/product/ProductReview.vue'
 import { fetchProductDetail, fetchRelatedProducts } from '@/api/product'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'

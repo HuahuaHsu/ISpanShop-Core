@@ -122,7 +122,15 @@ namespace ISpanShop.MVC.Controllers.Api
             dto.CreatedAt = DateTime.Now;
 
             await _reviewService.AddReviewAsync(dto);
-            return Ok(new { message = "感謝您的評價！" });
+            return Ok(new { success = true, message = "感謝您的評價！" });
+        }
+
+        [HttpGet("product/{productId}")]
+        [AllowAnonymous] // 必須加上這個，否則前台遊客看不到評論
+        public async Task<IActionResult> GetProductReviews(int productId)
+        {
+            var reviews = await _reviewService.GetReviewsByProductIdAsync(productId);
+            return Ok(reviews);
         }
     }
 }
