@@ -105,3 +105,30 @@ export interface SellerOrderItem {
   quantity: number
   subtotal: number
 }
+
+export interface SellerReturnItem {
+  id: number
+  orderNumber: string
+  buyerName: string
+  refundAmount: number
+  reasonCategory: string
+  createdAt: string
+  status: number
+  statusName: string
+}
+
+export interface SellerReturnDetail {
+  orderId: number
+  orderNumber: string
+  orderCreatedAt: string
+  reasonCategory: string
+  reasonDescription: string
+  refundAmount: number
+  requestCreatedAt: string
+  resolvedAt: string | null
+  status: number
+  statusName: string
+  imageUrls: string[]
+  buyerAccount: string
+  items: SellerOrderItem[]
+}

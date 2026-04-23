@@ -58,6 +58,27 @@ export const updateSellerOrderStatusApi = (orderId: number, status: number) => {
 }
 
 /**
+ * 取得賣場退貨申請列表
+ */
+export const getSellerReturnsApi = (params: { isProcessed?: boolean, page?: number, pageSize?: number } = {}) => {
+  return axios.get<{ items: SellerReturnItem[], totalCount: number }>('/api/front/store/returns', { params })
+}
+
+/**
+ * 取得退貨詳情
+ */
+export const getSellerReturnDetailApi = (orderId: string | number) => {
+  return axios.get<SellerReturnDetail>(`/api/front/store/returns/${orderId}`)
+}
+
+/**
+ * 審核退貨申請
+ */
+export const reviewReturnApi = (orderId: number, data: { isApproved: boolean, remark: string }) => {
+  return axios.post<ApiResponse>(`/api/front/store/returns/${orderId}/review`, data)
+}
+
+/**
  * 取得賣場公開資訊（名稱、評分、商品數、粉絲數、加入時間等）
 ...
  * GET /api/stores/:id

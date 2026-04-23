@@ -402,5 +402,149 @@ namespace ISpanShop.Services.Stores
                 }).ToList()
             };
         }
+
+        public async Task<PagedResultDto<SellerReturnListDto>> GetSellerReturnsAsync(int userId, bool? isProcessed = null, int page = 1, int pageSize = 10)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) throw new Exception("找不到您的賣場");
+
+            var query = _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.ReturnRequests)
+                .Where(o => o.StoreId == store.Id && o.ReturnRequests.Any());
+
+            if (isProcessed.HasValue)
+            {
+                if (isProcessed.Value)
+                {
+                    // 已處理：狀態為已退款，或狀態為已完成(代表拒絕後恢復)
+                    query = query.Where(o => o.Status == (byte)OrderStatus.Refunded || 
+                                           (o.Status == (byte)OrderStatus.Completed && o.ReturnRequests.Any(r => r.Status != 0)));
+                }
+                else
+                {
+                    // 待處理：狀態為退貨中
+                    query = query.Where(o => o.Status == (byte)OrderStatus.Returning);
+                }
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var orders = await query
+                .OrderByDescending(o => o.ReturnRequests.Max(r => r.CreatedAt))
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var items = orders.Select(o => {
+                var latestReturn = o.ReturnRequests.OrderByDescending(r => r.CreatedAt).First();
+                return new SellerReturnListDto
+                {
+                    Id = o.Id,
+                    OrderNumber = o.OrderNumber,
+                    BuyerName = o.User?.Account ?? "未知買家",
+                    RefundAmount = latestReturn.RefundAmount,
+                    ReasonCategory = latestReturn.ReasonCategory,
+                    CreatedAt = latestReturn.CreatedAt,
+                    Status = (OrderStatus)o.Status,
+                    StatusName = ((OrderStatus)o.Status).GetDisplayName()
+                };
+            }).ToList();
+
+            return new PagedResultDto<SellerReturnListDto>
+            {
+                Items = items,
+                TotalCount = totalCount
+            };
+        }
+
+        public async Task<SellerReturnDetailDto> GetSellerReturnDetailAsync(int userId, long orderId)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) throw new Exception("找不到您的賣場");
+
+            var order = await _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                .Include(o => o.ReturnRequests)
+                    .ThenInclude(r => r.ReturnRequestImages)
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.StoreId == store.Id);
+
+            if (order == null || !order.ReturnRequests.Any()) throw new Exception("找不到該筆退貨申請");
+
+            var latestReturn = order.ReturnRequests.OrderByDescending(r => r.CreatedAt).First();
+
+            return new SellerReturnDetailDto
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                OrderCreatedAt = order.CreatedAt ?? DateTime.MinValue,
+                
+                ReasonCategory = latestReturn.ReasonCategory,
+                ReasonDescription = latestReturn.ReasonDescription,
+                RefundAmount = latestReturn.RefundAmount,
+                RequestCreatedAt = latestReturn.CreatedAt,
+                ResolvedAt = latestReturn.UpdatedAt,
+                Status = (OrderStatus)order.Status,
+                StatusName = ((OrderStatus)order.Status).GetDisplayName(),
+                
+                ImageUrls = latestReturn.ReturnRequestImages.Select(img => img.ImageUrl).ToList(),
+                BuyerAccount = order.User?.Account ?? "未知",
+
+                Items = order.OrderDetails.Select(od => new SellerOrderItemDto
+                {
+                    Id = od.Id,
+                    ProductId = od.ProductId,
+                    VariantId = od.VariantId,
+                    ProductName = od.ProductName,
+                    VariantName = od.VariantName,
+                    SkuCode = od.SkuCode,
+                    CoverImage = od.CoverImage, // 詳情頁面可再優化圖片抓取，先簡單處理
+                    Price = od.Price ?? 0,
+                    Quantity = od.Quantity
+                }).ToList()
+            };
+        }
+
+        public async Task<bool> ReviewReturnRequestAsync(int userId, long orderId, ReviewReturnRequestDto dto)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) throw new Exception("找不到您的賣場");
+
+            var order = await _context.Orders
+                .Include(o => o.ReturnRequests)
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.StoreId == store.Id);
+
+            if (order == null || order.Status != (byte)OrderStatus.Returning) 
+                throw new Exception("該訂單目前不在退貨申請狀態中");
+
+            var latestReturn = order.ReturnRequests.OrderByDescending(r => r.CreatedAt).First();
+
+            if (dto.IsApproved)
+            {
+                order.Status = (byte)OrderStatus.Refunded;
+                latestReturn.Status = 1; // 已同意
+            }
+            else
+            {
+                order.Status = (byte)OrderStatus.Completed;
+                latestReturn.Status = 2; // 已拒絕
+            }
+
+            latestReturn.AdminRemark = dto.Remark;
+            latestReturn.UpdatedAt = DateTime.Now;
+
+            _context.Orders.Update(order);
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

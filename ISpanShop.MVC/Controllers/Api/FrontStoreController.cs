@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using ISpanShop.Models.DTOs.Orders;
 
 namespace ISpanShop.MVC.Controllers.Api
 {
@@ -247,6 +248,66 @@ namespace ISpanShop.MVC.Controllers.Api
 
                 var count = await _storeService.GetPendingOrdersCountAsync(userId);
                 return Ok(new { count });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 取得賣場退貨申請列表
+        /// </summary>
+        [HttpGet("returns")]
+        public async Task<IActionResult> GetSellerReturns([FromQuery] bool? isProcessed = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+                var result = await _storeService.GetSellerReturnsAsync(userId, isProcessed, page, pageSize);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 取得退貨申請詳情
+        /// </summary>
+        [HttpGet("returns/{orderId}")]
+        public async Task<IActionResult> GetSellerReturnDetail(long orderId)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+                var result = await _storeService.GetSellerReturnDetailAsync(userId, orderId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 審核退貨申請
+        /// </summary>
+        [HttpPost("returns/{orderId}/review")]
+        public async Task<IActionResult> ReviewReturnRequest(long orderId, [FromBody] ReviewReturnRequestDto dto)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+                var success = await _storeService.ReviewReturnRequestAsync(userId, orderId, dto);
+                return success ? Ok(new { message = "審核結果已提交" }) : BadRequest(new { message = "審核提交失敗" });
             }
             catch (Exception ex)
             {

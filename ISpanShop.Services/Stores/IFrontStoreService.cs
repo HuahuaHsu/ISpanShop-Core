@@ -21,5 +21,10 @@ namespace ISpanShop.Services.Stores
         Task<PagedResultDto<SellerOrderListDto>> GetSellerOrdersAsync(int userId, OrderStatus? status = null, int page = 1, int pageSize = 10);
         Task<SellerOrderDetailDto> GetSellerOrderDetailAsync(int userId, long orderId);
         Task<bool> UpdateOrderStatusAsync(int userId, long orderId, OrderStatus newStatus);
+
+        // 賣家退貨管理
+        Task<PagedResultDto<SellerReturnListDto>> GetSellerReturnsAsync(int userId, bool? isProcessed = null, int page = 1, int pageSize = 10);
+        Task<SellerReturnDetailDto> GetSellerReturnDetailAsync(int userId, long orderId);
+        Task<bool> ReviewReturnRequestAsync(int userId, long orderId, ReviewReturnRequestDto dto);
 	}
 }
