@@ -19,6 +19,8 @@
 
     <!-- 狀態 3: 已完成 -->
     <template v-if="status === 3">
+      <el-button type="success" size="default" @click="handleReview">評價回饋</el-button>
+      <el-button type="warning" size="default" @click="handleAppeal">訂單申訴</el-button>
       <el-button type="primary" plain size="default" @click="handleRebuy">再次購買</el-button>
       <el-button @click="handleRefund" :loading="loading" size="default">申請退貨/退款</el-button>
     </template>
@@ -66,7 +68,7 @@ const handlePay = async () => {
   // 讓結帳頁進入「支付確認模式」，而非「建立訂單模式」
   router.push({
     path: '/checkout',
-    query: { orderId: props.orderId }
+    query: { orderId: props.orderId, mode: 'payment' }
   });
 };
 
@@ -77,7 +79,7 @@ const handleCancel = async () => {
       cancelButtonText: '再想想',
       type: 'warning'
     });
-    
+
     loading.value = true;
     await cancelOrderApi(props.orderId);
     ElMessage.success('訂單已取消');
@@ -99,7 +101,7 @@ const handleConfirmReceipt = async () => {
       cancelButtonText: '取消',
       type: 'success'
     });
-    
+
     loading.value = true;
     await confirmReceiptApi(props.orderId);
     ElMessage.success('訂單已完成，感謝您的購物！');
@@ -122,9 +124,41 @@ const handleRefundDetail = () => {
   router.push(`/member/orders/${props.orderId}/refund/detail`);
 };
 
-const handleRebuy = () => {
-  // 再次購買邏輯，通常是導向商品頁或直接加購物車
-  ElMessage.info('再次購買功能開發中...');
+const handleRebuy = async () => {
+  try {
+    loading.value = true;
+    const res = await getOrderDetailApi(props.orderId);
+    const order = res.data;
+    
+    if (!order.items || order.items.length === 0) {
+      ElMessage.warning('無法取得訂單商品資訊');
+      return;
+    }
+
+    // 將訂單中的所有商品加入購物車
+    for (const item of order.items) {
+      cartStore.addItem({
+        productId: item.productId,
+        variantId: item.variantId || null,
+        name: item.productName,
+        image: item.coverImage || '',
+        price: item.price,
+        quantity: item.quantity,
+        specLabel: item.variantName || '',
+        storeId: order.storeId,
+        storeName: order.storeName,
+        storeStatus: 1, // 預設正常，實際可能需要從商品詳情再確認
+      });
+    }
+
+    ElMessage.success('已將商品重新加入購物車');
+    router.push('/cart');
+  } catch (error) {
+    console.error('再次購買失敗', error);
+    ElMessage.error('操作失敗，請稍後再試');
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 

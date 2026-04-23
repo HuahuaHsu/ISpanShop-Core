@@ -23,6 +23,40 @@ namespace ISpanShop.MVC.Controllers.Api
             _context = context;
         }
 
+        [HttpGet("level-info")]
+        public async Task<IActionResult> GetLevelInfo()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized(new { message = "未登入或 Token 已失效" });
+            int userId = int.Parse(userIdStr);
+
+            var user = await _context.Users
+                .Include(u => u.MemberProfile)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null) return NotFound(new { message = "找不到該使用者" });
+
+            // 獲取所有等級規則
+            var levels = await _context.MembershipLevels
+                .OrderBy(l => l.MinSpending)
+                .Select(l => new {
+                    l.Id,
+                    l.LevelName,
+                    l.MinSpending,
+                    l.DiscountRate
+                })
+                .ToListAsync();
+
+            return Ok(new {
+                userId = user.Id,
+                totalSpending = user.MemberProfile?.TotalSpending ?? 0,
+                currentLevelName = user.MemberProfile?.LevelId != null 
+                    ? levels.FirstOrDefault(l => l.Id == user.MemberProfile.LevelId)?.LevelName 
+                    : "一般會員",
+                levels = levels
+            });
+        }
+
         [HttpGet("wallet-balance")]
         public async Task<IActionResult> GetWalletBalance()
         {

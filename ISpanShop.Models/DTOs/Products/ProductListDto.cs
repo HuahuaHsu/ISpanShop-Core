@@ -30,5 +30,6 @@ namespace ISpanShop.Models.DTOs.Products
         /// <summary>強制下架原因（Status==4 時）</summary>
         public string? ForceOffShelfReason { get; set; }
         public DateTime? ReApplyDate { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

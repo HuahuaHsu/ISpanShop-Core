@@ -2,6 +2,7 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ISpanShop.Models.DTOs.Orders;
+using ISpanShop.Services;
 using ISpanShop.Services.Orders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +15,12 @@ namespace ISpanShop.MVC.Controllers.Api
     public class OrdersController : ControllerBase
     {
         private readonly IFrontOrderService _orderService;
+        private readonly IOrderReviewService _reviewService;
 
-        public OrdersController(IFrontOrderService orderService)
+        public OrdersController(IFrontOrderService orderService, IOrderReviewService reviewService)
         {
             _orderService = orderService;
+            _reviewService = reviewService;
         }
 
         [HttpGet]
@@ -103,6 +106,23 @@ namespace ISpanShop.MVC.Controllers.Api
             }
 
             return Ok(new { message = "退貨申請已送出，請等待賣家處理" });
+        }
+
+        [HttpPost("{id}/review")]
+        public async Task<IActionResult> AddReview(long id, [FromBody] ISpanShop.Models.DTOs.OrderReviewDto dto)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized();
+            }
+
+            dto.OrderId = id;
+            dto.UserId = userId;
+            dto.CreatedAt = DateTime.Now;
+
+            await _reviewService.AddReviewAsync(dto);
+            return Ok(new { message = "感謝您的評價！" });
         }
     }
 }

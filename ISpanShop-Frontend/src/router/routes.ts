@@ -71,9 +71,9 @@ export const routes: RouteRecordRaw[] = [
             component: () => import('../views/member/PasswordView.vue'),
           },
           {
-            path: 'privacy',
-            name: 'member-privacy',
-            component: () => import('../views/member/PrivacyView.vue'),
+            path: 'level',
+            name: 'member-level',
+            component: () => import('../views/member/LevelView.vue'),
           },
           {
             path: 'orders',
@@ -94,6 +94,16 @@ export const routes: RouteRecordRaw[] = [
             path: 'orders/:id/refund/detail',
             name: 'member-order-refund-detail',
             component: () => import('../views/member/RefundDetailView.vue'),
+          },
+          {
+            path: 'orders/:id/review',
+            name: 'member-order-review',
+            component: () => import('../views/member/OrderReviewView.vue'),
+          },
+          {
+            path: 'support',
+            name: 'member-support-tickets',
+            component: () => import('../views/member/SupportTicketsView.vue'),
           },
           {
             path: 'settings',
@@ -182,15 +192,17 @@ export const routes: RouteRecordRaw[] = [
         name: 'SellerProductEdit',
         component: () => import('../views/seller/ProductEditView.vue'),
       },
-      // ── TODO 佔位路由 ──
-      { path: 'orders',             name: 'SellerOrders',     component: () => import('../views/seller/TodoView.vue') },
-      { path: 'orders/batch',       name: 'SellerOrdersBatch', component: () => import('../views/seller/TodoView.vue') },
-      { path: 'returns',            name: 'SellerReturns',    component: () => import('../views/seller/TodoView.vue') },
-      { path: 'promotions',         name: 'SellerPromotions', component: () => import('../views/seller/PromotionListView.vue') },
-      { path: 'coupons',            name: 'SellerCoupons',    component: () => import('../views/seller/TodoView.vue') },
-      { path: 'analytics/sales',    name: 'SellerSales',      component: () => import('../views/seller/SalesReportView.vue') },
-      { path: 'analytics/traffic',  name: 'SellerTraffic',    component: () => import('../views/seller/TodoView.vue') },
-      { path: 'chat',               name: 'SellerChat',       component: () => import('../views/seller/TodoView.vue') },
+      // ── 訂單管理 ──
+      { path: 'orders', name: 'SellerOrders', component: () => import('../views/seller/OrderListView.vue') },
+      { path: 'orders/:id', name: 'SellerOrderDetail', component: () => import('../views/seller/OrderDetailView.vue') },
+      { path: 'orders/batch', name: 'SellerOrdersBatch', component: () => import('../views/seller/TodoView.vue') },
+      { path: 'returns', name: 'SellerReturns', component: () => import('../views/seller/ReturnListView.vue') },
+      { path: 'returns/:id', name: 'SellerReturnDetail', component: () => import('../views/seller/ReturnDetailView.vue') },
+      { path: 'promotions', name: 'SellerPromotions', component: () => import('../views/seller/PromotionListView.vue') },
+      { path: 'coupons', name: 'SellerCoupons', component: () => import('../views/seller/CouponListView.vue') },
+      { path: 'analytics/sales', name: 'SellerSales', component: () => import('../views/seller/SalesReportView.vue') },
+      { path: 'analytics/traffic', name: 'SellerTraffic', component: () => import('../views/seller/TodoView.vue') },
+      { path: 'chat', name: 'SellerChat', component: () => import('../views/seller/TodoView.vue') },
     ],
   },
 
@@ -206,12 +218,6 @@ export const routes: RouteRecordRaw[] = [
     name: 'payment-result',
     component: () => import('../views/cart/PaymentResultView.vue'),
     meta: { requiresAuth: true }
-  },
-  {
-    path: '/cart',
-    name: 'cart',
-    component: () => import('../views/cart/CartView.vue'),
-     meta: { requiresAuth: true }
   },
   {
     path: '/wip',

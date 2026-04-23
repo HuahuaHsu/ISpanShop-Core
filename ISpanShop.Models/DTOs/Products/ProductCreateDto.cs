@@ -20,9 +20,9 @@ namespace ISpanShop.Models.DTOs.Products
         public int CategoryId { get; set; }
 
         /// <summary>
-        /// 品牌 ID
+        /// 品牌 ID（選填，null 代表未指定品牌）
         /// </summary>
-        public int BrandId { get; set; }
+        public int? BrandId { get; set; }
 
         /// <summary>
         /// 商品名稱 - 必填

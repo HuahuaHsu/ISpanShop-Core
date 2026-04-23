@@ -38,7 +38,7 @@
               <el-menu-item index="/member/profile">個人資料</el-menu-item>
               <el-menu-item index="/member/address">地址</el-menu-item>
               <el-menu-item index="/member/password">更改密碼</el-menu-item>
-              <el-menu-item index="/member/privacy">帳號使用</el-menu-item>
+              <el-menu-item index="/member/level">會員等級</el-menu-item>
             </el-sub-menu>
 
             <el-menu-item index="/member/orders">

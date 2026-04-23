@@ -180,8 +180,10 @@ namespace ISpanShop.Repositories.Products
                 .Include(p => p.Brand)
                 .Include(p => p.ProductImages)
                 .Include(p => p.ProductVariants)
-                .Where(p => p.IsDeleted != true)
                 .AsQueryable();
+
+            if (!criteria.IncludeDeleted)
+                query = query.Where(p => p.IsDeleted != true);
 
             if (criteria.CategoryId.HasValue)
                 query = query.Where(p => p.CategoryId == criteria.CategoryId.Value);
@@ -207,7 +209,9 @@ namespace ISpanShop.Repositories.Products
 
             if (criteria.Status.HasValue)
                 query = query.Where(p => p.Status == criteria.Status.Value);
-            else
+            else if (!criteria.StoreId.HasValue)
+                // 只在「平台商品總覽」時過濾：已退回商品只在審核中心的近期退回紀錄顯示
+                // 但賣家查詢自己的商品時（有 StoreId），不過濾任何狀態，讓賣家看到所有商品
                 query = query.Where(p => p.Status != 2 && p.Status != 3);
 
             if (criteria.StartDate.HasValue)
@@ -253,12 +257,25 @@ namespace ISpanShop.Repositories.Products
                 .FirstOrDefault(p => p.Id == dto.Id);
             if (product == null) return;
 
+            var originalStatus = product.Status;
+
             product.Name               = dto.Name;
             product.Description        = dto.Description;
             product.CategoryId         = dto.CategoryId;
             product.BrandId            = dto.BrandId;
             product.SpecDefinitionJson = dto.SpecDefinitionJson;
             product.UpdatedAt          = DateTime.Now;
+
+            if (originalStatus == 3) // 審核退回 → 重新送審
+            {
+                product.Status       = 2;           // 待審核
+                product.ReviewStatus = 3;           // 重新申請審核
+                product.ReApplyDate  = DateTime.Now;
+                product.ReviewedBy   = null;
+                product.ReviewDate   = null;
+                // 保留 RejectReason，讓後台知道上次退回原因
+            }
+            // 已上架(1) 或未上架(0)：直接更新內容，狀態與審核記錄維持不變
 
             if (!string.IsNullOrWhiteSpace(dto.MainImageUrl))
             {
@@ -374,9 +391,12 @@ namespace ISpanShop.Repositories.Products
                 var statusByte = (byte)criteria.Status.Value;
                 query = query.Where(p => p.Status == statusByte);
             }
-            else
-                // 已退回商品只在審核中心的近期退回紀錄顯示，不出現在商品總覽
+            else if (!criteria.StoreId.HasValue)
+            {
+                // 只在「平台商品總覽」時過濾：已退回商品只在審核中心的近期退回紀錄顯示
+                // 但賣家查詢自己的商品時（有 StoreId），不過濾任何狀態，讓賣家看到所有商品
                 query = query.Where(p => p.Status != 2 && p.Status != 3);
+            }
 
             if (criteria.StartDate.HasValue)
                 query = query.Where(p => p.CreatedAt >= criteria.StartDate.Value);
@@ -1175,6 +1195,102 @@ namespace ISpanShop.Repositories.Products
                 .Take(limit)
                 .Select(p => p.Name.Length > 10 ? p.Name.Substring(0, 10) : p.Name)
                 .ToListAsync();
+        }
+
+        /// <inheritdoc/>
+        public void AddProductImages(int productId, IEnumerable<ProductImage> images)
+        {
+            foreach (var img in images)
+            {
+                img.ProductId = productId;
+                _context.ProductImages.Add(img);
+            }
+            _context.SaveChanges();
+        }
+
+        /// <inheritdoc/>
+        public void DeleteProductImages(int productId, string webRootPath)
+        {
+            var images = _context.ProductImages
+                .Where(pi => pi.ProductId == productId)
+                .ToList();
+
+            foreach (var img in images)
+            {
+                // 刪除實體檔案
+                if (!string.IsNullOrEmpty(img.ImageUrl))
+                {
+                    var filePath = Path.Combine(webRootPath, img.ImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        try
+                        {
+                            System.IO.File.Delete(filePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "無法刪除圖片檔案：{FilePath}", filePath);
+                        }
+                    }
+                }
+            }
+
+            // 刪除資料庫記錄
+            _context.ProductImages.RemoveRange(images);
+            _context.SaveChanges();
+        }
+
+        /// <inheritdoc/>
+        public void DeleteProductImagesExcept(int productId, List<string> keepImageUrls, string webRootPath)
+        {
+            var images = _context.ProductImages
+                .Where(pi => pi.ProductId == productId)
+                .ToList();
+
+            // 刪除不在 keepImageUrls 中的圖片
+            foreach (var img in images)
+            {
+                if (!keepImageUrls.Contains(img.ImageUrl))
+                {
+                    // 刪除實體檔案
+                    if (!string.IsNullOrEmpty(img.ImageUrl))
+                    {
+                        var filePath = Path.Combine(webRootPath, img.ImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                        if (System.IO.File.Exists(filePath))
+                        {
+                            try
+                            {
+                                System.IO.File.Delete(filePath);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "無法刪除圖片檔案：{FilePath}", filePath);
+                            }
+                        }
+                    }
+
+                    // 刪除資料庫記錄
+                    _context.ProductImages.Remove(img);
+                }
+            }
+
+            _context.SaveChanges();
+        }
+
+        /// <inheritdoc/>
+        public void UpdateMainImage(int productId, int mainImageIndex)
+        {
+            var images = _context.ProductImages
+                .Where(pi => pi.ProductId == productId)
+                .OrderBy(pi => pi.SortOrder)
+                .ToList();
+
+            for (int i = 0; i < images.Count; i++)
+            {
+                images[i].IsMain = (i == mainImageIndex);
+            }
+
+            _context.SaveChanges();
         }
     }
 }

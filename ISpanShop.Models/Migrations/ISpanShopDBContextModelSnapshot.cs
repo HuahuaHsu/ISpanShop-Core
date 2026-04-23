@@ -105,7 +105,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Addresse__3214EC0720517029");
+                        .HasName("PK__Addresse__3214EC07CCB52BF0");
 
                     b.HasIndex("UserId");
 
@@ -164,7 +164,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("datetime");
 
                     b.HasKey("Id")
-                        .HasName("PK__Blacklis__3214EC07CC1F5DE7");
+                        .HasName("PK__Blacklis__3214EC071F47C438");
 
                     b.HasIndex("AdminUserId");
 
@@ -209,7 +209,7 @@ namespace ISpanShop.Models.Migrations
                         .HasDefaultValue(0);
 
                     b.HasKey("Id")
-                        .HasName("PK__Brands__3214EC07EBF8F95E");
+                        .HasName("PK__Brands__3214EC07EA4B2CF7");
 
                     b.ToTable("Brands");
                 });
@@ -226,7 +226,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Carts__3214EC07ADAFED9C");
+                        .HasName("PK__Carts__3214EC07AD165691");
 
                     b.HasIndex(new[] { "UserId" }, "UQ_Carts_UserId")
                         .IsUnique();
@@ -261,7 +261,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__CartItem__3214EC073D89D384");
+                        .HasName("PK__CartItem__3214EC079F46FDB3");
 
                     b.HasIndex("CartId");
 
@@ -313,7 +313,7 @@ namespace ISpanShop.Models.Migrations
                         .HasDefaultValue(0);
 
                     b.HasKey("Id")
-                        .HasName("PK__Categori__3214EC07B271DEB5");
+                        .HasName("PK__Categori__3214EC076E37F147");
 
                     b.HasIndex("ParentId");
 
@@ -353,7 +353,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Category__3214EC07FB7FECCB");
+                        .HasName("PK__Category__3214EC072C2D6978");
 
                     b.ToTable("CategoryAttributes");
                 });
@@ -373,7 +373,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("CategoryId", "CategoryAttributeId")
-                        .HasName("PK__Category__2B1402DCE86C9054");
+                        .HasName("PK__Category__2B1402DCADA82BB2");
 
                     b.HasIndex("CategoryAttributeId");
 
@@ -400,7 +400,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Category__3214EC0795733785");
+                        .HasName("PK__Category__3214EC0745CE6B6D");
 
                     b.HasIndex("CategoryAttributeId");
 
@@ -441,7 +441,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("tinyint");
 
                     b.HasKey("Id")
-                        .HasName("PK__ChatMess__3214EC072C0A50B3");
+                        .HasName("PK__ChatMess__3214EC078C3DDCA1");
 
                     b.HasIndex("ReceiverId");
 
@@ -575,7 +575,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__LoginHis__3214EC07A95A3CD4");
+                        .HasName("PK__LoginHis__3214EC075C3F60F3");
 
                     b.HasIndex("UserId");
 
@@ -639,7 +639,8 @@ namespace ISpanShop.Models.Migrations
                     b.Property<bool?>("EmailNotification")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                        .HasDefaultValue(true)
+                        .HasAnnotation("Relational:DefaultConstraintName", "DF__MemberPro__Email__2645B050");
 
                     b.Property<string>("FullName")
                         .HasMaxLength(50)
@@ -648,8 +649,11 @@ namespace ISpanShop.Models.Migrations
                     b.Property<byte?>("Gender")
                         .HasColumnType("tinyint");
 
-                    b.Property<bool>("IsSeller")
-                        .HasColumnType("bit");
+                    b.Property<bool?>("IsSeller")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasAnnotation("Relational:DefaultConstraintName", "DF__MemberPro__IsSel__2739D489");
 
                     b.Property<int>("LevelId")
                         .HasColumnType("int");
@@ -662,12 +666,14 @@ namespace ISpanShop.Models.Migrations
                     b.Property<int?>("PointBalance")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasDefaultValue(0);
+                        .HasDefaultValue(0)
+                        .HasAnnotation("Relational:DefaultConstraintName", "DF__MemberPro__Point__25518C17");
 
                     b.Property<decimal?>("TotalSpending")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18, 2)")
-                        .HasDefaultValue(0m);
+                        .HasDefaultValue(0m)
+                        .HasAnnotation("Relational:DefaultConstraintName", "DF__MemberPro__Total__245D67DE");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime");
@@ -676,7 +682,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__MemberPr__3214EC07CBF77DA4");
+                        .HasName("PK__MemberPr__3214EC0733EF43BE");
 
                     b.HasIndex("LevelId");
 
@@ -706,7 +712,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Membersh__3214EC077D283FA0");
+                        .HasName("PK__Membersh__3214EC073BF07D38");
 
                     b.ToTable("MembershipLevels");
                 });
@@ -789,7 +795,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Orders__3214EC078F47CCEE");
+                        .HasName("PK__Orders__3214EC079627FFBC");
 
                     b.HasIndex("CouponId");
 
@@ -846,7 +852,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id")
-                        .HasName("PK__OrderDet__3214EC07D8EF013B");
+                        .HasName("PK__OrderDet__3214EC07B159CF56");
 
                     b.HasIndex("OrderId");
 
@@ -891,7 +897,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__OrderRev__3214EC07EDA47055");
+                        .HasName("PK__OrderRev__3214EC077AD35710");
 
                     b.HasIndex("OrderId");
 
@@ -909,7 +915,9 @@ namespace ISpanShop.Models.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("(getdate())");
 
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
@@ -975,7 +983,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("varchar(50)");
 
                     b.HasKey("Id")
-                        .HasName("PK__PaymentL__3214EC076A05C45F");
+                        .HasName("PK__PaymentL__3214EC07F3990609");
 
                     b.HasIndex("OrderId");
 
@@ -1045,7 +1053,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__PointHis__3214EC0748BD63DC");
+                        .HasName("PK__PointHis__3214EC076C183EFD");
 
                     b.HasIndex("UserId");
 
@@ -1143,7 +1151,7 @@ namespace ISpanShop.Models.Migrations
                         .HasDefaultValue(0);
 
                     b.HasKey("Id")
-                        .HasName("PK__Products__3214EC079295A641");
+                        .HasName("PK__Products__3214EC07B5C0B072");
 
                     b.HasIndex("BrandId");
 
@@ -1186,7 +1194,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__ProductI__3214EC0772EEB958");
+                        .HasName("PK__ProductI__3214EC0754523EDC");
 
                     b.HasIndex("ProductId");
 
@@ -1236,7 +1244,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id")
-                        .HasName("PK__ProductV__3214EC073A6575F7");
+                        .HasName("PK__ProductV__3214EC0758F430C3");
 
                     b.HasIndex("ProductId");
 
@@ -1301,7 +1309,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("datetime");
 
                     b.HasKey("Id")
-                        .HasName("PK__Promotio__3214EC07CCFDDD24");
+                        .HasName("PK__Promotio__3214EC07FD701303");
 
                     b.HasIndex("ReviewedBy");
 
@@ -1343,7 +1351,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Promotio__3214EC07C9CDD985");
+                        .HasName("PK__Promotio__3214EC079513EEFB");
 
                     b.HasIndex("ProductId");
 
@@ -1376,7 +1384,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Promotio__3214EC07269B7A44");
+                        .HasName("PK__Promotio__3214EC071864C6D6");
 
                     b.HasIndex("PromotionId");
 
@@ -1471,7 +1479,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__ReviewIm__3214EC074C21816B");
+                        .HasName("PK__ReviewIm__3214EC072755974D");
 
                     b.HasIndex("ReviewId");
 
@@ -1496,7 +1504,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Roles__3214EC07D7442CDF");
+                        .HasName("PK__Roles__3214EC070CF15786");
 
                     b.ToTable("Roles");
                 });
@@ -1532,7 +1540,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Sensitiv__3214EC079DF73360");
+                        .HasName("PK__Sensitiv__3214EC078BD26FA1");
 
                     b.HasIndex("CategoryId");
 
@@ -1553,7 +1561,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id")
-                        .HasName("PK__Sensitiv__3214EC07156B6588");
+                        .HasName("PK__Sensitiv__3214EC077849F621");
 
                     b.ToTable("SensitiveWordCategories");
                 });
@@ -1597,7 +1605,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__Stores__3214EC078D01D42D");
+                        .HasName("PK__Stores__3214EC074D4E53F2");
 
                     b.HasIndex("UserId");
 
@@ -1649,7 +1657,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id")
-                        .HasName("PK__SupportT__3214EC075D10031D");
+                        .HasName("PK__SupportT__3214EC0789C8C0A4");
 
                     b.HasIndex("OrderId");
 
@@ -1726,7 +1734,7 @@ namespace ISpanShop.Models.Migrations
                         .HasColumnType("datetime");
 
                     b.HasKey("Id")
-                        .HasName("PK__Users__3214EC071CE4420D");
+                        .HasName("PK__Users__3214EC07B29557C9");
 
                     b.HasIndex("AdminLevelId");
 

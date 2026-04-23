@@ -29,7 +29,7 @@ namespace ISpanShop.Services.Products
         /// <summary>
         /// 建立新商品
         /// </summary>
-        public void CreateProduct(ProductCreateDto dto)
+        public int CreateProduct(ProductCreateDto dto)
         {
             var product = new ISpanShop.Models.EfModels.Product
             {
@@ -65,6 +65,7 @@ namespace ISpanShop.Services.Products
             }
 
             _productRepository.AddProduct(product);
+            return product.Id;
         }
 
         /// <summary>
@@ -96,7 +97,8 @@ namespace ISpanShop.Services.Products
                 MainImageUrl = p.ProductImages
                     ?.FirstOrDefault(img => img.IsMain == true)?.ImageUrl
                     ?? p.ProductImages?.FirstOrDefault()?.ImageUrl
-                    ?? "https://via.placeholder.com/400x400?text=No+Image"
+                    ?? "https://via.placeholder.com/400x400?text=No+Image",
+                IsDeleted    = p.IsDeleted == true
             }).ToList();
             return PagedResult<ProductListDto>.Create(dtos, totalCount, criteria.PageNumber, criteria.PageSize);
         }
@@ -691,6 +693,30 @@ namespace ISpanShop.Services.Products
         {
             limit = Math.Clamp(limit, 1, 20);
             return await _productRepository.GetHotKeywordsAsync(limit);
+        }
+
+        /// <inheritdoc/>
+        public void AddProductImages(int productId, IEnumerable<ISpanShop.Models.EfModels.ProductImage> images)
+        {
+            _productRepository.AddProductImages(productId, images);
+        }
+
+        /// <inheritdoc/>
+        public void DeleteProductImages(int productId, string webRootPath)
+        {
+            _productRepository.DeleteProductImages(productId, webRootPath);
+        }
+
+        /// <inheritdoc/>
+        public void DeleteProductImagesExcept(int productId, List<string> keepImageUrls, string webRootPath)
+        {
+            _productRepository.DeleteProductImagesExcept(productId, keepImageUrls, webRootPath);
+        }
+
+        /// <inheritdoc/>
+        public void UpdateMainImage(int productId, int mainImageIndex)
+        {
+            _productRepository.UpdateMainImage(productId, mainImageIndex);
         }
     }
 }

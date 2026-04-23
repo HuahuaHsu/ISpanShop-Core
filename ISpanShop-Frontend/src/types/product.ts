@@ -108,6 +108,7 @@ export interface ApiResponse<T> {
 
 /** 賣家商品列表項目（對應後端 GET /api/seller/products 回傳）
  *  status: 0=未上架, 1=已上架, 2=待審核, 3=審核退回
+ *  reviewStatus: 0=待審核, 1=通過, 2=退回, 3=重新送審
  */
 export interface SellerProductListItem {
   id: number
@@ -121,6 +122,9 @@ export interface SellerProductListItem {
   statusText: string
   mainImageUrl: string | null
   createdAt: string | null
+  rejectReason: string | null
+  reviewStatus: number
+  isDeleted?: boolean
   // TODO: 以下欄位後端尚未回傳，補上後移除 nullable
   viewCount: number | null
   totalSales: number | null

@@ -19,5 +19,7 @@ namespace ISpanShop.Models.DTOs.Products
         public int PageSize { get; set; } = 10;
         /// <summary>date_desc|date_asc|name_asc|name_desc|price_asc|price_desc|status_asc|status_desc</summary>
         public string? SortOrder { get; set; }
+        /// <summary>是否包含已刪除商品（賣家查詢自己的商品時設為 true）</summary>
+        public bool IncludeDeleted { get; set; } = false;
     }
 }

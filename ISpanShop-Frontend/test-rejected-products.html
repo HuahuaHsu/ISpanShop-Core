@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>測試退回商品 API</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #ee4d2d;
+      margin-top: 0;
+    }
+    .info {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #ee4d2d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    button:hover {
+      background: #dc2626;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    .product-item {
+      background: white;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 4px;
+      border-left: 4px solid #e2e8f0;
+    }
+    .product-item.rejected {
+      border-left-color: #e11d48;
+      background: #fff1f2;
+    }
+    .product-item.review {
+      border-left-color: #d97706;
+      background: #fef3c7;
+    }
+    .product-item.on {
+      border-left-color: #16a34a;
+      background: #dcfce7;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .status-0 { background: #f1f5f9; color: #64748b; }
+    .status-1 { background: #dcfce7; color: #16a34a; }
+    .status-2 { background: #fef3c7; color: #d97706; }
+    .status-3 { background: #ffe4e6; color: #e11d48; }
+    .reject-reason {
+      color: #e11d48;
+      font-size: 13px;
+      margin-top: 6px;
+      padding: 6px 8px;
+      background: white;
+      border-radius: 3px;
+    }
+    code {
+      background: #1e293b;
+      color: #fbbf24;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+    pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      background: white;
+      padding: 12px 16px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #64748b;
+    }
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 測試退回商品 API</h1>
+    
+    <div class="info">
+      <strong>📌 使用說明：</strong><br>
+      1. 請先登入賣家帳號 (在主站登入，JWT token 會自動儲存到 localStorage)<br>
+      2. 點擊下方按鈕載入商品資料<br>
+      3. 查看退回商品的 status 值和 rejectReason
+    </div>
+
+    <button id="loadBtn" onclick="loadProducts()">載入我的商品</button>
+    <button onclick="clearResult()" style="background: #64748b; margin-left: 8px;">清除結果</button>
+
+    <div id="result" class="result" style="display: none;">
+      <h3>📊 統計資訊</h3>
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-label">總商品數</div>
+          <div class="stat-value" id="totalCount">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">已上架 (status=1)</div>
+          <div class="stat-value" id="onCount">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">審核中 (status=2)</div>
+          <div class="stat-value" id="reviewCount">0</div>
+        </div>
+        <div class="stat-item" style="border-color: #e11d48;">
+          <div class="stat-label">已退回 (status=3)</div>
+          <div class="stat-value" id="rejectedCount" style="color: #e11d48;">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">其他狀態</div>
+          <div class="stat-value" id="otherCount">0</div>
+        </div>
+      </div>
+
+      <h3>📦 商品列表</h3>
+      <div id="productList"></div>
+
+      <h3>🔧 API 回應 (JSON)</h3>
+      <pre id="rawJson"></pre>
+    </div>
+
+    <div id="error" style="display: none; background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 4px; margin-top: 16px;"></div>
+  </div>
+
+  <script>
+    const STATUS_MAP = {
+      0: { text: '未上架', color: 'status-0', class: '' },
+      1: { text: '已上架', color: 'status-1', class: 'on' },
+      2: { text: '審核中', color: 'status-2', class: 'review' },
+      3: { text: '已退回', color: 'status-3', class: 'rejected' }
+    };
+
+    async function loadProducts() {
+      const btn = document.getElementById('loadBtn');
+      const result = document.getElementById('result');
+      const error = document.getElementById('error');
+      
+      btn.disabled = true;
+      btn.textContent = '載入中...';
+      error.style.display = 'none';
+      result.style.display = 'none';
+
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('請先登入賣家帳號！Token 不存在於 localStorage');
+        }
+
+        const response = await fetch('/api/seller/products?page=1&pageSize=100', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const items = data.data?.items || data.items || [];
+
+        // 統計
+        let stats = { total: items.length, on: 0, review: 0, rejected: 0, other: 0 };
+        items.forEach(item => {
+          if (item.status === 1) stats.on++;
+          else if (item.status === 2) stats.review++;
+          else if (item.status === 3) stats.rejected++;
+          else stats.other++;
+        });
+
+        document.getElementById('totalCount').textContent = stats.total;
+        document.getElementById('onCount').textContent = stats.on;
+        document.getElementById('reviewCount').textContent = stats.review;
+        document.getElementById('rejectedCount').textContent = stats.rejected;
+        document.getElementById('otherCount').textContent = stats.other;
+
+        // 顯示商品列表
+        const productList = document.getElementById('productList');
+        if (items.length === 0) {
+          productList.innerHTML = '<p style="color: #64748b;">目前沒有任何商品</p>';
+        } else {
+          productList.innerHTML = items.map(item => {
+            const statusInfo = STATUS_MAP[item.status] || { text: `未知(${item.status})`, color: 'status-0', class: '' };
+            return `
+              <div class="product-item ${statusInfo.class}">
+                <div>
+                  <strong>${item.name}</strong>
+                  <span class="status-badge ${statusInfo.color}">status=${item.status} (${statusInfo.text})</span>
+                </div>
+                <div style="font-size: 13px; color: #64748b; margin-top: 4px;">
+                  ID: ${item.id} | 分類: ${item.categoryName || '--'} | 
+                  價格: NT$${item.minPrice || 0} | statusText: "${item.statusText}"
+                </div>
+                ${item.rejectReason ? `
+                  <div class="reject-reason">
+                    <strong>❌ 退回原因：</strong>${item.rejectReason}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('');
+        }
+
+        // 顯示原始 JSON
+        document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
+        
+        result.style.display = 'block';
+
+        // Console 輸出
+        console.log('=== 商品資料 ===');
+        items.forEach(item => {
+          console.log(`ID:${item.id} | ${item.name} | status:${item.status} (${item.statusText}) | rejectReason:${item.rejectReason || '無'}`);
+        });
+
+      } catch (err) {
+        error.textContent = `❌ 錯誤: ${err.message}`;
+        error.style.display = 'block';
+        console.error('載入失敗:', err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '載入我的商品';
+      }
+    }
+
+    function clearResult() {
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('error').style.display = 'none';
+    }
+
+    // 頁面載入時檢查 token
+    window.addEventListener('load', () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        document.getElementById('error').textContent = '⚠️ 請先在主站登入賣家帳號，Token 不存在於 localStorage';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('loadBtn').disabled = true;
+      }
+    });
+  </script>
+</body>
+</html>

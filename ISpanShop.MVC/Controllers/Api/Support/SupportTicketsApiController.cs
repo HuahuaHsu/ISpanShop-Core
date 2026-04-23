@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace ISpanShop.MVC.Controllers.Api.Support
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = "FrontendJwt")]
     [Route("api/support-tickets")]
     [ApiController]
     public class SupportTicketsApiController : ControllerBase
@@ -27,10 +27,13 @@ namespace ISpanShop.MVC.Controllers.Api.Support
         [HttpGet("my")]
         public async Task<IActionResult> GetMyTickets()
         {
-            var userId = User.GetUserId();
-            if (userId == null) return Unauthorized();
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized();
+            }
 
-            var tickets = await _supportService.GetByUserIdAsync(userId.Value);
+            var tickets = await _supportService.GetByUserIdAsync(userId);
             return Ok(tickets);
         }
 
@@ -42,11 +45,14 @@ namespace ISpanShop.MVC.Controllers.Api.Support
         {
             try 
             {
-                var userId = User.GetUserId();
-                if (userId == null) return Unauthorized();
+                var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+                {
+                    return Unauthorized();
+                }
 
                 // 強制綁定為當前登入者 ID
-                dto.UserId = userId.Value;
+                dto.UserId = userId;
                 
                 await _supportService.CreateAsync(dto);
                 return Ok(new { message = "工單已成功提交" });
@@ -54,7 +60,7 @@ namespace ISpanShop.MVC.Controllers.Api.Support
             catch (System.Exception ex)
             {
                 // 捕捉資料庫錯誤 (例如無效的 OrderId) 或其他伺服器錯誤
-                return BadRequest(new { message = "提交失敗：" + ex.InnerException?.Message ?? ex.Message });
+                return BadRequest(new { message = "提交失敗：" + (ex.InnerException?.Message ?? ex.Message) });
             }
         }
 

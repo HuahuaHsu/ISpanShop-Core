@@ -38,56 +38,46 @@
       <div v-else-if="status === 'Approved' && dashboardData" class="report-content">
         <!-- KPI 數據卡片 -->
         <el-row :gutter="16" class="stat-cards">
-          <el-col :xs="24" :sm="12" :lg="6">
+          <el-col :xs="24" :sm="12" :lg="12">
             <el-card class="stat-card" shadow="never">
               <div class="stat-inner">
                 <div class="stat-icon revenue">
                   <el-icon :size="22"><Money /></el-icon>
                 </div>
                 <div class="stat-content">
-                  <div class="stat-value">${{ formatPrice(dashboardData.kpis.totalRevenue) }}</div>
-                  <div class="stat-label">總累積營收</div>
+                  <div class="stat-main">
+                    <div class="stat-value">${{ formatPrice(dashboardData.kpis.revenueLast7Days) }}</div>
+                    <div class="stat-change" :class="dashboardData.kpis.revenueGrowthType">
+                      <el-icon :size="12" v-if="dashboardData.kpis.revenueGrowthType !== 'neutral'">
+                        <component :is="dashboardData.kpis.revenueGrowthType === 'up' ? CaretTop : CaretBottom" />
+                      </el-icon>
+                      <el-icon :size="12" v-else><Minus /></el-icon>
+                      {{ dashboardData.kpis.revenueGrowthRate }}
+                    </div>
+                  </div>
+                  <div class="stat-label">近 7 天營收</div>
                 </div>
               </div>
             </el-card>
           </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
+          <el-col :xs="24" :sm="12" :lg="12">
             <el-card class="stat-card" shadow="never">
               <div class="stat-inner">
                 <div class="stat-icon orders">
                   <el-icon :size="22"><Document /></el-icon>
                 </div>
                 <div class="stat-content">
-                  <div class="stat-value">{{ dashboardData.kpis.totalOrders }}</div>
-                  <div class="stat-label">總訂單數</div>
-                </div>
-              </div>
-            </el-card>
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <el-card class="stat-card" shadow="never">
-              <div class="stat-inner">
-                <div class="stat-icon products">
-                  <el-icon :size="22"><Goods /></el-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-value">{{ dashboardData.kpis.totalProducts }}</div>
-                  <div class="stat-label">架上商品數</div>
-                </div>
-              </div>
-            </el-card>
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <el-card class="stat-card" shadow="never">
-              <div class="stat-inner">
-                <div class="stat-icon warning">
-                  <el-icon :size="22"><Warning /></el-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-value" :class="{ 'warning-text': dashboardData.kpis.lowStockCount > 0 }">
-                    {{ dashboardData.kpis.lowStockCount }}
+                  <div class="stat-main">
+                    <div class="stat-value">{{ dashboardData.kpis.ordersLast7Days }}</div>
+                    <div class="stat-change" :class="dashboardData.kpis.ordersGrowthType">
+                      <el-icon :size="12" v-if="dashboardData.kpis.ordersGrowthType !== 'neutral'">
+                        <component :is="dashboardData.kpis.ordersGrowthType === 'up' ? CaretTop : CaretBottom" />
+                      </el-icon>
+                      <el-icon :size="12" v-else><Minus /></el-icon>
+                      {{ dashboardData.kpis.ordersGrowthRate }}
+                    </div>
                   </div>
-                  <div class="stat-label">低庫存警告</div>
+                  <div class="stat-label">近 7 天訂單數</div>
                 </div>
               </div>
             </el-card>
@@ -100,7 +90,7 @@
             <el-card class="chart-card" shadow="never">
               <template #header>
                 <div class="card-header">
-                  <span class="card-title">📈 銷售金額趨勢 (近 30 天)</span>
+                  <span class="card-title">📈 銷售金額趨勢 (近 7 天)</span>
                 </div>
               </template>
               <div class="chart-wrapper">
@@ -140,7 +130,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { Money, Document, Goods, Warning } from '@element-plus/icons-vue';
 import { getSellerDashboardApi, getStoreStatusApi } from '@/api/store';
-import type { SellerDashboardData, StoreStatus } from '@/types/store';
+import type { SellerDashboardData } from '@/types/store';
 import { ElMessage } from 'element-plus';
 import VueApexCharts from 'vue3-apexcharts';
 
@@ -149,6 +139,7 @@ const authStore = useAuthStore();
 const apexchart = VueApexCharts;
 
 const loading = ref(false);
+const status = ref<string>('Pending');
 const dashboardData = ref<SellerDashboardData | null>(null);
 
 const lastUpdateTime = computed(() => {
@@ -173,7 +164,7 @@ const chartOptions = ref({
   },
   colors: ['#ee4d2d'],
   stroke: {
-    curve: 'smooth',
+    curve: 'straight',
     width: 3
   },
   markers: {
@@ -193,7 +184,9 @@ const chartOptions = ref({
   }
 });
 
-const dashboardData = ref<SellerDashboardData | null>(null);
+const formatPrice = (price: number) => {
+  return price.toLocaleString();
+};
 
 const checkStatus = async () => {
   loading.value = true;
@@ -206,23 +199,22 @@ const checkStatus = async () => {
       const dashboardRes = await getSellerDashboardApi();
       dashboardData.value = dashboardRes.data;
       
-      if (dashboardData.value.salesTrend) {
+      if (dashboardData.value?.salesTrend) {
         chartOptions.value.xaxis.categories = dashboardData.value.salesTrend.labels;
       }
     } else {
       authStore.updateSellerStatus(false);
     }
-    }
+  } catch (error) {
     console.error('取得資料失敗', error);
-    ElMessage.error('無法取得賣場數據');
-    ElMessage.error('無法取得賣場狀態');
+    ElMessage.error('無法取得賣場狀態或數據');
   } finally {
     loading.value = false;
   }
 };
 
 onMounted(() => {
-  fetchDashboardData();
+  checkStatus();
 });
 </script>
 
@@ -245,6 +237,7 @@ onMounted(() => {
   margin: 0;
 }
 .page-date {
+  margin-left: 12px;
   color: #94a3b8;
   font-size: 14px;
 }
@@ -257,9 +250,13 @@ onMounted(() => {
   border: 1px solid #e8eaf0 !important;
   border-radius: 12px !important;
   margin-bottom: 16px;
+  height: 100px;
+  display: flex;
+  align-items: center;
   
   :deep(.el-card__body) {
     padding: 20px;
+    width: 100%;
   }
 }
 .stat-inner {
@@ -267,9 +264,14 @@ onMounted(() => {
   align-items: center;
   gap: 16px;
 }
+.stat-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
 .stat-icon {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -285,15 +287,26 @@ onMounted(() => {
   flex: 1;
 }
 .stat-value {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: #1e293b;
-  line-height: 1.2;
+  line-height: 1;
 }
 .stat-label {
   font-size: 13px;
   color: #64748b;
-  margin-top: 2px;
+  margin-top: 6px;
+}
+.stat-change {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  
+  &.up    { color: #22c55e; }
+  &.down  { color: #ef4444; }
+  &.neutral { color: #94a3b8; }
 }
 .warning-text {
   color: #ef4444;
@@ -320,7 +333,6 @@ onMounted(() => {
 
 .chart-wrapper {
   padding: 10px 0;
-  padding: 10px 0;
 }
 
 .status-box {
@@ -329,5 +341,10 @@ onMounted(() => {
   background: #fff;
   border-radius: 12px;
   border: 1px solid #e8eaf0;
+}
+
+.status-tip {
+  margin-bottom: 15px;
+  color: #64748b;
 }
 </style>

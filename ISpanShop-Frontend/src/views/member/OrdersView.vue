@@ -91,8 +91,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, computed, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { Search } from '@element-plus/icons-vue';
 import { getMyOrdersApi } from '@/api/order';
 import type { OrderListItem } from '@/types/order';
@@ -100,10 +100,20 @@ import { ElMessage } from 'element-plus';
 import OrderActionButtons from '@/components/order/OrderActionButtons.vue';
 
 const router = useRouter();
+const route = useRoute();
 const loading = ref(false);
 const orders = ref<OrderListItem[]>([]);
 const activeTab = ref('all');
 const searchQuery = ref('');
+
+// 監聽路由參數變化，以便在頁面內切換標籤時也能生效
+watch(() => route.query.tab, (newTab) => {
+  if (newTab) {
+    activeTab.value = newTab.toString();
+  } else {
+    activeTab.value = 'all';
+  }
+});
 
 const fetchOrders = async () => {
   loading.value = true;
@@ -136,8 +146,9 @@ const filteredOrders = computed(() => {
   return result;
 });
 
-const handleTabChange = () => {
-  // 可以擴充後端分頁抓取
+const handleTabChange = (tabName: string) => {
+  // 當使用者點擊標籤時，同步更新 URL 參數（選用，增加體驗）
+  router.replace({ query: { ...route.query, tab: tabName === 'all' ? undefined : tabName } });
 };
 
 const goToDetail = (id: number) => {
@@ -174,6 +185,10 @@ const getStatusClass = (status: number) => {
 };
 
 onMounted(() => {
+  // 初始化時讀取 URL 參數
+  if (route.query.tab) {
+    activeTab.value = route.query.tab.toString();
+  }
   fetchOrders();
 });
 </script>
@@ -365,12 +380,6 @@ onMounted(() => {
         font-size: 24px;
         color: #ee4d2d;
         font-weight: 500;
-        
-        &::before {
-          content: '$';
-          font-size: 16px;
-          margin-right: 2px;
-        }
       }
     }
   }

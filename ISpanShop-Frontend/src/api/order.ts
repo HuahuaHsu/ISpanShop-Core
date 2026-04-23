@@ -22,8 +22,12 @@ export const requestRefundApi = (id: number, data: any) => {
   return axios.post(`/api/front/orders/${id}/return`, data);
 };
 
+export const submitReviewApi = (id: number, data: any) => {
+  return axios.post(`/api/front/orders/${id}/review`, data);
+};
+
 export const uploadImagesApi = (formData: FormData) => {
-  return axios.post('/api/upload', formData, {
+  return axios.post<{ urls: string[] }>('/api/Upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }

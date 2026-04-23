@@ -466,3 +466,40 @@
          - 進入頁面時先檢查是否為「重新申請」。
          - 若為重新申請，先取得上次申請的內容填入表單。
          - 提交按鈕根據狀態判斷是呼叫「新增」還是「更新」API。
+
+         
+
+【會員等級功能 實作】 (完成於 2026-04-23)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 1：後端 — API 與 邏輯
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [x] 1. 在 MemberApiController 新增 GetLevelInfo API
+         路由：GET /api/member/level-info
+         功能：
+         - 實時從資料庫讀取 MemberProfile.TotalSpending (確保數據真實性)。
+         - 查詢 MembershipLevels 資料表，獲取所有等級規則 (Id, Name, MinSpending, DiscountRate)。
+         - 回傳 JSON：包含總消費金額、目前等級名稱及完整的等級規則列表。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 2：前端 — API 與 元件串接
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [x] 2. 封裝 API 請求
+         位置：src/api/member.ts
+         函式：export const getLevelInfo = () => axios.get('/api/member/level-info');
+
+  [x] 3. 實作 LevelView.vue 核心邏輯
+         位置：src/views/member/LevelView.vue
+         功能：
+         - 初始化載入：onMounted 時呼叫 getLevelInfo 並啟動 v-loading 狀態。
+         - 動態判定等級：使用 computed 根據 realTotalSpending 遍歷規則，自動匹配目前等級。
+         - 進度計算：精確計算目前金額距離下一階門檻的百分比，並動態提示所需金額。
+
+  [x] 4. UI/UX 視覺優化
+         - 顏色設定：一般會員 (品牌橘 #EE4D2D)、銀卡 (灰藍)、金卡 (琥珀金)。
+         - 閃爍修復：移除 el-progress 的 striped-flow 效果，改為穩定色塊。
+         - 表格邏輯：一般會員 (折扣率=1) 在專屬權益欄位顯示「—」，隱藏冗餘折扣資訊。
+         - 動態區間：自動計算最近 12 個月的統計日期 (startDate ～ endDate)。
+

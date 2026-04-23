@@ -31,10 +31,10 @@
 
             <el-form-item label="營業狀態">
               <el-radio-group v-model="form.storeStatus">
-                <el-radio-button :label="1">
+                <el-radio-button :value="1">
                   <el-icon><VideoPlay /></el-icon> 營業中
                 </el-radio-button>
-                <el-radio-button :label="2">
+                <el-radio-button :value="2">
                   <el-icon><CoffeeCup /></el-icon> 休假中
                 </el-radio-button>
               </el-radio-group>
@@ -70,6 +70,16 @@
                   </div>
                 </el-upload>
                 <div class="upload-hint">建議尺寸 200x200，不超過 2MB</div>
+                <el-button 
+                  v-if="form.logoUrl" 
+                  type="danger" 
+                  link 
+                  :icon="Delete"
+                  @click="handleRemoveLogo"
+                  class="mt-2"
+                >
+                  移除 Logo
+                </el-button>
               </div>
             </el-form-item>
           </el-col>
@@ -91,7 +101,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Camera, VideoPlay, CoffeeCup } from '@element-plus/icons-vue'
+import { Plus, Camera, VideoPlay, CoffeeCup, Delete } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules, UploadFile } from 'element-plus'
 import { getStoreProfileApi, updateStoreProfileApi, uploadStoreLogoApi, getPendingOrdersCountApi } from '@/api/store'
 import type { StoreProfileData } from '@/types/store'
@@ -156,6 +166,11 @@ const handleLogoChange = async (uploadFile: UploadFile) => {
   } catch (error) {
     ElMessage.error('圖片上傳失敗')
   }
+}
+
+const handleRemoveLogo = () => {
+  form.logoUrl = ''
+  ElMessage.success('已移除 Logo，請記得儲存變更')
 }
 
 const handleSave = async (formEl: FormInstance | undefined) => {

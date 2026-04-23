@@ -28,6 +28,13 @@ export interface UpdateMemberProfileDto {
 }
 
 /**
+ * 取得會員等級資訊與規則 (真實消費金額)
+ */
+export const getLevelInfo = () => {
+  return axios.get<any>('/api/member/level-info');
+};
+
+/**
  * 取得會員個人資料
  */
 export const getMemberProfile = (id: number) => {

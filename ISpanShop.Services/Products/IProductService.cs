@@ -29,7 +29,7 @@ namespace ISpanShop.Services.Products
         /// <summary>
         /// 建立新商品
         /// </summary>
-        void CreateProduct(ProductCreateDto dto);
+        int CreateProduct(ProductCreateDto dto);
 
         /// <summary>
         /// 分頁取得商品列表，支援分類篩選
@@ -185,5 +185,17 @@ namespace ISpanShop.Services.Products
 
         /// <summary>[Async] 取得熱搜關鍵字（瀏覽次數最高的前 N 筆上架商品名稱，超過 10 字截斷）。</summary>
         Task<List<string>> GetHotKeywordsAsync(int limit = 8);
+
+        /// <summary>批次新增商品圖片（前台賣家上傳，URLs 已儲存至磁碟）。</summary>
+        void AddProductImages(int productId, IEnumerable<ISpanShop.Models.EfModels.ProductImage> images);
+
+        /// <summary>刪除商品所有圖片（資料庫記錄 + 實體檔案）。</summary>
+        void DeleteProductImages(int productId, string webRootPath);
+
+        /// <summary>刪除商品圖片（排除指定的 URL 列表）。</summary>
+        void DeleteProductImagesExcept(int productId, List<string> keepImageUrls, string webRootPath);
+
+        /// <summary>更新商品主圖設定。</summary>
+        void UpdateMainImage(int productId, int mainImageIndex);
     }
 }

@@ -201,5 +201,17 @@ namespace ISpanShop.Repositories.Products
 
         /// <summary>[Async] 取得熱搜關鍵字（瀏覽次數最高的前 N 筆上架商品名稱）。</summary>
         Task<List<string>> GetHotKeywordsAsync(int limit);
+
+        /// <summary>批次新增商品圖片（前台賣家上傳）。</summary>
+        void AddProductImages(int productId, IEnumerable<ProductImage> images);
+
+        /// <summary>刪除商品所有圖片（資料庫記錄 + 實體檔案）。</summary>
+        void DeleteProductImages(int productId, string webRootPath);
+
+        /// <summary>刪除商品圖片（排除指定的 URL 列表）。</summary>
+        void DeleteProductImagesExcept(int productId, List<string> keepImageUrls, string webRootPath);
+
+        /// <summary>更新商品主圖設定。</summary>
+        void UpdateMainImage(int productId, int mainImageIndex);
     }
 }

@@ -53,6 +53,14 @@ namespace ISpanShop.Models.DTOs.Products
         public string? MainImageUrl { get; set; }
     }
 
+    /// <summary>更新商品狀態（上架/下架）</summary>
+    public class UpdateProductStatusRequest
+    {
+        [Required]
+        [Range(0, 1, ErrorMessage = "狀態只能是 0 (下架) 或 1 (上架)")]
+        public byte Status { get; set; }
+    }
+
     /// <summary>新增規格</summary>
     public class CreateVariantRequest
     {
@@ -108,9 +116,14 @@ namespace ISpanShop.Models.DTOs.Products
         public string   StatusText   { get; set; } = string.Empty;
         public string?  MainImageUrl { get; set; }
         public DateTime? CreatedAt   { get; set; }
-        public int      TotalStock   { get; set; }
-        public int?     TotalSales   { get; set; }
-        public int?     ViewCount    { get; set; }
+        public int      TotalStock    { get; set; }
+        public int?     TotalSales    { get; set; }
+        public int?     ViewCount     { get; set; }
+        /// <summary>審核退回原因（status=3 時才有值）</summary>
+        public string?  RejectReason  { get; set; }
+        /// <summary>審核狀態：0=待審核 1=通過 2=退回 3=重新送審</summary>
+        public int      ReviewStatus  { get; set; }
+        public bool     IsDeleted     { get; set; }
     }
 
     /// <summary>商品詳情（含規格列表）</summary>

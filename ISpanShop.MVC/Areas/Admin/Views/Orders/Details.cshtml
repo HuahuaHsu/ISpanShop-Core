@@ -188,7 +188,7 @@
                     <h6 class="mb-0 fw-bold text-dark"><i class="bx bx-edit me-1"></i>快速狀態切換</h6>
                 </div>
                 <div class="card-body">
-                    <form asp-action="UpdateStatus" method="post">
+                    <form id="updateStatusForm" asp-action="UpdateStatus" method="post">
                         <input type="hidden" name="id" value="@Model.Order.Id" />
                         <div class="mb-3">
                             <label class="form-label small text-muted">選擇新狀態</label>
@@ -199,7 +199,7 @@
                                 }
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-dark w-100 rounded-pill" onclick="return confirm('確定要修改狀態嗎?')">更新狀態</button>
+                        <button type="button" class="btn btn-dark w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#confirmUpdateModal">更新狀態</button>
                     </form>
                 </div>
             </div>
@@ -211,6 +211,30 @@
                 <div class="card-body">
                     <p class="text-muted small">@(string.IsNullOrEmpty(Model.Order.Note) ? "目前尚無任何內部備註或買家留給賣家的訊息。" : Model.Order.Note)</p>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ────────────────── 確認修改狀態 Modal ────────────────── *@
+<div class="modal fade" id="confirmUpdateModal" tabindex="-1" aria-labelledby="confirmUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="confirmUpdateModalLabel">
+                    <i class="bx bx-help-circle text-warning me-2 fs-3"></i>確認修改狀態
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-0 fs-5 text-dark">確定要修改訂單狀態嗎？</p>
+                <p class="text-muted small mt-2">此操作將會即時更新訂單資訊，並影響後續流程。</p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" onclick="document.getElementById('updateStatusForm').submit();">
+                    <i class="bx bx-check me-1"></i>確定更新
+                </button>
             </div>
         </div>
     </div>

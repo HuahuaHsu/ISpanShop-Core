@@ -47,7 +47,7 @@ namespace ISpanShop.Services.Payments
 						decimal couponDiscountAmount = 0;
 						Coupon? coupon = null;
 
-						var orderNumber = "ORD" + DateTime.Now.ToString("yyyyMMddHHmmss") + dto.UserId.ToString().PadLeft(4, '0');
+						var orderNumber = "ORD" + DateTime.Now.ToString("yyyyMMddHHmmss");
 
 						// --- B. 處理優惠券驗證與試算 ---
 						if (dto.CouponId.HasValue)

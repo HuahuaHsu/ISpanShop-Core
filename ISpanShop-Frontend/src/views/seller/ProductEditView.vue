@@ -4,7 +4,7 @@
     <el-breadcrumb separator=">">
       <el-breadcrumb-item :to="{ path: '/' }">首頁</el-breadcrumb-item>
       <el-breadcrumb-item :to="{ path: '/seller/products' }">我的商品</el-breadcrumb-item>
-      <el-breadcrumb-item>新增商品</el-breadcrumb-item>
+      <el-breadcrumb-item>{{ pageTitle }}</el-breadcrumb-item>
     </el-breadcrumb>
 
     <!-- 三欄布局 -->
@@ -47,7 +47,7 @@
       </aside>
 
       <!-- 中間:主表單 -->
-      <main class="main-content">
+      <main class="main-content" v-loading="loading">
         <!-- Tab 導航 -->
         <div class="tab-nav">
           <div
@@ -62,6 +62,33 @@
         </div>
 
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
+          <!-- 退回原因提示 (status=3) -->
+          <el-alert
+            v-if="isEditMode && productData?.status === 3 && productData?.rejectReason"
+            type="error"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 20px;"
+          >
+            <template #title>
+              <strong>審核退回原因：{{ productData.rejectReason }}</strong>
+            </template>
+            <template #default>
+              請根據退回原因修改商品資料後重新送審
+            </template>
+          </el-alert>
+
+          <!-- 已上架提示 (status=1) -->
+          <el-alert
+            v-if="isEditMode && productData?.status === 1"
+            type="info"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 20px;"
+          >
+            <template #title>編輯已上架商品，儲存後立即生效</template>
+          </el-alert>
+
           <!-- 基本資訊 -->
           <section id="section-basic" class="form-section">
             <h2 class="section-title">基本資訊</h2>
@@ -98,6 +125,7 @@
                 placeholder="品牌名稱 + 商品類型 + 重要功能(材質/顏色/尺寸/規格)"
                 maxlength="60"
               />
+              <div class="form-hint">商品名稱需介於 5~60 字</div>
             </el-form-item>
 
             <!-- 類別選擇 -->
@@ -241,10 +269,58 @@
           <section id="section-sales" class="form-section">
             <h2 class="section-title">銷售資訊</h2>
 
+            <!-- 無規格時的價格/數量 -->
+            <el-row v-if="!specsEnabled" :gutter="16">
+              <el-col :span="12">
+                <el-form-item prop="price">
+                  <template #label>
+                    <span class="required-label">* 價格</span>
+                  </template>
+                  <el-input-number
+                    v-model="form.price"
+                    placeholder="NT$"
+                    :min="1"
+                    :max="9999999"
+                    controls-position="right"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item prop="stock">
+                  <template #label>
+                    <span class="required-label">* 商品數量</span>
+                  </template>
+                  <el-input-number
+                    v-model="form.stock"
+                    :min="0"
+                    :max="99999"
+                    controls-position="right"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <!-- 最低購買數量 -->
+            <el-form-item prop="minPurchase">
+              <template #label>
+                <span class="required-label">* 最低購買數量</span>
+              </template>
+              <el-input-number
+                v-model="form.minPurchase"
+                :min="1"
+                :max="999"
+                controls-position="right"
+                style="width: 200px"
+              />
+              <div class="form-hint">最低購買數量是指買家一次至少購買的商品數量。請注意,若庫存少於最低購買數量,買家將無法下單購買。</div>
+            </el-form-item>
+
             <!-- 規格設定 -->
             <el-form-item>
               <template #label>
-                <span class="required-label">* 規格</span>
+                <span>規格</span>
               </template>
 
               <!-- 開啟規格按鈕 -->
@@ -295,8 +371,15 @@
                         :show-file-list="false"
                         :auto-upload="false"
                         accept="image/*"
+                        :on-change="(file: UploadFile) => handleOptionImageChange(specIndex, optIndex, file)"
                       >
-                        <el-icon class="upload-icon"><Picture /></el-icon>
+                        <img
+                          v-if="option.imagePreview"
+                          :src="option.imagePreview"
+                          class="option-image-preview"
+                          :alt="option.name"
+                        />
+                        <el-icon v-else class="upload-icon"><Picture /></el-icon>
                       </el-upload>
                       <el-input
                         v-model="option.name"
@@ -365,7 +448,7 @@
                   </div>
 
                   <!-- 表格 -->
-                  <el-table :data="variants" border style="width: 100%">
+                  <el-table :data="variantData" border style="width: 100%">
                     <el-table-column
                       v-if="form.specs.length > 0"
                       :label="form.specs[0]?.name || '規格一'"
@@ -413,54 +496,6 @@
                   </el-table>
                 </div>
               </div>
-            </el-form-item>
-
-            <!-- 無規格時的價格/數量 -->
-            <el-row v-if="!specsEnabled" :gutter="16">
-              <el-col :span="12">
-                <el-form-item prop="price">
-                  <template #label>
-                    <span class="required-label">* 價格</span>
-                  </template>
-                  <el-input-number
-                    v-model="form.price"
-                    placeholder="NT$"
-                    :min="1"
-                    :max="9999999"
-                    controls-position="right"
-                    style="width: 100%"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item prop="stock">
-                  <template #label>
-                    <span class="required-label">* 商品數量</span>
-                  </template>
-                  <el-input-number
-                    v-model="form.stock"
-                    :min="0"
-                    :max="99999"
-                    controls-position="right"
-                    style="width: 100%"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
-
-            <!-- 最低購買數量 -->
-            <el-form-item prop="minPurchase">
-              <template #label>
-                <span class="required-label">* 最低購買數量</span>
-              </template>
-              <el-input-number
-                v-model="form.minPurchase"
-                :min="1"
-                :max="999"
-                controls-position="right"
-                style="width: 200px"
-              />
-              <div class="form-hint">最低購買數量是指買家一次至少購買的商品數量</div>
             </el-form-item>
           </section>
         </el-form>
@@ -563,12 +598,32 @@
     <div class="bottom-actions">
       <div class="actions-wrapper">
         <el-button @click="handleCancel">取消</el-button>
-        <el-button :loading="saving" @click="handleSubmit(false)">
-          儲存並下架
-        </el-button>
-        <el-button type="primary" :loading="saving" @click="handleSubmit(true)">
-          儲存並上架
-        </el-button>
+
+        <!-- 已退回 (status=3)：只能重新送審 -->
+        <template v-if="isEditMode && productData?.status === 3">
+          <el-button type="primary" :loading="saving" @click="handleSubmit(true)">
+            修改完成，重新送審
+          </el-button>
+        </template>
+
+        <!-- 已上架 (status=1)：直接儲存，不走送審 -->
+        <template v-else-if="isEditMode && productData?.status === 1">
+          <el-button type="primary" :loading="saving" @click="handleSubmit(false)">
+            儲存修改
+          </el-button>
+        </template>
+
+        <!-- 未上架/其他編輯狀態 (status=0,2)：可儲存或送審 -->
+        <template v-else-if="isEditMode">
+          <el-button :loading="saving" @click="handleSubmit(false)">儲存</el-button>
+          <el-button type="primary" :loading="saving" @click="handleSubmit(true)">儲存並送審</el-button>
+        </template>
+
+        <!-- 新增商品 -->
+        <template v-else>
+          <el-button :loading="saving" @click="handleSubmit(false)">儲存草稿</el-button>
+          <el-button type="primary" :loading="saving" @click="handleSubmit(true)">儲存並送審</el-button>
+        </template>
       </div>
     </div>
 
@@ -581,17 +636,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import type { FormInstance, FormRules, UploadUserFile, UploadProps } from 'element-plus'
+import type { FormInstance, FormRules, UploadUserFile, UploadProps, UploadFile } from 'element-plus'
 import { Plus, CircleCheck, CircleClose, ArrowRight, Picture, Close, Delete } from '@element-plus/icons-vue'
 import { fetchBrands } from '@/api/brand'
+import { createSellerProduct, addSellerProductVariant, getSellerProductDetail, updateSellerProduct, updateProductImages } from '@/api/product'
 import type { Brand } from '@/types/brand'
 import { getCategoryAttributes, type CategoryAttribute } from '@/api/categoryAttribute'
 import CategoryPicker from '@/components/seller/CategoryPicker.vue'
 
 const router = useRouter()
+const route = useRoute()
+
+// 編輯模式判斷
+const productId = computed(() => route.params.id ? Number(route.params.id) : null)
+const isEditMode = computed(() => !!productId.value)
+const pageTitle = computed(() => isEditMode.value ? '編輯商品' : '新增商品')
 
 const tabs = [
   { id: 'section-basic', label: '基本資訊' },
@@ -603,6 +665,7 @@ const tabs = [
 interface SpecOption {
   name: string
   image: File | null
+  imagePreview: string | null
 }
 
 interface Spec {
@@ -648,6 +711,7 @@ interface ProductForm {
 
 const formRef = ref<FormInstance>()
 const saving = ref<boolean>(false)
+const loading = ref<boolean>(false)
 const brands = ref<Brand[]>([])
 const categoryAttributes = ref<CategoryAttribute[]>([])
 const loadingAttributes = ref<boolean>(false)
@@ -656,10 +720,14 @@ const showCategoryPicker = ref<boolean>(false)
 const specsEnabled = ref<boolean>(false)
 const descriptionImageCount = ref<number>(0)
 const currentImageIndex = ref<number>(0)
+const productData = ref<any>(null) // 儲存載入的商品原始資料
+const originalImageCount = ref<number>(0) // 記錄載入時的圖片數量
 
 const batchPrice = ref<number | null>(null)
 const batchStock = ref<number | null>(null)
 const batchSku = ref<string>('')
+
+const variantData = ref<Variant[]>([])
 
 const form = reactive<ProductForm>({
   name: '',
@@ -685,25 +753,37 @@ const form = reactive<ProductForm>({
   specs: [
     {
       name: '',
-      options: [{ name: '', image: null }],
+      options: [{ name: '', image: null, imagePreview: null }],
     },
   ],
   minPurchase: 1,
   isOnShelf: true,
 })
 
-const rules: FormRules = {
+const rules = computed<FormRules>(() => ({
   name: [
     { required: true, message: '請輸入商品名稱', trigger: 'blur' },
-    { min: 5, max: 100, message: '商品名稱需介於 5~100 字', trigger: 'blur' },
+    { min: 5, message: '商品名稱至少需要 5 個字', trigger: 'blur' },
+    { max: 60, message: '商品名稱最多 60 個字', trigger: 'blur' },
   ],
   categoryId: [{ required: true, message: '請選擇分類', trigger: 'change' }],
-  price: [
-    { required: true, message: '請輸入售價', trigger: 'blur' },
-    { type: 'number', min: 1, message: '售價至少為 1', trigger: 'blur' },
+  minPurchase: [
+    { required: true, message: '請輸入最低購買數量', trigger: 'blur' },
+    { type: 'number', min: 1, message: '最低購買數量至少為 1', trigger: 'blur' },
   ],
-  stock: [{ required: true, message: '請輸入庫存', trigger: 'blur' }],
-}
+  ...(specsEnabled.value
+    ? {}
+    : {
+        price: [
+          { required: true, message: '請輸入商品價格', trigger: 'blur' },
+          { type: 'number', min: 1, message: '商品價格至少為 1', trigger: 'blur' },
+        ],
+        stock: [
+          { required: true, message: '請輸入商品數量', trigger: 'blur' },
+          { type: 'number', min: 0, message: '商品數量不能小於 0', trigger: 'blur' },
+        ],
+      }),
+}))
 
 const attributesCompletionCount = computed(() => {
   if (categoryAttributes.value.length === 0) {
@@ -824,6 +904,14 @@ const variants = computed<Variant[]>(() => {
   return result
 })
 
+// Sync variant spec combinations → editable variantData, preserving user-entered price/stock/sku
+watch(variants, (newVariants) => {
+  variantData.value = newVariants.map(nv => {
+    const existing = variantData.value.find(v => v.spec1 === nv.spec1 && v.spec2 === nv.spec2)
+    return existing ?? { ...nv }
+  })
+}, { immediate: true })
+
 async function loadBrands(): Promise<void> {
   try {
     const res = await fetchBrands()
@@ -833,7 +921,102 @@ async function loadBrands(): Promise<void> {
   }
 }
 
-loadBrands()
+async function loadProductData(): Promise<void> {
+  if (!isEditMode.value || !productId.value) return
+  
+  loading.value = true
+  try {
+    // getSellerProductDetail 已經 return response.data，所以 res 就是商品物件
+    const product = await getSellerProductDetail(productId.value)
+    
+    // 儲存原始資料（用於顯示退回原因等）
+    productData.value = product
+    
+    console.log('載入商品資料:', product)
+    console.log('name:', product.name)
+    console.log('categoryName:', product.categoryName)
+    console.log('images:', product.images)
+    console.log('rejectReason:', product.rejectReason)
+    
+    // 基本資訊
+    form.name = product.name || ''
+    form.description = product.description || ''
+    form.categoryId = product.categoryId || null
+    
+    // 分類路徑 - 後端直接回傳 categoryName 字串
+    form.categoryPath = product.categoryName || ''
+    
+    // 品牌
+    if (product.brandId) {
+      form.attributes.brandId = product.brandId
+    }
+    
+    // 價格和庫存（無規格時）
+    form.price = product.minPrice || 0
+    form.stock = 0 // 後端沒有 totalStock，variants 為空時預設 0
+    
+    // 圖片 - 後端回傳的是字串陣列，如 ['/uploads/products/xxx.jpg']
+    if (product.images && product.images.length > 0) {
+      form.images = product.images.map((url: string, idx: number) => ({
+        uid: -(idx + 1), // 負數 uid 避免與新上傳的衝突
+        name: `image-${idx}`,
+        url: url.startsWith('http') ? url : `https://localhost:7125${url}`,
+        status: 'success' as const,
+      }))
+      
+      // 記錄原始圖片數量
+      originalImageCount.value = product.images.length
+    } else {
+      originalImageCount.value = 0
+    }
+    
+    // 規格和變體 - 後端回傳 specDefinitionJson 字串
+    if (product.specDefinitionJson && product.specDefinitionJson !== '[]') {
+      try {
+        const specs = JSON.parse(product.specDefinitionJson)
+        if (specs && specs.length > 0) {
+          specsEnabled.value = true
+          
+          // 重建規格定義
+          form.specs = specs.map((spec: any) => ({
+            name: spec.name || '',
+            options: (spec.options || []).map((optName: string) => ({
+              name: optName,
+              image: null,
+              imagePreview: null,
+            })),
+          }))
+        }
+      } catch (e) {
+        console.error('解析規格定義失敗:', e)
+      }
+    }
+    
+    // 變體資料
+    if (product.variants && product.variants.length > 0) {
+      specsEnabled.value = true
+      variantData.value = product.variants.map((v: any) => ({
+        spec1: Object.values(v.specValues || {})[0] || '',
+        spec2: Object.values(v.specValues || {})[1] || null,
+        price: v.price || null,
+        stock: v.stock || 0,
+        sku: v.skuCode || '',
+      }))
+    }
+    
+    ElMessage.success('商品資料載入成功')
+  } catch (error) {
+    console.error('載入商品資料失敗:', error)
+    ElMessage.error('載入商品資料失敗，請稍後再試')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  await loadBrands()
+  await loadProductData()
+})
 
 watch(
   () => form.categoryId,
@@ -925,17 +1108,44 @@ const handleImageChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => 
       return
     }
   }
+  
+  // 設定上傳狀態為成功（顯示打勾圖示）
+  if (uploadFile.status === 'ready') {
+    uploadFile.status = 'success'
+  }
 }
 
 function handleAddDescriptionImage(): void {
   ElMessage.info('TODO: 實作描述圖片上傳功能')
 }
 
+function handleOptionImageChange(specIndex: number, optIndex: number, file: UploadFile): void {
+  const raw = file.raw
+  if (!raw) return
+  const validTypes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!validTypes.includes(raw.type)) {
+    ElMessage.error('只支援 JPG、PNG、WEBP 格式')
+    return
+  }
+  if (raw.size > 2 * 1024 * 1024) {
+    ElMessage.error('圖片大小不能超過 2MB')
+    return
+  }
+  const option = form.specs[specIndex]?.options[optIndex]
+  if (!option) return
+  option.image = raw
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    option.imagePreview = e.target?.result as string ?? null
+  }
+  reader.readAsDataURL(raw)
+}
+
 function addSpec(): void {
   if (form.specs.length < 2) {
     form.specs.push({
       name: '',
-      options: [{ name: '', image: null }],
+      options: [{ name: '', image: null, imagePreview: null }],
     })
   }
 }
@@ -945,7 +1155,7 @@ function removeSpec(index: number): void {
 }
 
 function addSpecOption(specIndex: number): void {
-  form.specs[specIndex].options.push({ name: '', image: null })
+  form.specs[specIndex].options.push({ name: '', image: null, imagePreview: null })
 }
 
 function removeSpecOption(specIndex: number, optionIndex: number): void {
@@ -955,7 +1165,7 @@ function removeSpecOption(specIndex: number, optionIndex: number): void {
 }
 
 function applyBatch(): void {
-  variants.value.forEach((variant) => {
+  variantData.value.forEach((variant) => {
     if (batchPrice.value !== null) variant.price = batchPrice.value
     if (batchStock.value !== null) variant.stock = batchStock.value
     if (batchSku.value) variant.sku = batchSku.value
@@ -973,33 +1183,175 @@ function getBrandName(brandId: number): string {
 }
 
 async function handleSubmit(publishNow: boolean): Promise<void> {
-  const valid = await formRef.value?.validate().catch(() => false)
-  if (!valid) return
-
-  form.isOnShelf = publishNow
+  // 草稿模式：只驗證商品名稱（最低要求）
+  // 送審模式：全欄位驗證
+  if (publishNow) {
+    const valid = await formRef.value?.validate().catch(() => false)
+    if (!valid) {
+      ElMessage.warning('請填寫所有必填欄位（商品名稱、分類' + (specsEnabled.value ? '' : '、價格、庫存') + '）')
+      return
+    }
+  } else {
+    // 草稿至少要有名稱
+    if (!form.name || form.name.length < 1) {
+      ElMessage.warning('請輸入商品名稱才能儲存草稿')
+      return
+    }
+  }
 
   saving.value = true
   try {
-    const payload = {
-      name: form.name,
-      categoryId: form.categoryId,
-      attributes: form.attributes,
-      description: form.description,
-      price: specsEnabled.value ? null : form.price,
-      stock: specsEnabled.value ? null : form.stock,
-      minPurchase: form.minPurchase,
-      isOnShelf: form.isOnShelf,
-      images: form.images,
-      specs: specsEnabled.value ? form.specs : null,
-      variants: specsEnabled.value ? variants.value : null,
-    }
+    let res: any
+    let targetProductId: number | null = null
 
-    // TODO: 實際呼叫後端 API
-    // await createProduct(payload)
-    ElMessage.success(`商品${publishNow ? '上架' : '下架'}成功（待串接後端）`)
-    
-    void router.push('/seller/products')
+    if (isEditMode.value && productId.value) {
+      // ===== 編輯模式：使用 JSON (application/json) =====
+      const updateData = {
+        name: form.name,
+        description: form.description || '',
+        categoryId: form.categoryId,
+        brandId: form.attributes.brandId || null,
+        price: form.price || 0,
+        stock: form.stock || 0,
+        minPurchase: form.minPurchase || 1,
+        specDefinitionJson: specsEnabled.value && form.specs.length > 0
+          ? JSON.stringify(form.specs.map(s => ({ name: s.name })))
+          : '[]',
+      }
+
+      console.log('送出資料 (編輯模式/JSON):', {
+        Mode: 'UPDATE',
+        ProductId: productId.value,
+        ...updateData,
+      })
+
+      // 1. 先更新商品基本資料
+      res = await updateSellerProduct(productId.value, updateData)
+      targetProductId = productId.value
+      
+      // 2. 檢查圖片是否有變動
+      const newFiles = form.images.filter(f => f.raw)
+      const hasNewImages = newFiles.length > 0
+      const hasRemovedImages = form.images.length !== originalImageCount.value
+      
+      // 只有在圖片真正有變動時才呼叫圖片 API
+      if (hasNewImages || hasRemovedImages) {
+        const formData = new FormData()
+        const existingImageUrls: string[] = []
+
+        // 遍歷所有圖片
+        for (const file of form.images) {
+          if (file.raw) {
+            // 新上傳的圖片
+            formData.append('images', file.raw)
+          } else if (file.url) {
+            // 舊圖片的 URL，取相對路徑（跟資料庫格式一致）
+            let imageUrl = file.url
+            try {
+              const parsedUrl = new URL(imageUrl)
+              imageUrl = parsedUrl.pathname  // 例如：/uploads/products/xxx.jpg
+            } catch {
+              // 已經是相對路徑，不需要轉換
+            }
+            existingImageUrls.push(imageUrl)
+            formData.append('existingImages', imageUrl)
+          }
+        }
+
+        // 印出實際送出的 URL，確認格式與後端 DB 儲存格式一致
+        console.log('[圖片更新] existingImages 送出的 URL:', existingImageUrls)
+        console.log('[圖片更新] 統計:', {
+          newImages: newFiles.length,
+          existingImages: existingImageUrls.length,
+          totalImages: form.images.length,
+          originalCount: originalImageCount.value,
+        })
+
+        await updateProductImages(productId.value, formData)
+      } else {
+        console.log('圖片無變動，跳過圖片更新 API')
+      }
+      
+      // 3. 更新成功訊息並跳轉
+      const origStatus = productData.value?.status
+      let successMsg: string
+      if (origStatus === 3 && publishNow) {
+        successMsg = '商品已重新送審，請等待管理員審核'
+      } else if (origStatus === 1) {
+        successMsg = '商品資料已更新'
+      } else if (publishNow) {
+        successMsg = '商品已提交審核，請等待管理員審核'
+      } else {
+        successMsg = '商品已儲存'
+      }
+      ElMessage.success(successMsg)
+      void router.push('/seller/products')
+    } else {
+      // ===== 新增模式：使用 FormData (multipart/form-data) =====
+      const fd = new FormData()
+      fd.append('Name', form.name)
+      fd.append('Description', form.description)
+      if (form.categoryId !== null) fd.append('CategoryId', String(form.categoryId))
+      if (form.attributes.brandId !== null) fd.append('BrandId', String(form.attributes.brandId))
+
+      console.log('送出資料 (新增模式/FormData):', {
+        Mode: 'CREATE',
+        Name: form.name,
+        CategoryId: form.categoryId,
+        BrandId: form.attributes.brandId ?? '(未選擇)',
+        Description: form.description,
+        SpecDefinitionJson: form.specs.map(s => s.name),
+        ImageCount: form.images.filter(i => i.raw).length,
+      })
+
+      // 規格定義 JSON：[{"name":"顏色"},{"name":"尺寸"}]
+      if (specsEnabled.value && form.specs.length > 0) {
+        const specDef = form.specs.map(s => ({ name: s.name }))
+        fd.append('SpecDefinitionJson', JSON.stringify(specDef))
+      }
+
+      // 圖片（UploadUserFile 的 raw 就是 File）
+      let mainIdx = 0
+      form.images.forEach((img, idx) => {
+        if (img.raw) {
+          fd.append('Images', img.raw)
+          if (img.raw === form.images[0]?.raw) mainIdx = idx
+        }
+      })
+      
+      // 如果有上傳圖片，設定主圖索引
+      if (form.images.some(img => img.raw)) {
+        fd.append('MainImageIndex', String(mainIdx))
+      }
+
+      res = await createSellerProduct(fd)
+      targetProductId = res.data?.productId || null
+
+      // 如果有規格，依次建立 variants
+      if (specsEnabled.value && targetProductId && variantData.value.length > 0) {
+        const specNames = form.specs.map(s => s.name)
+        for (const v of variantData.value) {
+          // 組成 specValueJson：{"顏色":"紅色","尺寸":"L"}
+          const specValueMap: Record<string, string> = {}
+          if (specNames[0] && v.spec1) specValueMap[specNames[0]] = v.spec1
+          if (specNames[1] && v.spec2) specValueMap[specNames[1]] = v.spec2
+
+          await addSellerProductVariant(targetProductId, {
+            skuCode: v.sku || '',
+            variantName: Object.values(specValueMap).join('/'),
+            specValueJson: JSON.stringify(specValueMap),
+            price: v.price ?? 0,
+            stock: v.stock,
+          })
+        }
+      }
+
+      const successMsg = publishNow ? '商品已提交審核，請等待管理員審核' : '草稿已儲存'
+      ElMessage.success(successMsg)
+      void router.push('/seller/products')
+    }
   } catch (error) {
+    console.error('儲存失敗:', error)
     ElMessage.error('儲存失敗，請稍後再試')
   } finally {
     saving.value = false
@@ -1414,6 +1766,13 @@ function handleCancel(): void {
 .option-image-upload {
   width: 40px;
   height: 40px;
+}
+
+.option-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
 }
 
 .option-image-upload :deep(.el-upload) {

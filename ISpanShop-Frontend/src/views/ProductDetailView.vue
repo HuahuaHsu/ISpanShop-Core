@@ -154,7 +154,7 @@
             <!-- 規格選擇器 -->
             <div v-if="safeProduct.specs.length > 0" class="pd-spec-selector">
               <div v-for="spec in safeProduct.specs" :key="spec.name" class="pd-spec-row">
-                <span class="pd-spec-label">{{ spec.name }}</span>
+                <div class="pd-spec-label">{{ spec.name }}</div>
                 <div class="pd-spec-options">
                   <button
                     v-for="option in spec.options"
@@ -167,8 +167,13 @@
                     :disabled="isSoldOut || getOptionStatus(spec.name, option) !== 'available'"
                     @click="selectSpec(spec.name, option)"
                   >
-                    <el-icon v-if="selectedSpecs[spec.name] === option" class="spec-check"><Check /></el-icon>
-                    {{ option }}
+                    <img
+                      v-if="getSpecOptionImage(spec.name, option)"
+                      :src="getSpecOptionImage(spec.name, option)!"
+                      class="pd-spec-btn-img"
+                      :alt="option"
+                    />
+                    <span>{{ option }}</span>
                   </button>
                 </div>
               </div>
@@ -295,7 +300,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Picture, Check, ChatDotRound, Shop } from '@element-plus/icons-vue'
+import { Picture, ChatDotRound, Shop } from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
 import { fetchProductDetail, fetchRelatedProducts } from '@/api/product'
 import { useCartStore } from '@/stores/cart'
@@ -381,6 +386,13 @@ function getOptionStatus(specName: string, optionValue: string) {
   })
   if (matching.length === 0) return 'unavailable'
   return matching.some(v => v.stock > 0) ? 'available' : 'soldOut'
+}
+
+function getSpecOptionImage(specName: string, optionValue: string): string | null {
+  const variant = safeProduct.value.variants.find(
+    v => v.specValues[specName] === optionValue && v.imageUrl
+  )
+  return variant?.imageUrl ?? null
 }
 
 function selectSpec(specName: string, optionValue: string) {
@@ -540,10 +552,15 @@ watch(() => route.params.id, (newId) => {
 .pd-discount-tag { background: #EE4D2D; color: #fff; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 2px; }
 .pd-original-price { margin-top: 8px; font-size: 13px; color: #94a3b8; }
 .pd-strikethrough { text-decoration: line-through; }
-.pd-spec-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
-.pd-spec-label { flex: 0 0 52px; font-size: 14px; font-weight: 600; color: #475569; padding-top: 6px; }
-.pd-spec-btn { padding: 5px 14px; border: 1.5px solid #e2e8f0; border-radius: 4px; background: #fff; font-size: 13px; color: #334155; cursor: pointer; }
-.pd-spec-btn.selected { border-color: #EE4D2D; color: #EE4D2D; background: #fff5f3; }
+.pd-spec-row { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
+.pd-spec-label { flex: 0 0 80px; font-size: 14px; color: #757575; padding-top: 10px; }
+.pd-spec-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.pd-spec-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff; cursor: pointer; font-size: 14px; color: #333; transition: all 0.2s; min-height: 40px; position: relative; }
+.pd-spec-btn:hover:not(:disabled) { border-color: #EE4D2D; color: #EE4D2D; }
+.pd-spec-btn.selected { border-color: #EE4D2D; color: #EE4D2D; }
+.pd-spec-btn.selected::after { content: '✓'; position: absolute; bottom: 0; right: 0; background: #EE4D2D; color: #fff; font-size: 10px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border-radius: 4px 0 4px 0; }
+.pd-spec-btn.unavailable { opacity: 0.4; cursor: not-allowed; border-color: #e0e0e0; color: #333; }
+.pd-spec-btn-img { width: 24px; height: 24px; object-fit: cover; border-radius: 2px; }
 .pd-quantity-row { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
 .pd-stock-hint { font-size: 13px; color: #94a3b8; }
 .pd-action-buttons { display: flex; gap: 12px; }

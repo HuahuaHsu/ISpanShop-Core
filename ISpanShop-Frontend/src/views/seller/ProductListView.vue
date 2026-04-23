@@ -160,6 +160,7 @@
               v-for="product in pagedProducts"
               :key="product.id"
               class="product-card"
+              :class="{ 'product-card-deleted': product.isDeleted }"
             >
               <!-- 圖片 -->
               <div class="card-img-wrap">
@@ -183,6 +184,11 @@
               <!-- 商品資訊 -->
               <div class="card-body">
                 <p class="card-name">{{ product.name }}</p>
+                <!-- 退回原因橫幅 -->
+                <div v-if="product.status === 'rejected' && product.rejectReason" class="reject-banner">
+                  <el-icon :size="13"><WarningFilled /></el-icon>
+                  <span>退回原因：{{ product.rejectReason }}</span>
+                </div>
                 <div class="card-price">NT$ {{ getProductPrice(product) }}</div>
                 <div class="card-stock">
                   商品數量：
@@ -201,33 +207,69 @@
 
               <!-- 操作列 -->
               <div class="card-footer">
-                <button
-                  class="card-action-btn edit-btn"
-                  @click="router.push(`/seller/products/${product.id}/edit`)"
-                >
-                  <el-icon :size="13"><Edit /></el-icon> 編輯
-                </button>
-                <el-dropdown
-                  trigger="click"
-                  @command="(cmd: string) => handleCardCommand(cmd, product)"
-                >
-                  <button class="card-action-btn more-btn">
-                    <el-icon :size="15"><MoreFilled /></el-icon>
+                <template v-if="product.isDeleted">
+                  <span class="deleted-footer-label">
+                    <el-icon :size="12"><Delete /></el-icon>
+                    已刪除
+                  </span>
+                </template>
+                <template v-else>
+                  <button
+                    class="card-action-btn edit-btn"
+                    :class="{ 'resubmit-btn': product.status === 'rejected' }"
+                    @click="router.push(`/seller/products/${product.id}/edit`)"
+                  >
+                    <el-icon :size="13"><Edit /></el-icon>
+                    {{ product.status === 'rejected' ? '重新編輯' : '編輯' }}
                   </button>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item command="copy">複製</el-dropdown-item>
-                      <el-dropdown-item command="preview">即時預覽</el-dropdown-item>
-                      <el-dropdown-item command="shelf">
-                        {{ product.status === 'on' ? '下架' : '上架' }}
-                      </el-dropdown-item>
-                      <el-dropdown-item command="stock">低庫存提醒</el-dropdown-item>
-                      <el-dropdown-item command="delete" divided>
-                        <span class="text-danger">刪除</span>
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
+                  <el-dropdown
+                    trigger="click"
+                    @command="(cmd: string) => handleCardCommand(cmd, product)"
+                  >
+                    <button class="card-action-btn more-btn">
+                      <el-icon :size="15"><MoreFilled /></el-icon>
+                    </button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <!-- 複製：所有狀態都可以 -->
+                        <el-dropdown-item command="copy">複製</el-dropdown-item>
+
+                        <!-- 即時預覽：已上架、未上架、審核中可預覽 -->
+                        <el-dropdown-item
+                          v-if="product.status === 'on' || product.status === 'draft' || product.status === 'review'"
+                          command="preview"
+                        >
+                          即時預覽
+                        </el-dropdown-item>
+
+                        <!-- 上架/下架：只有已上架和未上架可以切換 -->
+                        <el-dropdown-item
+                          v-if="product.status === 'on' || product.status === 'draft'"
+                          command="shelf"
+                        >
+                          {{ product.status === 'on' ? '下架' : '上架' }}
+                        </el-dropdown-item>
+
+                        <!-- 低庫存提醒：已上架和未上架可設定 -->
+                        <el-dropdown-item
+                          v-if="product.status === 'on' || product.status === 'draft'"
+                          command="stock"
+                        >
+                          低庫存提醒
+                        </el-dropdown-item>
+
+                        <!-- 刪除：只有未上架和已退回可刪除 -->
+                        <el-dropdown-item
+                          v-if="product.status === 'draft' || product.status === 'rejected'"
+                          command="delete"
+                          divided
+                        >
+                          <span class="text-danger">刪除</span>
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </template>
               </div>
             </div>
           </div>
@@ -272,6 +314,10 @@
                   <div class="table-info">
                     <div class="table-name">{{ row.name }}</div>
                     <div class="table-id">ID: {{ row.id }}</div>
+                    <div v-if="row.status === 'rejected' && row.rejectReason" class="table-reject-reason">
+                      <el-icon :size="12"><WarningFilled /></el-icon>
+                      {{ row.rejectReason }}
+                    </div>
                   </div>
                 </div>
               </template>
@@ -304,7 +350,7 @@
 
             <el-table-column label="狀態" width="90" align="center">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'on' ? 'success' : 'info'" size="small">
+                <el-tag :type="getStatusTagType(row.status)" size="small">
                   {{ row.statusText }}
                 </el-tag>
               </template>
@@ -312,24 +358,30 @@
 
             <el-table-column label="操作" width="160" align="center" fixed="right">
               <template #default="{ row }">
-                <el-button
-                  text type="primary" size="small"
-                  @click="router.push(`/seller/products/${row.id}/edit`)"
-                >
-                  <el-icon><Edit /></el-icon> 編輯
-                </el-button>
-                <el-popconfirm
-                  title="確定要刪除這個商品嗎？"
-                  confirm-button-text="確定"
-                  cancel-button-text="取消"
-                  @confirm="handleDelete(row.id)"
-                >
-                  <template #reference>
-                    <el-button text type="danger" size="small">
-                      <el-icon><Delete /></el-icon>
-                    </el-button>
-                  </template>
-                </el-popconfirm>
+                <template v-if="!row.isDeleted">
+                  <el-button
+                    text
+                    :type="row.status === 'rejected' ? 'warning' : 'primary'"
+                    size="small"
+                    @click="router.push(`/seller/products/${row.id}/edit`)"
+                  >
+                    <el-icon><Edit /></el-icon>
+                    {{ row.status === 'rejected' ? '重新編輯' : '編輯' }}
+                  </el-button>
+                  <el-popconfirm
+                    title="確定要刪除這個商品嗎？"
+                    confirm-button-text="確定"
+                    cancel-button-text="取消"
+                    @confirm="handleDeleteProduct(row)"
+                  >
+                    <template #reference>
+                      <el-button text type="danger" size="small">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </template>
+                  </el-popconfirm>
+                </template>
+                <el-tag v-else type="danger" size="small">已刪除</el-tag>
               </template>
             </el-table-column>
           </el-table>
@@ -403,35 +455,19 @@
         <el-button type="primary" @click="saveStockAlert">儲存</el-button>
       </template>
     </el-dialog>
-
-    <!-- ── 刪除確認 Dialog（卡片更多選單觸發）── -->
-    <el-dialog v-model="deleteDialogVisible" title="確認刪除" width="400px">
-      <div class="delete-dialog-body">
-        <el-icon :size="48" color="#ef4444"><WarningFilled /></el-icon>
-        <p>
-          確定要刪除商品<br />
-          「{{ deleteTargetProduct?.name }}」嗎？<br />
-          <span class="hint-text">此操作無法復原。</span>
-        </p>
-      </div>
-      <template #footer>
-        <el-button @click="deleteDialogVisible = false">取消</el-button>
-        <el-button type="danger" @click="confirmDelete">確定刪除</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus, Search, Edit, Delete, Grid, List,
   ArrowDown, ArrowUp, DCaret, CaretTop, CaretBottom,
   MoreFilled, WarningFilled, View, ShoppingCart, Goods,
 } from '@element-plus/icons-vue'
-import { fetchSellerProducts } from '@/api/product'
+import { fetchSellerProducts, updateProductStatus, deleteSellerProduct } from '@/api/product'
 import { fetchMainCategories } from '@/api/category'
 import type { SellerProductListItem } from '@/types/product'
 import type { Category } from '@/types/category'
@@ -457,8 +493,8 @@ function getProductPrice(product: SellerProduct): string {
 }
 
 // ── 型別定義 ──────────────────────────────────────────────────────
-type ProductStatus = 'on' | 'off' | 'deleted' | 'review' | 'draft'
-type TabKey = 'all' | 'on' | 'deleted' | 'review' | 'draft'
+type ProductStatus = 'on' | 'off' | 'deleted' | 'review' | 'rejected' | 'draft'
+type TabKey = 'all' | 'on' | 'deleted' | 'review' | 'rejected' | 'draft'
 type SubTabKey = 'all' | 'restock' | 'optimize'
 type SortField = 'minPrice' | 'createdAt'
 type SortDir = 'asc' | 'desc' | null
@@ -468,7 +504,7 @@ function mapStatusToKey(status: number): ProductStatus {
   switch (status) {
     case 1: return 'on'
     case 2: return 'review'
-    case 3: return 'deleted'
+    case 3: return 'rejected'  // 審核退回
     default: return 'draft'
   }
 }
@@ -480,8 +516,11 @@ function mapStatusToKey(status: number): ProductStatus {
  */
 interface SellerProduct extends Omit<SellerProductListItem, 'status'> {
   status: ProductStatus
+  isDeleted: boolean
   lowStockAlert: boolean
   lowStockThreshold: number
+  rejectReason: string | null
+  reviewStatus: number
 }
 
 // ── State ─────────────────────────────────────────────────────────
@@ -516,17 +555,14 @@ const stockDialogVisible = ref<boolean>(false)
 const stockDialogProduct = ref<SellerProduct | null>(null)
 const stockForm = reactive({ threshold: 0, enabled: false })
 
-// Dialog — 刪除
-const deleteDialogVisible = ref<boolean>(false)
-const deleteTargetProduct = ref<SellerProduct | null>(null)
-
 // ── 常數 ─────────────────────────────────────────────────────────
 const level1Tabs: Array<{ key: TabKey; label: string }> = [
-  { key: 'all',     label: '全部' },
-  { key: 'on',      label: '架上商品' },
-  { key: 'deleted', label: '違規/刪除' },
-  { key: 'review',  label: '審核中' },
-  { key: 'draft',   label: '未上架/尚未刊登' },
+  { key: 'all',      label: '全部' },
+  { key: 'on',       label: '架上商品' },
+  { key: 'rejected', label: '已退回' },
+  { key: 'review',   label: '審核中' },
+  { key: 'draft',    label: '未上架/尚未刊登' },
+  { key: 'deleted',  label: '違規/刪除' },
 ]
 
 const sortOptions: Array<{ field: string; label: string }> = [
@@ -602,7 +638,7 @@ const pagedProducts = computed<SellerProduct[]>(() => {
 
 /** 各 Tab 計數 */
 const tabCounts = computed<Record<TabKey, number>>(() => {
-  const c: Record<string, number> = { all: 0, on: 0, deleted: 0, review: 0, draft: 0 }
+  const c: Record<string, number> = { all: 0, on: 0, deleted: 0, review: 0, rejected: 0, draft: 0 }
   allProducts.value.forEach((p) => {
     c['all'] = (c['all'] ?? 0) + 1
     const prev = c[p.status]
@@ -635,15 +671,21 @@ async function loadProducts(): Promise<void> {
 
     if (res.items.length > 0) {
       console.log('第一筆商品:', res.items[0])
+      console.log('isDeleted 欄位:', res.items[0]?.isDeleted)
     }
 
     allProducts.value = res.items.map((p): SellerProduct => {
       const { status, ...rest } = p
+      const isDeleted = p.isDeleted ?? false
       return {
         ...rest,
-        status: mapStatusToKey(status),
+        status: isDeleted ? 'deleted' : mapStatusToKey(status),
+        statusText: isDeleted ? '已刪除' : p.statusText,
+        isDeleted,
         lowStockAlert: false,
         lowStockThreshold: 5,
+        rejectReason: p.rejectReason ?? null,
+        reviewStatus: p.reviewStatus ?? 0,
       }
     })
   } catch (err) {
@@ -699,7 +741,7 @@ function getSortIcon(field: SortField): object {
 }
 
 // ── 卡片更多選單 ──────────────────────────────────────────────────
-function handleCardCommand(cmd: string, product: SellerProduct): void {
+async function handleCardCommand(cmd: string, product: SellerProduct): Promise<void> {
   switch (cmd) {
     case 'copy':
       // TODO: 呼叫 POST /api/seller/products/{id}/copy 複製商品
@@ -710,42 +752,97 @@ function handleCardCommand(cmd: string, product: SellerProduct): void {
       window.open(`/product/${product.id}`, '_blank')
       break
     case 'shelf':
-      handleToggleShelf(product)
+      await handleToggleShelf(product)
       break
     case 'stock':
       openStockDialog(product)
       break
     case 'delete':
-      deleteTargetProduct.value = product
-      deleteDialogVisible.value = true
+      await handleDeleteProduct(product)
       break
   }
 }
 
+// ── 刪除商品 ──────────────────────────────────────────────────────
+async function handleDeleteProduct(product: SellerProduct): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      '確定要刪除此商品嗎？刪除後可在「違規/刪除」中查看',
+      '刪除確認',
+      {
+        confirmButtonText: '確定刪除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    await deleteSellerProduct(product.id)
+    ElMessage.success('商品已刪除')
+
+    // 本地即時更新：直接標記為已刪除
+    // 不重新呼叫 API，因為後端可能過濾掉已刪除商品，導致商品從所有 tab 消失
+    const idx = allProducts.value.findIndex(p => p.id === product.id)
+    if (idx !== -1) {
+      allProducts.value[idx] = {
+        ...allProducts.value[idx],
+        isDeleted: true,
+        status: 'deleted',
+        statusText: '已刪除',
+      }
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('刪除商品失敗:', error)
+      ElMessage.error('刪除失敗，請稍後再試')
+    }
+  }
+}
+
 // ── 上/下架切換 ───────────────────────────────────────────────────
-function handleToggleShelf(product: SellerProduct): void {
-  const newStatus: ProductStatus = product.status === 'on' ? 'off' : 'on'
-  // TODO: 呼叫 PUT /api/seller/products/{id}/shelf { isOnShelf: newStatus === 'on' }
-  console.log('[TODO] PUT /api/seller/products/' + product.id + '/shelf', {
-    isOnShelf: newStatus === 'on',
-  })
-  product.status = newStatus
-  ElMessage.success(newStatus === 'on' ? '商品已上架' : '商品已下架')
-}
+async function handleToggleShelf(product: SellerProduct): Promise<void> {
+  // 只有已上架('on') 或 未上架('draft', 對應後端 status=0) 可以切換
+  // 'off' 在本系統不使用（mapStatusToKey: 0 → 'draft'）
+  if (product.status !== 'on' && product.status !== 'draft') {
+    ElMessage.warning('此商品狀態無法進行上下架操作')
+    return
+  }
 
-// ── 刪除 ──────────────────────────────────────────────────────────
-function handleDelete(id: number): void {
-  // TODO: 呼叫 DELETE /api/seller/products/{id}
-  console.log('[TODO] DELETE /api/seller/products/' + id)
-  allProducts.value = allProducts.value.filter((p) => p.id !== id)
-  ElMessage.success('商品已刪除（TODO: 串接後端）')
-}
+  // 下架後 status key 必須用 'draft'（對應後端 status=0），而非 'off'
+  // 否則 tabCounts['draft'] 不會增加，商品也不會出現在「未上架」tab
+  const newStatus: ProductStatus = product.status === 'on' ? 'draft' : 'on'
+  const newStatusNumber = newStatus === 'on' ? 1 : 0
+  const actionText = newStatus === 'on' ? '上架' : '下架'
 
-function confirmDelete(): void {
-  if (!deleteTargetProduct.value) return
-  handleDelete(deleteTargetProduct.value.id)
-  deleteDialogVisible.value = false
-  deleteTargetProduct.value = null
+  try {
+    await ElMessageBox.confirm(
+      `確定要${actionText}「${product.name}」嗎？`,
+      `${actionText}確認`,
+      {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+
+    await updateProductStatus(product.id, newStatusNumber)
+
+    // 本地即時更新：替換陣列元素，確保 tabFiltered / tabCounts 兩個 computed 正確重算
+    const idx = allProducts.value.findIndex(p => p.id === product.id)
+    if (idx !== -1) {
+      allProducts.value[idx] = {
+        ...allProducts.value[idx],
+        status: newStatus,
+        statusText: newStatus === 'on' ? '上架' : '下架',
+      }
+    }
+
+    ElMessage.success(`商品已${actionText}`)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error(`${actionText}失敗:`, error)
+      ElMessage.error(`${actionText}失敗，請稍後再試`)
+    }
+  }
 }
 
 // ── 低庫存 Dialog ─────────────────────────────────────────────────
@@ -771,10 +868,20 @@ function saveStockAlert(): void {
 
 // ── Helpers ───────────────────────────────────────────────────────
 const STATUS_LABEL: Record<ProductStatus, string> = {
-  on: '架上', off: '下架', deleted: '已刪除', review: '審核中', draft: '草稿',
+  on: '架上', off: '下架', deleted: '已刪除', review: '審核中', rejected: '已退回', draft: '草稿',
 }
 function statusLabel(status: ProductStatus): string {
   return STATUS_LABEL[status] ?? status
+}
+
+function getStatusTagType(status: ProductStatus): 'success' | 'warning' | 'danger' | 'info' {
+  switch (status) {
+    case 'on': return 'success'
+    case 'review': return 'warning'
+    case 'rejected': return 'danger'
+    case 'deleted': return 'danger'
+    default: return 'info'
+  }
 }
 </script>
 
@@ -934,6 +1041,22 @@ function statusLabel(status: ProductStatus): string {
   transform: translateY(-2px);
   border-color: #ee4d2d;
 }
+.product-card-deleted {
+  opacity: 0.55;
+  filter: grayscale(40%);
+}
+.product-card-deleted:hover {
+  box-shadow: none;
+  transform: none;
+  border-color: #e8eaf0;
+}
+.product-card-deleted .card-img-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
 
 .card-img-wrap {
   position: relative;
@@ -958,13 +1081,37 @@ function statusLabel(status: ProductStatus): string {
   font-weight: 600;
   pointer-events: none;
 }
-.badge-on      { background: #dcfce7; color: #16a34a; }
-.badge-off     { background: #f1f5f9; color: #64748b; }
-.badge-deleted { background: #fee2e2; color: #dc2626; }
-.badge-review  { background: #fef3c7; color: #d97706; }
-.badge-draft   { background: #f1f5f9; color: #64748b; }
+.badge-on       { background: #dcfce7; color: #16a34a; }
+.badge-off      { background: #f1f5f9; color: #64748b; }
+.badge-deleted  { background: #fee2e2; color: #dc2626; }
+.badge-review   { background: #fef3c7; color: #d97706; }
+.badge-rejected { background: #ffe4e6; color: #e11d48; }
+.badge-draft    { background: #f1f5f9; color: #64748b; }
 
 .card-body { padding: 8px 10px; flex: 1; }
+
+/* 退回原因橫幅 */
+.reject-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: #e11d48;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+.reject-banner .el-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* 重新編輯按鈕 — 橘色強調 */
+.resubmit-btn { color: #ee4d2d !important; font-weight: 600; }
+.resubmit-btn:hover { background: #fff7ed !important; }
 
 .card-name {
   font-size: 13px;
@@ -1018,6 +1165,14 @@ function statusLabel(status: ProductStatus): string {
 .edit-btn:hover { color: #ee4d2d; background: #fff7ed; }
 .more-btn { color: #94a3b8; }
 .more-btn:hover { color: #ee4d2d; background: #fff7ed; }
+.deleted-footer-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #dc2626;
+  padding: 4px 6px;
+}
 
 /* ─ 列表模式 ─────────────────────────────────────────────────────── */
 .table-product-cell {
@@ -1042,6 +1197,18 @@ function statusLabel(status: ProductStatus): string {
   max-width: 180px;
 }
 .table-id { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.table-reject-reason {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #e11d48;
+  margin-top: 3px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ─ 分頁 ─────────────────────────────────────────────────────────── */
 .pagination-wrapper {
