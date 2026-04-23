@@ -745,6 +745,7 @@
                         fontFamily: 'Public Sans, -apple-system, sans-serif',
                         events: {
                             dataPointSelection: function(event, chartContext, config) {
+                                // 修正：獲取選中的類別名稱
                                 const label = config.w.config.xaxis.categories[config.dataPointIndex];
                                 const type = 'Sales';
                                 showCategoryDetail(type, label);
@@ -777,7 +778,7 @@
                         }
                     },
                     xaxis: { 
-                        categories: data.map(x => x.productName),
+                        categories: data.map(x => x.categoryName), // 改為使用 categoryName
                         max: targetMax,
                         forceNiceScale: true, // 自動對齊漂亮刻度
                         labels: {

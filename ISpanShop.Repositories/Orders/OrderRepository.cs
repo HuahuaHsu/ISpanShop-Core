@@ -460,22 +460,30 @@ namespace ISpanShop.Repositories.Orders
 
 		public async Task<List<TopProductSalesDto>> GetTopSellingCategoriesAsync(int? storeId, DateTime startDate, DateTime endDate, string orderBy)
 		{
-			// 修正：對個人賣家而言，排行應該以「商品」為單位才有意義
+			// 需求變更：顯示「主類別」排行，而非熱銷商品
 			var query = _context.OrderDetails
 				.Include(od => od.Order)
 				.Include(od => od.Product)
+					.ThenInclude(p => p.Category)
+						.ThenInclude(c => c.Parent)
 				.Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate && od.Order.Status == 3);
 
 			if (storeId.HasValue) query = query.Where(od => od.Order.StoreId == storeId.Value);
 
 			var groupedQuery = query
-				.GroupBy(od => new { od.ProductId, od.ProductName })
+				.Select(od => new
+				{
+					ParentCategoryName = od.Product.Category.ParentId == null ? od.Product.Category.Name : od.Product.Category.Parent.Name,
+					Quantity = od.Quantity,
+					Revenue = (od.Price ?? 0) * od.Quantity
+				})
+				.GroupBy(x => x.ParentCategoryName)
 				.Select(g => new TopProductSalesDto
 				{
-					ProductName = g.Key.ProductName ?? "未命名商品",
-					CategoryName = "", // 暫不顯示類別
-					SalesVolume = g.Sum(od => od.Quantity),
-					SalesRevenue = g.Sum(od => (od.Price ?? 0) * od.Quantity)
+					CategoryName = g.Key ?? "未分類",
+					ProductName = g.Key ?? "未分類", // 這裡為了與前端相容，ProductName 存放類別名稱
+					SalesVolume = g.Sum(x => x.Quantity),
+					SalesRevenue = g.Sum(x => x.Revenue)
 				});
 
 			return orderBy.ToLower() == "volume"
