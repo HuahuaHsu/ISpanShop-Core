@@ -80,9 +80,6 @@
                 :is-reviewed="order.isReviewed || (order as any).IsReviewed"
                 @refresh="fetchOrders"
               />
-              <el-button @click="goToDetail(order.id)" size="default" class="detail-btn">
-                查看訂單詳情
-              </el-button>
             </div>
           </div>
         </div>

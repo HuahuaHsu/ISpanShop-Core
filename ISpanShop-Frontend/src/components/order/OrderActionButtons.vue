@@ -2,8 +2,8 @@
   <div class="order-actions">
     <!-- 狀態 0: 待付款 -->
     <template v-if="status === 0">
-      <el-button type="primary" size="default" @click="handlePay" :loading="loading">立即付款</el-button>
       <el-button @click="handleCancel" :loading="loading" size="default">取消訂單</el-button>
+      <el-button type="primary" size="default" @click="handlePay" :loading="loading">立即付款</el-button>
     </template>
 
     <!-- 狀態 1: 待出貨 -->
@@ -13,20 +13,20 @@
 
     <!-- 狀態 2: 運送中 -->
     <template v-if="status === 2">
-      <el-button type="primary" @click="handleConfirmReceipt" :loading="loading" size="default">確認收貨</el-button>
       <el-button @click="handleRefund" :loading="loading" size="default">申請退貨/退款</el-button>
+      <el-button type="primary" @click="handleConfirmReceipt" :loading="loading" size="default">確認收貨</el-button>
     </template>
 
     <!-- 狀態 3: 已完成 -->
     <template v-if="status === 3">
-      <el-button v-if="!isReviewed" type="success" size="default" @click="handleReview">評價回饋</el-button>
-      <el-button type="warning" size="default" @click="handleAppeal">訂單申訴</el-button>
-      <el-button type="primary" plain size="default" @click="handleRebuy">再次購買</el-button>
+      <el-button size="default" @click="handleAppeal">訂單申訴</el-button>
+      <el-button v-if="!isReviewed" size="default" @click="handleReview">評價回饋</el-button>
+      <el-button type="primary" size="default" @click="handleRebuy">再次購買</el-button>
     </template>
 
     <!-- 狀態 4: 已取消 -->
     <template v-if="status === 4">
-      <el-button type="primary" plain size="default" @click="handleRebuy">再次購買</el-button>
+      <el-button type="primary" size="default" @click="handleRebuy">再次購買</el-button>
     </template>
 
     <!-- 狀態 5: 退貨/款中 -->
