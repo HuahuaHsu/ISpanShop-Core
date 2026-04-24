@@ -151,9 +151,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Picture, ArrowLeft } from '@element-plus/icons-vue'
 import { getSellerOrderDetailApi, updateSellerOrderStatusApi } from '@/api/store'
 import type { SellerOrderDetail } from '@/types/store'
+import { useChatStore } from '@/stores/chat'
 
 const route = useRoute()
 const router = useRouter()
+const chatStore = useChatStore()
 const loading = ref(false)
 const order = ref<SellerOrderDetail | null>(null)
 
@@ -212,7 +214,11 @@ const handleShip = async () => {
 }
 
 const contactBuyer = () => {
-  ElMessage.info('即時聊天功能開發中')
+  if (order.value?.userId) {
+    chatStore.openChatWithUser(order.value.userId, order.value.buyerName || order.value.buyerAccount);
+  } else {
+    ElMessage.warning('無法取得買家資訊');
+  }
 }
 
 onMounted(() => {
