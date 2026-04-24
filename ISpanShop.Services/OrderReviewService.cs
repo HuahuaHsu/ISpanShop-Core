@@ -87,5 +87,37 @@ namespace ISpanShop.Services
                 await _repo.UpdateAsync(review);
             }
         }
+
+        public async Task<List<ISpanShop.Models.DTOs.Products.FrontProductReviewVm>> GetReviewsByProductIdAsync(int productId)
+        {
+            var entities = await _repo.GetAllAsync();
+
+            // 除錯：先不檢查 IsHidden 看看資料有沒有出來
+            var reviews = entities
+                .Where(r => r.Order != null && r.Order.OrderDetails.Any(od => od.ProductId == productId))
+                .Select(r => new ISpanShop.Models.DTOs.Products.FrontProductReviewVm
+                {
+                    Id = r.Id,
+                    UserName = MaskUserName(r.User?.Account ?? "Guest"),
+                    UserAvatar = r.User?.MemberProfile?.AvatarUrl ?? "/images/default-avatar.png",
+                    Rating = r.Rating,
+                    Comment = r.Comment,
+                    StoreReply = r.StoreReply,
+                    CreatedAt = r.CreatedAt ?? DateTime.MinValue,
+                    VariantName = r.Order.OrderDetails.FirstOrDefault(od => od.ProductId == productId)?.VariantName,
+                    ImageUrls = r.ReviewImages.Select(ri => ri.ImageUrl).ToList()
+                })
+                .OrderByDescending(r => r.CreatedAt)
+                .ToList();
+
+            return reviews;
+        }
+
+        private string MaskUserName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "****";
+            if (name.Length <= 2) return name[0] + "****";
+            return name[0] + "****" + name[name.Length - 1];
+        }
     }
 }

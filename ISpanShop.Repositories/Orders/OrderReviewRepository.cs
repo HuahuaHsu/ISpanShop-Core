@@ -18,6 +18,8 @@ namespace ISpanShop.Repositories.Orders
         {
             return await _context.OrderReviews
                 .Include(r => r.ReviewImages)
+                .Include(r => r.User)
+                    .ThenInclude(u => u.MemberProfile)
                 .Include(r => r.Order)
                     .ThenInclude(o => o.OrderDetails)
                         .ThenInclude(od => od.Product)
