@@ -10,6 +10,8 @@ namespace ISpanShop.Models.DTOs.Orders
         public string OrderNumber { get; set; }
         public DateTime? CreatedAt { get; set; }
         public decimal FinalAmount { get; set; }
+        public decimal? DiscountAmount { get; set; }
+        public decimal? LevelDiscount { get; set; }
         public OrderStatus Status { get; set; }
         public string StatusName { get; set; }
         public string StoreName { get; set; }

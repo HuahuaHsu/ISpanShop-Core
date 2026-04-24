@@ -92,6 +92,7 @@ export interface SellerOrderDetail {
   totalAmount: number
   shippingFee: number
   discountAmount: number
+  levelDiscount?: number // 會員等級折抵
   pointDiscount: number
   finalAmount: number
 

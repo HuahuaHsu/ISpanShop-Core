@@ -1,5 +1,6 @@
 import axios from './axios';
 import type { ChangePasswordRequest } from '@/types/auth';
+import type { AddressDto, CreateAddressDto, UpdateAddressDto, LevelInfo, LevelDetail } from '@/types/member';
 
 /** 會員資料 DTO (用於讀取) */
 export interface MemberDto {
@@ -31,7 +32,14 @@ export interface UpdateMemberProfileDto {
  * 取得會員等級詳細資訊 (含進度、計算區間、最新消費額)
  */
 export const getLevelDetail = () => {
-  return axios.get<any>('/api/member/level-detail');
+  return axios.get<LevelDetail>('/api/member/level-detail');
+};
+
+/**
+ * 取得會員等級基本資訊
+ */
+export const getLevelInfo = () => {
+  return axios.get<LevelInfo>('/api/member/level-info');
 };
 
 /**

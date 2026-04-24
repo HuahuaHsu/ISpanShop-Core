@@ -40,6 +40,8 @@ namespace ISpanShop.Services.Orders
                     OrderNumber = o.OrderNumber.StartsWith("ORD") ? o.OrderNumber : "ORD" + o.OrderNumber,
                     CreatedAt = o.CreatedAt,
                     FinalAmount = o.FinalAmount,
+                    DiscountAmount = o.DiscountAmount,
+                    LevelDiscount = o.LevelDiscount, // 從資料庫讀取
                     Status = (OrderStatus)(o.Status ?? 0),
                     StatusName = GetStatusName(o.Status),
                     StoreName = o.Store?.StoreName ?? "未知商店",
@@ -76,6 +78,7 @@ namespace ISpanShop.Services.Orders
                 ShippingFee = o.ShippingFee,
                 PointDiscount = o.PointDiscount,
                 DiscountAmount = o.DiscountAmount,
+                LevelDiscount = o.LevelDiscount, // 從資料庫讀取
                 CouponId = o.CouponId,
                 CouponTitle = o.Coupon?.Title ?? (o.CouponId.HasValue ? "優惠券" : null),
                 FinalAmount = o.FinalAmount,

@@ -125,7 +125,8 @@ namespace ISpanShop.Services.Payments
 							TotalAmount = subtotal,
 							ShippingFee = shippingFee,
 							CouponId = dto.CouponId,
-							DiscountAmount = totalDiscountAmount, // 優惠券 + 等級折扣
+							DiscountAmount = couponDiscountAmount, // 僅存優惠券折扣
+							LevelDiscount = levelDiscountAmount,   // 存入會員等級折扣
 							PointDiscount = (int)pointDiscountAmount, // 點數折扣
 							FinalAmount = (subtotal + shippingFee) - totalDiscountAmount - pointDiscountAmount,
 							Status = 0, // 0: 待付款

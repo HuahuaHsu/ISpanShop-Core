@@ -77,28 +77,18 @@
             </el-table-column>
           </el-table>
 
-          <div class="order-summary">
-            <div class="summary-line">
-              <span>商品總額</span>
-              <span>NT$ {{ order.totalAmount.toLocaleString() }}</span>
-            </div>
-            <div class="summary-line">
-              <span>運費</span>
-              <span>NT$ {{ order.shippingFee.toLocaleString() }}</span>
-            </div>
-            <div class="summary-line discount" v-if="order.discountAmount > 0">
-              <span>活動折扣</span>
-              <span>- NT$ {{ order.discountAmount.toLocaleString() }}</span>
-            </div>
-            <div class="summary-line discount" v-if="order.pointDiscount > 0">
-              <span>點數折抵</span>
-              <span>- NT$ {{ order.pointDiscount.toLocaleString() }}</span>
-            </div>
-            <el-divider />
-            <div class="summary-line total">
-              <span>買家實付</span>
-              <span class="final-amount">NT$ {{ order.finalAmount.toLocaleString() }}</span>
-            </div>
+          <!-- 價格結算 (使用抽取的組件) -->
+          <div class="seller-summary-wrapper">
+            <OrderSummary 
+              v-if="order"
+              :total-amount="order.totalAmount"
+              :shipping-fee="order.shippingFee"
+              :point-discount="order.pointDiscount"
+              :discount-amount="order.discountAmount"
+              :level-discount="order.levelDiscount"
+              :final-amount="order.finalAmount"
+              payment-method="線上支付"
+            />
           </div>
         </el-card>
       </el-col>
@@ -164,6 +154,7 @@ import { getSellerOrderDetailApi, updateSellerOrderStatusApi } from '@/api/store
 import type { SellerOrderDetail } from '@/types/store'
 import { useChatStore } from '@/stores/chat'
 import OrderSteps from '@/components/order/OrderSteps.vue'
+import OrderSummary from '@/components/order/OrderSummary.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -331,29 +322,8 @@ onMounted(() => {
   color: #1e293b;
 }
 
-.order-summary {
+.seller-summary-wrapper {
   margin-top: 24px;
-  width: 300px;
-  margin-left: auto;
-}
-.summary-line {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #64748b;
-}
-.summary-line.discount {
-  color: #ef4444;
-}
-.summary-line.total {
-  font-weight: 700;
-  color: #1e293b;
-  font-size: 16px;
-}
-.final-amount {
-  color: #ee4d2d;
-  font-size: 20px;
 }
 
 .info-card {

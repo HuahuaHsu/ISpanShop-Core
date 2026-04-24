@@ -63,38 +63,17 @@
           </div>
         </div>
 
-        <!-- 價格結算 -->
-        <div class="order-summary">
-          <div class="summary-row">
-            <span class="label">商品總金額</span>
-            <span class="value">${{ formatPrice(order?.totalAmount || 0) }}</span>
-          </div>
-          <div class="summary-row">
-            <span class="label">運費</span>
-            <span class="value">${{ formatPrice(order?.shippingFee || 0) }}</span>
-          </div>
-          <div v-if="order?.pointDiscount" class="summary-row">
-            <span class="label">點數折抵</span>
-            <span class="value discount">-${{ formatPrice(order.pointDiscount) }}</span>
-          </div>
-          <div v-if="order?.discountAmount && order.discountAmount > 0" class="summary-row">
-            <span class="label">
-              優惠券折抵
-              <span v-if="order.couponTitle || (order as any).CouponTitle" class="coupon-name">
-                ({{ order.couponTitle || (order as any).CouponTitle }})
-              </span>
-            </span>
-            <span class="value discount">-${{ formatPrice(order.discountAmount) }}</span>
-          </div>
-          <div class="summary-row total">
-            <span class="label">訂單總金額</span>
-            <span class="value final-price">${{ formatPrice(order?.finalAmount || 0) }}</span>
-          </div>
-          <div class="summary-row payment-method">
-            <span class="label">付款方式</span>
-            <span class="value">線上支付</span>
-          </div>
-        </div>
+        <!-- 價格結算 (使用抽取的組件) -->
+        <OrderSummary 
+          v-if="order"
+          :total-amount="order.totalAmount"
+          :shipping-fee="order.shippingFee"
+          :point-discount="order.pointDiscount"
+          :discount-amount="order.discountAmount"
+          :coupon-title="order.couponTitle"
+          :level-discount="order.levelDiscount"
+          :final-amount="order.finalAmount"
+        />
       </div>
 
       <!-- 底部動作按鈕區 (獨立區塊) -->
@@ -121,6 +100,7 @@ import type { OrderDetail } from '@/types/order';
 import { ElMessage } from 'element-plus';
 import OrderSteps from '@/components/order/OrderSteps.vue';
 import OrderActionButtons from '@/components/order/OrderActionButtons.vue';
+import OrderSummary from '@/components/order/OrderSummary.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -306,66 +286,6 @@ onMounted(() => {
 }
 }
 }
-
-  .order-summary {
-    padding: 20px;
-    background-color: #fffbf8;
-
-    .summary-row {
-  display: flex;
-      justify-content: flex-end;
-  align-items: center;
-      margin-bottom: 12px;
-      
-      .label {
-        min-width: 150px;
-        width: auto;
-        white-space: nowrap;
-        text-align: right;
-        color: rgba(0,0,0,.54);
-        font-size: 14px;
-        padding-right: 20px;
-        border-right: 1px solid #e1e1e1;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-}
-
-      .coupon-name {
-        margin-left: 4px;
-        color: #ee4d2d;
-        font-size: 12px;
-        font-weight: normal;
-      }
-
-      .value {
-        width: 150px;
-        text-align: right;
-        padding-left: 20px;
-        font-size: 14px;
-        color: rgba(0,0,0,.8);
-
-        &.discount {
-          color: #ee4d2d;
-        }
-}
-
-      &.total {
-        margin-top: 20px;
-        .final-price {
-          color: #ee4d2d;
-          font-size: 24px;
-  font-weight: 500;
-        }
-}
-
-      &.payment-method {
-        border-top: 1px solid #f0f0f0;
-        padding-top: 15px;
-      }
-    }
-  }
 } /* 這裡正確閉合 items-card */
 
 /* 底部動作按鈕區 (獨立區塊) */

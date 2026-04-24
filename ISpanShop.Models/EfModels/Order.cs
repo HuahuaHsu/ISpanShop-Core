@@ -23,6 +23,8 @@ public partial class Order
 
     public decimal? DiscountAmount { get; set; }
 
+    public decimal? LevelDiscount { get; set; }
+
     public decimal FinalAmount { get; set; }
 
     public byte? Status { get; set; }

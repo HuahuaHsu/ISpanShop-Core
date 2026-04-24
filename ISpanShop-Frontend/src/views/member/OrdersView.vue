@@ -61,6 +61,10 @@
               </div>
             </div>
             <div class="price-info">
+              <div class="discount-tags" v-if="(order.discountAmount && order.discountAmount > 0) || (order.levelDiscount && order.levelDiscount > 0)">
+                <el-tag v-if="order.discountAmount && order.discountAmount > 0" size="small" type="danger" effect="plain">優惠券折抵</el-tag>
+                <el-tag v-if="order.levelDiscount && order.levelDiscount > 0" size="small" type="warning" effect="plain">會員折扣</el-tag>
+              </div>
               <div class="total-label">訂單金額：</div>
               <div class="total-amount">${{ formatPrice(order.finalAmount) }}</div>
             </div>
@@ -437,6 +441,12 @@ onMounted(() => {
       display: flex;
       align-items: center;
       gap: 10px;
+
+      .discount-tags {
+        display: flex;
+        gap: 4px;
+        margin-right: 4px;
+      }
 
       .total-label {
         font-size: 14px;

@@ -438,6 +438,7 @@ namespace ISpanShop.Services.Stores
                 TotalAmount = order.TotalAmount,
                 ShippingFee = order.ShippingFee,
                 DiscountAmount = order.DiscountAmount,
+                LevelDiscount = order.LevelDiscount,
                 PointDiscount = order.PointDiscount,
                 FinalAmount = order.FinalAmount,
 

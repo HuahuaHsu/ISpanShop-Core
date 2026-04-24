@@ -3,6 +3,8 @@ export interface OrderListItem {
   orderNumber: string;
   createdAt: string;
   finalAmount: number;
+  discountAmount?: number;
+  levelDiscount?: number;
   status: number;
   statusName: string;
   storeName: string;
@@ -35,6 +37,7 @@ export interface OrderDetail {
   shippingFee: number | null;
   pointDiscount: number | null;
   discountAmount: number | null;
+  levelDiscount: number | null;
   couponId: number | null;
   couponTitle: string | null;
   finalAmount: number;
