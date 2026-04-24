@@ -53,7 +53,7 @@
             <div class="buyer-info">
               <span class="buyer-tag">買家</span>
               <span class="buyer-name">{{ order.buyerName }}</span>
-              <el-button link type="primary" size="small" icon="ChatDotRound" class="chat-btn">聊聊</el-button>
+              <el-button link type="primary" size="small" icon="ChatDotRound" class="chat-btn">好聊</el-button>
             </div>
             <div class="status-info">
               <span class="status-text" :class="getStatusClass(order.status)">

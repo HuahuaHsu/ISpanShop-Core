@@ -34,9 +34,9 @@
             <div class="store-info">
               <span class="store-tag">賣場</span>
               <span class="store-name">{{ order.storeName }}</span>
-              <el-button link type="primary" size="small" class="chat-btn">聊聊</el-button>
+              <el-button link type="primary" size="small" class="chat-btn" @click.stop="handleChat(order)">好聊</el-button>
               <el-divider direction="vertical" />
-              <el-button link size="small">查看賣場</el-button>
+              <el-button link size="small" @click.stop="handleGoToStore(order.storeId)">查看賣場</el-button>
             </div>
             <div class="status-info">
               <span class="status-text" :class="getStatusClass(order.status)">
@@ -108,9 +108,11 @@ import { getMyOrdersApi } from '@/api/order';
 import type { OrderListItem } from '@/types/order';
 import { ElMessage } from 'element-plus';
 import OrderActionButtons from '@/components/order/OrderActionButtons.vue';
+import { useChatStore } from '@/stores/chat';
 
 const router = useRouter();
 const route = useRoute();
+const chatStore = useChatStore();
 const loading = ref(false);
 const orders = ref<OrderListItem[]>([]);
 const activeTab = ref('all');
@@ -180,6 +182,18 @@ const handleTabChange = (tabName: string) => {
 
 const goToDetail = (id: number) => {
   router.push(`/member/orders/${id}`);
+};
+
+const handleChat = (order: OrderListItem) => {
+  if (order.sellerId) {
+    chatStore.openChatWithUser(order.sellerId, order.storeName);
+  } else {
+    ElMessage.warning('無法取得賣家資訊');
+  }
+};
+
+const handleGoToStore = (storeId: number) => {
+  router.push(`/store/${storeId}`);
 };
 
 const formatPrice = (price: number) => {

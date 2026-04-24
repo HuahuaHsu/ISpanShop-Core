@@ -43,6 +43,8 @@ namespace ISpanShop.Services.Orders
                     Status = (OrderStatus)(o.Status ?? 0),
                     StatusName = GetStatusName(o.Status),
                     StoreName = o.Store?.StoreName ?? "未知商店",
+                    StoreId = o.StoreId,
+                    SellerId = o.Store?.UserId ?? 0,
                     FirstProductName = firstDetail?.ProductName,
                     FirstProductImage = GetFinalImage(firstDetail),
                     TotalItemCount = o.OrderDetails.Sum(od => od.Quantity),

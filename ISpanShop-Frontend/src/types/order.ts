@@ -6,6 +6,8 @@ export interface OrderListItem {
   status: number;
   statusName: string;
   storeName: string;
+  storeId: number;
+  sellerId: number;
   firstProductName: string;
   firstProductImage: string;
   totalItemCount: number;
