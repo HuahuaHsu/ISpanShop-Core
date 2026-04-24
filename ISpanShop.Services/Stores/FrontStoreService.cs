@@ -571,7 +571,17 @@ namespace ISpanShop.Services.Stores
                 // 關鍵：這裡只列出「退貨品項」及其數量
                 Items = latestReturn.ReturnRequestItems.Select(ri => {
                     string image = ri.OrderDetail.CoverImage;
-                    // 若無快照圖，可進一步處理 (此處簡化處理，因為退貨時理應已有 OrderDetail 快照)
+                    
+                    // [優化] 若訂單明細無快照圖，嘗試抓取商品目前的主圖
+                    if (string.IsNullOrEmpty(image))
+                    {
+                        image = _context.ProductImages
+                            .Where(pi => pi.ProductId == ri.OrderDetail.ProductId && pi.IsMain == true)
+                            .Select(pi => pi.ImageUrl)
+                            .FirstOrDefault();
+                    }
+
+                    // 確保路徑格式正確
                     if (!string.IsNullOrEmpty(image) && !image.StartsWith("http") && !image.StartsWith("/"))
                     {
                         image = "/" + image;
