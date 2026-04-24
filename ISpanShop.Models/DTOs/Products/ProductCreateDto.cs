@@ -69,5 +69,10 @@ namespace ISpanShop.Models.DTOs.Products
         /// 審核狀態：0=待審核, 4=草稿
         /// </summary>
         public int ReviewStatus { get; set; } = 0;
+
+        /// <summary>
+        /// 屬性列表 JSON
+        /// </summary>
+        public string? AttributesJson { get; set; }
     }
 }

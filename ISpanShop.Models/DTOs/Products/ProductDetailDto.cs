@@ -32,6 +32,7 @@ namespace ISpanShop.Models.DTOs.Products
         public string? SpecDefinitionJson { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public string? AttributesJson { get; set; }
         public List<string> Images { get; set; } = new();
         public List<ProductVariantDetailDto> Variants { get; set; } = new();
     }

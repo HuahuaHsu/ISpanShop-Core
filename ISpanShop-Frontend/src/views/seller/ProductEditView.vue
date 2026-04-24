@@ -211,10 +211,11 @@
                   <el-select
                     v-if="!attr.isMultiple"
                     v-model="form.dynamicAttributes[attr.id]"
-                    :placeholder="`選擇${attr.name}`"
+                    :placeholder="attr.allowCustom !== false ? `選擇或自行輸入${attr.name}` : `選擇${attr.name}`"
                     clearable
-                    filterable
-                    allow-create
+                    :filterable="attr.allowCustom !== false"
+                    :allow-create="attr.allowCustom !== false"
+                    default-first-option
                     :reserve-keyword="false"
                     style="width: 100%"
                   >
@@ -232,10 +233,11 @@
                     v-model="form.dynamicAttributes[attr.id]"
                     multiple
                     :multiple-limit="attr.maxSelect || 5"
-                    :placeholder="`選擇${attr.name}（最多${attr.maxSelect || 5}個）`"
+                    :placeholder="attr.allowCustom !== false ? `選擇或多個輸入${attr.name}` : `選擇${attr.name}（最多${attr.maxSelect || 5}個）`"
                     clearable
-                    filterable
-                    allow-create
+                    :filterable="attr.allowCustom !== false"
+                    :allow-create="attr.allowCustom !== false"
+                    default-first-option
                     :reserve-keyword="false"
                     style="width: 100%"
                   >
@@ -1154,6 +1156,38 @@ async function loadProductData(): Promise<void> {
       specsEnabled.value = false
     }
     
+    // 5. 屬性還原
+    if (product.categoryId) {
+      loadingAttributes.value = true
+      try {
+        const attrRes = await getCategoryAttributes(product.categoryId)
+        if (attrRes.success && attrRes.data) {
+          categoryAttributes.value = attrRes.data
+          
+          if (product.attributesJson) {
+            try {
+              const savedAttrs = JSON.parse(product.attributesJson)
+              if (Array.isArray(savedAttrs)) {
+                savedAttrs.forEach((saved: any) => {
+                  // 優先使用 OptionId (數字)，若無則使用 CustomValue (字串)
+                  const value = saved.optionId || saved.OptionId || saved.customValue || saved.CustomValue
+                  if (value !== undefined && value !== null) {
+                    form.dynamicAttributes[saved.attributeId || saved.AttributeId] = value
+                  }
+                })
+              }
+            } catch (e) {
+              console.error('解析屬性 JSON 失敗:', e)
+            }
+          }
+        }
+      } catch (e) {
+        console.error('載入屬性定義失敗:', e)
+      } finally {
+        loadingAttributes.value = false
+      }
+    }
+
     ElMessage.success('商品資料載入成功')
   } catch (error) {
     console.error('載入商品資料失敗:', error)
@@ -1423,6 +1457,37 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true, isDraftAc
 
     const variantsJson = JSON.stringify(processedVariants)
 
+    // 準備屬性資料 (分流 OptionId 與 CustomValue)
+    const processedAttributes: any[] = []
+    Object.entries(form.dynamicAttributes).forEach(([attrId, value]) => {
+      const attributeId = parseInt(attrId)
+      const values = Array.isArray(value) ? value : [value]
+      
+      values.forEach(val => {
+        if (val === null || val === undefined || val === '') return
+
+        // 判斷方式：若能轉為純數字，代表是選中的選項 ID；否則視為自填文字
+        const numericValue = Number(val)
+        const isOptionId = !isNaN(numericValue) && typeof val !== 'boolean'
+
+        if (isOptionId) {
+          processedAttributes.push({
+            AttributeId: attributeId,
+            OptionId: numericValue,
+            CustomValue: null
+          })
+        } else {
+          processedAttributes.push({
+            AttributeId: attributeId,
+            OptionId: null,
+            CustomValue: String(val)
+          })
+        }
+      })
+    })
+
+    const attributesJson = JSON.stringify(processedAttributes)
+
     if (isEditMode.value && productId.value) {
       // ===== 編輯模式：使用 JSON =====
       const updateData = {
@@ -1437,7 +1502,8 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true, isDraftAc
         specDefinitionJson: specsEnabled.value && form.specs.length > 0
           ? JSON.stringify(form.specs.map(s => ({ name: s.name })))
           : '[]',
-        variantsJson: variantsJson // 加入變體 JSON
+        variantsJson: variantsJson,
+        attributesJson: attributesJson // 加入屬性 JSON
       }
 
       await updateSellerProduct(productId.value, updateData)
@@ -1469,7 +1535,8 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true, isDraftAc
       fd.append('stock', String(form.stock || 0))
       fd.append('minPurchase', String(form.minPurchase || 1))
       
-      fd.append('variantsJson', variantsJson) // 加入變體 JSON
+      fd.append('variantsJson', variantsJson)
+      fd.append('attributesJson', attributesJson) // 加入屬性 JSON
 
       if (specsEnabled.value && form.specs.length > 0) {
         fd.append('specDefinitionJson', JSON.stringify(form.specs.map(s => ({ name: s.name }))))

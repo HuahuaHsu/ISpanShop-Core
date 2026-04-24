@@ -15,5 +15,6 @@ namespace ISpanShop.Models.DTOs.Products
         public byte? Status { get; set; }
         public int? ReviewStatus { get; set; }
         public string? VariantsJson { get; set; }
+        public string? AttributesJson { get; set; }
     }
 }

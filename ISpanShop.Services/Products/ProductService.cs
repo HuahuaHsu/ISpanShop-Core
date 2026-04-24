@@ -254,6 +254,7 @@ namespace ISpanShop.Services.Products
                 ForceOffShelfDate   = product.ForceOffShelfDate,
                 ForceOffShelfBy     = product.ForceOffShelfBy,
                 ReApplyDate         = product.ReApplyDate,
+                AttributesJson     = product.AttributesJson,
                 Images = product.ProductImages?
                     .OrderBy(img => img.SortOrder)
                     .Select(img => img.ImageUrl)

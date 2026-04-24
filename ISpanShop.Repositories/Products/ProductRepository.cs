@@ -360,8 +360,16 @@ namespace ISpanShop.Repositories.Products
                 }
             }
 
-			// 5. 【關鍵】重算快取欄位 (MinPrice, MaxPrice, TotalStock)
+			// 5. 處理屬性更新 (Attributes)
+			if (!string.IsNullOrWhiteSpace(dto.AttributesJson))
+			{
+				// 直接存入主商品的 AttributesJson 欄位 (已透過 Partial Class 擴充)
+				product.AttributesJson = dto.AttributesJson;
+			}
+
+			// 6. 【關鍵】重算快取欄位 (MinPrice, MaxPrice)
 			var activeVariants = product.ProductVariants.Where(v => v.IsDeleted != true).ToList();
+
 			if (activeVariants.Any())
 			{
 				product.MinPrice = activeVariants.Min(v => v.Price);
@@ -374,7 +382,7 @@ namespace ISpanShop.Repositories.Products
 			}
 
 			_context.SaveChanges();
-        }
+		}
 
         // 定義一個內部的輔助類別來解析 JSON
         private class ProductVariantUpdateItem

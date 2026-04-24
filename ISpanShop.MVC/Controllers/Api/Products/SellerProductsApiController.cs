@@ -146,7 +146,8 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 SpecDefinitionJson = request.SpecDefinitionJson ?? "[]",
                 Variants           = new List<ProductVariantCreateDto>(),
                 Status             = 0, // 絕對規則：新增商品一律設為 0 (未上架)
-                ReviewStatus       = (mode == "submit") ? 0 : 4 // 0=待審核, 4=草稿
+                ReviewStatus       = (mode == "submit") ? 0 : 4, // 0=待審核, 4=草稿
+                AttributesJson     = request.AttributesJson
             };
 
             var productId = _productService.CreateProduct(dto);
@@ -246,7 +247,8 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 MainImageUrl       = request.MainImageUrl,
                 Status             = 0, // 絕對規則：編輯商品時保持 Status=0 (未上架)
                 ReviewStatus       = (mode == "submit") ? 0 : (existing.ReviewStatus == 2 ? 4 : existing.ReviewStatus),
-                VariantsJson       = request.VariantsJson
+                VariantsJson       = request.VariantsJson,
+                AttributesJson     = request.AttributesJson
             };
 
             // 如果原本是退回狀態(2)且現在要送審，則改為重新送審(3)
@@ -555,6 +557,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             ReviewStatus       = dto.ReviewStatus,
             CreatedAt          = dto.CreatedAt,
             UpdatedAt          = dto.UpdatedAt,
+            AttributesJson     = dto.AttributesJson,
             Images             = dto.Images,
             Variants           = dto.Variants
                 .Where(v => v.IsDeleted != true)

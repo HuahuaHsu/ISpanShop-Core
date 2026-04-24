@@ -39,6 +39,9 @@ namespace ISpanShop.Models.DTOs.Products
 
         /// <summary>變體列表 JSON</summary>
         public string? VariantsJson { get; set; }
+
+        /// <summary>屬性列表 JSON</summary>
+        public string? AttributesJson { get; set; }
     }
 
     /// <summary>更新商品基本資料（JSON）</summary>
@@ -63,6 +66,17 @@ namespace ISpanShop.Models.DTOs.Products
 
         /// <summary>變體列表 JSON</summary>
         public string? VariantsJson { get; set; }
+
+        /// <summary>屬性列表 JSON</summary>
+        public string? AttributesJson { get; set; }
+    }
+
+    /// <summary>屬性資料 DTO</summary>
+    public class ProductAttributeDto
+    {
+        public int AttributeId { get; set; }
+        public int? OptionId { get; set; }
+        public string? CustomValue { get; set; }
     }
 
     /// <summary>更新商品狀態（上架/下架）</summary>
@@ -160,6 +174,7 @@ namespace ISpanShop.Models.DTOs.Products
         public int      ReviewStatus       { get; set; }
         public DateTime? CreatedAt         { get; set; }
         public DateTime? UpdatedAt         { get; set; }
+        public string?   AttributesJson     { get; set; }
         public List<string>                  Images   { get; set; } = new();
         public List<VariantDetailResponse>   Variants { get; set; } = new();
     }
