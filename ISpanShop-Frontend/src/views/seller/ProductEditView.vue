@@ -987,9 +987,28 @@ const variants = computed<Variant[]>(() => {
 
 // Sync variant spec combinations → editable variantData, preserving user-entered price/stock/sku
 watch(variants, (newVariants) => {
-  variantData.value = newVariants.map(nv => {
-    const existing = variantData.value.find(v => v.spec1 === nv.spec1 && v.spec2 === nv.spec2)
-    return existing ?? { ...nv }
+  const oldData = [...variantData.value]
+  
+  variantData.value = newVariants.map((nv, idx) => {
+    // 1. 策略 A：完全匹配 (名稱沒變的情況，優先保留)
+    const exactMatch = oldData.find(v => v.spec1 === nv.spec1 && v.spec2 === nv.spec2)
+    if (exactMatch) return { ...exactMatch }
+
+    // 2. 策略 B：智慧合併 (Smart Merge)
+    // 若長度一致，通常代表使用者只是在修改某個選項的文字，我們依索引繼承資料
+    if (oldData.length === newVariants.length) {
+      const prev = oldData[idx]
+      return {
+        ...nv,
+        id: prev.id,       // 關鍵：保留資料庫 ID
+        price: prev.price,
+        stock: prev.stock,
+        sku: prev.sku
+      }
+    }
+
+    // 3. 策略 C：全新組合
+    return { ...nv }
   })
 }, { immediate: true })
 
