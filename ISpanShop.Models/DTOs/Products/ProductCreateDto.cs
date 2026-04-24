@@ -59,5 +59,15 @@ namespace ISpanShop.Models.DTOs.Products
         /// 主圖索引 - 紀錄在圖片集合中哪一張是主圖
         /// </summary>
         public int MainImageIndex { get; set; }
+
+        /// <summary>
+        /// 商品狀態：0=未上架, 2=待審核
+        /// </summary>
+        public byte Status { get; set; } = 0;
+
+        /// <summary>
+        /// 審核狀態：0=待審核, 4=草稿
+        /// </summary>
+        public int ReviewStatus { get; set; } = 0;
     }
 }

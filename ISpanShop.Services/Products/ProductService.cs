@@ -42,8 +42,8 @@ namespace ISpanShop.Services.Products
                 SpecDefinitionJson = dto.SpecDefinitionJson,
                 CreatedAt          = DateTime.Now,
                 UpdatedAt          = DateTime.Now,
-                Status             = 2, // 待審核
-                ReviewStatus       = 0
+                Status             = dto.Status,
+                ReviewStatus       = dto.ReviewStatus
             };
 
             if (dto.Variants != null && dto.Variants.Count > 0)

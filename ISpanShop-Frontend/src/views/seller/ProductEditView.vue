@@ -1307,7 +1307,7 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true): Promise<
         price: form.price || 0,
         stock: form.stock || 0,
         minPurchase: form.minPurchase || 1,
-        mode: mode, // 傳入 mode
+        mode: mode, // 加入 mode 參數
         specDefinitionJson: specsEnabled.value && form.specs.length > 0
           ? JSON.stringify(form.specs.map(s => ({ name: s.name })))
           : '[]',
@@ -1316,6 +1316,7 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true): Promise<
       console.log('送出資料 (編輯模式/JSON):', {
         Mode: 'UPDATE',
         ProductId: productId.value,
+        SubmitMode: mode,
         ...updateData,
       })
 
@@ -1328,25 +1329,21 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true): Promise<
       const hasNewImages = newFiles.length > 0
       const hasRemovedImages = form.images.length !== originalImageCount.value
       
-      // 只有在圖片真正有變動時才呼叫圖片 API
       if (hasNewImages || hasRemovedImages) {
         const formData = new FormData()
         const existingImageUrls: string[] = []
 
-        // 遍歷所有圖片
         for (const file of form.images) {
           if (file.raw) {
-            // 新上傳的圖片
             formData.append('images', file.raw)
           } else {
-            // 舊圖片：優先用 _originalUrl（載入時保存的相對路徑），否則從 url 解析
             const f = file as UploadUserFile & { _originalUrl?: string }
             let imageUrl = f._originalUrl ?? f.url ?? ''
             if (!f._originalUrl && imageUrl) {
               try {
-                imageUrl = new URL(imageUrl).pathname // 例如：/uploads/products/xxx.jpg
+                imageUrl = new URL(imageUrl).pathname
               } catch {
-                // 已經是相對路徑，不需要轉換
+                // 已經是相對路徑
               }
             }
             if (imageUrl) {
@@ -1355,88 +1352,57 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true): Promise<
             }
           }
         }
-
-        // 印出實際送出的 URL，確認格式與後端 DB 儲存格式一致
-        console.log('[圖片更新] existingImages 送出的 URL:', existingImageUrls)
-        console.log('[圖片更新] 統計：', {
-          newImages: formData.getAll('images').length,
-          existingImages: formData.getAll('existingImages'),
-          totalFiles: form.images.length,
-        })
-
         await updateProductImages(productId.value, formData)
-      } else {
-        console.log('圖片無變動，跳過圖片更新 API')
       }
       
-      // 3. 更新成功訊息並跳轉
-      const origStatus = productData.value?.status
-      let successMsg: string
-      if (origStatus === 3 && publishNow) {
-        successMsg = '商品已重新送審，請等待管理員審核'
-      } else if (origStatus === 1) {
-        successMsg = '商品資料已更新'
-      } else if (publishNow) {
-        successMsg = '商品已提交審核，請等待管理員審核'
-      } else {
-        successMsg = '商品已儲存'
-      }
+      // 3. 更新成功訊息並依 mode 跳轉
+      const successMsg = publishNow ? '商品已提交審核，請等待管理員審核' : '商品草稿已儲存'
       ElMessage.success(successMsg)
       
       if (redirectAfter) {
-        // 如果是送審，導向審核中 tab；如果是草稿，導向未上架 tab；否則回到來源 tab
-        const targetTab = publishNow ? 'review' : (origStatus === 0 ? 'draft' : fromTab.value)
+        // 送審導向 review，草稿導向 draft
+        const targetTab = publishNow ? 'review' : 'draft'
         void router.push(`/seller/products?tab=${targetTab}`)
       }
       return true
     } else {
       // ===== 新增模式：使用 FormData (multipart/form-data) =====
       const fd = new FormData()
-      fd.append('Name', form.name)
-      fd.append('Description', form.description)
-      fd.append('Mode', mode) // 傳入 mode
-      if (form.categoryId !== null) fd.append('CategoryId', String(form.categoryId))
-      if (form.attributes.brandId !== null) fd.append('BrandId', String(form.attributes.brandId))
+      fd.append('name', form.name)
+      fd.append('description', form.description)
+      fd.append('mode', mode) // 加入 mode 參數
+      if (form.categoryId !== null) fd.append('categoryId', String(form.categoryId))
+      if (form.attributes.brandId !== null) fd.append('brandId', String(form.attributes.brandId))
 
       console.log('送出資料 (新增模式/FormData):', {
         Mode: 'CREATE',
         SubmitMode: mode,
         Name: form.name,
-        CategoryId: form.categoryId,
-        BrandId: form.attributes.brandId ?? '(未選擇)',
-        Description: form.description,
-        SpecDefinitionJson: form.specs.map(s => s.name),
-        ImageCount: form.images.filter(i => i.raw).length,
       })
 
-      // 規格定義 JSON：[{"name":"顏色"},{"name":"尺寸"}]
       if (specsEnabled.value && form.specs.length > 0) {
         const specDef = form.specs.map(s => ({ name: s.name }))
-        fd.append('SpecDefinitionJson', JSON.stringify(specDef))
+        fd.append('specDefinitionJson', JSON.stringify(specDef))
       }
 
-      // 圖片（UploadUserFile 的 raw 就是 File）
       let mainIdx = 0
       form.images.forEach((img, idx) => {
         if (img.raw) {
-          fd.append('Images', img.raw)
+          fd.append('images', img.raw)
           if (img.raw === form.images[0]?.raw) mainIdx = idx
         }
       })
       
-      // 如果有上傳圖片，設定主圖索引
       if (form.images.some(img => img.raw)) {
-        fd.append('MainImageIndex', String(mainIdx))
+        fd.append('mainImageIndex', String(mainIdx))
       }
 
       res = await createSellerProduct(fd)
       targetProductId = res.data?.productId || null
 
-      // 如果有規格，依次建立 variants
       if (specsEnabled.value && targetProductId && variantData.value.length > 0) {
         const specNames = form.specs.map(s => s.name)
         for (const v of variantData.value) {
-          // 組成 specValueJson：{"顏色":"紅色","尺寸":"L"}
           const specValueMap: Record<string, string> = {}
           if (specNames[0] && v.spec1) specValueMap[specNames[0]] = v.spec1
           if (specNames[1] && v.spec2) specValueMap[specNames[1]] = v.spec2
@@ -1451,10 +1417,11 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true): Promise<
         }
       }
 
-      const successMsg = publishNow ? '商品已提交審核，請等待管理員審核' : '草稿已儲存'
+      const successMsg = publishNow ? '商品已提交審核，請等待管理員審核' : '商品草稿已儲存'
       ElMessage.success(successMsg)
       
       if (redirectAfter) {
+        // 送審導向 review，草稿導向 draft
         const targetTab = publishNow ? 'review' : 'draft'
         void router.push(`/seller/products?tab=${targetTab}`)
       }

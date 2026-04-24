@@ -33,6 +33,9 @@ namespace ISpanShop.Models.DTOs.Products
 
         /// <summary>主圖索引（0-based）</summary>
         public int MainImageIndex { get; set; } = 0;
+
+        /// <summary>儲存模式：draft=草稿, submit=送審</summary>
+        public string Mode { get; set; } = "draft";
     }
 
     /// <summary>更新商品基本資料（JSON）</summary>
@@ -51,6 +54,9 @@ namespace ISpanShop.Models.DTOs.Products
         public string? SpecDefinitionJson { get; set; }
 
         public string? MainImageUrl { get; set; }
+
+        /// <summary>儲存模式：draft=草稿, submit=送審</summary>
+        public string Mode { get; set; } = "draft";
     }
 
     /// <summary>更新商品狀態（上架/下架）</summary>
