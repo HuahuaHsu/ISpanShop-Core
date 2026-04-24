@@ -185,8 +185,8 @@
               <el-input-number
                 v-model="quantity"
                 :min="1"
-                :max="currentStock"
-                :disabled="isSoldOut || !allSpecsSelected"
+                :max="Math.max(1, currentStock || 1)"
+                :disabled="isSoldOut || currentStock <= 0 || !allSpecsSelected"
                 controls-position="right"
                 size="default"
               />
@@ -229,6 +229,12 @@
             <div class="pd-spec-item"><span class="spec-key">店家</span><span class="spec-val">{{ safeProduct.storeName }}</span></div>
             <div class="pd-spec-item"><span class="spec-key">庫存</span><span class="spec-val">{{ safeProduct.totalStock }}</span></div>
             <div class="pd-spec-item"><span class="spec-key">上架日</span><span class="spec-val">{{ safeProduct.createdAt }}</span></div>
+            
+            <!-- 動態屬性 -->
+            <div v-for="attr in displayAttributes" :key="attr.id" class="pd-spec-item">
+              <span class="spec-key">{{ attr.label }}</span>
+              <span class="spec-val">{{ attr.value }}</span>
+            </div>
           </div>
         </el-card>
 
@@ -303,6 +309,7 @@ import { ElMessage } from 'element-plus'
 import { Picture, ChatDotRound, Shop } from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
 import { fetchProductDetail, fetchRelatedProducts } from '@/api/product'
+import { getCategoryAttributes } from '@/api/categoryAttribute'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
@@ -317,6 +324,7 @@ import type {
   ProductSpec,
   StoreInfo,
 } from '@/types/product'
+import type { CategoryAttribute } from '@/api/categoryAttribute'
 
 const route = useRoute()
 const router = useRouter()
@@ -325,6 +333,7 @@ const authStore = useAuthStore()
 const chatStore = useChatStore()
 
 const product = ref<ProductDetail | null>(null)
+const categoryAttributes = ref<CategoryAttribute[]>([])
 const loading = ref(false)
 const loadError = ref<string | null>(null)
 const relatedProducts = ref<ProductListItem[]>([])
@@ -351,6 +360,39 @@ const safeProduct = computed(() => {
     specs: (p.specs || []) as ProductSpec[],
     variants: (p.variants || []) as ProductVariant[],
     createdAt: p.createdAt ? p.createdAt.substring(0, 10) : '—',
+  }
+})
+
+/** 解析並翻譯屬性字典 */
+const displayAttributes = computed(() => {
+  const p = product.value
+  if (!p || !p.attributesJson) return []
+  try {
+    const parsed = JSON.parse(p.attributesJson)
+    if (!Array.isArray(parsed)) return []
+
+    return parsed.map((attr: any) => {
+      // 支援大小寫 Key (AttributeId / attributeId)
+      const attrId = attr.AttributeId || attr.attributeId
+      const optId = attr.OptionId || attr.optionId
+      const customVal = attr.CustomValue || attr.customValue
+
+      // 1. 去字典找屬性定義
+      const def = categoryAttributes.value?.find(c => c.id === attrId)
+      const label = def ? def.name : `屬性#${attrId}`
+
+      // 2. 決定顯示的值：優先顯示 CustomValue，若無則用 OptionId 去字典找
+      let value = customVal
+      if (!value && optId && def?.options) {
+        const opt = def.options.find((o: any) => o.id === optId)
+        if (opt) value = opt.value
+      }
+
+      return { id: attrId, label, value: value || '—' }
+    }).filter(a => a.value !== '—')
+  } catch (e) {
+    console.error('屬性解析失敗', e)
+    return []
   }
 })
 
@@ -411,6 +453,15 @@ async function loadProduct(id: number) {
       const mainImg = res.data.images.find(img => img.isMain) || res.data.images[0]
       activeImageUrl.value = mainImg?.url || ''
       res.data.specs.forEach(s => selectedSpecs.value[s.name] = null)
+      
+      // 載入屬性定義
+      try {
+        const attrRes = await getCategoryAttributes(res.data.categoryId)
+        if (attrRes.success) categoryAttributes.value = attrRes.data
+      } catch (e) {
+        console.error('載入屬性定義失敗:', e)
+      }
+
       void loadRelated(id)
     }
   } catch (err) {

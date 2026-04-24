@@ -569,34 +569,23 @@
 
             <!-- 屬性 -->
             <div class="preview-attrs">
-              <div v-if="form.attributes.brandId" class="attr-item">
-                <span class="attr-label">品牌:</span>
-                <span class="attr-value">{{ getBrandName(form.attributes.brandId) }}</span>
-              </div>
               <div v-if="form.categoryPath" class="attr-item">
                 <span class="attr-label">種類:</span>
                 <span class="attr-value">{{ form.categoryPath }}</span>
               </div>
-              <div v-if="form.attributes.productType" class="attr-item">
-                <span class="attr-label">商品種類:</span>
-                <span class="attr-value">{{ form.attributes.productType }}</span>
+              <div v-if="form.attributes.brandId" class="attr-item">
+                <span class="attr-label">品牌:</span>
+                <span class="attr-value">{{ getBrandName(form.attributes.brandId) }}</span>
               </div>
-              <div v-if="form.attributes.materials.length > 0" class="attr-item">
-                <span class="attr-label">材質:</span>
-                <span class="attr-value">{{ form.attributes.materials.join('、') }}</span>
+              <!-- 動態屬性預覽 -->
+              <div v-for="attr in previewAttributes" :key="attr.label" class="attr-item">
+                <span class="attr-label">{{ attr.label }}:</span>
+                <span class="attr-value">{{ attr.value }}</span>
               </div>
               <div v-if="specsEnabled && variants.length > 0" class="attr-item">
                 <span class="attr-label">規格:</span>
-                <span class="attr-value">{{ variants.length }} 個規格可用</span>
+                <span class="attr-value">{{ variants.length }} 個組合可用</span>
               </div>
-
-              <!-- 動態屬性預覽 -->
-              <template v-if="filledAttributes.length > 0">
-                <div v-for="item in filledAttributes" :key="item.name" class="attr-item">
-                  <span class="attr-label">{{ item.name }}:</span>
-                  <span class="attr-value">{{ item.displayValue }}</span>
-                </div>
-              </template>
             </div>
 
             <!-- 描述 -->
@@ -1013,6 +1002,34 @@ watch(variants, (newVariants) => {
     return { ...nv }
   })
 }, { immediate: true })
+
+/** 預覽顯示的動態屬性 */
+const previewAttributes = computed(() => {
+  const result: Array<{ label: string; value: string }> = []
+  
+  Object.entries(form.dynamicAttributes).forEach(([attrId, val]) => {
+    if (val === null || val === undefined || val === '') return
+    
+    const id = parseInt(attrId)
+    const attrDef = categoryAttributes.value.find(a => a.id === id)
+    if (!attrDef) return
+
+    const label = attrDef.name
+    const values = Array.isArray(val) ? val : [val]
+    
+    const displayValues = values.map(v => {
+      // 若是選項 ID
+      const opt = attrDef.options.find(o => o.id === v || o.value === v)
+      return opt ? opt.value : String(v)
+    })
+
+    if (displayValues.length > 0) {
+      result.push({ label, value: displayValues.join('、') })
+    }
+  })
+  
+  return result
+})
 
 async function loadBrands(): Promise<void> {
   try {

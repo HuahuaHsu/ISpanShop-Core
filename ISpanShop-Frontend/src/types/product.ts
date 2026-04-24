@@ -13,7 +13,9 @@ export interface BrandInfo {
 
 export interface StoreInfo {
   id: number
+  userId: number
   name: string
+  status: number
   logoUrl: string | null
   rating: number | null
   productCount: number
@@ -69,6 +71,7 @@ export interface ProductDetail {
   reviewCount: number | null
   isOnShelf: boolean
   createdAt: string | null
+  attributesJson: string | null
 }
 
 // ─── 商品列表相關型別 ───────────────────────────────────────────

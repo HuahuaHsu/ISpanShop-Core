@@ -269,7 +269,8 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 ReviewCount         = reviewCount,
                 IsOnShelf           = product.Status == 1,
                 CreatedAt           = product.CreatedAt,
-                ViewCount           = product.ViewCount ?? 0
+                ViewCount           = product.ViewCount ?? 0,
+                AttributesJson      = product.AttributesJson
             };
 
             return Ok(new { success = true, data = dto, message = "" });
