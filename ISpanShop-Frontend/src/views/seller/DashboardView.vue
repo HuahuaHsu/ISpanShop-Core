@@ -8,7 +8,7 @@
     <!-- 區塊 A：頂部統計卡片 -->
     <el-row :gutter="16" class="stat-cards">
       <el-col :xs="24" :sm="12" :lg="6" v-for="stat in statCards" :key="stat.label">
-        <el-card class="stat-card" shadow="never">
+        <el-card class="stat-card clickable-card" shadow="never" @click="router.push(stat.route)">
           <div class="stat-inner">
             <div class="stat-icon" :style="{ background: stat.iconBg }">
               <el-icon :size="22" :color="stat.iconColor">
@@ -183,6 +183,7 @@ const statCards = computed(() => {
       icon: Document,
       iconBg: '#fff7ed',
       iconColor: '#ee4d2d',
+      route: '/seller/orders'
     },
     {
       label: '待審核退貨',
@@ -191,6 +192,7 @@ const statCards = computed(() => {
       icon: List,
       iconBg: '#f0fdf4',
       iconColor: '#22c55e',
+      route: '/seller/returns'
     },
     {
       label: '低庫存警告',
@@ -199,6 +201,7 @@ const statCards = computed(() => {
       icon: WarningFilled,
       iconBg: '#fef9c3',
       iconColor: '#eab308',
+      route: '/seller/products'
     },
     {
       label: '已上架商品',
@@ -207,6 +210,7 @@ const statCards = computed(() => {
       icon: Box,
       iconBg: '#eff6ff',
       iconColor: '#3b82f6',
+      route: '/seller/products'
     }
     ]
     })
@@ -288,6 +292,16 @@ function statusTagType(status: string): 'success' | 'warning' | 'danger' | 'info
   height: 100px;
   display: flex;
   align-items: center;
+}
+
+.clickable-card {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.clickable-card:hover {
+  border-color: #ee4d2d !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 :deep(.el-card__body) {
   width: 100%;
