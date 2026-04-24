@@ -26,18 +26,14 @@
     <el-row :gutter="20" v-if="order">
       <!-- 左側：訂單資訊與商品明細 -->
       <el-col :span="16">
-        <!-- 訂單狀態卡片 -->
-        <el-card class="status-card" shadow="never">
-          <div class="status-box">
-            <div class="status-label">目前訂單狀態</div>
-            <div class="status-value" :class="statusClass">{{ order.statusName }}</div>
-          </div>
-          <el-divider />
-          <div class="timeline">
-            <div class="time-item">下單時間：{{ order.createdAt }}</div>
-            <div v-if="order.paymentDate" class="time-item">付款時間：{{ order.paymentDate }}</div>
-            <div v-if="order.completedAt" class="time-item">完成時間：{{ order.completedAt }}</div>
-          </div>
+        <!-- 訂單進度條 -->
+        <el-card class="steps-card" shadow="never">
+          <OrderSteps 
+            :status="order.status"
+            :created-at="order.createdAt"
+            :payment-date="order.paymentDate"
+            :completed-at="order.completedAt"
+          />
         </el-card>
 
         <!-- 商品明細 -->
@@ -100,8 +96,16 @@
         </el-card>
       </el-col>
 
-      <!-- 右側：買家與收件資訊 -->
+      <!-- 右側：訂單狀態、買家與收件資訊 -->
       <el-col :span="8">
+        <!-- 精簡版訂單狀態 -->
+        <el-card class="info-card condensed-status-card" shadow="never">
+          <div class="status-box">
+            <div class="status-label">目前訂單狀態</div>
+            <div class="status-value" :class="statusClass">{{ order.statusName }}</div>
+          </div>
+        </el-card>
+
         <el-card class="info-card" shadow="never" header="買家資訊">
           <div class="info-group">
             <div class="label">買家帳號</div>
@@ -152,6 +156,7 @@ import { Picture, ArrowLeft } from '@element-plus/icons-vue'
 import { getSellerOrderDetailApi, updateSellerOrderStatusApi } from '@/api/store'
 import type { SellerOrderDetail } from '@/types/store'
 import { useChatStore } from '@/stores/chat'
+import OrderSteps from '@/components/order/OrderSteps.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -244,6 +249,11 @@ onMounted(() => {
   flex: 1;
   font-size: 20px;
   color: #1e293b;
+}
+
+.steps-card {
+  margin-bottom: 20px;
+  border-radius: 8px;
 }
 
 .status-card {
