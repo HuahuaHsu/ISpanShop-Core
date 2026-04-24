@@ -182,6 +182,7 @@ namespace ISpanShop.MVC
 			builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 			builder.Services.AddScoped<IOrderService, OrderService>();
 			builder.Services.AddScoped<IFrontOrderService, FrontOrderService>();
+			builder.Services.AddScoped<ICartService, CartService>();
 			builder.Services.AddScoped<IOrderDashboardService, OrderDashboardService>();
 			builder.Services.AddScoped<IOrderReviewRepository, OrderReviewRepository>();
 			builder.Services.AddScoped<IOrderReviewService, OrderReviewService>();

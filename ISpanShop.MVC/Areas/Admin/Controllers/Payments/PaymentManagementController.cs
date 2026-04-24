@@ -166,7 +166,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Payments
 		public async Task<IActionResult> Create(OrderCreateVM vm)
 		{
 			// ... 原本的邏輯
-			var dto = new CheckoutRequestDTO { /* ... */ };
+			var dto = new CheckoutRequestDto { /* ... */ };
 			var result = await _checkoutService.CreateOrderAsync(dto);
 			// ...
 			return View(vm);

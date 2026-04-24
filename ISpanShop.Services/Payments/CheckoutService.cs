@@ -30,7 +30,7 @@ namespace ISpanShop.Services.Payments
 			_couponService = couponService;
 		}
 
-		public async Task<(bool IsSuccess, string Message, string? OrderNumber)> CreateOrderAsync(CheckoutRequestDTO dto)
+		public async Task<(bool IsSuccess, string Message, string? OrderNumber)> CreateOrderAsync(CheckoutRequestDto dto)
 		{
 			var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -184,6 +184,26 @@ namespace ISpanShop.Services.Payments
 						};
 
 						_context.PaymentLogs.Add(paymentLog);
+
+						// --- H. 清除已結帳的購物車商品 (確保不會重複結帳) ---
+						var cart = await _context.Carts
+							.Include(c => c.CartItems)
+							.FirstOrDefaultAsync(c => c.UserId == dto.UserId);
+							
+						if (cart != null && dto.Items.Any())
+						{
+							foreach (var item in dto.Items)
+							{
+								var cartItem = cart.CartItems.FirstOrDefault(ci => 
+									ci.ProductId == item.ProductId && 
+									(ci.VariantId == (item.VariantId ?? 0) || ci.VariantId == item.VariantId));
+									
+								if (cartItem != null)
+								{
+									_context.CartItems.Remove(cartItem);
+								}
+							}
+						}
 
 						await _context.SaveChangesAsync();
 						await transaction.CommitAsync();

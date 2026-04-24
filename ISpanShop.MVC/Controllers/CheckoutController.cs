@@ -22,7 +22,7 @@ namespace ISpanShop.WebAPI.Controllers
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> CreateOrder([FromBody] CheckoutRequestDTO dto)
+		public async Task<IActionResult> CreateOrder([FromBody] CheckoutRequestDto dto)
 		{
 			if (dto == null || dto.Items == null || !dto.Items.Any())
 			{
