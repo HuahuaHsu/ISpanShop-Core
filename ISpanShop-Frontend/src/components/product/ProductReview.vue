@@ -122,26 +122,28 @@ onMounted(loadReviews)
             </div>
             <el-rate v-model="review.rating" disabled size="small" />
             
-            <div class="text-[12px] text-gray-500 my-2 flex items-center">
+            <div style="font-size: 12px; color: #999; margin: 8px 0; display: flex; align-items: center;">
               <span>{{ formatDate(review.createdAt) }}</span>
-              <span v-if="review.variantName" class="ml-4 text-gray-400">規格：{{ review.variantName }}</span>
+              <span v-if="review.variantName" style="margin: 0 8px; color: #eee;">|</span>
+              <span v-if="review.variantName">規格：{{ review.variantName }}</span>
             </div>
             
-            <div class="text-sm text-gray-800 leading-relaxed mb-4 whitespace-pre-wrap">
+            <div style="font-size: 17px; color: #333; line-height: 1.5; margin-bottom: 15px; white-space: pre-wrap;">
               {{ review.comment }}
             </div>
 
             <!-- 評價圖片 -->
             <div v-if="review.imageUrls && review.imageUrls.length > 0" class="flex flex-wrap gap-2 mb-4">
-              <el-image 
-                v-for="(url, index) in review.imageUrls" 
-                :key="index"
-                :src="url" 
-                :preview-src-list="review.imageUrls"
-                :initial-index="index"
-                fit="cover"
-                class="w-20 h-20 rounded-sm cursor-zoom-in border border-gray-200"
-              />
+              <div v-for="(url, index) in review.imageUrls" :key="index" 
+                   style="width: 80px; height: 80px; overflow: hidden; border-radius: 2px; border: 1px solid #eee; flex-shrink: 0; cursor: zoom-in;">
+                <el-image 
+                  :src="url" 
+                  :preview-src-list="review.imageUrls"
+                  :initial-index="index"
+                  fit="cover"
+                  style="width: 100%; height: 100%; display: block;"
+                />
+              </div>
             </div>
 
             <!-- 賣家回覆 -->
@@ -174,4 +176,46 @@ onMounted(loadReviews)
 }
 
 .review-item:hover { background-color: #fafafa; transition: 0.2s; }
+
+.review-img-wrap {
+  width: 80px !important;
+  height: 80px !important;
+  overflow: hidden;
+  border-radius: 2px;
+  border: 1px solid #eee;
+  flex-shrink: 0;
+  cursor: zoom-in;
+}
+
+.review-img {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.review-meta {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+}
+
+.meta-divider {
+  margin: 0 8px;
+  color: #eee;
+}
+
+.review-content {
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.87);
+  line-height: 1.5;
+  margin-top: 10px;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+:deep(.review-img img) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
 </style>
