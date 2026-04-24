@@ -188,6 +188,7 @@
                   <!-- TODO: reviewCount 尚未由後端商品列表 API 回傳，待補上 -->
                   <span title="評論數"><el-icon><ChatDotRound /></el-icon> 0</span>
                 </div>
+                <div class="card-date">建立時間: {{ formatDate(product.createdAt) }}</div>
               </div>
 
               <!-- 操作列 -->
@@ -632,11 +633,18 @@ async function loadProducts(): Promise<void> {
   loading.value = true
   try {
     // 依據排序狀態帶入參數
+    let sortOrderParam = sortDir.value === 'asc' ? 'asc' : 'desc'
+    
+    // 如果排序欄位是建立時間，則依照後端規範使用 date_asc / date_desc
+    if (sortField.value === 'createdAt') {
+      sortOrderParam = sortDir.value === 'asc' ? 'date_asc' : 'date_desc'
+    }
+
     const params: any = { 
       page: 1, 
       pageSize: 100,
       sortBy: sortField.value,
-      sortOrder: sortDir.value
+      sortOrder: sortOrderParam
     }
     
     const res = await fetchSellerProducts(params)
@@ -736,11 +744,6 @@ function handleEdit(id: number): void {
 // ── 卡片更多選單 ──────────────────────────────────────────────────
 async function handleCardCommand(cmd: string, product: SellerProduct): Promise<void> {
   switch (cmd) {
-    case 'copy':
-      // TODO: 呼叫 POST /api/seller/products/{id}/copy 複製商品
-      console.log('[TODO] POST /api/seller/products/' + product.id + '/copy')
-      ElMessage.info('複製功能待後端 API 實作')
-      break
     case 'preview':
       window.open(`/product/${product.id}`, '_blank')
       break
@@ -860,6 +863,12 @@ function saveStockAlert(): void {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
+function formatDate(dateString: string | undefined): string {
+  if (!dateString) return '—'
+  const d = new Date(dateString)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 const STATUS_LABEL: Record<ProductStatus, string> = {
   on: '架上', off: '下架', deleted: '已刪除', review: '審核中', rejected: '已退回', draft: '草稿',
 }
@@ -1119,6 +1128,13 @@ function getStatusTagType(status: ProductStatus): 'success' | 'warning' | 'dange
   gap: 8px;
   font-size: 11px;
   color: #94a3b8;
+}
+.card-date {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #f1f5f9;
 }
 
 .card-footer {
