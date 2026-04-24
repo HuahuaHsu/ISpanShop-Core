@@ -6,10 +6,10 @@ import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useAddressStore } from '@/stores/address'
 import { checkoutApi, type CheckoutRequest } from '@/api/checkout'
-import { getMemberProfile } from '@/api/member'
+import { getMemberProfile, getLevelInfo } from '@/api/member'
 import AddressCard from '@/components/member/AddressCard.vue'
 import AddressFormDialog from '@/components/member/AddressFormDialog.vue'
-import { Plus, ArrowRight, Location, Phone, User } from '@element-plus/icons-vue'
+import { Plus, ArrowRight, ArrowLeft, Location, Phone, User, Trophy as TrophyIcon, Star as StarIcon } from '@element-plus/icons-vue'
 import { getOrderDetailApi } from '@/api/order'
 
 const router = useRouter()
@@ -21,6 +21,12 @@ const addressStore = useAddressStore()
 // 地址相關
 const selectedAddressId = ref<number | null>(null)
 const addressDialogVisible = ref(false)
+
+// 會員等級相關
+const memberLevel = ref({
+  name: '',
+  discountRate: 1.0 // 預設不打折
+})
 
 // 表單資料 (手動填寫用)
 const recipient = ref({
@@ -117,21 +123,58 @@ const couponDiscount = computed(() => {
   return 0
 })
 
+const levelDiscount = computed(() => {
+  if (isPaymentMode.value) return 0 // 舊訂單不重新計算等級折扣
+  if (memberLevel.value.discountRate >= 1.0) return 0
+  // 計算折扣金額 (小計扣除優惠券後再計算等級折扣)
+  const afterCoupon = subtotal.value - couponDiscount.value
+  return Math.round(afterCoupon * (1 - memberLevel.value.discountRate))
+})
+
 const pointDiscount = computed(() => {
   if (isPaymentMode.value && existingOrderData.value) {
     const d = existingOrderData.value
     return d.pointDiscount ?? d.PointDiscount ?? 0
   }
   if (!usePoints.value) return 0
-  const remaining = subtotal.value - couponDiscount.value
+  const remaining = subtotal.value - couponDiscount.value - levelDiscount.value
   return Math.min(walletBalance.value, remaining)
+})
+
+// 會員等級配色與權益
+const levelColors: Record<string, string> = {
+  '銅牌會員': '#EE4D2D',
+  '銀牌會員': '#64748b',
+  '金牌會員': '#f59e0b'
+}
+
+const currentLevelColor = computed(() => {
+  return levelColors[memberLevel.value.name] || '#94a3b8'
+})
+
+const levelBenefits = computed(() => {
+  const name = memberLevel.value.name || ''
+  if (name.includes('銀牌')) {
+    return [
+      { text: '全站商品享 9.0 折專屬折扣' },
+      { text: '專屬銀牌會員限定活動參與權' }
+    ]
+  } else if (name.includes('金牌')) {
+    return [
+      { text: '全站商品享 8.0 折專屬折扣' },
+      { text: '享有最優先的出貨處理順序' },
+      { text: '金牌專屬客服優先服務通道' }
+    ]
+  }
+  return []
 })
 
 const finalAmount = computed(() => {
   if (isPaymentMode.value && existingOrderData.value) {
     return existingOrderData.value.finalAmount
   }
-  return subtotal.value + shippingFee.value - couponDiscount.value - pointDiscount.value
+  const amt = subtotal.value + shippingFee.value - couponDiscount.value - levelDiscount.value - pointDiscount.value
+  return Math.max(amt, 0)
 })
 
 onMounted(async () => {
@@ -169,21 +212,57 @@ onMounted(async () => {
     return
   }
 
-  // 4. 加載結帳所需資訊 (優惠券、錢包、個人資料)
+  // 4. 加載結帳所需資訊 (優惠券、錢包、個人資料、等級資訊)
   try {
     const memberId = authStore.memberInfo?.memberId || 0
-    const [couponsRes, walletRes, profileRes] = await Promise.all([
+    const [couponsRes, walletRes, profileRes, levelRes] = await Promise.all([
       checkoutApi.getAvailableCoupons(
         checkoutItems.value[0].storeId,
         subtotal.value,
         checkoutItems.value.map(i => i.productId)
       ),
       checkoutApi.getWalletBalance(),
-      memberId ? getMemberProfile(memberId) : Promise.resolve({ data: null })
+      memberId ? getMemberProfile(memberId) : Promise.resolve({ data: null }),
+      getLevelInfo()
     ])
     
     availableCoupons.value = couponsRes.data
     walletBalance.value = walletRes.data.pointBalance ?? walletRes.data.balance ?? 0
+
+    // 更新等級資訊
+    if (levelRes.data) {
+      console.log('Level API Response:', levelRes.data)
+      const { currentLevelName, levels, totalSpending } = levelRes.data
+      const spending = Number(totalSpending || 0)
+      
+      // 1. 優先嘗試從 levels 中尋找對應名稱的物件
+      let currentLevelData = levels.find((l: any) => l.levelName === currentLevelName)
+      
+      // 2. 如果沒對應到，或後端沒給名稱，改用消費金額手動計算 (與 LevelView 邏輯一致)
+      if (levels && levels.length > 0) {
+        const sorted = [...levels].sort((a, b) => Number(b.minSpending) - Number(a.minSpending))
+        const detectedLevel = sorted.find((l: any) => spending >= Number(l.minSpending))
+        
+        // 如果手動算出來的等級更高，則採用手動算的
+        if (detectedLevel && (!currentLevelData || Number(detectedLevel.minSpending) > Number(currentLevelData.minSpending))) {
+          currentLevelData = detectedLevel
+          console.log('Detected higher level based on spending:', currentLevelData.levelName)
+        }
+      }
+
+      if (currentLevelData) {
+        memberLevel.value = {
+          name: currentLevelData.levelName,
+          discountRate: Number(currentLevelData.discountRate)
+        }
+        console.log('Final Member Level:', memberLevel.value)
+      } else {
+        memberLevel.value = {
+          name: currentLevelName || '一般會員',
+          discountRate: 1.0
+        }
+      }
+    }
 
     // 載入地址簿
     await addressStore.fetchAddresses()
@@ -294,7 +373,10 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
 <template>
   <div class="checkout-page">
     <div class="checkout-container">
-      <h1 class="page-title">{{ isPaymentMode ? '訂單支付' : '結帳' }}</h1>
+      <div class="page-header">
+        <el-button :icon="ArrowLeft" circle @click="router.back()" class="back-btn" />
+        <h1 class="page-title">{{ isPaymentMode ? '訂單支付' : '結帳' }}</h1>
+      </div>
 
       <!-- 🛒 訂單商品 -->
       <el-card class="section-card">
@@ -333,7 +415,7 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
                   @select="handleSelectAddress"
                 />
               </el-col>
-              </el-row>
+            </el-row>
           </el-scrollbar>
         </div>
 
@@ -401,6 +483,10 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
             <el-icon><ArrowRight /></el-icon>
           </div>
         </div>
+        <div class="discount-row" v-if="memberLevel.discountRate < 1.0">
+          <div class="label">{{ memberLevel.name }} 專屬權益</div>
+          <div class="value discount">{{ memberLevel.discountRate * 10 }} 折</div>
+        </div>
         <div class="discount-row">
           <div class="label">
             點數折抵
@@ -416,9 +502,28 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
       <el-card class="section-card">
         <template #header><div class="card-header">💳 支付方式</div></template>
         <el-radio-group v-model="paymentMethod">
-          <el-radio label="ECPay" border>綠界支付</el-radio>
-          <el-radio label="NewebPay" border>藍新支付</el-radio>
+          <el-radio value="ECPay" border>綠界支付</el-radio>
+          <el-radio value="NewebPay" border>藍新支付</el-radio>
         </el-radio-group>
+      </el-card>
+
+      <!-- 🏆 會員專屬權益 -->
+      <el-card class="section-card benefit-card" v-if="levelBenefits.length > 0">
+        <div class="benefit-container">
+          <div class="benefit-header" :style="{ color: currentLevelColor }">
+            <el-icon class="trophy-icon"><trophy-icon /></el-icon>
+            <span class="benefit-title">{{ memberLevel.name }} 專屬權益</span>
+          </div>
+          <div class="benefit-list">
+            <div v-for="(benefit, index) in levelBenefits" :key="index" class="benefit-item">
+              <el-icon class="star-icon" :style="{ color: currentLevelColor }"><star-icon /></el-icon>
+              <span>{{ benefit.text }}</span>
+            </div>
+          </div>
+          <div class="benefit-footer">
+            本訂單已為您節省 NT$ {{ formatPrice(levelDiscount) }} ({{ (memberLevel.discountRate * 10).toFixed(1) }} 折)
+          </div>
+        </div>
       </el-card>
 
       <!-- 總計資訊 -->
@@ -440,6 +545,10 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
             </small>
           </span>
           <span class="discount">- NT$ {{ formatPrice(couponDiscount) }}</span>
+        </div>
+        <div v-if="levelDiscount > 0" class="summary-row">
+          <span>{{ memberLevel.name }} 專屬折扣 ({{ memberLevel.discountRate * 10 }}折)</span>
+          <span class="discount">- NT$ {{ formatPrice(levelDiscount) }}</span>
         </div>
         <div v-if="pointDiscount > 0" class="summary-row">
           <span>點數折抵</span>
@@ -554,6 +663,51 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
 .submit-btn {
   margin-top: 24px;
   width: 200px;
+}
+
+/* 會員權益卡片樣式 */
+.benefit-card {
+  border: 1px dashed #dcdfe6;
+  background-color: #fafafa;
+}
+.benefit-container {
+  padding: 8px 0;
+}
+.benefit-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.trophy-icon {
+  font-size: 24px;
+}
+.benefit-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+.benefit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+.star-icon {
+  font-size: 16px;
+}
+.benefit-footer {
+  font-size: 13px;
+  color: #909399;
+  border-top: 1px solid #ebeef5;
+  padding-top: 12px;
+  font-style: italic;
 }
 
 .coupon-item {
