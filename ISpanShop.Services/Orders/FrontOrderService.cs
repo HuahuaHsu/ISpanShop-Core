@@ -43,6 +43,7 @@ namespace ISpanShop.Services.Orders
                     Status = (OrderStatus)(o.Status ?? 0),
                     StatusName = GetStatusName(o.Status),
                     StoreName = o.Store?.StoreName ?? "未知商店",
+                    StoreStatus = o.Store?.StoreStatus ?? 1,
                     FirstProductName = firstDetail?.ProductName,
                     FirstProductImage = GetFinalImage(firstDetail),
                     TotalItemCount = o.OrderDetails.Sum(od => od.Quantity)
@@ -76,6 +77,7 @@ namespace ISpanShop.Services.Orders
                 Status = (OrderStatus)(o.Status ?? 0),
                 StatusName = GetStatusName(o.Status),
                 StoreName = o.Store?.StoreName ?? "未知商店",
+                StoreStatus = o.Store?.StoreStatus ?? 1,
                 RecipientName = o.RecipientName,
                 RecipientPhone = o.RecipientPhone,
                 RecipientAddress = o.RecipientAddress,
@@ -89,7 +91,8 @@ namespace ISpanShop.Services.Orders
                     VariantName = od.VariantName,
                     CoverImage = GetFinalImage(od),
                     Price = od.Price ?? 0,
-                    Quantity = od.Quantity
+                    Quantity = od.Quantity,
+                    StoreStatus = o.Store?.StoreStatus ?? 1
                 }).ToList(),
                 
                 // 抓取最新的一筆退貨申請作為資訊展示

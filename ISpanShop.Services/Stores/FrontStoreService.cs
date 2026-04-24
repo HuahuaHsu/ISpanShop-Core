@@ -217,6 +217,7 @@ namespace ISpanShop.Services.Stores
 
             if (store == null) return "NotApplied";
             if (store.IsVerified == null) return "Pending";
+            if (store.StoreStatus == 3) return "Suspended";
 
             return store.IsVerified.Value ? "Approved" : "Rejected";
         }

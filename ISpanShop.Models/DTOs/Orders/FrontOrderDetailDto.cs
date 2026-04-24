@@ -22,6 +22,7 @@ namespace ISpanShop.Models.DTOs.Orders
         public string StatusName { get; set; }
         
         public string StoreName { get; set; }
+        public int StoreStatus { get; set; }
         
         public string RecipientName { get; set; }
         public string RecipientPhone { get; set; }
@@ -54,5 +55,6 @@ namespace ISpanShop.Models.DTOs.Orders
         public string CoverImage { get; set; }
         public decimal Price { get; set; }
         public int Quantity { get; set; }
+        public int StoreStatus { get; set; }
     }
 }

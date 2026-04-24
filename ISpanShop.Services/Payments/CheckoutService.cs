@@ -110,9 +110,16 @@ namespace ISpanShop.Services.Payments
 
 						// 檢查賣場狀態
 						var store = await _context.Stores.AsNoTracking().FirstOrDefaultAsync(s => s.Id == effectiveStoreId);
-						if (store != null && store.StoreStatus == 2)
+						if (store != null)
 						{
-							return (false, "該賣場目前休假中，暫時無法接受下單", null);
+							if (store.StoreStatus == 2)
+							{
+								return (false, "該賣場目前休假中，暫時無法接受下單", null);
+							}
+							if (store.StoreStatus == 3)
+							{
+								return (false, "該賣場已被停權，目前無法接受新訂單，請聯繫客服", null);
+							}
 						}
 
 						var order = new Order

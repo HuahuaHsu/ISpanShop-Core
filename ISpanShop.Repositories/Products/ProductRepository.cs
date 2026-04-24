@@ -381,7 +381,14 @@ namespace ISpanShop.Repositories.Products
             }
 
             if (criteria.StoreId.HasValue)
+            {
                 query = query.Where(p => p.StoreId == criteria.StoreId.Value);
+            }
+            else
+            {
+                // 非賣家後台查詢時，過濾掉「非營業中」的店家商品 (營業中 = 1)
+                query = query.Where(p => p.Store != null && p.Store.StoreStatus == 1);
+            }
 
             if (criteria.BrandId.HasValue)
                 query = query.Where(p => p.BrandId == criteria.BrandId.Value);
@@ -1000,7 +1007,9 @@ namespace ISpanShop.Repositories.Products
         {
             var query = _context.Products
                 .AsNoTracking()
+                .Include(p => p.Store)
                 .Where(p => p.IsDeleted != true && p.Status == 1)
+                .Where(p => p.Store != null && p.Store.StoreStatus == 1) // 確保店家也是營業中
                 .AsQueryable();
 
             // ── 分類篩選 ───────────────────────────────────────────

@@ -1,6 +1,7 @@
 ﻿using ISpanShop.Models.DTOs.Inventories;
 using ISpanShop.Services.Products;
 using ISpanShop.Services.Inventories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ISpanShop.MVC.Controllers.Api.Inventories
@@ -11,6 +12,7 @@ namespace ISpanShop.MVC.Controllers.Api.Inventories
     [ApiController]
     [Route("api/seller/inventory")]
     [Produces("application/json")]
+    [Authorize(AuthenticationSchemes = "FrontendJwt")]
     public class SellerInventoryApiController : ControllerBase
     {
         private readonly IInventoryService _inventoryService;

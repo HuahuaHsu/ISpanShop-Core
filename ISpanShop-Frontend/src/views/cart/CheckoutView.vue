@@ -98,6 +98,11 @@ const subtotal = computed(() => {
   return checkoutItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
 })
 
+// ── 檢查休假狀態 ──
+const hasVacationItems = computed(() => {
+  return checkoutItems.value.some(item => item.storeStatus === 2)
+})
+
 const shippingFee = ref(60)
 const selectedCoupon = computed(() => availableCoupons.value.find(c => c.id === selectedCouponId.value))
 
@@ -229,6 +234,11 @@ function selectCoupon(id: number | null) {
 }
 
 async function handleSubmit() {
+  if (hasVacationItems.value) {
+    ElMessage.error('包含休假中賣場的商品，暫時無法結帳')
+    return
+  }
+
   if (isPaymentMode.value && existingOrderData.value) {
     const backendBase = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7125'
     const controller = paymentMethod.value === 'NewebPay' ? 'PaymentNewebPay' : 'Payment'
@@ -295,13 +305,27 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
     <div class="checkout-container">
       <h1 class="page-title">{{ isPaymentMode ? '訂單支付' : '結帳' }}</h1>
 
+      <!-- 🏖️ 賣場休假提示 -->
+      <div v-if="hasVacationItems" class="vacation-warning">
+        <el-alert
+          title="包含休假中賣場的商品"
+          type="warning"
+          description="訂單內有商品所屬賣場正在休假，請移除該商品或待賣場恢復營業後再下單。"
+          show-icon
+          :closable="false"
+        />
+      </div>
+
       <!-- 🛒 訂單商品 -->
       <el-card class="section-card">
         <template #header><div class="card-header">🛒 訂單商品</div></template>
         <div v-for="item in checkoutItems" :key="item.productId + (item.variantId || '')" class="item-row">
           <el-image :src="item.image || item.coverImage" class="item-img" />
           <div class="item-info">
-            <div class="item-name">{{ item.name || item.productName }}</div>
+            <div class="item-name">
+              <el-tag v-if="item.storeStatus === 2" type="warning" size="small" effect="dark" class="mr-1">休假中</el-tag>
+              {{ item.name || item.productName }}
+            </div>
             <div class="item-price">NT$ {{ formatPrice(item.price) }} x {{ item.quantity }}</div>
           </div>
           <div class="item-total">NT$ {{ formatPrice(item.price * item.quantity) }}</div>
@@ -449,8 +473,14 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
           <span>{{ isPaymentMode ? '應付總計' : '訂單總計' }}</span>
           <span class="price">NT$ {{ formatPrice(finalAmount) }}</span>
         </div>
-        <el-button type="primary" size="large" class="submit-btn" @click="handleSubmit">
-          {{ isPaymentMode ? '立即付款' : '下單' }}
+        <el-button 
+          type="primary" 
+          size="large" 
+          class="submit-btn" 
+          @click="handleSubmit"
+          :disabled="hasVacationItems"
+        >
+          {{ hasVacationItems ? '賣場休假中' : (isPaymentMode ? '立即付款' : '下單') }}
         </el-button>
       </div>
     </div>
@@ -493,6 +523,12 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
   margin: 0;
   font-size: 24px;
   font-weight: bold;
+}
+.vacation-warning {
+  margin-bottom: 20px;
+}
+.mr-1 {
+  margin-right: 4px;
 }
 .back-btn {
   font-size: 18px;

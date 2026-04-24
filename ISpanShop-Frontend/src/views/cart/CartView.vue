@@ -10,9 +10,9 @@ const cartStore = useCartStore()
 
 const isEmpty = computed(() => cartStore.items.length === 0)
 
-/** 檢查是否有休假中賣場的商品 */
+/** 檢查已勾選項目中是否有休假中賣場的商品 */
 const hasVacationItems = computed(() => {
-  return cartStore.items.some(item => item.storeStatus === 2)
+  return cartStore.items.filter(item => item.selected).some(item => item.storeStatus === 2)
 })
 
 function increment(productId: number, variantId: number | null, current: number): void {

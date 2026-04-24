@@ -29,7 +29,6 @@
               <div class="stat-label">{{ stat.label }}</div>
             </div>
           </div>
-          <!-- TODO: 呼叫後端 GET /api/seller/dashboard/stats 取得真實數據 -->
         </el-card>
       </el-col>
     </el-row>
@@ -47,7 +46,6 @@
           </div>
         </div>
       </template>
-      <!-- TODO: 呼叫後端 GET /api/seller/dashboard/analytics 取得真實數據 -->
       <el-row :gutter="0" class="analytics-row">
         <el-col
           v-for="metric in analyticsMetrics"
@@ -90,7 +88,6 @@
           <el-button text type="primary" @click="router.push('/seller/orders')">查看全部</el-button>
         </div>
       </template>
-      <!-- TODO: 呼叫後端 GET /api/seller/orders?pageSize=5&page=1 取得真實訂單 -->
       <el-table :data="recentOrders" stripe class="orders-table">
         <el-table-column prop="orderNumber" label="訂單編號" min-width="200" class-name="no-wrap" />
         <el-table-column prop="buyerName" label="買家" min-width="150" class-name="no-wrap" />
@@ -116,7 +113,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Document, Box, WarningFilled,
-  CaretTop, CaretBottom,
+  CaretTop, CaretBottom, Minus,
   Plus, List, StarFilled, DataLine
 } from '@element-plus/icons-vue'
 import { getStoreStatusApi, getSellerDashboardApi } from '@/api/store'
@@ -129,20 +126,21 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const dashboardData = ref<SellerDashboardData | null>(null)
+const isRedirecting = ref(false)
 
 /** 安全性複核：確保使用者確實具備賣家身分 */
 const checkAccess = async () => {
+  if (isRedirecting.value) return
   loading.value = true
   try {
     const res = await getStoreStatusApi()
     if (res.data.status !== 'Approved') {
+      isRedirecting.value = true
       authStore.updateSellerStatus(false)
       ElMessage.warning('您的賣家權限已變更')
-      router.replace('/member/mystore')
+      await router.replace('/member/mystore')
       return
     }
-    
-    // 取得儀表板數據
     const dashboardRes = await getSellerDashboardApi()
     dashboardData.value = dashboardRes.data
   } catch (error) {
@@ -198,9 +196,9 @@ const statCards = computed(() => {
       icon: Box,
       iconBg: '#eff6ff',
       iconColor: '#3b82f6',
-    }
-    ]
-    })
+    },
+  ]
+})
 
 // 區塊 B 數據中心
 const analyticsMetrics = computed(() => {
@@ -216,8 +214,8 @@ const analyticsMetrics = computed(() => {
 
 // 區塊 C 快捷操作
 const quickActions = [
-  { label: '新增商品', route: '/seller/products/new', icon: Plus,      bg: '#fff7ed', color: '#ee4d2d' },
-  { label: '查看訂單', route: '/seller/orders',        icon: List,      bg: '#f0fdf4', color: '#22c55e' },
+  { label: '新增商品', route: '/seller/products/new', icon: Plus,       bg: '#fff7ed', color: '#ee4d2d' },
+  { label: '查看訂單', route: '/seller/orders',        icon: List,       bg: '#f0fdf4', color: '#22c55e' },
   { label: '建立活動', route: '/seller/promotions',    icon: StarFilled, bg: '#fef9c3', color: '#eab308' },
   { label: '查看數據', route: '/seller/analytics/sales', icon: DataLine, bg: '#eff6ff', color: '#3b82f6' },
 ]

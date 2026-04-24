@@ -1,6 +1,7 @@
 ﻿using ISpanShop.Models.DTOs.Products;
 using ISpanShop.Services.Products;
 using ISpanShop.Services.Inventories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ISpanShop.MVC.Controllers.Api.Products
@@ -9,6 +10,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
     [ApiController]
     [Route("api/seller/products/{productId:int}/variants")]
     [Produces("application/json")]
+    [Authorize(AuthenticationSchemes = "FrontendJwt")]
     public class SellerVariantsApiController : ControllerBase
     {
         private readonly IProductService _productService;

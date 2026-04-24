@@ -1,5 +1,29 @@
 <template>
   <div class="seller-layout">
+    <!-- 1. 停權提示彈窗 (僅在 isSuspended 為 true 時顯示) -->
+    <el-dialog
+      v-model="isSuspended"
+      title="商店狀態提示"
+      width="480px"
+      :show-close="false"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      align-center
+      class="suspension-dialog"
+    >
+    <div class="suspension-content">
+        <el-icon color="#f56c6c" size="120"><WarningFilled /></el-icon>
+        <h2>您的商店已被停權</h2>
+        <p>目前賣場已「停權」，暫時無法使用賣家中心相關功能。您可以查看諮詢紀錄或提交新的諮詢與平台管理員聯繫。</p>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="router.push('/')">回到首頁</el-button>
+          <el-button type="primary" @click="router.push('/member/support')">聯繫客服</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <!-- 頂部導覽列 -->
     <header class="seller-header">
       <div class="header-left">
@@ -9,7 +33,6 @@
         </div>
       </div>
       <div class="header-right">
-        <!-- 帳號下拉 -->
         <el-dropdown trigger="click" @command="handleCommand">
           <span class="account-trigger">
             <el-avatar :size="32" class="account-avatar">
@@ -33,8 +56,11 @@
     </header>
 
     <div class="seller-body">
-      <!-- 左側選單 -->
-      <aside class="seller-sidebar" :class="{ collapsed: isCollapsed }">
+      <!-- 2. 停權網底屏蔽層 (毛玻璃效果) -->
+      <div v-if="isSuspended" class="suspension-mask-layer"></div>
+
+      <!-- 左側選單 (完整恢復) -->
+      <aside class="seller-sidebar" :class="{ collapsed: isCollapsed, 'is-suspended': isSuspended }">
         <el-menu
           :default-active="activeMenu"
           :collapse="isCollapsed"
@@ -123,7 +149,6 @@
           </el-menu-item>
         </el-menu>
 
-        <!-- 收合按鈕 -->
         <div class="collapse-btn" @click="toggleCollapse">
           <el-icon>
             <component :is="isCollapsed ? DArrowRight : DArrowLeft" />
@@ -132,47 +157,84 @@
         </div>
       </aside>
 
-      <!-- 主內容 -->
+      <!-- 3. 主內容區 -->
       <main class="seller-main" :style="{ marginLeft: isCollapsed ? '64px' : '220px' }">
-        <router-view />
+        <!-- 如果正在檢查狀態且不是 Suspended，則顯示載入中 (避免正常用戶看到閃爍) -->
+        <div v-if="checkingStatus && !isSuspended" v-loading="true" class="loading-placeholder"></div>
+
+        <template v-else>
+          <!-- 停權時顯示客服內容作為網底 -->
+          <div v-if="isSuspended" class="suspended-bg-content">
+            <SupportTicketsView />
+          </div>
+          <!-- 正常時顯示路由內容 -->
+          <router-view v-else />
+        </template>
       </main>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  ArrowDown, House, SwitchButton,
+  ArrowDown, House, SwitchButton, WarningFilled,
   DataAnalysis, Box, List, Plus, Document, RefreshLeft,
   PriceTag, StarFilled, Ticket, TrendCharts, Histogram, DataLine,
   ChatDotRound, DArrowLeft, DArrowRight, Setting
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
+import { getStoreStatusApi } from '../api/store'
+import SupportTicketsView from '../views/member/SupportTicketsView.vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
 const isCollapsed = ref<boolean>(false)
+const isSuspended = ref<boolean>(false)
+const checkingStatus = ref<boolean>(true)
 const activeMenu = computed<string>(() => route.path)
+
+async function checkStoreStatus() {
+  // 如果已經知道是正常狀態且 token 沒變，可以考慮從 store 快取讀取以減少請求
+  // 但為了安全，我們在 Layout 層級至少做一次即時檢查
+  try {
+    const res = await getStoreStatusApi()
+    const currentStatus = res.data.status
+
+    if (currentStatus === 'Suspended') {
+      isSuspended.value = true
+    } else if (currentStatus === 'Approved') {
+      isSuspended.value = false
+      authStore.updateSellerStatus(true)
+    } else {
+      // Pending, Rejected 等狀態導回檢查頁
+      await router.replace('/member/mystore')
+    }
+  } catch (error) {
+    console.error('[SellerLayout] Status Check Failed:', error)
+  } finally {
+    checkingStatus.value = false
+  }
+}
+
+onMounted(() => {
+  checkStoreStatus()
+})
 
 function toggleCollapse(): void {
   isCollapsed.value = !isCollapsed.value
 }
 
 function handleCommand(command: string): void {
-  switch (command) {
-    case 'storefront':
-      void router.push('/')
-      break
-    case 'logout':
-      authStore.logout()
-      ElMessage.success('已登出')
-      void router.push('/login')
-      break
+  if (command === 'storefront') router.push('/')
+  else if (command === 'logout') {
+    authStore.logout()
+    ElMessage.success('已登出')
+    router.push('/login')
   }
 }
 </script>
@@ -183,6 +245,31 @@ function handleCommand(command: string): void {
   display: flex;
   flex-direction: column;
   background: #f5f6fa;
+}
+
+/* ── 停權屏蔽遮罩 (僅屏蔽互動) ── */
+.suspension-mask-layer {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(6px);
+  z-index: 2000;
+  cursor: not-allowed;
+}
+
+/* ── 停權背景內容樣式 ── */
+.suspended-bg-content {
+  opacity: 0.7;
+  filter: grayscale(0.3);
+  pointer-events: none;
+}
+
+.loading-placeholder {
+  height: 400px;
+  width: 100%;
 }
 
 /* ── 頂部導覽列 ── */
@@ -197,68 +284,26 @@ function handleCommand(command: string): void {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 2001;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.seller-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-.logo-icon {
-  height: 32px;
-  width: auto;
-  object-fit: contain;
-}
-.logo-text {
-  font-size: 18px;
-  font-weight: 700;
-  color: white;
-  letter-spacing: 0.5px;
-}
-.logo-sub {
-  font-size: 14px;
-  font-weight: 400;
-  color: #ee4d2d;
-  margin-left: 6px;
-}
+.seller-logo { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.logo-icon { height: 32px; }
+.logo-text { font-size: 18px; font-weight: 700; color: white; }
+.logo-sub { font-size: 14px; color: #ee4d2d; margin-left: 6px; }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.account-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  color: #cbd5e1;
-  transition: color 0.2s;
-  outline: none;
-}
-.account-trigger:hover { color: white; }
-.account-avatar {
-  background: #ee4d2d;
-  color: white;
-  font-weight: 700;
-  font-size: 14px;
-}
+.account-trigger { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #cbd5e1; outline: none; }
 .account-name { font-size: 14px; }
-.account-arrow { font-size: 12px; }
 
-/* ── 主體（側邊 + 內容） ── */
+/* ── 主體 ── */
 .seller-body {
   display: flex;
   flex: 1;
   margin-top: 56px;
+  position: relative;
 }
 
-/* ── 側邊選單 ── */
 .seller-sidebar {
   width: 220px;
   min-height: calc(100vh - 56px);
@@ -267,53 +312,17 @@ function handleCommand(command: string): void {
   left: 0;
   top: 56px;
   bottom: 0;
-  display: flex;
-  flex-direction: column;
   border-right: 1px solid #e8eaf0;
-  transition: width 0.3s ease;
+  transition: width 0.3s;
   z-index: 900;
-  overflow: hidden;
 }
-.seller-sidebar.collapsed {
-  width: 64px;
+.seller-sidebar.is-suspended {
+  pointer-events: none;
+  opacity: 0.6;
 }
+.seller-sidebar.collapsed { width: 64px; }
+.sidebar-menu { border-right: none !important; }
 
-.sidebar-menu {
-  flex: 1;
-  border-right: none !important;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* 選中項目：左邊框橘色 + 淡橘底 */
-:deep(.el-menu-item.is-active) {
-  color: #ee4d2d !important;
-  background-color: #fff7ed !important;
-  border-left: 3px solid #ee4d2d;
-}
-:deep(.el-menu-item:hover) {
-  background-color: #fff7ed !important;
-  color: #ee4d2d !important;
-}
-:deep(.el-sub-menu__title:hover) {
-  background-color: #fff7ed !important;
-  color: #ee4d2d !important;
-}
-:deep(.el-sub-menu.is-active > .el-sub-menu__title) {
-  color: #ee4d2d !important;
-}
-:deep(.el-menu-item) {
-  height: 48px;
-  line-height: 48px;
-  font-size: 14px;
-}
-:deep(.el-sub-menu__title) {
-  height: 48px;
-  line-height: 48px;
-  font-size: 14px;
-}
-
-/* 收合按鈕 */
 .collapse-btn {
   height: 48px;
   display: flex;
@@ -322,26 +331,25 @@ function handleCommand(command: string): void {
   gap: 8px;
   cursor: pointer;
   color: #64748b;
-  font-size: 13px;
   border-top: 1px solid #e8eaf0;
-  transition: color 0.2s, background 0.2s;
-  padding: 0 16px;
-}
-.collapse-btn:hover {
-  color: #ee4d2d;
-  background: #fff7ed;
-}
-.collapse-label {
-  white-space: nowrap;
-  overflow: hidden;
 }
 
-/* ── 右側主內容 ── */
 .seller-main {
   flex: 1;
   min-height: calc(100vh - 56px);
   padding: 24px;
-  transition: margin-left 0.3s ease;
-  overflow-x: hidden;
+  transition: margin-left 0.3s;
 }
+
+/* 彈窗樣式微調 */
+.suspension-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 10px 0;
+}
+.suspension-content h3 { margin: 16px 0 10px; color: #303133; }
+.suspension-content p { color: #606266; line-height: 1.6; }
+.dialog-footer { display: flex; justify-content: center; }
 </style>

@@ -479,6 +479,7 @@ function handleBuyNow(): void {
     specLabel,
     storeId: p.store?.id ?? 0,
     storeName: p.storeName,
+    storeStatus: p.store?.status ?? 1,
   }
 
   // 3. 存入臨時結帳資訊 (SessionStorage) 並導向結帳頁，不影響購物車

@@ -4,7 +4,7 @@ export interface StoreApplyRequest {
   logoUrl?: string
 }
 
-export type StoreStatus = 'NotApplied' | 'Pending' | 'Approved' | 'Rejected'
+export type StoreStatus = 'NotApplied' | 'Pending' | 'Approved' | 'Rejected' | 'Suspended'
 
 export interface StoreStatusResponse {
   status: StoreStatus
