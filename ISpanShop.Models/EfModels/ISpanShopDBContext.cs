@@ -75,6 +75,8 @@ public partial class ISpanShopDBContext : DbContext
 
     public virtual DbSet<ReturnRequestImage> ReturnRequestImages { get; set; }
 
+    public virtual DbSet<ReturnRequestItem> ReturnRequestItems { get; set; }
+
     public virtual DbSet<ReviewImage> ReviewImages { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }

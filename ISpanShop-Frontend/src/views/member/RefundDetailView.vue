@@ -18,6 +18,32 @@
         class="status-alert"
       />
 
+      <!-- 退貨商品明細 -->
+      <el-card class="info-card" shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span class="header-title">退貨商品明細</span>
+          </div>
+        </template>
+        
+        <div class="returned-items-list">
+          <div v-for="(item, idx) in order?.returnInfo?.items" :key="idx" class="returned-item">
+            <el-image :src="item.coverImage" class="item-img" fit="cover" />
+            <div class="item-info">
+              <div class="name">{{ item.productName }}</div>
+              <div class="variant" v-if="item.variantName">規格：{{ item.variantName }}</div>
+              <div class="price-qty">
+                <span class="price">${{ formatPrice(item.price) }}</span>
+                <span class="qty">退貨數量：{{ item.returnQuantity }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-if="!order?.returnInfo?.items?.length" class="empty-items-tip">
+            (整筆訂單退貨)
+          </div>
+        </div>
+      </el-card>
+
       <!-- 退款資訊快照 -->
       <el-card class="info-card" shadow="never">
         <template #header>
@@ -196,6 +222,43 @@ onMounted(fetchOrderDetail);
   }
   
   .no-image { color: #ccc; font-style: italic; font-size: 13px; }
+}
+
+.returned-items-list {
+  .returned-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+    &:last-child { border-bottom: none; }
+
+    .item-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      flex-shrink: 0;
+    }
+
+    .item-info {
+      flex: 1;
+      .name { font-size: 14px; font-weight: 500; color: #333; margin-bottom: 4px; }
+      .variant { font-size: 12px; color: #999; margin-bottom: 8px; }
+      .price-qty {
+        display: flex;
+        justify-content: space-between;
+        .price { color: #666; }
+        .qty { color: #ee4d2d; font-weight: 500; }
+      }
+    }
+  }
+}
+
+.empty-items-tip {
+  text-align: center;
+  color: #999;
+  padding: 20px 0;
+  font-style: italic;
 }
 
 .tips-section {

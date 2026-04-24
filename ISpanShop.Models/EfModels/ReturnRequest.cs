@@ -28,4 +28,6 @@ public partial class ReturnRequest
     public virtual Order Order { get; set; }
 
     public virtual ICollection<ReturnRequestImage> ReturnRequestImages { get; set; } = new List<ReturnRequestImage>();
+
+    public virtual ICollection<ReturnRequestItem> ReturnRequestItems { get; set; } = new List<ReturnRequestItem>();
 }

@@ -43,6 +43,16 @@ namespace ISpanShop.Models.DTOs.Orders
         public byte Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<string> ImageUrls { get; set; }
+        public List<FrontReturnItemDto> Items { get; set; } = new List<FrontReturnItemDto>();
+    }
+
+    public class FrontReturnItemDto
+    {
+        public string ProductName { get; set; }
+        public string VariantName { get; set; }
+        public string CoverImage { get; set; }
+        public decimal Price { get; set; }
+        public int ReturnQuantity { get; set; }
     }
 
     public class FrontOrderItemDto
