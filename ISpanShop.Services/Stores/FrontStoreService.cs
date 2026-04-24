@@ -342,8 +342,9 @@ namespace ISpanShop.Services.Stores
                     CreatedAt = o.CreatedAt,
                     FinalAmount = o.FinalAmount,
                     Status = (OrderStatus)o.Status,
-                    StatusName = ((OrderStatus)o.Status).GetDisplayName(),
+                    StatusName = GetStatusName(o.Status),
                     BuyerName = o.User?.Account ?? "未知買家",
+                    BuyerId = o.UserId,
                     RecipientName = o.RecipientName,
                     FirstProductName = firstDetail?.ProductName,
                     FirstProductImage = image,
@@ -601,6 +602,21 @@ namespace ISpanShop.Services.Stores
 
             _context.Orders.Update(order);
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        private string GetStatusName(byte? status)
+        {
+            return status switch
+            {
+                0 => "待付款",
+                1 => "待出貨",
+                2 => "運送中",
+                3 => "已完成",
+                4 => "已取消",
+                5 => "退貨/款中",
+                6 => "已退款",
+                _ => "未知"
+            };
         }
     }
 }

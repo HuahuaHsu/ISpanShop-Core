@@ -62,6 +62,7 @@ export interface SellerOrder {
   status: number
   statusName: string
   buyerName: string
+  buyerId: number
   recipientName: string
   firstProductName: string
   firstProductImage: string

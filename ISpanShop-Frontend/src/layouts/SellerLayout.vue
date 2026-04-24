@@ -137,6 +137,9 @@
         <router-view />
       </main>
     </div>
+
+    <!-- 聊聊懸浮按鈕與視窗 -->
+    <ChatFloat />
   </div>
 </template>
 
@@ -144,6 +147,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import ChatFloat from '../components/chat/ChatFloat.vue'
 import {
   ArrowDown, House, SwitchButton,
   DataAnalysis, Box, List, Plus, Document, RefreshLeft,

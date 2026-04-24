@@ -53,7 +53,7 @@
             <div class="buyer-info">
               <span class="buyer-tag">買家</span>
               <span class="buyer-name">{{ order.buyerName }}</span>
-              <el-button link type="primary" size="small" icon="ChatDotRound" class="chat-btn">好聊</el-button>
+              <el-button link type="primary" size="small" class="chat-btn" @click.stop="handleChat(order)">好聊</el-button>
             </div>
             <div class="status-info">
               <span class="status-text" :class="getStatusClass(order.status)">
@@ -142,9 +142,11 @@ import { Search, Picture, Location, ChatDotRound } from '@element-plus/icons-vue
 import { getSellerOrdersApi, updateSellerOrderStatusApi } from '@/api/store';
 import type { SellerOrder } from '@/types/store';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { useChatStore } from '@/stores/chat';
 
 const router = useRouter();
 const route = useRoute();
+const chatStore = useChatStore();
 const loading = ref(false);
 const orders = ref<SellerOrder[]>([]);
 const totalCount = ref(0);
@@ -192,6 +194,18 @@ const handleSizeChange = (size: number) => {
 const handleSearch = () => {
   currentPage.value = 1;
   fetchOrders();
+};
+
+const handleChat = (order: SellerOrder) => {
+  const buyerId = order.buyerId || (order as any).BuyerId;
+  console.log('Chat clicked for order:', order.orderNumber, 'BuyerId:', buyerId);
+  
+  if (buyerId) {
+    chatStore.openChatWithUser(buyerId, order.buyerName);
+  } else {
+    console.warn('Order object:', order);
+    ElMessage.warning('無法取得買家資訊');
+  }
 };
 
 const handleReset = () => {
