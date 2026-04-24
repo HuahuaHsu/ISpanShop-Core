@@ -965,90 +965,131 @@ async function loadProductData(): Promise<void> {
   
   loading.value = true
   try {
-    // getSellerProductDetail 已經 return response.data，所以 res 就是商品物件
     const product = await getSellerProductDetail(productId.value)
-    
-    // 儲存原始資料（用於顯示退回原因等）
     productData.value = product
 
-    console.log('[商品狀態]', { status: product.status, reviewStatus: product.reviewStatus })
     console.log('載入商品資料:', product)
-    console.log('name:', product.name)
-    console.log('categoryName:', product.categoryName)
-    console.log('images:', product.images)
-    console.log('rejectReason:', product.rejectReason)
     
-    // 基本資訊
+    // 1. 基本資訊還原
     form.name = product.name || ''
     form.description = product.description || ''
     form.categoryId = product.categoryId || null
-    
-    // 分類路徑 - 後端直接回傳 categoryName 字串
     form.categoryPath = product.categoryName || ''
+    form.minPurchase = product.minPurchase || 1
     
-    // 品牌
     if (product.brandId) {
       form.attributes.brandId = product.brandId
     }
     
-    // 價格和庫存（無規格時）
+    // 無規格時的價格和庫存
     form.price = product.minPrice || 0
-    form.stock = 0 // 後端沒有 totalStock，variants 為空時預設 0
+    form.stock = 0 
     
-    // 圖片 - 後端回傳的是字串陣列，如 ['/uploads/products/xxx.jpg']
+    // 2. 圖片還原
     if (product.images && product.images.length > 0) {
       form.images = product.images.map((url: string, idx: number) => {
-        // 顯示用完整 URL；_originalUrl 保留相對路徑，供送出 existingImages 使用
         const originalUrl = url.startsWith('http')
           ? (() => { try { return new URL(url).pathname } catch { return url } })()
           : url
         return {
-          uid: -(idx + 1), // 負數 uid 避免與新上傳的衝突
+          uid: -(idx + 1),
           name: `image-${idx}`,
           url: url.startsWith('http') ? url : `https://localhost:7125${url}`,
           status: 'success' as const,
           _originalUrl: originalUrl,
         }
       }) as UploadUserFile[]
-      
-      // 記錄原始圖片數量
       originalImageCount.value = product.images.length
     } else {
       originalImageCount.value = 0
     }
     
-    // 規格和變體 - 後端回傳 specDefinitionJson 字串
-    if (product.specDefinitionJson && product.specDefinitionJson !== '[]') {
+    // 3. 規格還原與舊資料相容邏輯
+    let reconstructedSpecs: Spec[] = []
+    const hasSpecDef = product.specDefinitionJson && product.specDefinitionJson !== '[]' && product.specDefinitionJson !== 'null'
+    const hasVariants = product.variants && product.variants.length > 0
+
+    // A. 嘗試從 specDefinitionJson 還原
+    if (hasSpecDef) {
       try {
-        const specs = JSON.parse(product.specDefinitionJson)
-        if (specs && specs.length > 0) {
-          specsEnabled.value = true
-          
-          // 重建規格定義
-          form.specs = specs.map((spec: any) => ({
-            name: spec.name || '',
-            options: (spec.options || []).map((optName: string) => ({
-              name: optName,
-              image: null,
-              imagePreview: null,
-            })),
+        const specsDef = JSON.parse(product.specDefinitionJson)
+        if (Array.isArray(specsDef) && specsDef.length > 0) {
+          reconstructedSpecs = specsDef.map((s: any) => ({
+            name: s.name || '',
+            // 如果 specDefinitionJson 裡已經有 options，就直接用；否則初始化為空陣列
+            options: Array.isArray(s.options) 
+              ? s.options.map((opt: any) => ({
+                  name: typeof opt === 'string' ? opt : (opt.name || ''),
+                  image: null,
+                  imagePreview: null
+                }))
+              : []
           }))
         }
       } catch (e) {
         console.error('解析規格定義失敗:', e)
       }
     }
+
+    // B. 舊商品相容邏輯：如果沒有規格定義或選項為空，則從 variants 反推
+    const needsInference = reconstructedSpecs.length === 0 || reconstructedSpecs.every(s => s.options.length === 0)
     
-    // 變體資料
-    if (product.variants && product.variants.length > 0) {
+    if (needsInference && hasVariants) {
+      const specOptionsMap = new Map<string, Set<string>>()
+      const specNamesOrder: string[] = reconstructedSpecs.length > 0 ? reconstructedSpecs.map(s => s.name) : []
+
+      product.variants.forEach((v: any) => {
+        try {
+          const specValues = typeof v.specValueJson === 'string' ? JSON.parse(v.specValueJson) : v.specValueJson
+          if (specValues) {
+            Object.entries(specValues).forEach(([name, value]) => {
+              if (!specOptionsMap.has(name)) {
+                specOptionsMap.set(name, new Set())
+                if (!specNamesOrder.includes(name)) specNamesOrder.push(name)
+              }
+              specOptionsMap.get(name)?.add(value as string)
+            })
+          }
+        } catch (e) {
+          console.error('解析變體規格值失敗:', e)
+        }
+      })
+
+      if (specNamesOrder.length > 0) {
+        reconstructedSpecs = specNamesOrder.map(name => ({
+          name,
+          options: Array.from(specOptionsMap.get(name) || []).map(optName => ({
+            name: optName,
+            image: null,
+            imagePreview: null
+          }))
+        }))
+        console.log('偵測到舊資料，已自動重建規格定義結構')
+      }
+    }
+
+    // 4. 賦值並同步變體表格
+    if (reconstructedSpecs.length > 0) {
       specsEnabled.value = true
-      variantData.value = product.variants.map((v: any) => ({
-        spec1: Object.values(v.specValues || {})[0] || '',
-        spec2: Object.values(v.specValues || {})[1] || null,
-        price: v.price || null,
-        stock: v.stock || 0,
-        sku: v.skuCode || '',
-      }))
+      form.specs = reconstructedSpecs
+      
+      // 確保在 nextTick 之後或直接在同一個 tick 更新 variantData
+      // 由於 watch(variants) 會在 reactive 更新後執行，我們在這裡先準備好對應的資料
+      if (hasVariants) {
+        const specNames = reconstructedSpecs.map(s => s.name)
+        variantData.value = product.variants.map((v: any) => {
+          const specValues = typeof v.specValueJson === 'string' ? JSON.parse(v.specValueJson) : v.specValueJson
+          return {
+            spec1: specValues[specNames[0]] || '',
+            spec2: specNames[1] ? (specValues[specNames[1]] || null) : null,
+            price: v.price || null,
+            stock: v.stock || 0,
+            sku: v.skuCode || '',
+          }
+        })
+      }
+    } else {
+      specsEnabled.value = false
     }
     
     ElMessage.success('商品資料載入成功')
