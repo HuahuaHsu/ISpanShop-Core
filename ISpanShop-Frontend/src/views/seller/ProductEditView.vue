@@ -11,36 +11,38 @@
     <div class="three-column-layout">
       <!-- 左側:填寫建議 -->
       <aside class="left-sidebar">
-        <div class="tips-card">
-          <div class="tips-header">填寫建議</div>
-          <div class="tips-list">
-            <div class="tip-item" :class="{ completed: isImageComplete }">
-              <el-icon class="tip-icon">
-                <CircleCheck v-if="isImageComplete" />
-                <CircleClose v-else />
-              </el-icon>
-              <span>新增至少 3 張圖片</span>
-            </div>
-            <div class="tip-item" :class="{ completed: isNameComplete }">
-              <el-icon class="tip-icon">
-                <CircleCheck v-if="isNameComplete" />
-                <CircleClose v-else />
-              </el-icon>
-              <span>商品名稱的字數需介於 5~100</span>
-            </div>
-            <div class="tip-item" :class="{ completed: isDescriptionComplete }">
-              <el-icon class="tip-icon">
-                <CircleCheck v-if="isDescriptionComplete" />
-                <CircleClose v-else />
-              </el-icon>
-              <span>商品描述需填入至少 100 個文字或是 1 張圖片</span>
-            </div>
-            <div class="tip-item" :class="{ completed: isBrandComplete }">
-              <el-icon class="tip-icon">
-                <CircleCheck v-if="isBrandComplete" />
-                <CircleClose v-else />
-              </el-icon>
-              <span>新增品牌資訊</span>
+        <div class="sticky-wrapper">
+          <div class="tips-card">
+            <div class="tips-header">填寫建議</div>
+            <div class="tips-list">
+              <div class="tip-item" :class="{ completed: isImageComplete }">
+                <el-icon class="tip-icon">
+                  <CircleCheck v-if="isImageComplete" />
+                  <CircleClose v-else />
+                </el-icon>
+                <span>新增至少 3 張圖片</span>
+              </div>
+              <div class="tip-item" :class="{ completed: isNameComplete }">
+                <el-icon class="tip-icon">
+                  <CircleCheck v-if="isNameComplete" />
+                  <CircleClose v-else />
+                </el-icon>
+                <span>商品名稱的字數需介於 5~100</span>
+              </div>
+              <div class="tip-item" :class="{ completed: isDescriptionComplete }">
+                <el-icon class="tip-icon">
+                  <CircleCheck v-if="isDescriptionComplete" />
+                  <CircleClose v-else />
+                </el-icon>
+                <span>商品描述需填入至少 100 個文字或是 1 張圖片</span>
+              </div>
+              <div class="tip-item" :class="{ completed: isBrandComplete }">
+                <el-icon class="tip-icon">
+                  <CircleCheck v-if="isBrandComplete" />
+                  <CircleClose v-else />
+                </el-icon>
+                <span>新增品牌資訊</span>
+              </div>
             </div>
           </div>
         </div>
@@ -517,12 +519,13 @@
 
       <!-- 右側:即時預覽 -->
       <aside class="right-sidebar">
-        <div class="preview-card">
-          <div class="preview-header">
-            <div class="preview-title">預覽</div>
-            <div class="preview-subtitle">商品詳情</div>
-          </div>
-          <div class="preview-content">
+        <div class="sticky-wrapper">
+          <div class="preview-card">
+            <div class="preview-header">
+              <div class="preview-title">預覽</div>
+              <div class="preview-subtitle">商品詳情</div>
+            </div>
+            <div class="preview-content">
             <!-- 主圖輪播 -->
             <div class="preview-image">
               <el-carousel
@@ -603,8 +606,9 @@
             </div>
           </div>
         </div>
-      </aside>
-    </div>
+      </div>
+    </aside>
+  </div>
 
     <!-- 底部按鈕列 -->
     <div class="bottom-actions">
@@ -1566,6 +1570,7 @@ async function handleReShelf(): Promise<void> {
   background: #f5f5f5;
   min-height: 100vh;
   padding: 16px 24px 80px;
+  overflow: visible !important; /* 強制解除溢出限制，確保 sticky 生效 */
 }
 
 :deep(.el-breadcrumb) {
@@ -1578,14 +1583,21 @@ async function handleReShelf(): Promise<void> {
   gap: 20px;
   max-width: 1400px;
   margin: 0 auto;
+  align-items: flex-start; /* 確保子元素不會被拉伸，讓 sticky 有滑動空間 */
 }
 
-/* 左側:填寫建議 */
-.left-sidebar {
+/* 側邊欄容器 */
+.left-sidebar,
+.right-sidebar {
   width: 280px;
   flex-shrink: 0;
+}
+
+/* 終極 Sticky 包裹器 */
+.sticky-wrapper {
   position: sticky;
   top: 20px;
+  z-index: 10;
   height: fit-content;
 }
 
@@ -1715,6 +1727,7 @@ async function handleReShelf(): Promise<void> {
   position: sticky;
   top: 20px;
   height: fit-content;
+  align-self: flex-start; /* 防止 flex 延伸 */
 }
 
 .preview-card {
@@ -1722,11 +1735,15 @@ async function handleReShelf(): Promise<void> {
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+  max-height: calc(100vh - 40px); /* 限制最大高度，避免超出視窗 */
+  display: flex;
+  flex-direction: column;
 }
 
 .preview-header {
   padding: 16px;
   border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
 }
 
 .preview-title {
@@ -1743,6 +1760,8 @@ async function handleReShelf(): Promise<void> {
 
 .preview-content {
   padding: 16px;
+  overflow-y: auto; /* 內容過多時可捲動 */
+  flex: 1;
 }
 
 .preview-image {
