@@ -10,5 +10,6 @@ namespace ISpanShop.Models.DTOs.Auth
         public string LevelName { get; set; } = string.Empty;
         public int PointBalance { get; set; }
         public bool IsSeller { get; set; }
+        public bool IsBlacklisted { get; set; }
     }
 }

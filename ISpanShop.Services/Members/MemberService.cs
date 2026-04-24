@@ -70,7 +70,10 @@ namespace ISpanShop.Services.Members
 			{
 				userInDb.MemberProfile.FullName = dto.FullName;
 				userInDb.MemberProfile.PhoneNumber = dto.PhoneNumber;
-				userInDb.MemberProfile.AvatarUrl = dto.AvatarUrl;
+				// 只有當 DTO 有提供非空的路徑，且路徑真的改變時才更新
+				if (!string.IsNullOrWhiteSpace(dto.AvatarUrl) && dto.AvatarUrl != userInDb.MemberProfile.AvatarUrl) {
+					userInDb.MemberProfile.AvatarUrl = dto.AvatarUrl;
+				}
 				userInDb.MemberProfile.Gender = dto.Gender;
 				userInDb.MemberProfile.DateOfBirth = dto.Birthday;
 			}
@@ -91,7 +94,10 @@ namespace ISpanShop.Services.Members
 			{
 				userInDb.MemberProfile.FullName = dto.FullName;
 				userInDb.MemberProfile.PhoneNumber = dto.PhoneNumber;
-				userInDb.MemberProfile.AvatarUrl = dto.AvatarUrl;
+				// 只有當 DTO 有提供非空的路徑，且路徑真的改變時才更新
+				if (!string.IsNullOrWhiteSpace(dto.AvatarUrl) && dto.AvatarUrl != userInDb.MemberProfile.AvatarUrl) {
+					userInDb.MemberProfile.AvatarUrl = dto.AvatarUrl;
+				}
 				userInDb.MemberProfile.Gender = dto.Gender;
 				userInDb.MemberProfile.DateOfBirth = dto.Birthday;
 			}

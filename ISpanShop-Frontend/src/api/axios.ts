@@ -44,10 +44,25 @@ instance.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      console.error(`[API 401 Unauthorized] 觸發自動登出。請求 URL: ${error.config?.url}`);
-      storage.clearAll();
-      window.location.href = '/login';
+    if (error.response) {
+      const { status, data } = error.response;
+      
+      if (status === 401) {
+        console.error(`[API 401 Unauthorized] 觸發自動登出。`);
+        storage.clearAll();
+        window.location.href = '/login';
+      }
+      
+      if (status === 403) {
+        // 如果後端告知帳號已停權，我們同步更新本地 Pinia 狀態
+        // 這會觸發 DefaultLayout 的 showBlacklistDialog
+        const { useAuthStore } = require('../stores/auth'); // 動態引入避免循環依賴
+        const authStore = useAuthStore();
+        if (data && data.code === 'ACCOUNT_BLOCKED') {
+          authStore.memberInfo.isBlacklisted = true;
+          storage.setUser(authStore.memberInfo);
+        }
+      }
     }
     return Promise.reject(error);
   }

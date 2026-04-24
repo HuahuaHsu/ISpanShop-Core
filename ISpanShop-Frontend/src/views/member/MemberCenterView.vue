@@ -127,7 +127,24 @@ const services = [
 
 <template>
   <div class="page">
-    <!-- 原本的 Header 已經整合到 MemberLayout 中 -->
+    <!-- 停權提示 Banner -->
+    <div v-if="authStore.isBlacklisted" class="blacklist-banner">
+      <el-alert
+        title="您的帳號目前已停權"
+        type="error"
+        description="您的帳號因違反平台規範已暫時停權，目前的權限為「唯讀」。如有任何疑問或欲進行復權申訴，請聯繫平台管理員。"
+        show-icon
+        :closable="false"
+      >
+        <template #default>
+          <div class="banner-actions">
+            <el-button type="danger" size="small" @click="go('客服專區')">
+              前往申訴管道
+            </el-button>
+          </div>
+        </template>
+      </el-alert>
+    </div>
 
     <!-- 購買清單 -->
     <div class="card">
@@ -206,6 +223,13 @@ const services = [
   margin: 0 auto;
   position: relative;
   overflow-x: hidden;
+}
+
+.blacklist-banner {
+  margin: 12px;
+}
+.banner-actions {
+  margin-top: 10px;
 }
 
 @media (max-width: 1200px) {

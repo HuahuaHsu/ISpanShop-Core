@@ -181,6 +181,7 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Members
 					Email = model.Email,
 					FullName = model.FullName,
 					PhoneNumber = model.PhoneNumber,
+					AvatarUrl = model.AvatarUrl, // 補上頭貼路徑
 					IsBlacklisted = model.IsBlacklisted,
 					IsSeller = model.IsSeller,
 					City = model.City,

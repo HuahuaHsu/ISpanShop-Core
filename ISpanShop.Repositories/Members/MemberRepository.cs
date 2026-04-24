@@ -20,7 +20,6 @@ namespace ISpanShop.Repositories.Members.Implementations
 		public User GetById(int id)
 		{
 			return _context.Users
-				.AsNoTracking()
 				.Include(u => u.Role)
 				.Include(u => u.Addresses)
 				.Include(u => u.MemberProfile)

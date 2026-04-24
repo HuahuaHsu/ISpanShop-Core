@@ -4,17 +4,17 @@
 ▌Phase 1：後端 — 模型定義
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 1. 建立 FrontLoginRequestDto
+  [x] 1. 建立 FrontLoginRequestDto
          位置：ISpanShop.Models 專案 -> DTOs -> Auth 資料夾 (需新增) -> FrontLoginRequestDto.cs
          說明：接收前端傳來的登入帳密，欄位對照 Member EfModel。
          內容：Email、Password
 
-  [ ] 2. 建立 FrontLoginResponseDto
+  [x] 2. 建立 FrontLoginResponseDto
          位置：ISpanShop.Models 專案 -> DTOs -> Auth 資料夾 -> FrontLoginResponseDto.cs
          說明：登入成功後回傳給前端的資料。
          內容：Token、MemberId、Email、MemberName (依 Member EfModel 欄位命名)
 
-  [ ] 3. 建立 FrontRegisterRequestDto
+  [x] 3. 建立 FrontRegisterRequestDto
          位置：ISpanShop.Models 專案 -> DTOs -> Auth 資料夾 -> FrontRegisterRequestDto.cs
          說明：前台會員註冊所需欄位，對照 Member EfModel。
 
@@ -22,11 +22,11 @@
 ▌Phase 2：後端 — Program.cs 設定
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 4. 安裝 NuGet 套件
+  [x] 4. 安裝 NuGet 套件
          位置：ISpanShop.MVC 專案
          動作：安裝 Microsoft.AspNetCore.Authentication.JwtBearer
 
-  [ ] 5. 新增 JWT 設定到 appsettings.json
+  [x] 5. 新增 JWT 設定到 appsettings.json
          位置：ISpanShop.MVC 專案 -> appsettings.json
          動作：在原本設定下方新增
          "Jwt": {
@@ -36,12 +36,12 @@
            "ExpireMinutes": 60
          }
 
-  [ ] 6. 在 Program.cs 新增 JWT 驗證方案
+  [x] 6. 在 Program.cs 新增 JWT 驗證方案
          位置：ISpanShop.MVC 專案 -> Program.cs
          動作：在原本 AdminCookieAuth 的 .AddCookie(...) 後方串接，不動原有設定
          .AddJwtBearer("FrontendJwt", options => { ... })
 
-  [ ] 7. 設定 CORS
+  [x] 7. 設定 CORS
          位置：ISpanShop.MVC 專案 -> Program.cs
          動作：新增 AddCors，允許 Vue dev server (localhost:5173) 存取
 
@@ -49,20 +49,20 @@
 ▌Phase 3：後端 — Service 層
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 8. 建立介面 IFrontAuthService
+  [x] 8. 建立介面 IFrontAuthService
          位置：ISpanShop.Services 專案 -> Interfaces 資料夾 -> IFrontAuthService.cs
          說明：定義前台登入與註冊的方法合約。
          內容：
          Task<FrontLoginResponseDto?> LoginAsync(FrontLoginRequestDto request);
          Task<bool> RegisterAsync(FrontRegisterRequestDto request);
 
-  [ ] 9. 實作 FrontAuthService
+  [x] 9. 實作 FrontAuthService
          位置：ISpanShop.Services 專案 -> (根目錄) -> FrontAuthService.cs
          說明：注入 MemberRepository，實作以下流程：
          登入：查詢 Member -> 比對密碼 hash -> 簽發 JWT (寫入 MemberId、Email 等 Claims)
          註冊：驗證 Email 不重複 -> 建立新 Member -> 儲存
 
-  [ ] 10. 註冊服務到 DI 容器
+  [x] 10. 註冊服務到 DI 容器
           位置：ISpanShop.MVC 專案 -> Program.cs
           動作：在 var app = builder.Build(); 之前加入
           builder.Services.AddScoped<IFrontAuthService, FrontAuthService>();
@@ -71,7 +71,7 @@
 ▌Phase 4：後端 — API Controller
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 11. 建立 FrontAuthController
+  [x] 11. 建立 FrontAuthController
           位置：ISpanShop.MVC 專案 -> Controllers -> Api 資料夾 -> FrontAuthController.cs
           說明：前台登入/註冊 API 進入點，不加 [Authorize]（登入前不需驗證）。
           實作：
@@ -82,20 +82,20 @@
 ▌Phase 5：前端 — 基礎設施
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 12. 實作 storage.ts
+  [x] 12. 實作 storage.ts
           位置：src/utils/storage.ts
           說明：封裝 localStorage 操作，提供 getToken、setToken、removeToken 方法。
 
-  [ ] 13. 定義 Auth 相關型別
+  [x] 13. 定義 Auth 相關型別
           位置：src/types/auth.ts  (需新增)
           說明：對應後端 DTO，定義 LoginRequest、LoginResponse、RegisterRequest 介面。
           欄位命名需與後端 DTO 一致。
 
-  [ ] 14. 實作 auth.ts (API 層)
+  [x] 14. 實作 auth.ts (API 層)
           位置：src/api/auth.ts
           說明：定義 loginApi()、registerApi() 函式，透過 axios 呼叫後端 API。
 
-  [ ] 15. 設定 axios.ts
+  [x] 15. 設定 axios.ts
           位置：src/api/axios.ts
           說明：建立 axios instance 並設定：
           baseURL 指向後端
@@ -106,7 +106,7 @@
 ▌Phase 6：前端 — Pinia Store
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 16. 實作 auth store
+  [x] 16. 實作 auth store
           位置：src/stores/auth.ts
           說明：
           state：token、memberInfo (MemberId、Email、MemberName)、isLoggedIn
@@ -118,11 +118,11 @@
 ▌Phase 7：前端 — 路由守衛
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 17. 設定路由 meta 標記
+  [x] 17. 設定路由 meta 標記
           位置：src/router/routes.ts
           說明：需要登入的頁面加上 meta: { requiresAuth: true }
 
-  [ ] 18. 設定全域路由守衛
+  [x] 18. 設定全域路由守衛
           位置：src/router/index.ts
           說明：新增 beforeEach：
           requiresAuth: true 且未登入 -> 導向 /login
@@ -132,11 +132,11 @@
 ▌Phase 8：前端 — 登入/註冊頁面
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 19. 建立 LoginView.vue
+  [x] 19. 建立 LoginView.vue
           位置：src/views/auth/LoginView.vue
-          說明：使用 Element Plus el-form，呼叫 authStore.login()，成功後導向首頁。
+          說明：使用 Element Plus el-form，呼叫 authStore.login()，成功後導向首頁.
 
-  [ ] 20. 建立 RegisterView.vue
+  [x] 20. 建立 RegisterView.vue
           位置：src/views/auth/RegisterView.vue
           說明：使用 Element Plus el-form，呼叫 registerApi()，成功後導向登入頁。
 
@@ -146,7 +146,7 @@
 ▌Phase 1：後端 — 模型定義
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 1. 建立 ChangePasswordDto
+  [x] 1. 建立 ChangePasswordDto
          位置：ISpanShop.Models 專案 -> DTOs -> Auth 資料夾 -> ChangePasswordDto.cs
          說明：已登入使用者變更密碼時，接收舊密碼與新密碼。
          內容：UserId、OldPassword、NewPassword
@@ -155,11 +155,11 @@
 ▌Phase 2：後端 — Repository 層
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 2. 確認 UserRepository 已有 GetByIdAsync
+  [x] 2. 確認 UserRepository 已有 GetByIdAsync
          位置：ISpanShop.Repositories 專案 -> UserRepository.cs
          說明：若尚未實作，補上依 UserId 查詢使用者的方法，供 Service 層驗證密碼使用。
 
-  [ ] 3. UserRepository 新增 UpdatePasswordHashAsync
+  [x] 3. UserRepository 新增 UpdatePasswordHashAsync
          位置：ISpanShop.Repositories 專案 -> UserRepository.cs
          說明：依 UserId 更新資料庫中的密碼 Hash。
          方法簽章：Task UpdatePasswordHashAsync(int userId, string newHash)
@@ -168,12 +168,12 @@
 ▌Phase 3：後端 — Service 層
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 4. 建立 IAccountService 介面
+  [x] 4. 建立 IAccountService 介面
          位置：ISpanShop.Services 專案 -> Interfaces -> IAccountService.cs
          說明：定義帳號相關業務邏輯的抽象介面。
          方法：ChangePasswordAsync
 
-  [ ] 5. 建立 AccountService
+  [x] 5. 建立 AccountService
          位置：ISpanShop.Services 專案 -> AccountService.cs
          說明：實作 IAccountService，包含以下方法：
 
@@ -184,7 +184,7 @@
            - 呼叫 UpdatePasswordHashAsync 更新密碼
            - 回傳 (bool Success, string Message)
 
-  [ ] 6. 在 Program.cs 註冊服務
+  [x] 6. 在 Program.cs 註冊服務
          位置：WebAPI 或 MVC 專案 -> Program.cs
          說明：
            builder.Services.AddScoped<IAccountService, AccountService>();
@@ -193,7 +193,7 @@
 ▌Phase 4：後端 — API Controller
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 7. 新增變更密碼 API
+  [x] 7. 新增變更密碼 API
          位置：FrontMemberController.cs（或新建 FrontAccountController.cs）
          路由：PUT /api/front/member/password
          說明：需加上 [Authorize]，從 JWT Token 取出 UserId，
@@ -203,7 +203,7 @@
 ▌Phase 5：前端
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 8. 實作 PasswordView.vue
+  [x] 8. 實作 PasswordView.vue
          位置：src/views/member/PasswordView.vue（已存在，補上實作）
          說明：表單包含舊密碼、新密碼、確認新密碼三個欄位，
                串接 PUT /api/front/member/password，
@@ -217,17 +217,17 @@
 ▌Phase 1：後端 — 模型定義
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 1. 建立 ForgotPasswordDto
+  [x] 1. 建立 ForgotPasswordDto
          位置：ISpanShop.Models 專案 -> DTOs -> Auth 資料夾 -> ForgotPasswordDto.cs
          說明：忘記密碼時，接收使用者輸入的 Email 以觸發寄信流程。
          內容：Email
 
-  [ ] 2. 建立 ResetPasswordDto
+  [x] 2. 建立 ResetPasswordDto
          位置：ISpanShop.Models 專案 -> DTOs -> Auth 資料夾 -> ResetPasswordDto.cs
          說明：使用者點擊信件連結後，接收 Token 與新密碼完成密碼重設。
          內容：Token、NewPassword
 
-  [ ] 3. 建立 PasswordResetToken EfModel
+  [x] 3. 建立 PasswordResetToken EfModel
          位置：ISpanShop.Models 專案 -> EfModels -> PasswordResetToken.cs
          說明：對應資料庫 PasswordResetTokens 資料表。
          內容：Id、UserId (FK)、Token、ExpiresAt、IsUsed、CreatedAt
@@ -236,7 +236,7 @@
 ▌Phase 2：後端 — 資料庫
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 4. 新增 PasswordResetTokens 資料表
+  [x] 4. 新增 PasswordResetTokens 資料表
          位置：DbContext -> 新增 DbSet<PasswordResetToken>
          說明：設定 UserId FK 對應 Users 資料表。
          執行：Add-Migration AddPasswordResetTokens -> Update-Database
@@ -245,12 +245,12 @@
 ▌Phase 3：後端 — Repository 層
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 5. 建立 IPasswordResetTokenRepository 介面
+  [x] 5. 建立 IPasswordResetTokenRepository 介面
          位置：ISpanShop.Repositories 專案 -> Interfaces -> IPasswordResetTokenRepository.cs
          說明：定義 Token 相關資料操作的抽象介面。
          方法：CreateTokenAsync、GetValidTokenAsync、MarkTokenUsedAsync
 
-  [ ] 6. 建立 PasswordResetTokenRepository
+  [x] 6. 建立 PasswordResetTokenRepository
          位置：ISpanShop.Repositories 專案 -> PasswordResetTokenRepository.cs
          說明：實作 IPasswordResetTokenRepository，直接操作 DbContext。
          方法說明：
@@ -262,21 +262,21 @@
 ▌Phase 4：後端 — Service 層
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 7. 建立 IEmailService 介面
+  [x] 7. 建立 IEmailService 介面
          位置：ISpanShop.Common 專案 -> Helpers -> IEmailService.cs
          說明：定義寄送 Email 的抽象介面。
          方法：Task SendAsync(string toEmail, string subject, string htmlBody)
 
-  [ ] 8. 建立 EmailService
+  [x] 8. 建立 EmailService
          位置：ISpanShop.Common 專案 -> Helpers -> EmailService.cs
          說明：使用 MailKit 實作寄信，SMTP 設定寫在 appsettings.json，
                透過建構子注入 IConfiguration 讀取。
 
-  [ ] 9. IAccountService 介面補上忘記密碼相關方法
+  [x] 9. IAccountService 介面補上忘記密碼相關方法
          位置：ISpanShop.Services 專案 -> Interfaces -> IAccountService.cs
          新增方法：ForgotPasswordAsync、ResetPasswordAsync
 
-  [ ] 10. AccountService 補上忘記密碼相關方法
+  [x] 10. AccountService 補上忘記密碼相關方法
           位置：ISpanShop.Services 專案 -> AccountService.cs
 
           ForgotPasswordAsync(string email)
@@ -293,7 +293,7 @@
             - 呼叫 MarkTokenUsedAsync 將 Token 標記為已使用
             - 回傳 (bool Success, string Message)
 
-  [ ] 11. 在 Program.cs 補上新增服務註冊
+  [x] 11. 在 Program.cs 補上新增服務註冊
           位置：WebAPI 或 MVC 專案 -> Program.cs
           說明：
             builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
@@ -303,18 +303,18 @@
 ▌Phase 5：後端 — API Controller
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 12. 新增忘記密碼 API
+  [x] 12. 新增忘記密碼 API
           位置：FrontAuthController.cs
           路由：POST /api/front/auth/forgot-password
           說明：不需 [Authorize]，接收 Email，呼叫 AccountService.ForgotPasswordAsync。
 
-  [ ] 13. 新增驗證 Token API
+  [x] 13. 新增驗證 Token API
           位置：FrontAuthController.cs
           路由：GET /api/front/auth/verify-reset-token?token=xxx
           說明：不需 [Authorize]，前端重設密碼頁面載入時呼叫，
                 Token 無效則前端顯示「連結已失效」。
 
-  [ ] 14. 新增重設密碼 API
+  [x] 14. 新增重設密碼 API
           位置：FrontAuthController.cs
           路由：POST /api/front/auth/reset-password
           說明：不需 [Authorize]，接收 Token + NewPassword，
@@ -324,16 +324,16 @@
 ▌Phase 6：前端
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 15. LoginView.vue 新增「忘記密碼？」連結
+  [x] 15. LoginView.vue 新增「忘記密碼？」連結
           位置：src/views/auth/LoginView.vue
           說明：在密碼欄位下方加上連結，點擊後導向 /forgot-password。
 
-  [ ] 16. 新增 ForgotPasswordView.vue
+  [x] 16. 新增 ForgotPasswordView.vue
           位置：src/views/auth/ForgotPasswordView.vue
           說明：單一 Email 輸入欄位，送出後顯示「請查收信箱，連結 30 分鐘內有效」提示，
                 使用 BlankLayout 版型。
 
-  [ ] 17. 新增 ResetPasswordView.vue
+  [x] 17. 新增 ResetPasswordView.vue
           位置：src/views/auth/ResetPasswordView.vue
           說明：頁面載入時從網址取出 Token，呼叫 verify-reset-token 驗證，
                 Token 無效則顯示「連結已失效，請重新申請」；
@@ -341,7 +341,7 @@
                 送出後串接 POST /api/front/auth/reset-password，成功後導向 /login。
                 使用 BlankLayout 版型。
 
-  [ ] 18. 新增路由設定
+  [x] 18. 新增路由設定
           位置：src/router/index.js
           說明：新增以下兩條路由，皆使用 BlankLayout，不需 requiresAuth：
             { path: '/forgot-password', component: ForgotPasswordView }
@@ -353,12 +353,12 @@
 ▌Phase 1：後端 — 模型與介面定義
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 1. 建立 StoreApplyRequestDto
+  [x] 1. 建立 StoreApplyRequestDto
          位置：ISpanShop.Models 專案 -> DTOs -> Stores 資料夾 -> StoreApplyRequestDto.cs
          說明：接收前端傳來的賣場申請資料。
          內容：StoreName (必填)、Description (選填)、LogoUrl (選填)
 
-  [ ] 2. 更新 IFrontStoreService 介面
+  [x] 2. 更新 IFrontStoreService 介面
          位置：ISpanShop.Services 專案 -> Interfaces -> IFrontStoreService.cs
          新增方法：
          Task<bool> ApplyStoreAsync(int userId, StoreApplyRequestDto dto);
@@ -368,14 +368,14 @@
 ▌Phase 2：後端 — Service 與 API 實作
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 3. 實作 FrontStoreService 申請邏輯
+  [x] 3. 實作 FrontStoreService 申請邏輯
          位置：ISpanShop.Services 專案 -> Stores -> FrontStoreService.cs
          說明：
          1. 檢查該會員是否已有 Store 紀錄 (避免重複申請)。
          2. 新增 Store：IsVerified 設為 null (待審核), StoreStatus 設為 2 (休假中)。
          3. 暫不更新 MemberProfile.IsSeller，待後台審核通過後再更新。
 
-  [ ] 4. 建立 FrontStoreController (Api)
+  [x] 4. 建立 FrontStoreController (Api)
          位置：ISpanShop.MVC 專案 -> Controllers -> Api -> FrontStoreController.cs
          實作：
          POST /api/front/store/apply  -> [Authorize] 接收 DTO 並呼叫 ApplyStoreAsync。
@@ -385,11 +385,11 @@
 ▌Phase 3：前端 — 介面與導航邏輯
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 5. 定義 Store 相關型別與 API 呼叫
+  [x] 5. 定義 Store 相關型別與 API 呼叫
          位置：src/types/store.ts, src/api/store.ts
          說明：建立對應後端 DTO 的型別，並實作 axios 呼叫。
 
-  [ ] 6. 建立 SellerApplyView.vue (申請頁面)
+  [x] 6. 建立 SellerApplyView.vue (申請頁面)
          位置：src/views/member/SellerApplyView.vue
          說明：使用 Element Plus 製作申請表單。包含賣場名稱、描述與提交按鈕。
 
@@ -399,11 +399,11 @@
 ▌Phase 1：後端 — 模型與 DTO (ISpanShop.Models)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 1. 建立 StoreReviewDto
+  [x] 1. 建立 StoreReviewDto
          位置：ISpanShop.Models 專案 -> DTOs -> Stores 資料夾 -> StoreReviewDto.cs
          內容：StoreId (int)、IsPassed (bool)、ReviewNote (string, 駁回原因)
 
-  [ ] 2. 建立 StoreDetailDto (管理後台用)
+  [x] 2. 建立 StoreDetailDto (管理後台用)
          位置：ISpanShop.Models 專案 -> DTOs -> Stores 資料夾 -> StoreDetailDto.cs
          說明：顯示申請內容供管理員審核。
          內容：StoreId、MemberName、StoreName、Description、ApplyTime、IsVerified
@@ -412,7 +412,7 @@
 ▌Phase 2：後端 — 管理後台實作 (ISpanShop.MVC / Services)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 3. 更新 IStoreService 與 StoreService (後台版)
+  [x] 3. 更新 IStoreService 與 StoreService (後台版)
          位置：ISpanShop.Services 專案 -> Stores 資料夾
          新增方法：
          - GetPendingStoresAsync()：取得所有 IsVerified 為 null 的申請案。
@@ -425,7 +425,7 @@
              - 更新 Store.IsVerified = false。
              - 更新 Store.ReviewNote = dto.ReviewNote (需在 EfModel 新增此欄位)。
 
-  [ ] 4. 實作 Admin StoreController
+  [x] 4. 實作 Admin StoreController
          位置：ISpanShop.MVC 專案 -> Areas -> Admin -> Controllers -> StoreController.cs
          動作：
          - Index：列表顯示所有 Pending 狀態的賣場。
@@ -435,14 +435,14 @@
 ▌Phase 3：後端 — 前台 API 調整
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 5. 調整 FrontStoreService.ApplyStoreAsync
+  [x] 5. 調整 FrontStoreService.ApplyStoreAsync
          位置：ISpanShop.Services 專案 -> Stores -> FrontStoreService.cs
          邏輯優化：
          - 如果該會員已存在 Store 紀錄且狀態為「Rejected (IsVerified=false)」：
            - 允許「更新」現有紀錄（StoreName, Description, Logo）並將 IsVerified 重設為 null。
            - 這樣就不會重複產生多筆 Store 紀錄，達成「重新申請」功能。
 
-  [ ] 6. 調整 FrontStoreController.GetStoreStatus
+  [x] 6. 調整 FrontStoreController.GetStoreStatus
          位置：ISpanShop.MVC 專案 -> Controllers -> Api -> FrontStoreController.cs
          說明：回傳資料需包含 ReviewNote，讓使用者知道為何被駁回。
 
@@ -450,7 +450,7 @@
 ▌Phase 4：前端 — 狀態跳轉與重新申請 (Vue)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [ ] 7. 強化 MyStoreView.vue
+  [x] 7. 強化 MyStoreView.vue
          位置：src/views/member/MyStoreView.vue
          邏輯處理：
          - `status === 'NotApplied'`：顯示「成為賣家」大按鈕。
@@ -460,7 +460,7 @@
            - 提供「重新編輯申請」按鈕，點擊後跳轉至申請頁面並帶入原有資料。
          - `status === 'Approved'`：渲染賣家儀表板 (Dashboard)。
 
-  [ ] 8. 優化 SellerApplyView.vue
+  [x] 8. 優化 SellerApplyView.vue
          位置：src/views/member/SellerApplyView.vue
          功能：
          - 進入頁面時先檢查是否為「重新申請」。
@@ -500,6 +500,60 @@
   [x] 4. UI/UX 視覺優化
          - 顏色設定：一般會員 (品牌橘 #EE4D2D)、銀卡 (灰藍)、金卡 (琥珀金)。
          - 閃爍修復：移除 el-progress 的 striped-flow 效果，改為穩定色塊。
-         - 表格邏輯：一般會員 (折扣率=1) 在專屬權益欄位顯示「—」，隱藏冗餘折扣資訊。
+         - 表格邏輯：一般會員 (折扣率=1) 在專專屬權益欄位顯示「—」，隱藏冗餘折扣資訊。
          - 動態區間：自動計算最近 12 個月的統計日期 (startDate ～ endDate)。
 
+
+【帳號停權與全域安全性防護】 (完成於 2026-04-24)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 1：後端 — 封鎖狀態同步 (JWT & Service)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [x] 1. 更新 FrontLoginResponseDto
+         位置：ISpanShop.Models -> DTOs -> Auth -> FrontLoginResponseDto.cs
+         動作：新增 IsBlacklisted (bool) 欄位。
+
+  [x] 2. 注入封鎖狀態至 JWT Claims
+         位置：ISpanShop.Services -> Auth -> FrontAuthService.cs
+         動作：在 GenerateJwtToken 方法中，將 user.IsBlacklisted 寫入 Claims。
+         
+  [x] 3. 修正頭貼消失問題 (資料一致性)
+         位置：ISpanShop.Services -> Members -> MemberService.cs
+         動作：在 UpdateMemberProfile 方法中加入判斷：只有當傳入路徑不為空且與資料庫不一致時才更新。這能防止停權操作誤刪圖片。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 2：前端 — Pinia 狀態與即時同步
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [x] 4. 更新 Auth Store (Pinia)
+         位置：src/stores/auth.ts
+         動作：
+         - state 加入 isBlacklisted。
+         - fetchUserInfo 方法中加入對 isBlacklisted 欄位的同步，確保與後端資料庫即時一致。
+
+  [x] 5. 實現「當下更新」機制 (Router Guard)
+         位置：src/router/index.ts
+         動作：在 beforeEach 全域守衛中，於每次路由跳轉前強制呼叫 fetchUserInfo()。這能確保管理員在後端封鎖後，使用者點擊任何連結會立即觸發前端攔截。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▌Phase 3：前端 — 全域攔截 UI (Layouts)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [x] 6. 實作「帳號異常」全域彈窗
+         位置：src/layouts/DefaultLayout.vue
+         動作：
+         - 植入不可關閉的 el-dialog，顯示停權警告。
+         - 邏輯排除白名單（會員中心、客服申訴、歷史訂單），確保停權者仍有申訴與查詢舊訂單的權利。
+         - 隱藏停權帳號的聊天功能 (ChatFloat) 與購物車 Badge。
+
+  [x] 7. 賣家中心停權保護 (SellerLayout)
+         位置：src/layouts/SellerLayout.vue
+         動作：
+         - 實作網底屏蔽層 (毛玻璃模糊效果)。
+         - 當商店停權時，背景（網底）自動替換為 SupportTicketsView (客服系統)。
+         - 跳出彈窗提示並引導回首頁或客服，徹底封鎖賣家後台操作。
+
+  [x] 8. 會員中心提示 Banner
+         位置：src/views/member/MemberCenterView.vue
+         動作：在頂部加入紅色 el-alert 警告標籤與「前往申訴」按鈕。

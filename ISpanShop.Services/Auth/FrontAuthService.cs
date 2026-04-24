@@ -62,7 +62,8 @@ namespace ISpanShop.Services.Auth
                 MemberName = user.MemberProfile?.FullName ?? user.Account,
                 LevelName = user.MemberProfile?.Level?.LevelName ?? "一般會員",
                 PointBalance = user.MemberProfile?.PointBalance ?? 0,
-                IsSeller = user.MemberProfile?.IsSeller ?? false
+                IsSeller = user.MemberProfile?.IsSeller ?? false,
+                IsBlacklisted = user.IsBlacklisted == true
             };
         }
 
@@ -111,7 +112,8 @@ namespace ISpanShop.Services.Auth
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.MemberProfile?.FullName ?? user.Account),
-                new Claim("RoleId", user.RoleId.ToString())
+                new Claim("RoleId", user.RoleId.ToString()),
+                new Claim("IsBlacklisted", (user.IsBlacklisted == true).ToString())
             };
 
             // 如果使用者有店家，將第一個店家的 ID 加入 claims

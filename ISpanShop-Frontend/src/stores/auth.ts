@@ -18,6 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
     pointBalance: number | null;
     avatarUrl: string | null;
     isSeller: boolean;
+    isBlacklisted: boolean;
   }>(storage.getUser() || {
     memberId: null,
     email: null,
@@ -26,11 +27,13 @@ export const useAuthStore = defineStore('auth', () => {
     levelName: null,
     pointBalance: null,
     avatarUrl: null,
-    isSeller: false
+    isSeller: false,
+    isBlacklisted: false
   });
 
   // Getters
   const isLoggedIn = computed(() => !!token.value);
+  const isBlacklisted = computed(() => memberInfo.value.isBlacklisted);
 
   // Actions
   async function login(loginData: LoginRequest) {
@@ -51,7 +54,8 @@ export const useAuthStore = defineStore('auth', () => {
         levelName: data.levelName,
         pointBalance: data.pointBalance,
         avatarUrl: data.avatarUrl || null,
-        isSeller: data.isSeller
+        isSeller: data.isSeller,
+        isBlacklisted: data.isBlacklisted
       };
 
       // 2. 持久化到 localStorage
@@ -85,7 +89,8 @@ export const useAuthStore = defineStore('auth', () => {
       levelName: null,
       pointBalance: null,
       avatarUrl: null,
-      isSeller: false
+      isSeller: false,
+      isBlacklisted: false
     };
 
     // 2. 清除 localStorage
@@ -130,6 +135,7 @@ export const useAuthStore = defineStore('auth', () => {
         levelName: data.levelName || '一般會員',
         pointBalance: data.pointBalance ?? memberInfo.value.pointBalance,
         avatarUrl: data.avatarUrl || null,
+        isBlacklisted: data.isBlacklisted ?? data.IsBlacklisted ?? false // 同步封鎖狀態
       };
       storage.setUser(memberInfo.value);
     } catch (error) {
@@ -150,6 +156,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoginDialogOpen,
     memberInfo,
     isLoggedIn,
+    isBlacklisted,
     login,
     logout,
     updatePoints,
