@@ -6,6 +6,7 @@ import type {
   ProductDetail,
   ProductListItem,
   SellerProductListResponse,
+  SellerProductDetail,
 } from '@/types/product'
 
 export async function fetchProductList(
@@ -108,9 +109,10 @@ export async function addSellerProductVariant(
 /**
  * 取得賣家商品詳情（用於編輯）
  * GET /api/seller/products/{id}
+ * 後端直接回傳 ProductDetailResponse，不包在 ApiResponse 裡
  */
-export async function getSellerProductDetail(id: number): Promise<ApiResponse<ProductDetail>> {
-  const response = await request.get<ApiResponse<ProductDetail>>(`/api/seller/products/${id}`)
+export async function getSellerProductDetail(id: number): Promise<SellerProductDetail> {
+  const response = await request.get<SellerProductDetail>(`/api/seller/products/${id}`)
   return response.data
 }
 

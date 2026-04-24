@@ -442,6 +442,41 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         }
 
         // ──────────────────────────────────────────────────────────
+        // POST api/seller/products/description-image
+        // 上傳商品描述圖片
+        // ──────────────────────────────────────────────────────────
+        [HttpPost("description-image")]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> UploadDescriptionImage(IFormFile image)
+        {
+            if (image == null || image.Length == 0)
+                return BadRequest(new { success = false, message = "請選擇圖片" });
+
+            if (image.Length > 2 * 1024 * 1024)
+                return BadRequest(new { success = false, message = "圖片大小不能超過 2MB" });
+
+            var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+            if (!allowedTypes.Contains(image.ContentType))
+                return BadRequest(new { success = false, message = "只支援 JPG、PNG、WEBP 格式" });
+
+            var uploadPath = Path.Combine(_env.WebRootPath, "uploads", "descriptions");
+            Directory.CreateDirectory(uploadPath);
+
+            var fileName = Guid.NewGuid() + Path.GetExtension(image.FileName).ToLowerInvariant();
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await image.CopyToAsync(stream);
+            }
+
+            return Ok(new { success = true, imageUrl = $"/uploads/descriptions/{fileName}" });
+        }
+
+        // ──────────────────────────────────────────────────────────
         // 內部映射方法
         // ──────────────────────────────────────────────────────────
         private static string ToStatusText(byte? status) => status switch
@@ -491,6 +526,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             MaxPrice           = dto.MaxPrice,
             SpecDefinitionJson = dto.SpecDefinitionJson,
             RejectReason       = dto.RejectReason,
+            ReviewStatus       = dto.ReviewStatus,
             CreatedAt          = dto.CreatedAt,
             UpdatedAt          = dto.UpdatedAt,
             Images             = dto.Images,

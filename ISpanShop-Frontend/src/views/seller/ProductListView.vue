@@ -219,7 +219,7 @@
                   <button
                     class="card-action-btn edit-btn"
                     :class="{ 'resubmit-btn': product.status === 'rejected' }"
-                    @click="router.push(`/seller/products/${product.id}/edit`)"
+                    @click="handleEdit(product.id)"
                   >
                     <el-icon :size="13"><Edit /></el-icon>
                     {{ product.status === 'rejected' ? '重新編輯' : '編輯' }}
@@ -367,7 +367,7 @@
                     text
                     :type="row.status === 'rejected' ? 'warning' : 'primary'"
                     size="small"
-                    @click="router.push(`/seller/products/${row.id}/edit`)"
+                    @click="handleEdit(row.id)"
                   >
                     <el-icon><Edit /></el-icon>
                     {{ row.status === 'rejected' ? '重新編輯' : '編輯' }}
@@ -463,8 +463,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus, Search, Edit, Delete, Grid, List,
@@ -478,6 +478,7 @@ import type { SellerProductListItem } from '@/types/product'
 import type { Category } from '@/types/category'
 
 const router = useRouter()
+const route = useRoute()
 const sellerStore = useSellerStore()
 
 // ── 預設圖片 ──────────────────────────────────────────────────────
@@ -536,8 +537,8 @@ const categories = ref<Category[]>([])
 const selectedRows = ref<SellerProduct[]>([])
 
 // Tabs
-const activeTab = ref<TabKey>('all')
-const activeSubTab = ref<SubTabKey>('all')
+const activeTab = ref<TabKey>((route.query.tab as TabKey) || 'all')
+const activeSubTab = ref<SubTabKey>((route.query.subTab as SubTabKey) || 'all')
 
 // 搜尋
 const searchKeyword = ref<string>('')
@@ -547,8 +548,8 @@ const advMinPrice = ref<number | null>(null)
 const advMaxPrice = ref<number | null>(null)
 
 // 排序
-const sortField = ref<SortField | null>(null)
-const sortDir = ref<SortDir>(null)
+const sortField = ref<SortField>('createdAt')
+const sortDir = ref<SortDir>('desc')
 
 // 顯示模式
 const viewMode = ref<'grid' | 'list'>('grid')
@@ -597,7 +598,7 @@ const tabFiltered = computed<SellerProduct[]>(() => {
   return list
 })
 
-/** Step 2：依搜尋條件 + 進階篩選過濾，並排序 */
+/** Step 2：依搜尋條件 + 進階篩選過濾 */
 const filteredProducts = computed<SellerProduct[]>(() => {
   let list = tabFiltered.value
 
@@ -620,17 +621,6 @@ const filteredProducts = computed<SellerProduct[]>(() => {
   }
   if (advMaxPrice.value !== null) {
     list = list.filter((p) => (p.minPrice ?? 0) <= (advMaxPrice.value ?? Infinity))
-  }
-
-  // 排序
-  if (sortField.value && sortDir.value) {
-    const f = sortField.value
-    const d = sortDir.value
-    list = [...list].sort((a, b) => {
-      const av = a[f] as number
-      const bv = b[f] as number
-      return d === 'asc' ? av - bv : bv - av
-    })
   }
 
   return list
@@ -673,7 +663,15 @@ async function loadCategories(): Promise<void> {
 async function loadProducts(): Promise<void> {
   loading.value = true
   try {
-    const res = await fetchSellerProducts({ page: 1, pageSize: 100 })
+    // 依據排序狀態帶入參數
+    const params: any = { 
+      page: 1, 
+      pageSize: 100,
+      sortBy: sortField.value,
+      sortOrder: sortDir.value
+    }
+    
+    const res = await fetchSellerProducts(params)
 
     if (res.items.length > 0) {
       console.log('第一筆商品:', res.items[0])
@@ -702,14 +700,41 @@ async function loadProducts(): Promise<void> {
   }
 }
 
+// 監聽排序變更，自動重新載入
+watch([sortField, sortDir], () => {
+  loadProducts()
+})
+
+// 監聽網址 Query 變更（如瀏覽器上一頁/下一頁）
+watch(
+  () => route.query.tab,
+  (newTab) => {
+    if (newTab && newTab !== activeTab.value) {
+      activeTab.value = newTab as TabKey
+    }
+  }
+)
+
+watch(
+  () => route.query.subTab,
+  (newSubTab) => {
+    if (newSubTab && newSubTab !== activeSubTab.value) {
+      activeSubTab.value = newSubTab as SubTabKey
+    }
+  }
+)
+
 // ── Tab 事件 ──────────────────────────────────────────────────────
-function onTabChange(): void {
+function onTabChange(val: TabKey): void {
   activeSubTab.value = 'all'
   pagination.page = 1
+  // 更新網址 Query，但不重新跳轉頁面
+  router.replace({ query: { ...route.query, tab: val } })
 }
 
-function onSubTabChange(): void {
+function onSubTabChange(val: SubTabKey): void {
   pagination.page = 1
+  router.replace({ query: { ...route.query, subTab: val } })
 }
 
 // ── 搜尋 / 重設 ───────────────────────────────────────────────────
@@ -723,8 +748,8 @@ function handleReset(): void {
   advMinPrice.value = null
   advMaxPrice.value = null
   showAdvanced.value = false
-  sortField.value = null
-  sortDir.value = null
+  sortField.value = 'createdAt'
+  sortDir.value = 'desc'
   pagination.page = 1
 }
 
@@ -736,14 +761,23 @@ function toggleSort(field: SortField): void {
   } else if (sortDir.value === 'asc') {
     sortDir.value = 'desc'
   } else {
-    sortField.value = null
-    sortDir.value = null
+    // 回到預設：建立時間降序
+    sortField.value = 'createdAt'
+    sortDir.value = 'desc'
   }
 }
 
 function getSortIcon(field: SortField): object {
   if (sortField.value !== field) return DCaret
   return sortDir.value === 'asc' ? CaretTop : CaretBottom
+}
+
+// ── 編輯導向 ────────────────────────────────────────────────────
+function handleEdit(id: number): void {
+  router.push({
+    path: `/seller/products/${id}/edit`,
+    query: { fromTab: activeTab.value }
+  })
 }
 
 // ── 卡片更多選單 ──────────────────────────────────────────────────

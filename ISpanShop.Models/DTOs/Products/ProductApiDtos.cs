@@ -144,6 +144,8 @@ namespace ISpanShop.Models.DTOs.Products
         public decimal? MaxPrice           { get; set; }
         public string?  SpecDefinitionJson { get; set; }
         public string?  RejectReason       { get; set; }
+        /// <summary>審核狀態：0=待審核 1=通過 2=退回 3=重新送審</summary>
+        public int      ReviewStatus       { get; set; }
         public DateTime? CreatedAt         { get; set; }
         public DateTime? UpdatedAt         { get; set; }
         public List<string>                  Images   { get; set; } = new();

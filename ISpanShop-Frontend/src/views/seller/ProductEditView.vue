@@ -61,7 +61,17 @@
           </div>
         </div>
 
-        <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
+        <el-form ref="formRef" :model="form" :rules="rules" label-position="top" :disabled="isUnderReview">
+          <!-- 審核中提示 (status=2) -->
+          <el-alert
+            v-if="isUnderReview"
+            type="warning"
+            :closable="false"
+            show-icon
+            title="商品審核中，暫時無法編輯"
+            style="margin-bottom: 20px;"
+          />
+
           <!-- 退回原因提示 (status=3) -->
           <el-alert
             v-if="isEditMode && productData?.status === 3 && productData?.rejectReason"
@@ -598,32 +608,34 @@
     <!-- 底部按鈕列 -->
     <div class="bottom-actions">
       <div class="actions-wrapper">
+        <!-- 取消（永遠顯示） -->
         <el-button @click="handleCancel">取消</el-button>
 
-        <!-- 已退回 (status=3)：只能重新送審 -->
-        <template v-if="isEditMode && productData?.status === 3">
-          <el-button type="primary" :loading="saving" @click="handleSubmit(true)">
-            修改完成，重新送審
-          </el-button>
+        <!-- 情況 6：審核中 → 僅提示，無儲存按鈕 -->
+        <template v-if="isUnderReview">
+          <el-button type="info" disabled>審核中，無法編輯</el-button>
         </template>
 
-        <!-- 已上架 (status=1)：直接儲存，不走送審 -->
-        <template v-else-if="isEditMode && productData?.status === 1">
-          <el-button type="primary" :loading="saving" @click="handleSubmit(false)">
-            儲存修改
-          </el-button>
+        <!-- 情況 1 & 2：新增商品 或 草稿 -->
+        <template v-else-if="isNewProduct || isDraft">
+          <el-button :loading="saving" @click="handleSaveDraft">儲存草稿</el-button>
+          <el-button type="primary" :loading="saving" @click="handleSaveAndSubmit">儲存並送審</el-button>
         </template>
 
-        <!-- 未上架/其他編輯狀態 (status=0,2)：可儲存或送審 -->
-        <template v-else-if="isEditMode">
-          <el-button :loading="saving" @click="handleSubmit(false)">儲存</el-button>
-          <el-button type="primary" :loading="saving" @click="handleSubmit(true)">儲存並送審</el-button>
+        <!-- 情況 3：已上架 → 直接生效 -->
+        <template v-else-if="isOnShelf">
+          <el-button type="primary" :loading="saving" @click="handleSave">儲存修改</el-button>
         </template>
 
-        <!-- 新增商品 -->
-        <template v-else>
-          <el-button :loading="saving" @click="handleSubmit(false)">儲存草稿</el-button>
-          <el-button type="primary" :loading="saving" @click="handleSubmit(true)">儲存並送審</el-button>
+        <!-- 情況 4：賣家自己下架（曾通過審核） → 可儲存或直接上架 -->
+        <template v-else-if="isSelfOffShelf">
+          <el-button :loading="saving" @click="handleSave">儲存</el-button>
+          <el-button type="success" :loading="saving" @click="handleReShelf">上架</el-button>
+        </template>
+
+        <!-- 情況 5：已退回 / 強制下架 → 修改後重新送審 -->
+        <template v-else-if="isRejectedOrForced">
+          <el-button type="primary" :loading="saving" @click="handleSaveAndSubmit">儲存並送審</el-button>
         </template>
       </div>
     </div>
@@ -639,12 +651,13 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules, UploadUserFile, UploadProps, UploadFile } from 'element-plus'
 import { Plus, CircleCheck, CircleClose, ArrowRight, Picture, Close, Delete } from '@element-plus/icons-vue'
 import { fetchBrands } from '@/api/brand'
-import { createSellerProduct, addSellerProductVariant, getSellerProductDetail, updateSellerProduct, updateProductImages } from '@/api/product'
+import { createSellerProduct, addSellerProductVariant, getSellerProductDetail, updateSellerProduct, updateProductImages, updateProductStatus } from '@/api/product'
 import type { Brand } from '@/types/brand'
+import type { SellerProductDetail } from '@/types/product'
 import { getCategoryAttributes, type CategoryAttribute } from '@/api/categoryAttribute'
 import CategoryPicker from '@/components/seller/CategoryPicker.vue'
 
@@ -655,6 +668,9 @@ const route = useRoute()
 const productId = computed(() => route.params.id ? Number(route.params.id) : null)
 const isEditMode = computed(() => !!productId.value)
 const pageTitle = computed(() => isEditMode.value ? '編輯商品' : '新增商品')
+
+// 從 Query 取得來源 Tab
+const fromTab = computed(() => (route.query.fromTab as string) || 'all')
 
 const tabs = [
   { id: 'section-basic', label: '基本資訊' },
@@ -721,7 +737,7 @@ const showCategoryPicker = ref<boolean>(false)
 const specsEnabled = ref<boolean>(false)
 const descriptionImageCount = ref<number>(0)
 const currentImageIndex = ref<number>(0)
-const productData = ref<any>(null) // 儲存載入的商品原始資料
+const productData = ref<SellerProductDetail | null>(null)
 const originalImageCount = ref<number>(0) // 記錄載入時的圖片數量
 
 const batchPrice = ref<number | null>(null)
@@ -820,6 +836,28 @@ const isImageComplete = computed(() => form.images.length >= 3)
 const isNameComplete = computed(() => form.name.length >= 5 && form.name.length <= 100)
 const isDescriptionComplete = computed(() => form.description.length >= 100 || descriptionImageCount.value >= 1)
 const isBrandComplete = computed(() => form.attributes.brandId !== null)
+
+// ── 商品狀態判斷 ────────────────────────────────────────────────
+// status: 0=未上架, 1=已上架, 2=待審核, 3=審核退回
+// reviewStatus: 0=待審核, 1=通過, 2=退回, 3=重新送審
+
+const isNewProduct = computed(() => !route.params.id)
+
+const isOnShelf = computed(() => productData.value?.status === 1)
+
+const isUnderReview = computed(() => productData.value?.status === 2)
+
+const isRejectedOrForced = computed(() => productData.value?.status === 3)
+
+const hasBeenApproved = computed(() => productData.value?.reviewStatus === 1)
+
+const isSelfOffShelf = computed(
+  () => productData.value?.status === 0 && hasBeenApproved.value,
+)
+
+const isDraft = computed(
+  () => isEditMode.value && productData.value?.status === 0 && !hasBeenApproved.value,
+)
 
 const filledAttributes = computed(() => {
   return categoryAttributes.value
@@ -932,7 +970,8 @@ async function loadProductData(): Promise<void> {
     
     // 儲存原始資料（用於顯示退回原因等）
     productData.value = product
-    
+
+    console.log('[商品狀態]', { status: product.status, reviewStatus: product.reviewStatus })
     console.log('載入商品資料:', product)
     console.log('name:', product.name)
     console.log('categoryName:', product.categoryName)
@@ -1192,20 +1231,23 @@ function getBrandName(brandId: number): string {
   return brand?.name || ''
 }
 
-async function handleSubmit(publishNow: boolean): Promise<void> {
+async function handleSubmit(publishNow: boolean, redirectAfter = true): Promise<boolean> {
+  const mode = publishNow ? 'submit' : 'draft'
+  console.log('[儲存模式]', mode)
+
   // 草稿模式：只驗證商品名稱（最低要求）
   // 送審模式：全欄位驗證
   if (publishNow) {
     const valid = await formRef.value?.validate().catch(() => false)
     if (!valid) {
       ElMessage.warning('請填寫所有必填欄位（商品名稱、分類' + (specsEnabled.value ? '' : '、價格、庫存') + '）')
-      return
+      return false
     }
   } else {
     // 草稿至少要有名稱
     if (!form.name || form.name.length < 1) {
       ElMessage.warning('請輸入商品名稱才能儲存草稿')
-      return
+      return false
     }
   }
 
@@ -1224,6 +1266,7 @@ async function handleSubmit(publishNow: boolean): Promise<void> {
         price: form.price || 0,
         stock: form.stock || 0,
         minPurchase: form.minPurchase || 1,
+        mode: mode, // 傳入 mode
         specDefinitionJson: specsEnabled.value && form.specs.length > 0
           ? JSON.stringify(form.specs.map(s => ({ name: s.name })))
           : '[]',
@@ -1298,17 +1341,25 @@ async function handleSubmit(publishNow: boolean): Promise<void> {
         successMsg = '商品已儲存'
       }
       ElMessage.success(successMsg)
-      void router.push('/seller/products')
+      
+      if (redirectAfter) {
+        // 如果是送審，導向審核中 tab；如果是草稿，導向未上架 tab；否則回到來源 tab
+        const targetTab = publishNow ? 'review' : (origStatus === 0 ? 'draft' : fromTab.value)
+        void router.push(`/seller/products?tab=${targetTab}`)
+      }
+      return true
     } else {
       // ===== 新增模式：使用 FormData (multipart/form-data) =====
       const fd = new FormData()
       fd.append('Name', form.name)
       fd.append('Description', form.description)
+      fd.append('Mode', mode) // 傳入 mode
       if (form.categoryId !== null) fd.append('CategoryId', String(form.categoryId))
       if (form.attributes.brandId !== null) fd.append('BrandId', String(form.attributes.brandId))
 
       console.log('送出資料 (新增模式/FormData):', {
         Mode: 'CREATE',
+        SubmitMode: mode,
         Name: form.name,
         CategoryId: form.categoryId,
         BrandId: form.attributes.brandId ?? '(未選擇)',
@@ -1361,18 +1412,63 @@ async function handleSubmit(publishNow: boolean): Promise<void> {
 
       const successMsg = publishNow ? '商品已提交審核，請等待管理員審核' : '草稿已儲存'
       ElMessage.success(successMsg)
-      void router.push('/seller/products')
+      
+      if (redirectAfter) {
+        const targetTab = publishNow ? 'review' : 'draft'
+        void router.push(`/seller/products?tab=${targetTab}`)
+      }
+      return true
     }
   } catch (error) {
     console.error('儲存失敗:', error)
     ElMessage.error('儲存失敗，請稍後再試')
+    return false
   } finally {
     saving.value = false
   }
+  return false
 }
 
 function handleCancel(): void {
-  void router.push('/seller/products')
+  void router.push(`/seller/products?tab=${fromTab.value}`)
+}
+
+async function handleSaveDraft(): Promise<void> {
+  await handleSubmit(false)
+}
+
+async function handleSave(): Promise<void> {
+  await handleSubmit(false)
+}
+
+async function handleSaveAndSubmit(): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      '確定要送出審核嗎？審核期間將無法編輯商品。',
+      '送審確認',
+      { type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  await handleSubmit(true)
+}
+
+async function handleReShelf(): Promise<void> {
+  try {
+    await ElMessageBox.confirm('確定要重新上架嗎？', '上架確認', { type: 'warning' })
+  } catch {
+    return
+  }
+  const saved = await handleSubmit(false, false)
+  if (!saved) return
+  try {
+    await updateProductStatus(productId.value!, 1)
+    ElMessage.success('商品已上架')
+    void router.push('/seller/products?tab=on')
+  } catch {
+    ElMessage.error('上架失敗，請稍後再試')
+  }
 }
 </script>
 

@@ -140,6 +140,43 @@ export interface SellerProductListResponse {
   totalPages: number
 }
 
+/** 賣家商品編輯用詳情（對應後端 GET /api/seller/products/{id} 直接回傳，無 ApiResponse 包裝）
+ *  status: 0=未上架, 1=已上架, 2=待審核, 3=審核退回
+ *  reviewStatus: 0=待審核, 1=通過, 2=退回, 3=重新送審
+ */
+export interface SellerProductDetail {
+  id: number
+  name: string
+  storeId: number
+  storeName: string | null
+  categoryId: number
+  categoryName: string | null
+  brandId: number | null
+  brandName: string | null
+  description: string | null
+  status: number
+  statusText: string
+  minPrice: number | null
+  maxPrice: number | null
+  specDefinitionJson: string | null
+  rejectReason: string | null
+  reviewStatus: number
+  createdAt: string | null
+  updatedAt: string | null
+  images: string[]
+  variants: SellerVariantDetail[]
+}
+
+export interface SellerVariantDetail {
+  id: number
+  skuCode: string | null
+  variantName: string | null
+  price: number
+  stock: number | null
+  safetyStock: number | null
+  specValueJson: string | null
+}
+
 /** GET /api/products 查詢參數 */
 export interface FetchProductsParams {
   page?: number
