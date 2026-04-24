@@ -34,9 +34,8 @@
             <div class="store-info">
               <span class="store-tag">賣場</span>
               <span class="store-name">{{ order.storeName }}</span>
-              <el-button link type="primary" size="small" class="chat-btn" @click.stop="handleChat(order)">好聊</el-button>
-              <el-divider direction="vertical" />
-              <el-button link size="small" @click.stop="handleGoToStore(order.storeId)">查看賣場</el-button>
+              <el-button size="small" class="header-action-btn" @click.stop="handleChat(order)">好聊</el-button>
+              <el-button size="small" class="header-action-btn" @click.stop="handleGoToStore(order.storeId)">查看賣場</el-button>
             </div>
             <div class="status-info">
               <span class="status-text" :class="getStatusClass(order.status)">
@@ -334,7 +333,7 @@ onMounted(() => {
     .store-info {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
 
       .store-tag {
         background-color: #ee4d2d;
@@ -347,10 +346,22 @@ onMounted(() => {
       .store-name {
         font-weight: 500;
         color: #333;
+        margin-right: 2px;
       }
 
-      .chat-btn {
-        margin-left: 5px;
+      .header-action-btn {
+        margin-left: 0;
+        height: 24px;
+        padding: 0 8px;
+        font-size: 12px;
+        border-color: #dcdfe6;
+        color: #606266;
+
+        &:hover {
+          color: #ee4d2d;
+          border-color: #f7a696;
+          background-color: #fffbf8;
+        }
       }
     }
 
