@@ -699,6 +699,7 @@ interface Spec {
 }
 
 interface Variant {
+  id?: number
   spec1: string
   spec2: string | null
   price: number | null
@@ -1119,6 +1120,7 @@ async function loadProductData(): Promise<void> {
         variantData.value = product.variants.map((v: any) => {
           const specValues = typeof v.specValueJson === 'string' ? JSON.parse(v.specValueJson) : v.specValueJson
           return {
+            id: v.id,
             spec1: specValues[specNames[0]] || '',
             spec2: specNames[1] ? (specValues[specNames[1]] || null) : null,
             price: v.price || null,
@@ -1362,159 +1364,104 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true, isDraftAc
   const mode = publishNow ? 'submit' : 'draft'
   console.log('[儲存模式]', mode)
 
-  // 草稿模式：只驗證商品名稱（最低要求）
-  // 送審模式：全欄位驗證
+  // 1. 驗證
   if (publishNow) {
     const valid = await formRef.value?.validate().catch(() => false)
     if (!valid) {
-      ElMessage.warning('請填寫所有必填欄位（商品名稱、分類' + (specsEnabled.value ? '' : '、價格、庫存') + '）')
+      ElMessage.warning('請填寫所有必填欄位')
       return false
     }
-  } else {
-    // 草稿至少要有名稱
-    if (!form.name || form.name.length < 1) {
-      ElMessage.warning('請輸入商品名稱才能儲存草稿')
-      return false
-    }
+  } else if (!form.name) {
+    ElMessage.warning('請輸入商品名稱才能儲存草稿')
+    return false
   }
 
   saving.value = true
   try {
-    let res: any
-    let targetProductId: number | null = null
+    // 準備變體資料 (格式轉換與型別檢查)
+    const processedVariants = specsEnabled.value ? variantData.value.map(v => {
+      const specNames = form.specs.map(s => s.name)
+      const specValueMap: Record<string, string> = {}
+      if (specNames[0] && v.spec1) specValueMap[specNames[0]] = v.spec1
+      if (specNames[1] && v.spec2) specValueMap[specNames[1]] = v.spec2
+
+      return {
+        id: v.id, // 保留 ID
+        skuCode: v.sku || '',
+        variantName: Object.values(specValueMap).join('/'),
+        specValueJson: JSON.stringify(specValueMap),
+        price: Number(v.price) || 0,
+        stock: Number(v.stock) || 0
+      }
+    }) : []
+
+    const variantsJson = JSON.stringify(processedVariants)
 
     if (isEditMode.value && productId.value) {
-      // ===== 編輯模式：使用 JSON (application/json) =====
+      // ===== 編輯模式：使用 JSON =====
       const updateData = {
         name: form.name,
         description: form.description || '',
         categoryId: form.categoryId,
         brandId: form.attributes.brandId || null,
-        price: form.price || 0,
-        stock: form.stock || 0,
-        minPurchase: form.minPurchase || 1,
-        mode: mode, // 加入 mode 參數
+        price: Number(form.price) || 0,
+        stock: Number(form.stock) || 0,
+        minPurchase: Number(form.minPurchase) || 1,
+        mode: mode,
         specDefinitionJson: specsEnabled.value && form.specs.length > 0
           ? JSON.stringify(form.specs.map(s => ({ name: s.name })))
           : '[]',
+        variantsJson: variantsJson // 加入變體 JSON
       }
 
-      console.log('送出資料 (編輯模式/JSON):', {
-        Mode: 'UPDATE',
-        ProductId: productId.value,
-        SubmitMode: mode,
-        ...updateData,
-      })
-
-      // 1. 先更新商品基本資料
-      res = await updateSellerProduct(productId.value, updateData)
-      targetProductId = productId.value
+      await updateSellerProduct(productId.value, updateData)
       
-      // 2. 檢查圖片是否有變動
+      // 更新圖片
       const newFiles = form.images.filter(f => f.raw)
-      const hasNewImages = newFiles.length > 0
-      const hasRemovedImages = form.images.length !== originalImageCount.value
-      
-      if (hasNewImages || hasRemovedImages) {
+      if (newFiles.length > 0 || form.images.length !== originalImageCount.value) {
         const formData = new FormData()
-        const existingImageUrls: string[] = []
-
-        for (const file of form.images) {
+        form.images.forEach(file => {
           if (file.raw) {
             formData.append('images', file.raw)
           } else {
-            const f = file as UploadUserFile & { _originalUrl?: string }
-            let imageUrl = f._originalUrl ?? f.url ?? ''
-            if (!f._originalUrl && imageUrl) {
-              try {
-                imageUrl = new URL(imageUrl).pathname
-              } catch {
-                // 已經是相對路徑
-              }
-            }
-            if (imageUrl) {
-              existingImageUrls.push(imageUrl)
-              formData.append('existingImages', imageUrl)
-            }
+            const f = file as any
+            const url = f._originalUrl ?? f.url ?? ''
+            if (url) formData.append('existingImages', url)
           }
-        }
+        })
         await updateProductImages(productId.value, formData)
       }
-      
-      // 3. 更新成功訊息並依 mode 跳轉
-      const successMsg = publishNow ? '商品已提交審核，請等待管理員審核' : '商品資料已儲存'
-      ElMessage.success(successMsg)
-      
-      if (redirectAfter) {
-        // 送審導向 review，草稿操作導向 draft，一般儲存回來源 tab
-        let targetTab = fromTab.value
-        if (publishNow) targetTab = 'review'
-        else if (isDraftAction) targetTab = 'draft'
-        
-        void router.push({ path: '/seller/products', query: { tab: targetTab } })
-      }
-      return true
     } else {
-      // ===== 新增模式：使用 FormData (multipart/form-data) =====
+      // ===== 新增模式：使用 FormData =====
       const fd = new FormData()
       fd.append('name', form.name)
       fd.append('description', form.description)
-      fd.append('mode', mode) // 加入 mode 參數
-      if (form.categoryId !== null) fd.append('categoryId', String(form.categoryId))
-      if (form.attributes.brandId !== null) fd.append('brandId', String(form.attributes.brandId))
-
-      console.log('送出資料 (新增模式/FormData):', {
-        Mode: 'CREATE',
-        SubmitMode: mode,
-        Name: form.name,
-      })
+      fd.append('mode', mode)
+      if (form.categoryId) fd.append('categoryId', String(form.categoryId))
+      if (form.attributes.brandId) fd.append('brandId', String(form.attributes.brandId))
+      fd.append('price', String(form.price || 0))
+      fd.append('stock', String(form.stock || 0))
+      fd.append('minPurchase', String(form.minPurchase || 1))
+      
+      fd.append('variantsJson', variantsJson) // 加入變體 JSON
 
       if (specsEnabled.value && form.specs.length > 0) {
-        const specDef = form.specs.map(s => ({ name: s.name }))
-        fd.append('specDefinitionJson', JSON.stringify(specDef))
+        fd.append('specDefinitionJson', JSON.stringify(form.specs.map(s => ({ name: s.name }))))
       }
 
-      let mainIdx = 0
       form.images.forEach((img, idx) => {
-        if (img.raw) {
-          fd.append('images', img.raw)
-          if (img.raw === form.images[0]?.raw) mainIdx = idx
-        }
+        if (img.raw) fd.append('images', img.raw)
       })
-      
-      if (form.images.some(img => img.raw)) {
-        fd.append('mainImageIndex', String(mainIdx))
-      }
 
-      res = await createSellerProduct(fd)
-      targetProductId = res.data?.productId || null
-
-      if (specsEnabled.value && targetProductId && variantData.value.length > 0) {
-        const specNames = form.specs.map(s => s.name)
-        for (const v of variantData.value) {
-          const specValueMap: Record<string, string> = {}
-          if (specNames[0] && v.spec1) specValueMap[specNames[0]] = v.spec1
-          if (specNames[1] && v.spec2) specValueMap[specNames[1]] = v.spec2
-
-          await addSellerProductVariant(targetProductId, {
-            skuCode: v.sku || '',
-            variantName: Object.values(specValueMap).join('/'),
-            specValueJson: JSON.stringify(specValueMap),
-            price: v.price ?? 0,
-            stock: v.stock,
-          })
-        }
-      }
-
-      const successMsg = publishNow ? '商品已提交審核，請等待管理員審核' : '商品草稿已儲存'
-      ElMessage.success(successMsg)
-      
-      if (redirectAfter) {
-        const targetTab = publishNow ? 'review' : 'draft'
-        void router.push({ path: '/seller/products', query: { tab: targetTab } })
-      }
-      return true
+      await createSellerProduct(fd)
     }
+
+    ElMessage.success(publishNow ? '商品已提交審核' : '商品資料已儲存')
+    if (redirectAfter) {
+      const targetTab = publishNow ? 'review' : (isDraftAction ? 'draft' : fromTab.value)
+      void router.push({ path: '/seller/products', query: { tab: targetTab } })
+    }
+    return true
   } catch (error) {
     console.error('儲存失敗:', error)
     ElMessage.error('儲存失敗，請稍後再試')
@@ -1522,7 +1469,6 @@ async function handleSubmit(publishNow: boolean, redirectAfter = true, isDraftAc
   } finally {
     saving.value = false
   }
-  return false
 }
 
 function handleCancel(): void {

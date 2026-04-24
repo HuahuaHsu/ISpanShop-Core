@@ -36,6 +36,9 @@ namespace ISpanShop.Models.DTOs.Products
 
         /// <summary>儲存模式：draft=草稿, submit=送審</summary>
         public string Mode { get; set; } = "draft";
+
+        /// <summary>變體列表 JSON</summary>
+        public string? VariantsJson { get; set; }
     }
 
     /// <summary>更新商品基本資料（JSON）</summary>
@@ -57,6 +60,9 @@ namespace ISpanShop.Models.DTOs.Products
 
         /// <summary>儲存模式：draft=草稿, submit=送審</summary>
         public string Mode { get; set; } = "draft";
+
+        /// <summary>變體列表 JSON</summary>
+        public string? VariantsJson { get; set; }
     }
 
     /// <summary>更新商品狀態（上架/下架）</summary>

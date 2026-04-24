@@ -14,5 +14,6 @@ namespace ISpanShop.Models.DTOs.Products
         public string? MainImageUrl { get; set; }
         public byte? Status { get; set; }
         public int? ReviewStatus { get; set; }
+        public string? VariantsJson { get; set; }
     }
 }

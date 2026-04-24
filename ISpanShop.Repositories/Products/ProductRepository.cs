@@ -254,11 +254,13 @@ namespace ISpanShop.Repositories.Products
         {
             var product = _context.Products
                 .Include(p => p.ProductImages)
+                .Include(p => p.ProductVariants)
                 .FirstOrDefault(p => p.Id == dto.Id);
             if (product == null) return;
 
             var originalStatus = product.Status;
 
+            // 1. 更新基本欄位
             product.Name               = dto.Name;
             product.Description        = dto.Description;
             product.CategoryId         = dto.CategoryId;
@@ -266,17 +268,22 @@ namespace ISpanShop.Repositories.Products
             product.SpecDefinitionJson = dto.SpecDefinitionJson;
             product.UpdatedAt          = DateTime.Now;
 
-            if (originalStatus == 3) // 審核退回 → 重新送審
+            // 2. 處理審核狀態
+            if (dto.ReviewStatus.HasValue)
             {
-                product.Status       = 2;           // 待審核
-                product.ReviewStatus = 3;           // 重新申請審核
-                product.ReApplyDate  = DateTime.Now;
-                product.ReviewedBy   = null;
-                product.ReviewDate   = null;
-                // 保留 RejectReason，讓後台知道上次退回原因
+                product.ReviewStatus = dto.ReviewStatus.Value;
+                
+                // 如果是送審 (0 或 3)
+                if (product.ReviewStatus == 0 || product.ReviewStatus == 3)
+                {
+                    product.Status = 2; // 待審核
+                    product.ReApplyDate = DateTime.Now;
+                    product.ReviewedBy = null;
+                    product.ReviewDate = null;
+                }
             }
-            // 已上架(1) 或未上架(0)：直接更新內容，狀態與審核記錄維持不變
 
+            // 3. 處理圖片更新 (主圖)
             if (!string.IsNullOrWhiteSpace(dto.MainImageUrl))
             {
                 var mainImg = product.ProductImages.FirstOrDefault(i => i.IsMain == true);
@@ -288,7 +295,96 @@ namespace ISpanShop.Repositories.Products
                         ImageUrl = dto.MainImageUrl, IsMain = true, SortOrder = 0
                     });
             }
-            _context.SaveChanges();
+
+            // 4. 處理變體更新 (Variants)
+            if (!string.IsNullOrWhiteSpace(dto.VariantsJson))
+            {
+                try
+                {
+                    var incomingVariants = System.Text.Json.JsonSerializer.Deserialize<List<ProductVariantUpdateItem>>(dto.VariantsJson, new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (incomingVariants != null)
+                    {
+                        var existingVariants = product.ProductVariants.Where(v => v.IsDeleted != true).ToList();
+                        
+                        // Delete: 存在於舊資料但不在新資料中的 Id
+                        var incomingIds = incomingVariants.Where(v => v.Id > 0).Select(v => v.Id).ToList();
+                        foreach (var oldVar in existingVariants)
+                        {
+                            if (!incomingIds.Contains(oldVar.Id))
+                            {
+                                oldVar.IsDeleted = true; // 軟刪除
+                            }
+                        }
+
+                        // Add / Update
+                        foreach (var v in incomingVariants)
+                        {
+                            if (v.Id > 0)
+                            {
+                                // Update
+                                var target = existingVariants.FirstOrDefault(ev => ev.Id == v.Id);
+                                if (target != null)
+                                {
+                                    target.SkuCode       = v.SkuCode;
+                                    target.VariantName   = v.VariantName;
+                                    target.SpecValueJson = v.SpecValueJson;
+                                    target.Price         = v.Price;
+                                    target.Stock         = v.Stock;
+                                }
+                            }
+                            else
+                            {
+                                // Add
+                                product.ProductVariants.Add(new ProductVariant
+                                {
+                                    ProductId     = product.Id,
+                                    SkuCode       = v.SkuCode,
+                                    VariantName   = v.VariantName,
+                                    SpecValueJson = v.SpecValueJson,
+                                    Price         = v.Price,
+                                    Stock         = v.Stock,
+                                    IsDeleted     = false
+                                });
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // 解析失敗則不處理變體更新，或根據需求拋出異常
+                    Console.WriteLine("解析 VariantsJson 失敗: " + ex.Message);
+                }
+            }
+
+			// 5. 【關鍵】重算快取欄位 (MinPrice, MaxPrice, TotalStock)
+			var activeVariants = product.ProductVariants.Where(v => v.IsDeleted != true).ToList();
+			if (activeVariants.Any())
+			{
+				product.MinPrice = activeVariants.Min(v => v.Price);
+				product.MaxPrice = activeVariants.Max(v => v.Price);
+			}
+			else
+			{
+				product.MinPrice = null;
+				product.MaxPrice = null;
+			}
+
+			_context.SaveChanges();
+        }
+
+        // 定義一個內部的輔助類別來解析 JSON
+        private class ProductVariantUpdateItem
+        {
+            public int Id { get; set; }
+            public string? SkuCode { get; set; }
+            public string? VariantName { get; set; }
+            public string? SpecValueJson { get; set; }
+            public decimal Price { get; set; }
+            public int Stock { get; set; }
         }
 
         public void SoftDeleteProduct(int id)
