@@ -20,8 +20,6 @@
             <el-divider direction="vertical" />
             <span>商品 {{ store.productCount ?? 0 }} 件</span>
             <el-divider direction="vertical" />
-            <span>粉絲 {{ store.followerCount ?? 0 }}</span>
-            <el-divider direction="vertical" />
             <span>{{ (store.joinedYearsAgo ?? 0) === 0 ? '新加入' : `加入 ${store.joinedYearsAgo} 年` }}</span>
           </div>
         </div>

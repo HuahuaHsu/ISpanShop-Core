@@ -186,6 +186,9 @@ namespace ISpanShop.Services.Products
         /// <summary>[Async] 取得熱搜關鍵字（瀏覽次數最高的前 N 筆上架商品名稱，超過 10 字截斷）。</summary>
         Task<List<string>> GetHotKeywordsAsync(int limit = 8);
 
+        /// <summary>[Async] 將商品 ViewCount +1（fire-and-forget 用途，不需 await 結果）。</summary>
+        Task IncrementViewCountAsync(int productId);
+
         /// <summary>批次新增商品圖片（前台賣家上傳，URLs 已儲存至磁碟）。</summary>
         void AddProductImages(int productId, IEnumerable<ISpanShop.Models.EfModels.ProductImage> images);
 

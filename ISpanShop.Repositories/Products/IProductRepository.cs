@@ -202,6 +202,9 @@ namespace ISpanShop.Repositories.Products
         /// <summary>[Async] 取得熱搜關鍵字（瀏覽次數最高的前 N 筆上架商品名稱）。</summary>
         Task<List<string>> GetHotKeywordsAsync(int limit);
 
+        /// <summary>[Async] 將商品 ViewCount +1（使用 ExecuteUpdateAsync 直接更新，不載入實體）。</summary>
+        Task IncrementViewCountAsync(int productId);
+
         /// <summary>批次新增商品圖片（前台賣家上傳）。</summary>
         void AddProductImages(int productId, IEnumerable<ProductImage> images);
 

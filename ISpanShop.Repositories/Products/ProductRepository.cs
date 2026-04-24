@@ -1200,6 +1200,14 @@ namespace ISpanShop.Repositories.Products
         }
 
         /// <inheritdoc/>
+        public async Task IncrementViewCountAsync(int productId)
+        {
+            await _context.Products
+                .Where(p => p.Id == productId)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.ViewCount, p => (p.ViewCount ?? 0) + 1));
+        }
+
+        /// <inheritdoc/>
         public void AddProductImages(int productId, IEnumerable<ProductImage> images)
         {
             foreach (var img in images)
@@ -1245,35 +1253,58 @@ namespace ISpanShop.Repositories.Products
         /// <inheritdoc/>
         public void DeleteProductImagesExcept(int productId, List<string> keepImageUrls, string webRootPath)
         {
+            // 正規化 URL：不論前端送來完整 URL 還是相對路徑，統一只取路徑部分
+            static string NormalizeUrl(string? url)
+            {
+                if (string.IsNullOrEmpty(url)) return string.Empty;
+                if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                    return uri.AbsolutePath;
+                return url;
+            }
+
+            var normalizedKeep = keepImageUrls
+                .Select(NormalizeUrl)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
             var images = _context.ProductImages
                 .Where(pi => pi.ProductId == productId)
                 .ToList();
 
-            // 刪除不在 keepImageUrls 中的圖片
-            foreach (var img in images)
-            {
-                if (!keepImageUrls.Contains(img.ImageUrl))
-                {
-                    // 刪除實體檔案
-                    if (!string.IsNullOrEmpty(img.ImageUrl))
-                    {
-                        var filePath = Path.Combine(webRootPath, img.ImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-                        if (System.IO.File.Exists(filePath))
-                        {
-                            try
-                            {
-                                System.IO.File.Delete(filePath);
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogWarning(ex, "無法刪除圖片檔案：{FilePath}", filePath);
-                            }
-                        }
-                    }
+            var toDelete = images
+                .Where(img => !normalizedKeep.Contains(NormalizeUrl(img.ImageUrl)))
+                .ToList();
+            var toKeep = images
+                .Where(img => normalizedKeep.Contains(NormalizeUrl(img.ImageUrl)))
+                .OrderBy(img => img.SortOrder)
+                .ToList();
 
-                    // 刪除資料庫記錄
-                    _context.ProductImages.Remove(img);
+            Console.WriteLine($"=== DeleteProductImagesExcept (productId={productId}) ===");
+            Console.WriteLine($"  保留清單 ({normalizedKeep.Count}): {string.Join(", ", normalizedKeep)}");
+            Console.WriteLine($"  DB 圖片  ({images.Count}): {string.Join(", ", images.Select(i => i.ImageUrl))}");
+            Console.WriteLine($"  要刪除: {toDelete.Count} 張，要保留: {toKeep.Count} 張");
+
+            // 刪除不在保留清單的圖片
+            foreach (var img in toDelete)
+            {
+                if (!string.IsNullOrEmpty(img.ImageUrl))
+                {
+                    var filePath = Path.Combine(webRootPath, img.ImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        try { System.IO.File.Delete(filePath); }
+                        catch (Exception ex) { _logger.LogWarning(ex, "無法刪除圖片檔案：{FilePath}", filePath); }
+                    }
                 }
+                _context.ProductImages.Remove(img);
+            }
+
+            // 重新排序保留的圖片（確保 SortOrder 連續從 0 開始）
+            int sortOrder = 0;
+            foreach (var img in toKeep)
+            {
+                img.SortOrder = sortOrder;
+                img.IsMain    = (sortOrder == 0);
+                sortOrder++;
             }
 
             _context.SaveChanges();

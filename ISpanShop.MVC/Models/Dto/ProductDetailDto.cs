@@ -27,6 +27,7 @@ namespace ISpanShop.MVC.Models.Dto
         public int ReviewCount { get; set; }
         public bool IsOnShelf { get; set; }
         public DateTime? CreatedAt { get; set; }
+        public int ViewCount { get; set; }
     }
 
     public class CategoryPathItemDto

@@ -343,6 +343,7 @@ namespace ISpanShop.Models.Seeding
 				ReviewDate = DateTime.Now.AddDays(-_random.Next(1, 30)),
 				CreatedAt = DateTime.Now.AddDays(-_random.Next(1, 100)),
 				UpdatedAt = DateTime.Now,
+				ViewCount = _random.Next(0, 5001),
 				ProductVariants = variants,
 				ProductImages = imageTemplates.Select(t => new ProductImage
 				{

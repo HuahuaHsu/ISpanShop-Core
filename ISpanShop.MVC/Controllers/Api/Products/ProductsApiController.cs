@@ -111,6 +111,9 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             if (product == null)
                 return NotFound(new { success = false, data = (object?)null, message = "商品不存在或已下架" });
 
+            // 非同步累加瀏覽次數（fire-and-forget，不阻塞回應）
+            _ = _productService.IncrementViewCountAsync(id);
+
             // ── 分類路徑（由子向上回溯到根）───────────────────────
             var categoryPath = new List<CategoryPathItemDto>();
             var cat = product.Category;
@@ -265,7 +268,8 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 Rating              = rating,
                 ReviewCount         = reviewCount,
                 IsOnShelf           = product.Status == 1,
-                CreatedAt           = product.CreatedAt
+                CreatedAt           = product.CreatedAt,
+                ViewCount           = product.ViewCount ?? 0
             };
 
             return Ok(new { success = true, data = dto, message = "" });

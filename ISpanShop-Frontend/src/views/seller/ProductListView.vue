@@ -200,10 +200,10 @@
                   </span>
                 </div>
                 <div class="card-stats">
-                  <!-- TODO: viewCount / totalSales / cartCount 後端尚未回傳，補上後移除 ?? '--' -->
+                  <!-- TODO: viewCount 後端尚未回傳，補上後移除 ?? '--' -->
                   <span title="瀏覽次數"><el-icon><View /></el-icon> {{ product.viewCount ?? '--' }}</span>
-                  <span title="已售數量"><el-icon><Goods /></el-icon> {{ product.totalSales ?? '--' }}</span>
-                  <span title="加入購物車"><el-icon><ShoppingCart /></el-icon> {{ product.cartCount ?? '--' }}</span>
+                  <!-- TODO: reviewCount 尚未由後端商品列表 API 回傳，待補上 -->
+                  <span title="評論數"><el-icon><ChatDotRound /></el-icon> 0</span>
                 </div>
               </div>
 
@@ -469,7 +469,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus, Search, Edit, Delete, Grid, List,
   ArrowDown, ArrowUp, DCaret, CaretTop, CaretBottom,
-  MoreFilled, WarningFilled, View, ShoppingCart, Goods,
+  MoreFilled, WarningFilled, View, ChatDotRound,
 } from '@element-plus/icons-vue'
 import { fetchSellerProducts, updateProductStatus, deleteSellerProduct } from '@/api/product'
 import { fetchMainCategories } from '@/api/category'

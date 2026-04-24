@@ -316,6 +316,15 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 return Ok(new { success = true, message = "未變更圖片" });
             }
 
+            // Debug：印出前後端 URL 格式以利排查不一致問題
+            Console.WriteLine("=== 圖片更新 Debug ===");
+            Console.WriteLine("收到的 existingImages:");
+            foreach (var img in existingImages ?? new List<string>())
+                Console.WriteLine("  前端送來: " + img);
+            Console.WriteLine("資料庫中的圖片:");
+            foreach (var img in existing.Images)
+                Console.WriteLine("  資料庫: " + img);
+
             // 驗證新上傳的圖片格式和大小
             if (images != null && images.Count > 0)
             {
@@ -333,7 +342,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 }
             }
 
-            // 刪除不在 existingImages 中的舊圖片
+            // 刪除不在 existingImages 中的舊圖片（內部會做 URL 正規化比對）
             _productService.DeleteProductImagesExcept(id, existingImages ?? new List<string>(), _env.WebRootPath);
 
             // 上傳新圖片
@@ -343,7 +352,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 var uploadDir = Path.Combine(_env.WebRootPath, "uploads", "products");
                 Directory.CreateDirectory(uploadDir);
 
-                // 計算排序起始值（從保留的圖片數量開始）
+                // 計算排序起始值（從實際保留的圖片數量開始，repository 已重排 SortOrder 從 0 起）
                 int sortOrder = existingImages?.Count ?? 0;
 
                 for (int i = 0; i < images.Count; i++)

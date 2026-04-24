@@ -696,6 +696,10 @@ namespace ISpanShop.Services.Products
         }
 
         /// <inheritdoc/>
+        public Task IncrementViewCountAsync(int productId)
+            => _productRepository.IncrementViewCountAsync(productId);
+
+        /// <inheritdoc/>
         public void AddProductImages(int productId, IEnumerable<ISpanShop.Models.EfModels.ProductImage> images)
         {
             _productRepository.AddProductImages(productId, images);

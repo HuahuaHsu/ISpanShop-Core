@@ -100,13 +100,14 @@
                 <span class="image-count">({{ form.images.length }}/9)</span>
               </template>
               <el-upload
-                v-model:file-list="form.images"
+                :file-list="form.images"
                 list-type="picture-card"
                 :limit="9"
                 :auto-upload="false"
                 accept=".jpg,.jpeg,.png,.webp"
                 :on-exceed="handleImageExceed"
                 :on-change="handleImageChange"
+                :on-remove="handleImageRemove"
                 draggable
               >
                 <el-icon><Plus /></el-icon>
@@ -957,12 +958,19 @@ async function loadProductData(): Promise<void> {
     
     // 圖片 - 後端回傳的是字串陣列，如 ['/uploads/products/xxx.jpg']
     if (product.images && product.images.length > 0) {
-      form.images = product.images.map((url: string, idx: number) => ({
-        uid: -(idx + 1), // 負數 uid 避免與新上傳的衝突
-        name: `image-${idx}`,
-        url: url.startsWith('http') ? url : `https://localhost:7125${url}`,
-        status: 'success' as const,
-      }))
+      form.images = product.images.map((url: string, idx: number) => {
+        // 顯示用完整 URL；_originalUrl 保留相對路徑，供送出 existingImages 使用
+        const originalUrl = url.startsWith('http')
+          ? (() => { try { return new URL(url).pathname } catch { return url } })()
+          : url
+        return {
+          uid: -(idx + 1), // 負數 uid 避免與新上傳的衝突
+          name: `image-${idx}`,
+          url: url.startsWith('http') ? url : `https://localhost:7125${url}`,
+          status: 'success' as const,
+          _originalUrl: originalUrl,
+        }
+      }) as UploadUserFile[]
       
       // 記錄原始圖片數量
       originalImageCount.value = product.images.length
@@ -1074,45 +1082,47 @@ function handleImageExceed(): void {
   ElMessage.warning('最多只能上傳 9 張圖片')
 }
 
+const handleImageRemove: UploadProps['onRemove'] = (_uploadFile, uploadFiles) => {
+  form.images = uploadFiles
+}
+
 const handleImageChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
-  // === 圖片驗證 ===
+  // === 圖片驗證（新上傳的檔案才驗證）===
   if (uploadFile.raw) {
     // 1. 格式驗證
     const validTypes = ['image/jpeg', 'image/png', 'image/webp']
     if (!validTypes.includes(uploadFile.raw.type)) {
       ElMessage.error('只支援 JPG、PNG、WEBP 格式')
-      const idx = form.images.findIndex(f => f.uid === uploadFile.uid)
-      if (idx !== -1) form.images.splice(idx, 1)
+      form.images = uploadFiles.filter(f => f.uid !== uploadFile.uid)
       return
     }
-    
+
     // 2. 大小驗證
     if (uploadFile.raw.size > 2 * 1024 * 1024) {
       ElMessage.error('圖片大小不能超過 2MB')
-      const idx = form.images.findIndex(f => f.uid === uploadFile.uid)
-      if (idx !== -1) form.images.splice(idx, 1)
+      form.images = uploadFiles.filter(f => f.uid !== uploadFile.uid)
       return
     }
-    
+
     // 3. 重複檔案檢查
     const isDuplicate = form.images.some(
-      f => f.uid !== uploadFile.uid && 
-           f.raw && 
-           f.raw.name === uploadFile.raw.name && 
-           f.raw.size === uploadFile.raw.size
+      f => f.uid !== uploadFile.uid &&
+           f.raw &&
+           f.raw.name === uploadFile.raw!.name &&
+           f.raw.size === uploadFile.raw!.size
     )
     if (isDuplicate) {
       ElMessage.warning('此圖片已上傳過，請勿重複上傳')
-      const idx = form.images.findIndex(f => f.uid === uploadFile.uid)
-      if (idx !== -1) form.images.splice(idx, 1)
+      form.images = uploadFiles.filter(f => f.uid !== uploadFile.uid)
       return
     }
-  }
-  
-  // 設定上傳狀態為成功（顯示打勾圖示）
-  if (uploadFile.status === 'ready') {
+
+    // 設定上傳狀態為成功（顯示打勾圖示）
     uploadFile.status = 'success'
   }
+
+  // 以 uploadFiles 為準同步 form.images，避免舊圖消失
+  form.images = uploadFiles
 }
 
 function handleAddDescriptionImage(): void {
@@ -1244,27 +1254,30 @@ async function handleSubmit(publishNow: boolean): Promise<void> {
           if (file.raw) {
             // 新上傳的圖片
             formData.append('images', file.raw)
-          } else if (file.url) {
-            // 舊圖片的 URL，取相對路徑（跟資料庫格式一致）
-            let imageUrl = file.url
-            try {
-              const parsedUrl = new URL(imageUrl)
-              imageUrl = parsedUrl.pathname  // 例如：/uploads/products/xxx.jpg
-            } catch {
-              // 已經是相對路徑，不需要轉換
+          } else {
+            // 舊圖片：優先用 _originalUrl（載入時保存的相對路徑），否則從 url 解析
+            const f = file as UploadUserFile & { _originalUrl?: string }
+            let imageUrl = f._originalUrl ?? f.url ?? ''
+            if (!f._originalUrl && imageUrl) {
+              try {
+                imageUrl = new URL(imageUrl).pathname // 例如：/uploads/products/xxx.jpg
+              } catch {
+                // 已經是相對路徑，不需要轉換
+              }
             }
-            existingImageUrls.push(imageUrl)
-            formData.append('existingImages', imageUrl)
+            if (imageUrl) {
+              existingImageUrls.push(imageUrl)
+              formData.append('existingImages', imageUrl)
+            }
           }
         }
 
         // 印出實際送出的 URL，確認格式與後端 DB 儲存格式一致
         console.log('[圖片更新] existingImages 送出的 URL:', existingImageUrls)
-        console.log('[圖片更新] 統計:', {
-          newImages: newFiles.length,
-          existingImages: existingImageUrls.length,
-          totalImages: form.images.length,
-          originalCount: originalImageCount.value,
+        console.log('[圖片更新] 統計：', {
+          newImages: formData.getAll('images').length,
+          existingImages: formData.getAll('existingImages'),
+          totalFiles: form.images.length,
         })
 
         await updateProductImages(productId.value, formData)
