@@ -139,11 +139,20 @@ onMounted(async () => {
   if (isPaymentMode.value) {
     try {
       const res = await getOrderDetailApi(existingOrderId.value!)
-      existingOrderData.value = res.data
-      recipient.value.name = res.data.recipientName
-      recipient.value.phone = res.data.recipientPhone
-      recipient.value.address = res.data.recipientAddress
-      shippingFee.value = res.data.shippingFee || 0
+      const order = res.data
+      
+      // [安全性強化] 檢查訂單狀態，只有「待付款 (0)」才能進入此頁面
+      if (order.status !== 0) {
+        ElMessage.warning('該訂單已完成付款或無法再進行結帳')
+        router.replace('/member/orders')
+        return
+      }
+
+      existingOrderData.value = order
+      recipient.value.name = order.recipientName
+      recipient.value.phone = order.recipientPhone
+      recipient.value.address = order.recipientAddress
+      shippingFee.value = order.shippingFee || 0
       return
     } catch (err) {
       ElMessage.error('無法載入訂單資訊')
@@ -230,12 +239,24 @@ function selectCoupon(id: number | null) {
 }
 
 async function handleSubmit() {
-  if (isPaymentMode.value && existingOrderData.value) {
-    const backendBase = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7125'
-    const controller = paymentMethod.value === 'NewebPay' ? 'PaymentNewebPay' : 'Payment'
-    const targetUrl = `${backendBase.replace(/\/$/, '')}/${controller}/Pay?orderNumber=${existingOrderData.value.orderNumber}`
-    ElMessage.success('正在導向支付頁面...')
-    window.location.href = targetUrl
+  if (isPaymentMode.value && existingOrderId.value) {
+    try {
+      // [專業優化] 向後端請求正式的支付路徑，後端會同時驗證訂單狀態與權限
+      const res = await checkoutApi.getRepaymentUrl(existingOrderId.value)
+      if (res.data.success) {
+        const backendBase = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7125'
+        // 拼接完整的跳轉 URL (如果後端回傳的是相對路徑)
+        const targetUrl = res.data.paymentUrl.startsWith('http') 
+          ? res.data.paymentUrl 
+          : `${backendBase.replace(/\/$/, '')}${res.data.paymentUrl}`
+          
+        ElMessage.success('正在導向支付頁面...')
+        window.location.href = targetUrl
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || '導向支付失敗，請稍後再試'
+      ElMessage.error(msg)
+    }
     return
   }
 

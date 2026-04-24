@@ -25,6 +25,11 @@ export const checkoutApi = {
   createOrder(data: CheckoutRequest) {
     return instance.post('/api/checkout', data);
   },
+
+  /** 獲取既有訂單的支付路徑 (不產生新訂單) */
+  getRepaymentUrl(orderId: number) {
+    return instance.get<{ success: boolean, paymentUrl: string }>(`/api/checkout/repay/${orderId}`);
+  },
   
   getAvailableCoupons(storeId: number, subtotal: number, productIds: number[]) {
     return instance.get('/api/coupon/available', {

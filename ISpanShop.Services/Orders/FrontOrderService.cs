@@ -60,6 +60,9 @@ namespace ISpanShop.Services.Orders
                 return null;
             }
 
+            // [安全性強化] 如果是為了結帳而讀取，或是在任何詳情檢查中
+            // 這裡保留通用讀取，但在下面 API 調用處會做更嚴格的攔截。
+            
             return new FrontOrderDetailDto
             {
                 Id = o.Id,
