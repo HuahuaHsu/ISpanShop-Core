@@ -46,6 +46,8 @@ namespace ISpanShop.Repositories.Orders
 				.Include(o => o.ReturnRequests)
 					.ThenInclude(rr => rr.ReturnRequestItems)
 						.ThenInclude(ri => ri.OrderDetail)
+							.ThenInclude(od => od.Product)
+								.ThenInclude(p => p.ProductImages)
 				.Include(o => o.OrderReviews)
 				.AsSplitQuery()
 				.FirstOrDefaultAsync(o => o.Id == id);

@@ -109,13 +109,22 @@ namespace ISpanShop.Services.Orders
                     CreatedAt = r.CreatedAt,
                     ImageUrls = r.ReturnRequestImages.Select(img => img.ImageUrl).ToList(),
                     // 關鍵：抓取退貨品項清單
-                    Items = r.ReturnRequestItems.Select(ri => new FrontReturnItemDto
-                    {
-                        ProductName = ri.OrderDetail.ProductName,
-                        VariantName = ri.OrderDetail.VariantName,
-                        CoverImage = GetFinalImage(ri.OrderDetail),
-                        Price = ri.OrderDetail.Price ?? 0,
-                        ReturnQuantity = ri.Quantity
+                    Items = r.ReturnRequestItems.Select(ri => {
+                        var img = GetFinalImage(ri.OrderDetail);
+                        // 統一補斜線邏輯，這與 o.OrderDetails.Select 的處理保持一致
+                        if (!string.IsNullOrEmpty(img) && !img.StartsWith("http") && !img.StartsWith("/"))
+                        {
+                            img = "/" + img;
+                        }
+
+                        return new FrontReturnItemDto
+                        {
+                            ProductName = ri.OrderDetail.ProductName,
+                            VariantName = ri.OrderDetail.VariantName,
+                            CoverImage = img,
+                            Price = ri.OrderDetail.Price ?? 0,
+                            ReturnQuantity = ri.Quantity
+                        };
                     }).ToList()
                 }).FirstOrDefault()
             };
