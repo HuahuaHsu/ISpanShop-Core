@@ -55,10 +55,11 @@ export const useAuthStore = defineStore('auth', () => {
       };
 
       // 2. 持久化到 localStorage
-        storage.setToken(data.token);
-        storage.setUser(memberInfo.value);;
-    try {
-        const profileRes = await getMemberProfile(data.memberId)
+      storage.setToken(data.token);
+      storage.setUser(memberInfo.value);
+
+      try {
+        const profileRes = await getMemberProfile()
         memberInfo.value.avatarUrl = profileRes.data.avatarUrl ?? null
         storage.setUser(memberInfo.value)
       } catch {
@@ -117,12 +118,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   /** 獲取最新會員資料並同步到 store 與 localStorage */
   async function fetchUserInfo() {
-    if (!memberInfo.value?.memberId) return;
     try {
-      const response = await getMemberProfile(memberInfo.value.memberId);
+      const response = await getMemberProfile();
       const { data } = response;
       memberInfo.value = {
         ...memberInfo.value,
+        memberId: data.id,
         email: data.email,
         account: data.account,
         memberName: data.fullName,

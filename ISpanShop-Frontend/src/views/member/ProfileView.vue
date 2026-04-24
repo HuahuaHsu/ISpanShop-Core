@@ -36,19 +36,13 @@ const rules = reactive<FormRules>({
 
 // ── 初始化資料 ────────────────────────────────────
 const fetchProfile = async () => {
-  const memberId = profileForm.id
-  if (!memberId) {
-    ElMessage.error('無法取得會員 ID，請重新登入')
-    console.error('會員 ID 為空:', authStore.memberInfo)
-    return
-  }
-
   try {
     isLoading.value = true
-    const response = await getMemberProfile(memberId)
+    const response = await getMemberProfile()
     const data = response.data as MemberDto
 
     // 補足其餘細節欄位 (相容大小寫)
+    profileForm.id = data.id // 同步最新的 ID
     profileForm.memberName = data.fullName ?? data.fullName ?? profileForm.memberName
     profileForm.email = data.email ?? data.email ?? profileForm.email
     profileForm.phone = data.phoneNumber ?? data.phoneNumber ?? profileForm.phone
@@ -111,7 +105,7 @@ const handleSave = async (formEl: FormInstance | undefined) => {
 
     console.log('送出資料:', submitData) // 除錯用
 
-    await updateMemberProfile(submitData.id, submitData)
+    await updateMemberProfile(submitData)
     ElMessage.success('個人資料已成功更新')
 
     // 同步更新 Pinia 與 LocalStorage

@@ -4,11 +4,17 @@ using ISpanShop.Models.DTOs.Members;
 using ISpanShop.Services.Members;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ISpanShop.MVC.Controllers.Api
 {
     [ApiController]
     [Route("api/front/profile")]
+    [Authorize(AuthenticationSchemes = "FrontendJwt")]
     public class FrontProfileController : ControllerBase
     {
         private readonly IMemberService _memberService;
@@ -59,14 +65,17 @@ namespace ISpanShop.MVC.Controllers.Api
         }
 
         /// <summary>
-        /// 取得個人詳細資料
+        /// 取得個人詳細資料 (從 Token 取得身分)
         /// </summary>
-        [HttpGet("{id}")]
-        public IActionResult GetProfile(int id)
+        [HttpGet]
+        public IActionResult GetProfile()
         {
             try
             {
-                var profile = _memberService.GetMemberById(id);
+                var userId = User.GetUserId();
+                if (userId == null) return Unauthorized(new { message = "未授權" });
+
+                var profile = _memberService.GetMemberById(userId.Value);
                 if (profile == null) return NotFound(new { message = "找不到該會員" });
 
                 return Ok(profile);
@@ -78,15 +87,18 @@ namespace ISpanShop.MVC.Controllers.Api
         }
 
         /// <summary>
-        /// 更新個人資料
+        /// 更新個人資料 (從 Token 取得身分)
         /// </summary>
-        [HttpPut("{id}")]
-        public IActionResult UpdateProfile(int id, [FromBody] UpdateMemberProfileDto dto)
+        [HttpPut]
+        public IActionResult UpdateProfile([FromBody] UpdateMemberProfileDto dto)
         {
             try
             {
-                if (id != dto.Id) 
-                    return BadRequest(new { message = "會員 ID 不符" });
+                var userId = User.GetUserId();
+                if (userId == null) return Unauthorized(new { message = "未授權" });
+
+                // 強制將 ID 設定為 Token 中的 ID，確保安全性
+                dto.Id = userId.Value;
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);

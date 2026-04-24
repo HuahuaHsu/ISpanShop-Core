@@ -171,7 +171,6 @@ onMounted(async () => {
 
   // 4. 加載結帳所需資訊 (優惠券、錢包、個人資料)
   try {
-    const memberId = authStore.memberInfo?.memberId || 0
     const [couponsRes, walletRes, profileRes] = await Promise.all([
       checkoutApi.getAvailableCoupons(
         checkoutItems.value[0].storeId,
@@ -179,7 +178,7 @@ onMounted(async () => {
         checkoutItems.value.map(i => i.productId)
       ),
       checkoutApi.getWalletBalance(),
-      memberId ? getMemberProfile(memberId) : Promise.resolve({ data: null })
+      getMemberProfile()
     ])
     
     availableCoupons.value = couponsRes.data

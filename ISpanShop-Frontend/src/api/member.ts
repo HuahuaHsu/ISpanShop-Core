@@ -37,15 +37,15 @@ export const getLevelInfo = () => {
 /**
  * 取得會員個人資料
  */
-export const getMemberProfile = (id: number) => {
-  return axios.get<MemberDto>(`/api/front/profile/${id}`);
+export const getMemberProfile = () => {
+  return axios.get<MemberDto>('/api/front/profile');
 };
 
 /**
  * 更新會員個人資料
  */
-export const updateMemberProfile = (id: number, data: UpdateMemberProfileDto) => {
-  return axios.put<{ message: string }>(`/api/front/profile/${id}`, data);
+export const updateMemberProfile = (data: UpdateMemberProfileDto) => {
+  return axios.put<{ message: string }>('/api/front/profile', data);
 };
 
 /**
@@ -54,7 +54,7 @@ export const updateMemberProfile = (id: number, data: UpdateMemberProfileDto) =>
 export const uploadAvatar = (file: File) => {
   const formData = new FormData();
   formData.append('file', file);
-  return axios.post<{ url: string }>('/api/front/upload/avatar', formData, {
+  return axios.post<{ url: string }>('/api/front/profile/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 };
