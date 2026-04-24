@@ -175,3 +175,20 @@ export async function deleteSellerProduct(
   return response.data
 }
 
+/**
+ * 上傳商品描述圖片 (供編輯器使用)
+ * POST /api/seller/products/upload-image (multipart/form-data)
+ */
+export async function uploadDescriptionImage(
+  image: File,
+): Promise<ApiResponse<{ url: string; imageUrl: string }>> {
+  const formData = new FormData()
+  formData.append('image', image)
+  const response = await request.post<ApiResponse<{ url: string; imageUrl: string }>>(
+    '/api/seller/products/upload-image',
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return response.data
+}
+

@@ -256,25 +256,28 @@
               <template #label>
                 <span class="required-label">* 商品描述</span>
               </template>
-              <div class="description-toolbar">
-                <el-button size="small" @click="handleAddDescriptionImage">
-                  <el-icon><Picture /></el-icon>
-                  新增圖片 ({{ descriptionImageCount }}/12)
-                </el-button>
-                <span class="char-count">{{ form.description.length }}/3000</span>
+              <div class="description-editor-container">
+                <!-- 隱藏的檔案輸入框 (由 Quill 圖片按鈕觸發) -->
+                <input
+                  ref="descImageInput"
+                  type="file"
+                  accept="image/*"
+                  style="display: none"
+                  @change="handleDescriptionImageFileChange"
+                />
+
+                <QuillEditor
+                  v-model:content="form.description"
+                  content-type="html"
+                  :options="editorOptions"
+                  placeholder="請輸入詳細的商品描述，展示商品特色..."
+                  class="description-quill"
+                />
               </div>
-              <el-input
-                v-model="form.description"
-                type="textarea"
-                :rows="10"
-                placeholder="請輸入商品描述或點選以新增圖片"
-                maxlength="3000"
-              />
-              <div class="form-hint">
-                建議至少 100 字。TODO: 之後可換成 Tiptap 或 Quill 富文字編輯器
+              <div class="description-hint">
+                建議至少 100 字。
               </div>
-            </el-form-item>
-          </section>
+            </el-form-item>          </section>
 
           <!-- 銷售資訊 -->
           <section id="section-sales" class="form-section">
@@ -590,9 +593,7 @@
             </div>
 
             <!-- 描述 -->
-            <div class="preview-description">
-              {{ form.description ? form.description.slice(0, 50) + (form.description.length > 50 ? '...' : '') : '商品描述...' }}
-            </div>
+            <div class="preview-description" v-html="form.description || '商品描述...'"></div>
 
             <!-- 底部按鈕 -->
             <div class="preview-actions">
@@ -654,8 +655,10 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules, UploadUserFile, UploadProps, UploadFile } from 'element-plus'
 import { Plus, CircleCheck, CircleClose, ArrowRight, Picture, Close, Delete } from '@element-plus/icons-vue'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import { fetchBrands } from '@/api/brand'
-import { createSellerProduct, addSellerProductVariant, getSellerProductDetail, updateSellerProduct, updateProductImages, updateProductStatus } from '@/api/product'
+import { createSellerProduct, addSellerProductVariant, getSellerProductDetail, updateSellerProduct, updateProductImages, updateProductStatus, uploadDescriptionImage } from '@/api/product'
 import type { Brand } from '@/types/brand'
 import type { SellerProductDetail } from '@/types/product'
 import { getCategoryAttributes, type CategoryAttribute } from '@/api/categoryAttribute'
@@ -735,10 +738,41 @@ const loadingAttributes = ref<boolean>(false)
 const currentTab = ref<string>('section-basic')
 const showCategoryPicker = ref<boolean>(false)
 const specsEnabled = ref<boolean>(false)
-const descriptionImageCount = ref<number>(0)
+const descImageInput = ref<HTMLInputElement | null>(null)
 const currentImageIndex = ref<number>(0)
 const productData = ref<SellerProductDetail | null>(null)
 const originalImageCount = ref<number>(0) // 記錄載入時的圖片數量
+
+// 編輯器配置
+const editorOptions = {
+  theme: 'snow',
+  modules: {
+    toolbar: {
+      container: [
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ header: 1 }, { header: 2 }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ color: [] }, { background: [] }],
+        ['clean'],
+        ['image'], // 保留圖片按鈕，但會被自定義攔截
+      ],
+      handlers: {
+        image: function () {
+          // 攔截點擊圖片按鈕事件，觸發隱藏的 input
+          document.querySelector<HTMLInputElement>('input[ref="descImageInput"]')?.click()
+          // 由於我們使用的是 ref 綁定，這裡直接用我們定義的 handleAddDescriptionImage
+          handleAddDescriptionImage()
+        },
+      },
+    },
+  },
+}
+
+// 描述中的圖片數量 (計算 <img> 標籤)
+const descriptionImageCount = computed(() => {
+  const matches = form.description.match(/<img/g)
+  return matches ? matches.length : 0
+})
 
 const batchPrice = ref<number | null>(null)
 const batchStock = ref<number | null>(null)
@@ -1206,7 +1240,54 @@ const handleImageChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => 
 }
 
 function handleAddDescriptionImage(): void {
-  ElMessage.info('TODO: 實作描述圖片上傳功能')
+  if (descriptionImageCount.value >= 12) {
+    ElMessage.warning('商品描述最多只能包含 12 張圖片')
+    return
+  }
+  descImageInput.value?.click()
+}
+
+async function handleDescriptionImageFileChange(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+
+  const file = input.files[0]
+  
+  // 1. 基本檢查
+  const validTypes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!validTypes.includes(file.type)) {
+    ElMessage.error('只支援 JPG、PNG、WEBP 格式')
+    input.value = ''
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('圖片大小不能超過 5MB')
+    input.value = ''
+    return
+  }
+
+  // 2. 上傳圖片
+  try {
+    const res = await uploadDescriptionImage(file)
+    if (res.success && (res as any).url) {
+      // 3. 插入圖片標籤到描述中 (Quill 會自動解析 HTML 顯示圖片影像)
+      const imgUrl = (res as any).url
+      const imgTag = `<img src="${imgUrl}" style="max-width: 100%;" />`
+      
+      // 直接附加到內容末尾，或者您可以手動插入 HTML
+      // 由於 QuillEditor 綁定了 form.description，直接修改字串即可生效
+      form.description += imgTag
+      ElMessage.success('圖片上傳成功')
+    } else {
+      ElMessage.error('圖片上傳失敗')
+    }
+  } catch (error) {
+    console.error('上傳描述圖片失敗:', error)
+    console.error('上傳失敗詳細資訊:', error)
+    ElMessage.error('圖片上傳發生錯誤')
+  } finally {
+    input.value = ''
+  }
 }
 
 function handleOptionImageChange(specIndex: number, optIndex: number, file: UploadFile): void {
@@ -1503,6 +1584,9 @@ async function handleReShelf(): Promise<void> {
 .left-sidebar {
   width: 280px;
   flex-shrink: 0;
+  position: sticky;
+  top: 20px;
+  height: fit-content;
 }
 
 .tips-card {
@@ -1510,8 +1594,6 @@ async function handleReShelf(): Promise<void> {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-  position: sticky;
-  top: 20px;
 }
 
 .tips-header {
@@ -1630,14 +1712,15 @@ async function handleReShelf(): Promise<void> {
 .right-sidebar {
   width: 280px;
   flex-shrink: 0;
+  position: sticky;
+  top: 20px;
+  height: fit-content;
 }
 
 .preview-card {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-  position: sticky;
-  top: 20px;
   overflow: hidden;
 }
 
@@ -1752,6 +1835,14 @@ async function handleReShelf(): Promise<void> {
   line-height: 1.6;
   margin-bottom: 16px;
   min-height: 40px;
+  overflow: hidden;
+}
+
+.preview-description :deep(img) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 8px 0;
 }
 
 .preview-actions {
@@ -1833,6 +1924,23 @@ async function handleReShelf(): Promise<void> {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.description-editor-container {
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+}
+
+.description-quill {
+  min-height: 300px;
+}
+
+.description-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+  width: 100%;
 }
 
 /* 規格設定 */

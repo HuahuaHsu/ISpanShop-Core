@@ -456,10 +456,10 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         }
 
         // ──────────────────────────────────────────────────────────
-        // POST api/seller/products/description-image
-        // 上傳商品描述圖片
+        // POST api/seller/products/upload-image
+        // 上傳商品描述圖片 (供編輯器使用)
         // ──────────────────────────────────────────────────────────
-        [HttpPost("description-image")]
+        [HttpPost("upload-image")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -469,17 +469,19 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             if (image == null || image.Length == 0)
                 return BadRequest(new { success = false, message = "請選擇圖片" });
 
-            if (image.Length > 2 * 1024 * 1024)
-                return BadRequest(new { success = false, message = "圖片大小不能超過 2MB" });
+            // 限制 5MB
+            if (image.Length > 5 * 1024 * 1024)
+                return BadRequest(new { success = false, message = "圖片大小不能超過 5MB" });
 
-            var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
-            if (!allowedTypes.Contains(image.ContentType))
+            var allowedExts = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(image.FileName).ToLowerInvariant();
+            if (!allowedExts.Contains(ext))
                 return BadRequest(new { success = false, message = "只支援 JPG、PNG、WEBP 格式" });
 
             var uploadPath = Path.Combine(_env.WebRootPath, "uploads", "descriptions");
             Directory.CreateDirectory(uploadPath);
 
-            var fileName = Guid.NewGuid() + Path.GetExtension(image.FileName).ToLowerInvariant();
+            var fileName = $"{Guid.NewGuid()}{ext}";
             var filePath = Path.Combine(uploadPath, fileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -487,7 +489,15 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 await image.CopyToAsync(stream);
             }
 
-            return Ok(new { success = true, imageUrl = $"/uploads/descriptions/{fileName}" });
+            var relativeUrl = $"/uploads/descriptions/{fileName}";
+            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+            var fullUrl = $"{baseUrl}{relativeUrl}";
+
+            return Ok(new { 
+                success = true, 
+                url = fullUrl,          // 完整網址
+                imageUrl = relativeUrl  // 相對路徑 (保留相容性)
+            });
         }
 
         // ──────────────────────────────────────────────────────────
