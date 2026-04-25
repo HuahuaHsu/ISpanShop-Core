@@ -1186,10 +1186,23 @@ async function loadProductData(): Promise<void> {
               const savedAttrs = JSON.parse(product.attributesJson)
               if (Array.isArray(savedAttrs)) {
                 savedAttrs.forEach((saved: any) => {
-                  // 優先使用 OptionId (數字)，若無則使用 CustomValue (字串)
+                  const id = saved.attributeId || saved.AttributeId
                   const value = saved.optionId || saved.OptionId || saved.customValue || saved.CustomValue
-                  if (value !== undefined && value !== null) {
-                    form.dynamicAttributes[saved.attributeId || saved.AttributeId] = value
+                  if (value === undefined || value === null) return
+
+                  // 尋找定義，判斷是否多選
+                  const def = categoryAttributes.value.find(c => c.id === id)
+                  const isMultiple = def?.isMultiple
+
+                  if (isMultiple) {
+                    // 多選：確保是陣列並 push
+                    if (!Array.isArray(form.dynamicAttributes[id])) {
+                      form.dynamicAttributes[id] = []
+                    }
+                    ;(form.dynamicAttributes[id] as any[]).push(value)
+                  } else {
+                    // 單選：直接賦值
+                    form.dynamicAttributes[id] = value
                   }
                 })
               }

@@ -363,14 +363,14 @@ const safeProduct = computed(() => {
   }
 })
 
-/** 解析並翻譯屬性字典 — 修復數字自填消失問題 */
+/** 解析並翻譯屬性字典 — 修復數字自填消失問題並實作多選合併 */
 const displayAttributes = computed(() => {
   const p = product.value
   if (!p || !p.attributesJson) return []
 
   try {
     const parsed = JSON.parse(p.attributesJson)
-    return parsed.map((attr: any) => {
+    const flatList = parsed.map((attr: any) => {
       const attrId = attr.AttributeId || attr.attributeId
       const optId = attr.OptionId || attr.optionId
       let customVal = attr.CustomValue || attr.customValue || attr.Value || attr.value
@@ -380,7 +380,7 @@ const displayAttributes = computed(() => {
 
       let finalValue = customVal
 
-      // 核心修復：如果沒有明確的自填字串，但有 optId
+      // 如果沒有明確的自填字串，但有 optId
       if (!finalValue && optId !== null && optId !== undefined) {
         if (def && def.options) {
           // 用 == 弱型別比對，避免數字與字串型別差異
@@ -388,7 +388,7 @@ const displayAttributes = computed(() => {
           if (opt) {
             finalValue = opt.value // 找到對應選項，顯示選項文字
           } else {
-            // 【關鍵防呆】找不到該選項！代表這個 optId 其實是手填的數字內容 (例如 123)
+            // 【關鍵防呆】找不到該選項！代表這個 optId 其實是手填的數字內容
             finalValue = String(optId)
           }
         } else {
@@ -398,6 +398,24 @@ const displayAttributes = computed(() => {
 
       return { id: attrId, label: labelName, value: finalValue }
     }).filter(a => a.value !== null && a.value !== undefined && a.value !== '')
+
+    // 群組化邏輯：將相同 ID 的屬性合併
+    const grouped: Record<number, { id: number; label: string; values: string[] }> = {}
+    flatList.forEach((item) => {
+      const id = item.id
+      if (!grouped[id]) {
+        grouped[id] = { id, label: item.label, values: [String(item.value)] }
+      } else {
+        grouped[id].values.push(String(item.value))
+      }
+    })
+
+    // 將合併後的陣列轉回適合渲染的格式
+    return Object.values(grouped).map((g) => ({
+      id: g.id,
+      label: g.label,
+      value: g.values.join('、'),
+    }))
   } catch (e) {
     console.error('屬性解析錯誤:', e)
     return []
