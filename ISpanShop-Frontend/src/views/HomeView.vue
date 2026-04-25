@@ -8,18 +8,24 @@
           <el-carousel height="320px" arrow="always">
             <el-carousel-item v-for="promo in promotions" :key="promo.id">
               <div class="carousel-slide promo-slide" @click="goToActivity(promo)">
-                <!-- 1. 完美填滿圖片 (保留右側主體) -->
+                <!-- 底層：模糊滿版背景 (營造氛圍) -->
                 <img
                   :src="getBannerImage(promo)"
-                  class="slide-img-new"
-                  alt="Banner"
-                  style="width: 100%; height: 100%; object-fit: cover; object-position: right center; position: absolute; top: 0; left: 0; z-index: 0;"
+                  alt="背景氛圍"
+                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; filter: blur(20px) brightness(0.6); transform: scale(1.1); z-index: 0;"
+                />
+
+                <!-- 中層：完整商品圖 (不裁切靠右) -->
+                <img
+                  :src="getBannerImage(promo)"
+                  alt="活動主圖"
+                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: right center; z-index: 1;"
                 />
                 
-                <!-- 3. 文字清晰漸層層 -->
-                <div class="slide-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(26,27,46,0.9) 0%, rgba(26,27,46,0.2) 50%, transparent 100%); z-index: 1;"></div>
+                <!-- 漸層遮罩層：提升文字辨識度 -->
+                <div class="slide-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(26,27,46,0.95) 0%, rgba(26,27,46,0.6) 40%, transparent 100%); z-index: 2; pointer-events: none;"></div>
 
-                <!-- 2. 修復文字與按鈕變形 -->
+                <!-- 頂層：文字與按鈕 (z-index 需最高) -->
                 <div class="slide-content" style="position: relative; height: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding-left: 60px; color: white; z-index: 10;">
                   <div class="slide-tag">{{ promo.typeLabel }}</div>
                   <h2 style="margin: 0 0 10px; font-size: 42px; font-weight: 800;">{{ promo.title }}</h2>
@@ -56,18 +62,24 @@
           <el-carousel height="320px" arrow="always">
             <el-carousel-item v-for="(banner, i) in staticBanners" :key="i">
               <div class="carousel-slide" @click="goToActivity(banner)">
-                <!-- 1. 完美填滿圖片 (保留右側主體) -->
+                <!-- 底層：模糊滿版背景 (營造氛圍) -->
                 <img
                   :src="getBannerImage(banner)"
-                  class="slide-img-new"
-                  alt="Banner"
-                  style="width: 100%; height: 100%; object-fit: cover; object-position: right center; position: absolute; top: 0; left: 0; z-index: 0;"
+                  alt="背景氛圍"
+                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; filter: blur(20px) brightness(0.6); transform: scale(1.1); z-index: 0;"
                 />
 
-                <!-- 3. 文字清晰漸層層 -->
-                <div class="slide-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(26,27,46,0.9) 0%, rgba(26,27,46,0.2) 50%, transparent 100%); z-index: 1;"></div>
+                <!-- 中層：完整商品圖 (不裁切靠右) -->
+                <img
+                  :src="getBannerImage(banner)"
+                  alt="活動主圖"
+                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: right center; z-index: 1;"
+                />
 
-                <!-- 2. 修復文字與按鈕變形 -->
+                <!-- 漸層遮罩層 -->
+                <div class="slide-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(26,27,46,0.95) 0%, rgba(26,27,46,0.6) 40%, transparent 100%); z-index: 2; pointer-events: none;"></div>
+
+                <!-- 頂層：文字與按鈕 -->
                 <div class="slide-content" style="position: relative; height: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding-left: 60px; color: white; z-index: 10;">
                   <div class="slide-tag">{{ banner.tag }}</div>
                   <h2 style="margin: 0 0 10px; font-size: 42px; font-weight: 800;">{{ banner.title }}</h2>
