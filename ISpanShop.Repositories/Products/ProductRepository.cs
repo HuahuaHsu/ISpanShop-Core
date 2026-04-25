@@ -317,7 +317,8 @@ namespace ISpanShop.Repositories.Products
                             if (!incomingIds.Contains(oldVar.Id))
                             {
                                 oldVar.IsDeleted = true; // 軟刪除
-                            }
+								oldVar.SkuCode = Guid.NewGuid().ToString();
+							}
                         }
 
                         // Add / Update
@@ -329,8 +330,8 @@ namespace ISpanShop.Repositories.Products
                                 var target = existingVariants.FirstOrDefault(ev => ev.Id == v.Id);
                                 if (target != null)
                                 {
-                                    target.SkuCode       = v.SkuCode;
-                                    target.VariantName   = v.VariantName;
+									// 空字串轉 null，避免多筆 "" 違反 UNIQUE KEY
+									target.SkuCode = string.IsNullOrWhiteSpace(v.SkuCode) ? Guid.NewGuid().ToString() : v.SkuCode; target.VariantName   = v.VariantName;
                                     target.SpecValueJson = v.SpecValueJson;
                                     target.Price         = v.Price;
                                     target.Stock         = v.Stock;
@@ -342,8 +343,9 @@ namespace ISpanShop.Repositories.Products
                                 product.ProductVariants.Add(new ProductVariant
                                 {
                                     ProductId     = product.Id,
-                                    SkuCode       = v.SkuCode,
-                                    VariantName   = v.VariantName,
+									// 空字串轉 null，避免多筆 "" 違反 UNIQUE KEY
+									SkuCode = string.IsNullOrWhiteSpace(v.SkuCode) ? Guid.NewGuid().ToString() : v.SkuCode,
+									VariantName   = v.VariantName,
                                     SpecValueJson = v.SpecValueJson,
                                     Price         = v.Price,
                                     Stock         = v.Stock,
