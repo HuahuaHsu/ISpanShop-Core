@@ -363,35 +363,43 @@ const safeProduct = computed(() => {
   }
 })
 
-/** 解析並翻譯屬性字典 */
+/** 解析並翻譯屬性字典 — 修復數字自填消失問題 */
 const displayAttributes = computed(() => {
   const p = product.value
   if (!p || !p.attributesJson) return []
+
   try {
     const parsed = JSON.parse(p.attributesJson)
-    if (!Array.isArray(parsed)) return []
-
     return parsed.map((attr: any) => {
-      // 支援大小寫 Key (AttributeId / attributeId)
       const attrId = attr.AttributeId || attr.attributeId
       const optId = attr.OptionId || attr.optionId
-      const customVal = attr.CustomValue || attr.customValue
+      let customVal = attr.CustomValue || attr.customValue || attr.Value || attr.value
 
-      // 1. 去字典找屬性定義
       const def = categoryAttributes.value?.find(c => c.id === attrId)
-      const label = def ? def.name : `屬性#${attrId}`
+      const labelName = def ? def.name : `屬性#${attrId}`
 
-      // 2. 決定顯示的值：優先顯示 CustomValue，若無則用 OptionId 去字典找
-      let value = customVal
-      if (!value && optId && def?.options) {
-        const opt = def.options.find((o: any) => o.id === optId)
-        if (opt) value = opt.value
+      let finalValue = customVal
+
+      // 核心修復：如果沒有明確的自填字串，但有 optId
+      if (!finalValue && optId !== null && optId !== undefined) {
+        if (def && def.options) {
+          // 用 == 弱型別比對，避免數字與字串型別差異
+          const opt = def.options.find(o => o.id == optId)
+          if (opt) {
+            finalValue = opt.value // 找到對應選項，顯示選項文字
+          } else {
+            // 【關鍵防呆】找不到該選項！代表這個 optId 其實是手填的數字內容 (例如 123)
+            finalValue = String(optId)
+          }
+        } else {
+          finalValue = String(optId)
+        }
       }
 
-      return { id: attrId, label, value: value || '—' }
-    }).filter(a => a.value !== '—')
+      return { id: attrId, label: labelName, value: finalValue }
+    }).filter(a => a.value !== null && a.value !== undefined && a.value !== '')
   } catch (e) {
-    console.error('屬性解析失敗', e)
+    console.error('屬性解析錯誤:', e)
     return []
   }
 })
