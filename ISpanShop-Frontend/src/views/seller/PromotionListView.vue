@@ -357,7 +357,7 @@
         style="width: 100%; margin-top: 12px;"
         row-key="id"
       >
-        <el-table-column type="selection" width="50" />
+        <el-table-column type="selection" :reserve-selection="true" width="50" />
         <el-table-column label="商品" min-width="280">
           <template #default="{ row }">
             <div class="selector-product-row">
