@@ -182,9 +182,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useSellerStore } from '../stores/seller'
 import ChatFloat from '../components/chat/ChatFloat.vue'
 import {
-  ArrowDown, House, SwitchButton, WarningFilled,
+  ArrowDown, House, SwitchButton,
   DataAnalysis, Box, List, Plus, Document, RefreshLeft,
   PriceTag, StarFilled, Ticket, TrendCharts, Histogram, DataLine,
   ChatDotRound, DArrowLeft, DArrowRight, Setting, WarningFilled
