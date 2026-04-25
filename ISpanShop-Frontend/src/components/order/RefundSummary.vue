@@ -10,83 +10,81 @@ interface OrderItem {
 }
 
 interface OrderData {
-  totalAmount: number
-  finalAmount: number
+  totalAmount?: number
+  finalAmount?: number
   levelDiscount?: number
   discountAmount?: number
   pointDiscount?: number
-  items: OrderItem[]
+  items?: OrderItem[]
 }
 
 interface Props {
-  order: OrderData | null
+  order: OrderData | any // 使用 any 以兼容後端可能的不同 DTO
   selectedItemIds: number[]
   returnQuantities: Record<number, number>
 }
 
 const props = defineProps<Props>()
 
-// 除錯訊息：當 order 改變時打印
-watch(() => props.order, (newOrder) => {
-  if (newOrder) {
-    console.log('RefundSummary: Order Data received', {
-      totalAmount: newOrder.totalAmount,
-      finalAmount: newOrder.finalAmount,
-      levelDiscount: newOrder.levelDiscount,
-      discountAmount: newOrder.discountAmount
-    })
-  }
-}, { immediate: true })
+// 1. 安全取得數值 (處理大小寫問題)
+const getVal = (obj: any, key: string) => {
+  if (!obj) return 0
+  const lowerKey = key.charAt(0).toLowerCase() + key.slice(1)
+  const upperKey = key.charAt(0).toUpperCase() + key.slice(1)
+  return obj[lowerKey] ?? obj[upperKey] ?? 0
+}
 
-// 1. 退貨商品原價小計
+const totalAmount = computed(() => getVal(props.order, 'totalAmount'))
+const finalAmount = computed(() => getVal(props.order, 'finalAmount'))
+const levelDiscount = computed(() => getVal(props.order, 'levelDiscount'))
+const discountAmount = computed(() => getVal(props.order, 'discountAmount'))
+const pointDiscount = computed(() => getVal(props.order, 'pointDiscount'))
+
+// 2. 退貨商品原價小計
 const itemsSubtotal = computed(() => {
-  if (!props.order) return 0
+  if (!props.order || !props.order.items) return 0
   return props.selectedItemIds.reduce((sum, id) => {
-    const item = props.order?.items.find(i => i.id === id)
+    const item = props.order.items.find((i: any) => i.id === id)
     return sum + (item ? item.price * (props.returnQuantities[id] || 0) : 0)
   }, 0)
 })
 
-// 2. 判斷是否為「全額退貨」
+// 3. 判斷是否為「全額退貨」
+// 在賣家審核端，如果商品小計等於訂單總原價，我們就視為全額退貨
 const isFullReturn = computed(() => {
-  if (!props.order) return false
-  const isAllSelected = props.order.items.length === props.selectedItemIds.length
-  const isAllQtyMatch = props.selectedItemIds.every(id => {
-    const item = props.order?.items.find(i => i.id === id)
-    return item && props.returnQuantities[id] === item.quantity
-  })
-  return isAllSelected && isAllQtyMatch
+  if (totalAmount.value === 0) return false
+  // 誤差容許值 1 元
+  return Math.abs(itemsSubtotal.value - totalAmount.value) < 1
 })
 
-// 3. 計算各項分攤比例 (部分退款時使用)
+// 4. 計算各項分攤比例 (部分退款時使用)
 const ratio = computed(() => {
-  if (!props.order || props.order.totalAmount === 0) return 0
-  return itemsSubtotal.value / props.order.totalAmount
+  if (totalAmount.value === 0) return 0
+  return itemsSubtotal.value / totalAmount.value
 })
 
-// 4. 各項折抵分攤計算
+// 5. 各項折抵分攤計算
 const levelDiscountShare = computed(() => 
-  isFullReturn.value ? (props.order?.levelDiscount || 0) : Math.round((props.order?.levelDiscount || 0) * ratio.value)
+  isFullReturn.value ? levelDiscount.value : Math.round(levelDiscount.value * ratio.value)
 )
 
 const couponDiscountShare = computed(() => 
-  isFullReturn.value ? (props.order?.discountAmount || 0) : Math.round((props.order?.discountAmount || 0) * ratio.value)
+  isFullReturn.value ? discountAmount.value : Math.round(discountAmount.value * ratio.value)
 )
 
 const pointDiscountShare = computed(() => 
-  isFullReturn.value ? (props.order?.pointDiscount || 0) : Math.round((props.order?.pointDiscount || 0) * ratio.value)
+  isFullReturn.value ? pointDiscount.value : Math.round(pointDiscount.value * ratio.value)
 )
 
-// 5. 最終預計退款總額
+// 6. 最終預計退款金額
 const finalRefundAmount = computed(() => {
-  if (isFullReturn.value) return props.order?.finalAmount || 0
+  if (isFullReturn.value) return finalAmount.value
   const amount = itemsSubtotal.value - levelDiscountShare.value - couponDiscountShare.value - pointDiscountShare.value
   return amount > 0 ? amount : 0
 })
 
 const formatPrice = (val: number) => val?.toLocaleString('zh-TW') || '0'
 
-// 向外暴露計算結果，讓父組件在 Footer 也能顯示
 defineExpose({
   finalRefundAmount
 })
@@ -101,7 +99,6 @@ defineExpose({
       </div>
 
       <!-- 會員等級折抵分攤 -->
-      <!-- 修正：確保只要有數值就顯示，或者至少在 debug 時能看到 -->
       <div v-if="levelDiscountShare !== 0" class="summary-row">
         <span class="label-with-hint">
           會員等級折抵分攤

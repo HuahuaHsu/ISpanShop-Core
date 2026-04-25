@@ -36,6 +36,14 @@ namespace ISpanShop.Models.DTOs.Orders
 
         // 買家資訊
         public string BuyerAccount { get; set; }
+
+        // 訂單財務資訊
+        public decimal TotalAmount { get; set; }
+        public decimal? ShippingFee { get; set; }
+        public decimal? LevelDiscount { get; set; }
+        public decimal? DiscountAmount { get; set; }
+        public int? PointDiscount { get; set; }
+        public decimal FinalAmount { get; set; }
         
         // 商品明細 (退款通常是整筆訂單，或由明細決定金額)
         public List<SellerOrderItemDto> Items { get; set; } = new();

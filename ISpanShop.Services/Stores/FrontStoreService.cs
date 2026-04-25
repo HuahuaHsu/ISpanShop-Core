@@ -570,6 +570,13 @@ namespace ISpanShop.Services.Stores
                 ImageUrls = latestReturn.ReturnRequestImages.Select(img => img.ImageUrl).ToList(),
                 BuyerAccount = order.User?.Account ?? "未知",
 
+                TotalAmount = order.TotalAmount,
+                ShippingFee = order.ShippingFee,
+                LevelDiscount = order.LevelDiscount,
+                DiscountAmount = order.DiscountAmount,
+                PointDiscount = order.PointDiscount,
+                FinalAmount = order.FinalAmount,
+
                 // 關鍵：這裡只列出「退貨品項」及其數量
                 Items = latestReturn.ReturnRequestItems.Select(ri => {
                     string image = ri.OrderDetail.CoverImage;

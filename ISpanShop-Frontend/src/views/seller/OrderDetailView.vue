@@ -15,7 +15,7 @@
         <!-- 退貨中狀態顯示審核按鈕 -->
         <el-button
           v-if="order?.status === 5"
-          type="warning"
+          type="primary"
           @click="router.push(`/seller/returns/${order?.id}`)"
         >
           前往審核退貨

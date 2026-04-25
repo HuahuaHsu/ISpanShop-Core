@@ -136,5 +136,14 @@ export interface SellerReturnDetail {
   statusName: string
   imageUrls: string[]
   buyerAccount: string
+
+  // 訂單財務資訊
+  totalAmount: number
+  shippingFee: number | null
+  levelDiscount: number | null
+  discountAmount: number | null
+  pointDiscount: number | null
+  finalAmount: number
+
   items: SellerOrderItem[]
 }
