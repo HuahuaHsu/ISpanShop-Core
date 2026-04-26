@@ -459,6 +459,9 @@ public partial class ISpanShopDBContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.PaymentDate).HasColumnType("datetime");
             entity.Property(e => e.PointDiscount).HasDefaultValue(0);
+            entity.Property(e => e.PromotionDiscount)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(18, 2)");
             entity.Property(e => e.RecipientAddress).HasMaxLength(300);
             entity.Property(e => e.RecipientName).HasMaxLength(50);
             entity.Property(e => e.RecipientPhone)
@@ -473,6 +476,10 @@ public partial class ISpanShopDBContext : DbContext
             entity.HasOne(d => d.Coupon).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.CouponId)
                 .HasConstraintName("FK_Orders_Coupons");
+
+            entity.HasOne(d => d.Promotion).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.PromotionId)
+                .HasConstraintName("FK_Orders_Promotions");
 
             entity.HasOne(d => d.Store).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.StoreId)
