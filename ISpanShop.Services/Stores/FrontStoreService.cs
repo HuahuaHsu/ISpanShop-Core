@@ -266,6 +266,12 @@ namespace ISpanShop.Services.Stores
             };
         }
 
+        public async Task<Store?> GetStoreByUserIdAsync(int userId)
+        {
+            return await _context.Stores
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+        }
+
         public async Task<bool> UpdateStoreInfoAsync(int userId, UpdateStoreInfoRequestDto dto)
         {
             var store = await _context.Stores

@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using ISpanShop.Common.Enums;
 using ISpanShop.Models.DTOs.Stores;
-
+using ISpanShop.Models.EfModels;
 using ISpanShop.Models.DTOs.Orders;
 using System.Collections.Generic;
 
@@ -14,6 +14,7 @@ namespace ISpanShop.Services.Stores
         Task<string> GetStoreStatusAsync(int userId); // 回傳狀態：NotApplied, Pending, Approved, Rejected
         Task<(string Status, bool IsBanned)> GetStoreStatusDetailAsync(int userId);
         Task<UpdateStoreInfoRequestDto> GetStoreInfoAsync(int userId);
+        Task<Store?> GetStoreByUserIdAsync(int userId);
         Task<bool> UpdateStoreInfoAsync(int userId, UpdateStoreInfoRequestDto dto);
         Task<int> GetPendingOrdersCountAsync(int userId);
 		Task<StorePublicProfileDto?> GetPublicStoreProfileAsync(int storeId);
