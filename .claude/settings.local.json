@@ -16,7 +16,8 @@
       "Bash(cmd /c \"type C:\\\\Users\\\\ispan\\\\Desktop\\\\github_repo\\\\ISpanShop-Core\\\\ISpanShop.Models\\\\Seeding\\\\SeederMappings.cs\" 2>&1 | grep -n \"機車\\\\|汽車\\\\|motorcycle\\\\|vehicle\" | head -20)",
       "Bash(cd:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm run *)"
     ]
   }
 }

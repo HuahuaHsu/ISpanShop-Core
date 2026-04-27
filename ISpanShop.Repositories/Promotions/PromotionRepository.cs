@@ -21,6 +21,9 @@ namespace ISpanShop.Repositories.Promotions
 
             var query = _db.Promotions
                 .AsNoTracking()
+                .Include(p => p.PromotionItems)
+                    .ThenInclude(pi => pi.Product)
+                        .ThenInclude(prod => prod.ProductImages)
                 .Where(p => !p.IsDeleted
                          && p.Status == 1
                          && p.StartTime <= now

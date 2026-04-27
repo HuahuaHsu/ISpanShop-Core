@@ -37,17 +37,32 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
         {
             var promotions = await _promotionSvc.GetActivePromotionsAsync(type, limit);
 
-            var items = promotions.Select(p => new PromotionListItemDto
+            var items = promotions.Select(p =>
             {
-                Id             = p.Id,
-                Title          = p.Name,
-                Subtitle       = string.IsNullOrWhiteSpace(p.Description) ? null : p.Description,
-                Type           = PromotionService.GetTypeCode(p.PromotionType),
-                TypeLabel      = PromotionService.GetTypeLabel(p.PromotionType),
-                BannerImageUrl = null,          // DB 無此欄位，待補
-                LinkUrl        = $"/promotion/{p.Id}",
-                StartDate      = p.StartTime,
-                EndDate        = p.EndTime
+                // 每個 PromotionItem 取其商品的主圖（IsMain 優先，其次 SortOrder 最小）
+                var productImageUrls = p.PromotionItems
+                    .Select(pi => pi.Product?.ProductImages?
+                        .OrderBy(img => img.IsMain == true ? 0 : 1)
+                        .ThenBy(img => img.SortOrder ?? 999)
+                        .FirstOrDefault()?.ImageUrl)
+                    .Where(url => !string.IsNullOrEmpty(url))
+                    .Distinct()
+                    .Take(4)
+                    .ToList();
+
+                return new PromotionListItemDto
+                {
+                    Id             = p.Id,
+                    Title          = p.Name,
+                    Subtitle       = string.IsNullOrWhiteSpace(p.Description) ? null : p.Description,
+                    Type           = PromotionService.GetTypeCode(p.PromotionType),
+                    TypeLabel      = PromotionService.GetTypeLabel(p.PromotionType),
+                    BannerImageUrl = productImageUrls.FirstOrDefault(),
+                    ProductImages  = productImageUrls!,
+                    LinkUrl        = $"/promotion/{p.Id}",
+                    StartDate      = p.StartTime,
+                    EndDate        = p.EndTime
+                };
             }).ToList();
 
             return Ok(new

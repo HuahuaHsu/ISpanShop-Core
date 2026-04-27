@@ -7,31 +7,39 @@
         <div class="main-carousel">
           <el-carousel height="320px" arrow="always">
             <el-carousel-item v-for="promo in promotions" :key="promo.id">
-              <div class="carousel-slide promo-slide" @click="goToActivity(promo)">
-                <!-- 底層：模糊滿版背景 (營造氛圍) -->
+              <div class="carousel-slide promo-slide" :style="getSlideBackground(promo)" @click="goToActivity(promo)">
+                <!-- 模糊底圖（有商品圖時才渲染） -->
                 <img
+                  v-if="getBannerImage(promo)"
                   :src="getBannerImage(promo)"
-                  alt="背景氛圍"
-                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; filter: blur(20px) brightness(0.6); transform: scale(1.1); z-index: 0;"
+                  class="slide-bg-blur"
+                  aria-hidden="true"
                 />
-
-                <!-- 中層：完整商品圖 (不裁切靠右) -->
-                <img
-                  :src="getBannerImage(promo)"
-                  alt="活動主圖"
-                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: right center; z-index: 1;"
-                />
-                
-                <!-- 漸層遮罩層：提升文字辨識度 -->
-                <div class="slide-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(26,27,46,0.95) 0%, rgba(26,27,46,0.6) 40%, transparent 100%); z-index: 2; pointer-events: none;"></div>
-
-                <!-- 頂層：文字與按鈕 (z-index 需最高) -->
-                <div class="slide-content" style="position: relative; height: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding-left: 60px; color: white; z-index: 10;">
-                  <div class="slide-tag">{{ promo.typeLabel }}</div>
-                  <h2 style="margin: 0 0 10px; font-size: 42px; font-weight: 800;">{{ promo.title }}</h2>
-                  <p v-if="promo.subtitle" style="margin-bottom: 24px; font-size: 18px; opacity: 0.85;">{{ promo.subtitle }}</p>
-                  <el-button type="primary" round size="large" @click.stop="goToActivity(promo)">立即搶購</el-button>
+                <!-- 漸層遮罩：保證文字可讀 -->
+                <div class="slide-overlay"></div>
+                <!-- 左側文字區 -->
+                <div class="slide-content">
+                  <span class="slide-tag" :class="promo.type">{{ promo.typeLabel }}</span>
+                  <h2 class="slide-title">{{ promo.title }}</h2>
+                  <p v-if="promo.subtitle" class="slide-desc">{{ promo.subtitle }}</p>
+                  <el-button type="danger" round size="large" @click.stop="goToActivity(promo)">立即搶購</el-button>
                 </div>
+                <!-- 右側商品圖拼貼（最多 3 張） -->
+                <div v-if="promo.productImages && promo.productImages.length > 0" class="slide-products">
+                  <div
+                    v-for="(img, i) in promo.productImages.slice(0, 3)"
+                    :key="i"
+                    class="slide-product-card"
+                  >
+                    <img :src="formatImageUrl(img)" alt="" />
+                  </div>
+                </div>
+                <!-- 沒有多張商品圖時，顯示單張主圖靠右 -->
+                <img
+                  v-else-if="getBannerImage(promo)"
+                  :src="getBannerImage(promo)"
+                  class="slide-main-img"
+                />
               </div>
             </el-carousel-item>
           </el-carousel>
@@ -42,26 +50,24 @@
             v-for="promo in sideBanners"
             :key="promo.id"
             class="side-banner-dynamic"
-            style="position: relative; cursor: pointer; border-radius: 12px; overflow: hidden;"
+            :style="!getBannerImage(promo) ? { background: typeGradients[promo.type] ?? typeGradients['other'] } : {}"
             @click="goToActivity(promo)"
           >
-            <!-- 背景圖 (破圖防呆) -->
+            <!-- 背景圖（有圖才渲染，破圖防呆） -->
             <img
+              v-if="getBannerImage(promo)"
               :src="getBannerImage(promo)"
               alt=""
               class="sb-bg-img"
-              @error="(e: any) => e.target.style.display = 'none'"
-              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;"
+              @error="(e: any) => (e.target as HTMLImageElement).style.display = 'none'"
             />
-            
             <!-- 漸層遮罩 -->
-            <div class="sb-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(26,27,46,0.9) 0%, rgba(26,27,46,0.3) 100%); z-index: 1;"></div>
-
+            <div class="sb-overlay"></div>
             <!-- 文字內容 -->
-            <div class="sb-content" style="position: relative; z-index: 2; padding: 16px 20px; color: white; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: flex-start;">
-              <span class="sb-tag" style="background-color: #EE4D2D; padding: 3px 10px; border-radius: 4px; font-size: 11px; margin-bottom: 8px;">{{ promo.typeLabel }}</span>
-              <h3 class="sb-title" style="margin: 0 0 4px; font-size: 18px; font-weight: 700; line-height: 1.4;">{{ promo.title }}</h3>
-              <p v-if="promo.subtitle" class="sb-subtitle" style="margin: 0; font-size: 13px; opacity: 0.85; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ promo.subtitle }}</p>
+            <div class="sb-content">
+              <span class="sb-tag" :class="promo.type">{{ promo.typeLabel }}</span>
+              <h3 class="sb-title">{{ promo.title }}</h3>
+              <p v-if="promo.subtitle" class="sb-subtitle">{{ promo.subtitle }}</p>
             </div>
           </div>
 
@@ -80,31 +86,17 @@
         <div class="main-carousel">
           <el-carousel height="320px" arrow="always">
             <el-carousel-item v-for="(banner, i) in staticBanners" :key="i">
-              <div class="carousel-slide" @click="goToActivity(banner)">
-                <!-- 底層：模糊滿版背景 (營造氛圍) -->
-                <img
-                  :src="getBannerImage(banner)"
-                  alt="背景氛圍"
-                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; filter: blur(20px) brightness(0.6); transform: scale(1.1); z-index: 0;"
-                />
-
-                <!-- 中層：完整商品圖 (不裁切靠右) -->
-                <img
-                  :src="getBannerImage(banner)"
-                  alt="活動主圖"
-                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: right center; z-index: 1;"
-                />
-
-                <!-- 漸層遮罩層 -->
-                <div class="slide-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, rgba(26,27,46,0.95) 0%, rgba(26,27,46,0.6) 40%, transparent 100%); z-index: 2; pointer-events: none;"></div>
-
-                <!-- 頂層：文字與按鈕 -->
-                <div class="slide-content" style="position: relative; height: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding-left: 60px; color: white; z-index: 10;">
-                  <div class="slide-tag">{{ banner.tag }}</div>
-                  <h2 style="margin: 0 0 10px; font-size: 42px; font-weight: 800;">{{ banner.title }}</h2>
-                  <p style="margin-bottom: 24px; font-size: 18px; opacity: 0.85;">{{ banner.subtitle }}</p>
-                  <el-button type="primary" round size="large" @click.stop="goToActivity(banner)">立即搶購</el-button>
+              <div class="carousel-slide" :style="getSlideBackground(banner)" @click="goToActivity(banner)">
+                <!-- 漸層遮罩 -->
+                <div class="slide-overlay"></div>
+                <!-- 文字與按鈕 -->
+                <div class="slide-content">
+                  <span class="slide-tag">{{ banner.tag }}</span>
+                  <h2 class="slide-title">{{ banner.title }}</h2>
+                  <p class="slide-desc">{{ banner.subtitle }}</p>
+                  <el-button type="danger" round size="large" @click.stop="goToActivity(banner)">立即搶購</el-button>
                 </div>
+                <span class="slide-static-emoji">{{ banner.emoji }}</span>
               </div>
             </el-carousel-item>
           </el-carousel>
@@ -430,28 +422,32 @@ function goToActivity(banner: any): void {
   void router.push({ path: '/products', query: queryParams })
 }
 
-/** 智慧派圖：根據活動內容動態決定輪播背景 */
+const API_BASE = (import.meta.env['VITE_API_BASE_URL'] as string) || 'https://localhost:7125'
+
+function formatImageUrl(url: string | null | undefined): string {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return API_BASE + url
+}
+
+const typeGradients: Record<string, string> = {
+  flashSale:  'linear-gradient(135deg, #ff6b35 0%, #f7c948 100%)',
+  discount:   'linear-gradient(135deg, #ee4d2d 0%, #ff7849 100%)',
+  limitedBuy: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+  other:      'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+}
+
 function getBannerImage(banner: any): string {
   if (!banner) return ''
+  if (banner.bannerImageUrl) return formatImageUrl(banner.bannerImageUrl as string)
+  if ((banner.productImages as string[] | undefined)?.length) return formatImageUrl(banner.productImages[0] as string)
+  return ''
+}
 
-  // 1. 最高優先級：後端傳來的真實路徑
-  const imageUrl = banner.bannerImageUrl || banner.imageUrl
-  if (imageUrl && imageUrl.trim() !== '') return imageUrl
-
-  // 2. 關鍵字派圖邏輯
-  const title = banner.title || ''
-  if (title.includes('腳架')) return 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=1200&auto=format&fit=crop'
-  if (title.includes('3C') || title.includes('筆電')) return 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1200&auto=format&fit=crop'
-  if (title.includes('春夏') || title.includes('穿搭')) return 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop'
-
-  // 3. 全館通用圖 (ID 穩定隨機)
-  const defaultBanners = [
-    'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1200&auto=format&fit=crop', // 購物節
-    'https://images.unsplash.com/photo-1544117518-32ed05601136?q=80&w=1200&auto=format&fit=crop', // 禮物
-    'https://images.unsplash.com/photo-1534452203294-49c8913721b2?q=80&w=1200&auto=format&fit=crop', // 折扣
-  ]
-  const bannerId = banner.id || 0
-  return defaultBanners[bannerId % defaultBanners.length]
+function getSlideBackground(banner: any): Record<string, string> {
+  if (getBannerImage(banner)) return {}
+  if (banner.bg as string | undefined) return { background: banner.bg as string }
+  return { background: typeGradients[banner.type as string] ?? typeGradients['other'] ?? '#1a1a2e' }
 }
 
 async function loadProducts(): Promise<void> {
@@ -729,61 +725,140 @@ const quickItems = [
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
+
+/* 每個 slide */
 .carousel-slide {
-  height: 100%;
   position: relative;
+  height: 320px;
   overflow: hidden;
-  background-color: #1a1b2e; /* 補齊圖片左側的底色 */
+  display: flex;
+  align-items: center;
+  background-color: #1a1b2e;
   cursor: pointer;
 }
-.slide-img-new {
+
+/* 模糊底圖 */
+.slide-bg-blur {
   position: absolute;
-  top: 0;
-  right: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: right center; /* 圖片靠右，文字在左 */
-  z-index: 1;
+  object-fit: cover;
+  filter: blur(20px) brightness(0.4);
+  transform: scale(1.1);
+  z-index: 0;
 }
+
+/* 漸層遮罩：左深右透，保障文字可讀 */
+.slide-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 左側文字區 */
 .slide-content {
   position: relative;
-  height: 100%;
+  z-index: 10;
+  padding: 40px 40px 40px 60px;
+  max-width: 50%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 0 60px;
+  align-items: flex-start;
   color: white;
-  z-index: 2; /* 確保文字在圖片上方 */
 }
+
+/* 活動類型標籤 */
 .slide-tag {
   display: inline-block;
-  background: rgba(238,77,45,0.2);
-  color: #EE4D2D;
-  padding: 6px 16px;
-  border-radius: 20px;
+  padding: 4px 14px;
+  border-radius: 4px;
   font-size: 13px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(238,77,45,0.3);
+  font-weight: 600;
+  margin-bottom: 12px;
+  background: rgba(238,77,45,0.85);
 }
-.carousel-slide h2 { font-size: 42px; margin: 0 0 10px; font-weight: 800; }
-.carousel-slide p { font-size: 18px; opacity: 0.85; margin-bottom: 24px; }
-.slide-emoji {
-  font-size: 180px;
-  filter: drop-shadow(0 10px 30px rgba(238,77,45,0.3));
+.slide-tag.flashSale  { background: #ff6b35; }
+.slide-tag.discount   { background: #ee4d2d; }
+.slide-tag.limitedBuy { background: #7c3aed; }
+.slide-tag.other      { background: #555; }
+
+.slide-title {
+  font-size: 30px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  line-height: 1.3;
 }
-.side-banner-dynamic {
-  flex: 1;
+.slide-desc {
+  font-size: 15px;
+  opacity: 0.9;
+  margin-bottom: 20px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  line-height: 1.6;
+}
+
+/* 右側商品圖拼貼 */
+.slide-products {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 5;
+}
+.slide-product-card {
+  width: 130px;
+  height: 130px;
   border-radius: 12px;
   overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  flex-shrink: 0;
+  transition: transform 0.3s;
+}
+.slide-product-card:hover { transform: translateY(-4px) scale(1.02); }
+.slide-product-card img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 單張主圖（無多張商品圖時） */
+.slide-main-img {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-height: 240px;
+  max-width: 280px;
+  object-fit: contain;
+  z-index: 5;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+
+/* 靜態 fallback 用 emoji */
+.slide-static-emoji {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 140px;
+  opacity: 0.25;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 右側小 Banner */
+.side-banner-dynamic {
   position: relative;
+  border-radius: 12px;
+  overflow: hidden;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   transition: transform 0.3s;
 }
-.side-banner-dynamic:hover {
-  transform: translateY(-3px);
-}
+.side-banner-dynamic:hover { transform: translateY(-3px); }
+
 .sb-bg-img {
   position: absolute;
   inset: 0;
@@ -809,6 +884,19 @@ const quickItems = [
   justify-content: center;
   align-items: flex-start;
 }
+.sb-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  background: rgba(238,77,45,0.85);
+}
+.sb-tag.flashSale  { background: #ff6b35; }
+.sb-tag.discount   { background: #ee4d2d; }
+.sb-tag.limitedBuy { background: #7c3aed; }
+.sb-tag.other      { background: #555; }
 .sb-title {
   margin: 0 0 4px;
   font-size: 18px;

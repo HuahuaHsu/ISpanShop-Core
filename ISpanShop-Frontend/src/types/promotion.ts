@@ -6,6 +6,7 @@ export interface Promotion {
   type: string
   typeLabel: string
   bannerImageUrl: string | null
+  productImages: string[]
   linkUrl: string
   startDate: string
   endDate: string

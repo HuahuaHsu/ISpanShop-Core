@@ -12,8 +12,10 @@ namespace ISpanShop.MVC.Models.Dto
         public string   Type           { get; set; } = string.Empty;
         /// <summary>活動類型中文標籤</summary>
         public string   TypeLabel      { get; set; } = string.Empty;
-        /// <summary>橫幅圖片（DB 無此欄位，目前固定 null）</summary>
+        /// <summary>橫幅圖片：取第一筆關聯商品的主圖</summary>
         public string?  BannerImageUrl { get; set; }
+        /// <summary>關聯商品主圖列表（最多 4 張，用於前端輪播背景）</summary>
+        public List<string> ProductImages { get; set; } = new();
         /// <summary>點擊跳轉路徑（前端慣例 /promotion/{id}）</summary>
         public string   LinkUrl        { get; set; } = string.Empty;
         public DateTime StartDate      { get; set; }
