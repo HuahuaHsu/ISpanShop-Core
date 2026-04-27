@@ -243,16 +243,6 @@ function handleCheckout(): void {
             <div class="item-subtotal">
               NT$ {{ formatPrice((item.promoPrice ?? item.price) * item.quantity) }}
             </div>
-
-            <!-- 刪除 -->
-            <el-button
-              circle
-              size="small"
-              type="danger"
-              plain
-              :icon="Delete"
-              @click="confirmRemove(item.productId, item.variantId)"
-            />
           </div>
             </div>
           </div>
