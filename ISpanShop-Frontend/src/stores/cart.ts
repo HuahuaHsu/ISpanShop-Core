@@ -10,6 +10,17 @@ import {
   clearCartApi
 } from '@/api/cart'
 
+export interface CartPromotion {
+  promotionId: number
+  name: string
+  promotionType: number
+  promotionTypeText: string
+  threshold: number
+  discountValue: number
+  discountType: number
+  description: string
+}
+
 export interface CartItem {
   productId: number
   variantId: number | null
@@ -21,6 +32,8 @@ export interface CartItem {
   specLabel: string
   storeId: number
   storeName: string
+  storeStatus: number
+  promotions: CartPromotion[]
 }
 
 const CART_KEY = 'cart_items'
@@ -60,7 +73,9 @@ export const useCartStore = defineStore('cart', () => {
         selected: true, // 預設選中
         specLabel: item.variantName || '',
         storeId: item.storeId,
-        storeName: item.storeName
+        storeName: item.storeName,
+        storeStatus: item.storeStatus,
+        promotions: item.promotions || []
       }))
     } catch (error) {
       console.error('獲取購物車失敗:', error)
@@ -97,7 +112,9 @@ export const useCartStore = defineStore('cart', () => {
         selected: true,
         specLabel: item.variantName || '',
         storeId: item.storeId,
-        storeName: item.storeName
+        storeName: item.storeName,
+        storeStatus: item.storeStatus,
+        promotions: item.promotions || []
       }))
       // 同步完後清除 localStorage 的暫存，因為已經進資料庫了
       localStorage.removeItem(CART_KEY)

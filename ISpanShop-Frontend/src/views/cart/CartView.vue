@@ -10,6 +10,47 @@ const cartStore = useCartStore()
 
 const isEmpty = computed(() => cartStore.items.length === 0)
 
+const groupedItems = computed(() => {
+  const groups: Record<number, { 
+    id: number, 
+    name: string, 
+    status: number, 
+    items: any[], 
+    storePromotions: any[] 
+  }> = {}
+  
+  cartStore.items.forEach(item => {
+    if (!groups[item.storeId]) {
+      groups[item.storeId] = {
+        id: item.storeId,
+        name: item.storeName,
+        status: item.storeStatus,
+        items: [],
+        storePromotions: []
+      }
+    }
+    groups[item.storeId].items.push(item)
+  })
+
+  // 計算每個賣場的活動進度
+  Object.values(groups).forEach(group => {
+    const promoMap: Record<number, any> = {}
+    group.items.forEach(item => {
+      item.promotions.forEach((p: any) => {
+        if (!promoMap[p.promotionId]) {
+          promoMap[p.promotionId] = { ...p, currentTotal: 0 }
+        }
+        if (item.selected) {
+          promoMap[p.promotionId].currentTotal += item.price * item.quantity
+        }
+      })
+    })
+    group.storePromotions = Object.values(promoMap)
+  })
+
+  return Object.values(groups)
+})
+
 /** 檢查已勾選項目中是否有休假中賣場的商品 */
 const hasVacationItems = computed(() => {
   return cartStore.items.filter(item => item.selected).some(item => item.storeStatus === 2)
@@ -85,15 +126,45 @@ function handleCheckout(): void {
           />
         </div>
 
-        <div class="cart-list">
-          <div
-            v-for="item in cartStore.items"
-            :key="`${item.productId}-${item.variantId}`"
-            class="cart-item"
-            :class="{ 'is-vacation': item.storeStatus === 2 }"
-          >
-            <!-- 勾選框 -->
-            <el-checkbox v-model="item.selected" class="item-checkbox" />
+        <div class="cart-groups">
+          <div v-for="group in groupedItems" :key="group.id" class="store-group">
+            <div class="store-header">
+              <el-icon class="store-icon"><svg viewBox="0 0 1024 1024" width="16" height="16"><path d="M912 216H112c-17.7 0-32 14.3-32 32v560c0 17.7 14.3 32 32 32h800c17.7 0 32-14.3 32-32V248c0-17.7-14.3-32-32-32zM216 752H144V280h72v472z m664 0h-72V280h72v472z m-136 0H288V280h356v472z" fill="currentColor"></path></svg></el-icon>
+              <span class="store-name">{{ group.name }}</span>
+            </div>
+
+            <!-- 活動提示區 -->
+            <div v-if="group.storePromotions.length > 0" class="promotion-alerts">
+              <div v-for="promo in group.storePromotions" :key="promo.promotionId" class="promo-alert">
+                <el-tag size="small" type="danger" effect="plain" class="promo-tag">
+                  {{ promo.promotionTypeText }}
+                </el-tag>
+                <span class="promo-text">
+                  <span class="promo-name">{{ promo.name }}</span>
+                  <template v-if="promo.promotionType === 2">
+                    <span v-if="promo.currentTotal >= promo.threshold" class="promo-met">
+                      ：已滿足門檻 (NT$ {{ formatPrice(promo.threshold) }})，可享折扣！
+                    </span>
+                    <span v-else class="promo-unmet">
+                      ：再湊 <span class="highlight">NT$ {{ formatPrice(promo.threshold - promo.currentTotal) }}</span> 滿足門檻
+                    </span>
+                  </template>
+                  <template v-else>
+                    ：{{ promo.description }}
+                  </template>
+                </span>
+              </div>
+            </div>
+
+            <div class="cart-list">
+              <div
+                v-for="item in group.items"
+                :key="`${item.productId}-${item.variantId}`"
+                class="cart-item"
+                :class="{ 'is-vacation': item.storeStatus === 2 }"
+              >
+                <!-- 勾選框 -->
+                <el-checkbox v-model="item.selected" class="item-checkbox" />
 
             <!-- 商品圖片 -->
             <el-image
@@ -151,6 +222,8 @@ function handleCheckout(): void {
               :icon="Delete"
               @click="confirmRemove(item.productId, item.variantId)"
             />
+          </div>
+            </div>
           </div>
         </div>
 
@@ -212,11 +285,68 @@ function handleCheckout(): void {
 .vacation-warning {
   margin-bottom: 16px;
 }
+.cart-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.store-group {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+.store-header {
+  padding: 12px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.store-icon {
+  color: #606266;
+}
+.store-name {
+  font-weight: 600;
+  color: #303133;
+}
+.promotion-alerts {
+  padding: 10px 20px;
+  background: #fffafa;
+  border-bottom: 1px solid #fff0f0;
+}
+.promo-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.promo-alert:last-child {
+  margin-bottom: 0;
+}
+.promo-text {
+  color: #606266;
+}
+.promo-name {
+  font-weight: 500;
+  color: #303133;
+}
+.promo-met {
+  color: #67C23A;
+  font-weight: 500;
+}
+.promo-unmet {
+  color: #909399;
+}
+.highlight {
+  color: #f56c6c;
+  font-weight: 600;
+}
 .cart-list {
   background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 16px;
 }
 .cart-item {
   display: flex;

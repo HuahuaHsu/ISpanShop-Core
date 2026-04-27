@@ -20,20 +20,53 @@ namespace ISpanShop.Services.Orders
         public async Task<List<CartItemDto>> GetCartAsync(int userId)
         {
             var cart = await GetOrCreateCartAsync(userId);
+            var now = DateTime.Now;
+
+            // 取得所有購物車商品對應的活動
+            var productIds = cart.CartItems.Select(ci => ci.ProductId).Distinct().ToList();
+            var activePromotions = await _context.PromotionItems
+                .Include(pi => pi.Promotion)
+                    .ThenInclude(p => p.PromotionRules)
+                .Where(pi => productIds.Contains(pi.ProductId) 
+                          && pi.Promotion.Status == 1 
+                          && pi.Promotion.StartTime <= now 
+                          && pi.Promotion.EndTime >= now
+                          && !pi.Promotion.IsDeleted)
+                .ToListAsync();
             
-            return cart.CartItems.Select(ci => new CartItemDto
-            {
-                Id = ci.Id,
-                StoreId = ci.StoreId,
-                StoreName = ci.Store?.StoreName ?? "未知商店",
-                ProductId = ci.ProductId,
-                VariantId = ci.VariantId == 0 ? null : ci.VariantId,
-                ProductName = ci.Product?.Name ?? "未知商品",
-                VariantName = ci.Variant?.VariantName,
-                ProductImage = GetProductImage(ci),
-                UnitPrice = ci.UnitPrice ?? ci.Variant?.Price ?? ci.Product?.MinPrice ?? 0,
-                Quantity = ci.Quantity,
-                Selected = true
+            return cart.CartItems.Select(ci => {
+                var itemPromotions = activePromotions
+                    .Where(ap => ap.ProductId == ci.ProductId)
+                    .Select(ap => {
+                        var rule = ap.Promotion.PromotionRules.FirstOrDefault();
+                        return new CartItemPromotionDto
+                        {
+                            PromotionId = ap.PromotionId,
+                            Name = ap.Promotion.Name,
+                            PromotionType = ap.Promotion.PromotionType,
+                            Threshold = rule?.Threshold ?? 0,
+                            DiscountValue = rule?.DiscountValue ?? 0,
+                            DiscountType = rule?.DiscountType ?? 0,
+                            Description = ap.Promotion.Description
+                        };
+                    }).ToList();
+
+                return new CartItemDto
+                {
+                    Id = ci.Id,
+                    StoreId = ci.StoreId,
+                    StoreName = ci.Store?.StoreName ?? "未知商店",
+                    StoreStatus = ci.Store?.StoreStatus ?? 1,
+                    ProductId = ci.ProductId,
+                    VariantId = ci.VariantId == 0 ? null : ci.VariantId,
+                    ProductName = ci.Product?.Name ?? "未知商品",
+                    VariantName = ci.Variant?.VariantName,
+                    ProductImage = GetProductImage(ci),
+                    UnitPrice = ci.UnitPrice ?? ci.Variant?.Price ?? ci.Product?.MinPrice ?? 0,
+                    Quantity = ci.Quantity,
+                    Selected = true,
+                    Promotions = itemPromotions
+                };
             }).ToList();
         }
 
