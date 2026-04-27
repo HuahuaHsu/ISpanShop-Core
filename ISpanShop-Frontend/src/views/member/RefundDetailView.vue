@@ -142,9 +142,11 @@ import { ArrowLeft, InfoFilled } from '@element-plus/icons-vue';
 import { getOrderDetailApi } from '@/api/order';
 import type { OrderDetail } from '@/types/order';
 import { ElMessage } from 'element-plus';
+import { useChatStore } from '@/stores/chat';
 
 const route = useRoute();
 const router = useRouter();
+const chatStore = useChatStore();
 const loading = ref(false);
 const order = ref<OrderDetail | null>(null);
 
@@ -200,7 +202,11 @@ const fetchOrderDetail = async () => {
 };
 
 const handleContactSeller = () => {
-  ElMessage.info('正在開啟聊聊...');
+  if (order.value?.sellerId) {
+    chatStore.openChatWithUser(order.value.sellerId, order.value.storeName);
+  } else {
+    ElMessage.warning('無法取得賣家資訊');
+  }
 };
 
 const formatPrice = (price: number) => {

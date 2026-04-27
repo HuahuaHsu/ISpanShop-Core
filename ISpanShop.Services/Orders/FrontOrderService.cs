@@ -84,6 +84,8 @@ namespace ISpanShop.Services.Orders
                 FinalAmount = o.FinalAmount,
                 Status = (OrderStatus)(o.Status ?? 0),
                 StatusName = GetStatusName(o.Status),
+                StoreId = o.StoreId,
+                SellerId = o.Store?.UserId ?? 0,
                 StoreName = o.Store?.StoreName ?? "未知商店",
                 StoreStatus = o.Store?.StoreStatus ?? 1,
                 RecipientName = o.RecipientName,

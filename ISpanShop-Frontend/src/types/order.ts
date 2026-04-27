@@ -43,6 +43,8 @@ export interface OrderDetail {
   finalAmount: number;
   status: number;
   statusName: string;
+  storeId: number;
+  sellerId: number;
   storeName: string;
   recipientName: string;
   recipientPhone: string;

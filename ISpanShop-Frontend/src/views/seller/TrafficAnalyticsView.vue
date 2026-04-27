@@ -84,7 +84,7 @@ onMounted(() => {
             </div>
             <div class="kpi-info">
               <div class="kpi-label">
-                流量集中度 (前三名)
+                流量集中度 (前三名佔比)
                 <el-tooltip content="計算前三名熱門商品佔全店總流量的比例。若比例過高，代表流量過於依賴少數商品。" placement="top">
                   <el-icon class="info-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
