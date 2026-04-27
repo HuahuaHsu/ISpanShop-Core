@@ -85,8 +85,16 @@
               </div>
             </div>
             <div class="price-info">
-              <div class="total-label">訂單總額：</div>
-              <div class="total-amount">NT$ {{ order.finalAmount.toLocaleString() }}</div>
+              <div class="total-row">
+                <OrderDiscountTags 
+                  :discount-amount="order.discountAmount"
+                  :level-discount="order.levelDiscount"
+                  :point-discount="order.pointDiscount"
+                  :promotion-discount="order.promotionDiscount"
+                />
+                <span class="total-label">訂單總額：</span>
+                <span class="total-amount">NT$ {{ order.finalAmount.toLocaleString() }}</span>
+              </div>
             </div>
           </div>
 
@@ -109,10 +117,6 @@
               <template v-else-if="order.status === 2">
                 <el-button type="primary" plain class="action-btn" @click="handleComplete(order.id)">模擬買家收貨</el-button>
               </template>
-
-              <el-button @click="goToDetail(order.id)" class="action-btn detail-btn">
-                查看訂單詳情
-              </el-button>
             </div>
           </div>
         </div>
@@ -143,6 +147,7 @@ import { getSellerOrdersApi, updateSellerOrderStatusApi } from '@/api/store';
 import type { SellerOrder } from '@/types/store';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useChatStore } from '@/stores/chat';
+import OrderDiscountTags from '@/components/order/OrderDiscountTags.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -471,8 +476,18 @@ onMounted(() => {
 
     .price-info {
       text-align: right;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+
+      .total-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
       .total-label { font-size: 14px; color: #333; }
-      .total-amount { font-size: 24px; color: #ee4d2d; font-weight: 500; margin-top: 5px; }
+      .total-amount { font-size: 24px; color: #ee4d2d; font-weight: 500; }
     }
   }
 
@@ -505,12 +520,6 @@ onMounted(() => {
         min-width: 110px;
         height: 36px;
         border-radius: 2px;
-        
-        &.detail-btn:hover {
-          color: #ee4d2d;
-          border-color: #ee4d2d;
-          background-color: #fff;
-        }
         
         &.secondary {
           border-color: rgba(0,0,0,.09);
