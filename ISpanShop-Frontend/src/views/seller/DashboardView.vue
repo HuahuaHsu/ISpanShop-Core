@@ -253,7 +253,7 @@ const quickActions = [
   { label: '新增商品', route: '/seller/products/new', icon: Plus,       bg: '#fff7ed', color: '#ee4d2d' },
   { label: '查看訂單', route: '/seller/orders',        icon: List,       bg: '#f0fdf4', color: '#22c55e' },
   { label: '建立活動', route: '/seller/promotions',    icon: StarFilled, bg: '#fef9c3', color: '#eab308' },
-  { label: '查看數據', route: '/seller/analytics/sales', icon: DataLine, bg: '#eff6ff', color: '#3b82f6' },
+  { label: '查看數據', route: '/seller/analytics/traffic', icon: DataLine, bg: '#eff6ff', color: '#3b82f6' },
 ]
 
 // 區塊 D 近期訂單
