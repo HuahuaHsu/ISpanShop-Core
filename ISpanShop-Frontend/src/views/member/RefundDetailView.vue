@@ -10,6 +10,16 @@
 
       <!-- 狀態提示區 -->
       <el-alert
+        v-if="order?.status === 6"
+        title="退款已完成"
+        type="success"
+        description="您的退款申請已審核通過並完成撥款。退款金額已依原支付方式退還，實際入帳時間請依銀行或第三方支付通知為準。"
+        show-icon
+        :closable="false"
+        class="status-alert"
+      />
+      <el-alert
+        v-else-if="order?.status === 5"
         title="退貨/退款申請審核中"
         type="warning"
         description="賣家正在審核您的退貨申請，這通常需要 1-3 個工作天。審核通過後，系統將會更新您的退款進度。"
