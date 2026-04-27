@@ -31,8 +31,8 @@ export const uploadStoreLogoApi = (file: File) => {
 /**
  * 取得賣家數據中心資料
  */
-export const getSellerDashboardApi = () => {
-  return axios.get<SellerDashboardData>('/api/front/store/dashboard')
+export const getSellerDashboardApi = (params: { days?: number } = {}) => {
+  return axios.get<SellerDashboardData>('/api/front/store/dashboard', { params })
 }
 /**
  * 取得賣場訂單列表

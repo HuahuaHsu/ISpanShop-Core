@@ -169,7 +169,7 @@ namespace ISpanShop.MVC.Controllers.Api
         /// 取得賣場儀表板數據 (僅限已通過審核的賣家)
         /// </summary>
         [HttpGet("dashboard")]
-        public async Task<IActionResult> GetDashboardData()
+        public async Task<IActionResult> GetDashboardData([FromQuery] int days = 7)
         {
             try
             {
@@ -186,7 +186,7 @@ namespace ISpanShop.MVC.Controllers.Api
                     return Forbid("您的賣場尚未通過審核或已被停權");
                 }
 
-                var data = await _storeService.GetDashboardDataAsync(userId);
+                var data = await _storeService.GetDashboardDataAsync(userId, days);
                 return Ok(data);
             }
             catch (Exception ex)

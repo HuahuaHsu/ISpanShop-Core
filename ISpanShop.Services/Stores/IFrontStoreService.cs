@@ -9,7 +9,7 @@ namespace ISpanShop.Services.Stores
 {
     public interface IFrontStoreService
     {
-        Task<FrontSellerDashboardDto> GetDashboardDataAsync(int userId);
+        Task<FrontSellerDashboardDto> GetDashboardDataAsync(int userId, int days = 7);
         Task<bool> ApplyStoreAsync(int userId, StoreApplyRequestDto dto);
         Task<string> GetStoreStatusAsync(int userId); // 回傳狀態：NotApplied, Pending, Approved, Rejected
         Task<(string Status, bool IsBanned)> GetStoreStatusDetailAsync(int userId);

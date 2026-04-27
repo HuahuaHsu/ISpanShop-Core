@@ -1,8 +1,16 @@
 <template>
   <div class="sales-report-container">
     <div class="page-header">
-      <h1 class="page-title">銷售報表</h1>
-      <span class="page-date">{{ lastUpdateTime }}</span>
+      <div class="header-left">
+        <h1 class="page-title">銷售報表</h1>
+        <span class="page-date">更新時間: {{ lastUpdateTime }}</span>
+      </div>
+      <div class="header-right">
+        <el-radio-group v-model="timeRange" size="small" class="time-toggle">
+          <el-radio-button :label="7">最近 7 天</el-radio-button>
+          <el-radio-button :label="30">最近 30 天</el-radio-button>
+        </el-radio-group>
+      </div>
     </div>
 
     <div v-loading="loading" class="status-content">
@@ -55,7 +63,7 @@
                       {{ dashboardData.kpis.revenueGrowthRate }}
                     </div>
                   </div>
-                  <div class="stat-label">近 7 天營收</div>
+                  <div class="stat-label">近 {{ timeRange }} 天營收</div>
                 </div>
               </div>
             </el-card>
@@ -77,7 +85,7 @@
                       {{ dashboardData.kpis.ordersGrowthRate }}
                     </div>
                   </div>
-                  <div class="stat-label">近 7 天訂單數</div>
+                  <div class="stat-label">近 {{ timeRange }} 天訂單數</div>
                 </div>
               </div>
             </el-card>
@@ -90,7 +98,7 @@
             <el-card class="chart-card" shadow="never">
               <template #header>
                 <div class="card-header">
-                  <span class="card-title">📈 銷售金額趨勢 (近 7 天)</span>
+                  <span class="card-title">📈 銷售金額趨勢 (近 {{ timeRange }} 天)</span>
                 </div>
               </template>
               <div class="chart-wrapper">
@@ -111,7 +119,7 @@
             <el-card class="top-products-card" shadow="never">
               <template #header>
                 <div class="card-header">
-                  <span class="card-title">🏆 熱銷商品排行</span>
+                  <span class="card-title">🏆 熱銷商品排行 (近 {{ timeRange }} 天)</span>
                 </div>
               </template>
               <el-table 
@@ -160,21 +168,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, computed, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { Money, Document, Goods, Warning } from '@element-plus/icons-vue';
-import { getSellerDashboardApi, getStoreStatusApi } from '@/api/store';
+import { getStoreStatusApi, getSellerDashboardApi } from '@/api/store';
 import type { SellerDashboardData } from '@/types/store';
 import { ElMessage } from 'element-plus';
+import { Money, Document, CaretTop, CaretBottom, Minus, Picture } from '@element-plus/icons-vue';
 import VueApexCharts from 'vue3-apexcharts';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const apexchart = VueApexCharts;
 
 const loading = ref(false);
 const status = ref<string>('Pending');
+const timeRange = ref(7); // 預設 7 天
 const dashboardData = ref<SellerDashboardData | null>(null);
 
 const lastUpdateTime = computed(() => {
@@ -182,16 +192,27 @@ const lastUpdateTime = computed(() => {
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${d.toLocaleTimeString()}`;
 });
 
-const chartOptions = ref({
+const chartOptions = computed(() => ({
   chart: {
     id: 'sales-trend',
     toolbar: { show: false },
     fontFamily: 'inherit'
   },
   xaxis: {
-    categories: [] as string[],
+    categories: dashboardData.value?.salesTrend?.labels || [],
     axisBorder: { show: false },
-    axisTicks: { show: false }
+    axisTicks: { show: false },
+    labels: {
+      rotate: -45,
+      rotateAlways: false,
+      hideOverlappingLabels: true,
+      style: {
+        fontSize: '12px',
+        colors: '#94a3b8'
+      }
+    },
+    // 根據天數決定顯示多少個刻度標籤
+    tickAmount: timeRange.value === 30 ? 10 : undefined 
   },
   grid: {
     borderColor: '#f1f5f9',
@@ -217,7 +238,7 @@ const chartOptions = ref({
       formatter: (val: number) => `$ ${val.toLocaleString()}`
     }
   }
-});
+}));
 
 const formatPrice = (price: number) => {
   return price.toLocaleString();
@@ -238,12 +259,7 @@ const checkStatus = async () => {
 
     if (status.value === 'Approved') {
       authStore.updateSellerStatus(true);
-      const dashboardRes = await getSellerDashboardApi();
-      dashboardData.value = dashboardRes.data;
-      
-      if (dashboardData.value?.salesTrend) {
-        chartOptions.value.xaxis.categories = dashboardData.value.salesTrend.labels;
-      }
+      await fetchDashboardData();
     } else {
       authStore.updateSellerStatus(false);
     }
@@ -254,6 +270,20 @@ const checkStatus = async () => {
     loading.value = false;
   }
 };
+
+const fetchDashboardData = async () => {
+  try {
+    const dashboardRes = await getSellerDashboardApi({ days: timeRange.value });
+    dashboardData.value = dashboardRes.data;
+  } catch (error) {
+    ElMessage.error('無法更新報表數據');
+  }
+};
+
+// 監聽時間維度變化
+watch(timeRange, () => {
+  fetchDashboardData();
+});
 
 onMounted(() => {
   checkStatus();
@@ -269,19 +299,30 @@ onMounted(() => {
 
 .page-header {
   display: flex;
-  align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
 }
 .page-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
 }
 .page-date {
-  margin-left: 12px;
+  font-size: 13px;
   color: #94a3b8;
-  font-size: 14px;
+  margin-top: 4px;
+  display: block;
+}
+
+.time-toggle :deep(.el-radio-button__inner) {
+  padding: 8px 16px;
+}
+.time-toggle :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background-color: #ee4d2d;
+  border-color: #ee4d2d;
+  box-shadow: -1px 0 0 0 #ee4d2d;
 }
 
 /* 統計卡片樣式同步首頁 */
