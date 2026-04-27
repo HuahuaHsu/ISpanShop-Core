@@ -180,23 +180,40 @@ namespace ISpanShop.Services.Stores
             }
 
             // 4. 近期訂單 (前 10 筆)
-            var recentOrders = await _context.Orders
+            var recentOrdersRaw = await _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.OrderDetails)
                 .Where(o => o.StoreId == storeId)
                 .OrderByDescending(o => o.CreatedAt)
                 .Take(10)
-                .Select(o => new RecentOrderDto
+                .ToListAsync();
+
+            var recentOrders = new List<RecentOrderDto>();
+            foreach (var o in recentOrdersRaw)
+            {
+                var firstDetail = o.OrderDetails.FirstOrDefault();
+                string image = firstDetail?.CoverImage;
+
+                if (string.IsNullOrEmpty(image) && firstDetail != null)
+                {
+                    image = await _context.ProductImages
+                        .Where(pi => pi.ProductId == firstDetail.ProductId && pi.IsMain == true)
+                        .Select(pi => pi.ImageUrl)
+                        .FirstOrDefaultAsync();
+                }
+
+                recentOrders.Add(new RecentOrderDto
                 {
                     OrderId = o.Id,
                     OrderNumber = o.OrderNumber,
                     BuyerName = o.User.Account,
-                    ProductName = o.OrderDetails.Select(od => od.ProductName).FirstOrDefault() ?? "未知商品",
+                    ProductName = firstDetail?.ProductName ?? "未知商品",
+                    ProductImage = image ?? "",
                     Amount = o.FinalAmount,
                     Status = ((OrderStatus)o.Status).GetDisplayName(),
                     CreatedAt = o.CreatedAt.Value.ToString("yyyy/MM/dd HH:mm")
-                })
-                .ToListAsync();
+                });
+            }
 
             return new FrontSellerDashboardDto
             {

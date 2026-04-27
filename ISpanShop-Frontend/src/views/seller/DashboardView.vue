@@ -99,19 +99,37 @@
         class="orders-table clickable-table"
         @row-click="handleRowClick"
       >
-        <el-table-column prop="orderNumber" label="訂單編號" min-width="200" class-name="no-wrap" />
-        <el-table-column prop="buyerName" label="買家" min-width="150" class-name="no-wrap" />
-        <el-table-column prop="amount" label="金額" min-width="140">
+        <el-table-column label="訂單資訊" min-width="280">
           <template #default="{ row }">
-            <span class="no-wrap">NT$ {{ row.amount.toLocaleString() }}</span>
+            <div class="order-info-cell">
+              <el-image :src="row.productImage || row.ProductImage" fit="cover" class="product-img">
+                <template #error>
+                  <div class="image-placeholder">📦</div>
+                </template>
+              </el-image>
+              <div class="order-meta">
+                <div class="order-no">{{ row.orderNumber }}</div>
+                <div class="product-name">{{ row.productName }}</div>
+              </div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="狀態" min-width="100">
+        <el-table-column prop="buyerName" label="買家" width="120" />
+        <el-table-column prop="amount" label="金額" width="140" align="right">
           <template #default="{ row }">
-            <el-tag :type="statusTagType(row.status)" size="small">{{ row.status }}</el-tag>
+            <span class="order-amount">NT$ {{ row.amount.toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="建立時間" min-width="180" />
+        <el-table-column prop="status" label="狀態" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="statusTagType(row.status)" size="small" effect="light">{{ row.status }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="建立時間" width="160" align="right">
+          <template #default="{ row }">
+            <span class="time-text">{{ row.createdAt }}</span>
+          </template>
+        </el-table-column>
       </el-table>
       <el-empty v-if="recentOrders.length === 0" description="暫無訂單" :image-size="60" />
     </el-card>
@@ -437,14 +455,57 @@ function statusTagType(status: string): 'success' | 'warning' | 'danger' | 'info
 }
 .orders-table { width: 100%; }
 
-.clickable-table :deep(.el-table__row) {
-  cursor: pointer;
+.order-info-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.product-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background: #f8fafc;
+  flex-shrink: 0;
+  border: 1px solid #f1f5f9;
+}
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: #f1f5f9;
+}
+.order-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+.order-no {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.product-name {
+  font-size: 12px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.order-amount {
+  font-weight: 600;
+  color: #1e293b;
+}
+.time-text {
+  font-size: 12px;
+  color: #94a3b8;
 }
 
-:deep(.no-wrap),
-:deep(.no-wrap .cell) {
-  white-space: nowrap !important;
-  word-break: keep-all !important;
+.clickable-table :deep(.el-table__row) {
+  cursor: pointer;
 }
 
 </style>
