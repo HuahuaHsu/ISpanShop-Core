@@ -118,14 +118,35 @@
                 :data="dashboardData.topProducts" 
                 stripe 
                 style="width: 100%"
-                class="clickable-table"
+                class="rank-table"
                 @row-click="handleRowClick"
               >
-                <el-table-column type="index" label="排名" width="80" align="center" />
-                <el-table-column prop="productName" label="商品名稱" min-width="400" />
+                <el-table-column label="排行" width="80" align="center">
+                  <template #default="scope">
+                    <span :class="['rank-num', { 'top-three': scope.$index < 3 }]">{{ scope.$index + 1 }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="商品資訊" min-width="400">
+                  <template #default="{ row }">
+                    <div class="product-info">
+                      <el-image :src="row.productImage || row.ProductImage" fit="cover" class="product-img">
+                        <template #error>
+                          <div class="image-placeholder">🖼️</div>
+                        </template>
+                      </el-image>
+                      <span class="product-name">{{ row.productName || row.ProductName }}</span>
+                    </div>
+                  </template>
+                </el-table-column>
                 <el-table-column prop="salesVolume" label="總銷量" width="150" align="right">
                   <template #default="scope">
-                    <span style="font-weight: 700; color: #ee4d2d">{{ scope.row.salesVolume }}</span> 件
+                    <span class="sales-value">{{ scope.row.salesVolume || scope.row.SalesVolume }}</span>
+                    <span class="unit"> 件</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="salesRevenue" label="銷售額" width="180" align="right">
+                  <template #default="scope">
+                    <span class="revenue-value">NT$ {{ formatPrice(scope.row.salesRevenue || scope.row.SalesRevenue) }}</span>
                   </template>
                 </el-table-column>
               </el-table>
@@ -369,7 +390,65 @@ onMounted(() => {
   color: #64748b;
 }
 
-.clickable-table :deep(.el-table__row) {
+.rank-table :deep(.el-table__row) {
   cursor: pointer;
+}
+
+.rank-num {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: #f5f7fa;
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+.rank-num.top-three {
+  background: #ee4d2d;
+  color: white;
+}
+
+.product-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.product-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: #f1f5f9;
+}
+.product-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.sales-value {
+  font-weight: 700;
+  color: #ee4d2d;
+  font-size: 15px;
+}
+.unit {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.revenue-value {
+  font-weight: 600;
+  color: #1e293b;
 }
 </style>

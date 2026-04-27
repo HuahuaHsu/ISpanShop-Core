@@ -142,11 +142,11 @@ namespace ISpanShop.Services.Stores
             salesTrend.Series.Add(series);
 
             // 3. 熱銷商品排行 (前 10 名)
-            var topProducts = await _context.OrderDetails
+            var topProductsQuery = await _context.OrderDetails
                 .Include(od => od.Order)
                 .Where(od => od.Order.StoreId == storeId && od.Order.Status == (byte)OrderStatus.Completed)
                 .GroupBy(od => new { od.ProductId, od.ProductName })
-                .Select(g => new TopProductSalesDto
+                .Select(g => new
                 {
                     ProductId = g.Key.ProductId,
                     ProductName = g.Key.ProductName,
@@ -156,6 +156,28 @@ namespace ISpanShop.Services.Stores
                 .OrderByDescending(p => p.SalesVolume)
                 .Take(10)
                 .ToListAsync();
+
+            var topProducts = new List<TopProductSalesDto>();
+            foreach (var p in topProductsQuery)
+            {
+                var image = await _context.ProductImages
+                    .Where(pi => pi.ProductId == p.ProductId && pi.IsMain == true)
+                    .Select(pi => pi.ImageUrl)
+                    .FirstOrDefaultAsync() 
+                    ?? await _context.ProductImages
+                        .Where(pi => pi.ProductId == p.ProductId)
+                        .Select(pi => pi.ImageUrl)
+                        .FirstOrDefaultAsync();
+
+                topProducts.Add(new TopProductSalesDto
+                {
+                    ProductId = p.ProductId,
+                    ProductName = p.ProductName,
+                    ProductImage = image ?? "",
+                    SalesVolume = p.SalesVolume,
+                    SalesRevenue = p.SalesRevenue
+                });
+            }
 
             // 4. 近期訂單 (前 10 筆)
             var recentOrders = await _context.Orders

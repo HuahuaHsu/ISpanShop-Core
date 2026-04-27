@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { getTrafficAnalyticsApi } from '@/api/seller'
 import { ElMessage } from 'element-plus'
-import { View, ShoppingCart, PieChart, TrendCharts } from '@element-plus/icons-vue'
+import { View, ShoppingCart, PieChart, TrendCharts, QuestionFilled } from '@element-plus/icons-vue'
 
 interface TrafficSummary {
   totalViews: number
@@ -83,7 +83,12 @@ onMounted(() => {
               <el-icon><TrendCharts /></el-icon>
             </div>
             <div class="kpi-info">
-              <div class="kpi-label">流量集中度 (前三名)</div>
+              <div class="kpi-label">
+                流量集中度 (前三名)
+                <el-tooltip content="計算前三名熱門商品佔全店總流量的比例。若比例過高，代表流量過於依賴少數商品。" placement="top">
+                  <el-icon class="info-icon"><QuestionFilled /></el-icon>
+                </el-tooltip>
+              </div>
               <div class="kpi-value">{{ summary.topItemsTrafficShare }}%</div>
             </div>
           </div>
@@ -96,7 +101,12 @@ onMounted(() => {
               <el-icon><ShoppingCart /></el-icon>
             </div>
             <div class="kpi-info">
-              <div class="kpi-label">平均全店轉換率</div>
+              <div class="kpi-label">
+                平均全店轉換率
+                <el-tooltip content="全店總銷量 / 總瀏覽次數。反映賣場商品的吸引力與下單意願。" placement="top">
+                  <el-icon class="info-icon"><QuestionFilled /></el-icon>
+                </el-tooltip>
+              </div>
               <div class="kpi-value">{{ summary.avgConversionRate }}%</div>
             </div>
           </div>
@@ -232,7 +242,19 @@ onMounted(() => {
 .kpi-icon.concentration { background: #fdf6ec; color: #e6a23c; }
 .kpi-icon.conversion { background: #f0f9eb; color: #67c23a; }
 
-.kpi-label { font-size: 14px; color: #606266; margin-bottom: 4px; }
+.kpi-label { 
+  font-size: 14px; 
+  color: #606266; 
+  margin-bottom: 4px; 
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.info-icon {
+  font-size: 14px;
+  color: #c0c4cc;
+  cursor: help;
+}
 .kpi-value { font-size: 24px; font-weight: 700; color: #303133; }
 
 .rank-card :deep(.el-card__header) { font-weight: 600; }
