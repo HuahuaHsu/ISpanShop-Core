@@ -5,6 +5,8 @@ export interface OrderListItem {
   finalAmount: number;
   discountAmount?: number;
   levelDiscount?: number;
+  pointDiscount?: number;
+  promotionDiscount?: number;
   status: number;
   statusName: string;
   storeName: string;

@@ -61,9 +61,11 @@
               </div>
             </div>
             <div class="price-info">
-              <div class="discount-tags" v-if="(order.discountAmount && order.discountAmount > 0) || (order.levelDiscount && order.levelDiscount > 0)">
-                <el-tag v-if="order.discountAmount && order.discountAmount > 0" size="small" type="danger" effect="plain">優惠券折抵</el-tag>
-                <el-tag v-if="order.levelDiscount && order.levelDiscount > 0" size="small" type="warning" effect="plain">會員折扣</el-tag>
+              <div class="discount-tags" v-if="(order.discountAmount && order.discountAmount > 0) || (order.levelDiscount && order.levelDiscount > 0) || (order.pointDiscount && order.pointDiscount > 0) || (order.promotionDiscount && order.promotionDiscount > 0)">
+                <el-tag v-if="order.discountAmount && order.discountAmount > 0" size="small" type="danger" effect="plain" class="mr-1">優惠券折抵</el-tag>
+                <el-tag v-if="order.levelDiscount && order.levelDiscount > 0" size="small" type="warning" effect="plain" class="mr-1">會員折扣</el-tag>
+                <el-tag v-if="order.pointDiscount && order.pointDiscount > 0" size="small" type="success" effect="plain" class="mr-1">點數折抵</el-tag>
+                <el-tag v-if="order.promotionDiscount && order.promotionDiscount > 0" size="small" type="primary" effect="plain" class="mr-1">活動促銷</el-tag>
               </div>
               <div class="total-label">訂單金額：</div>
               <div class="total-amount">${{ formatPrice(order.finalAmount) }}</div>

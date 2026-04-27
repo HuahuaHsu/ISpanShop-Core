@@ -42,6 +42,8 @@ namespace ISpanShop.Services.Orders
                     FinalAmount = o.FinalAmount,
                     DiscountAmount = o.DiscountAmount,
                     LevelDiscount = o.LevelDiscount, // 從資料庫讀取
+                    PointDiscount = o.PointDiscount,
+                    PromotionDiscount = o.OrderDetails.Sum(od => od.AllocatedDiscountAmount ?? 0),
                     Status = (OrderStatus)(o.Status ?? 0),
                     StatusName = GetStatusName(o.Status),
                     StoreName = o.Store?.StoreName ?? "未知商店",
