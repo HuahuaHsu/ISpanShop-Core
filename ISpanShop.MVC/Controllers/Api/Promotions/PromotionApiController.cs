@@ -156,7 +156,9 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
 
             var query = _db.PromotionItems
                 .AsNoTracking()
-                .Where(pi => pi.PromotionId == id)
+                .Where(pi => pi.PromotionId == id
+                          && !pi.Product.IsDeleted
+                          && pi.Product.Status == 1)   // 只顯示已上架商品，防止點擊後 404
                 .Include(pi => pi.Product)
                     .ThenInclude(p => p.ProductImages);
 

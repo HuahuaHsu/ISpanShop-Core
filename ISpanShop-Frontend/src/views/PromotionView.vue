@@ -209,6 +209,7 @@ function handlePageChange(page: number): void {
 }
 
 function goToProduct(id: number): void {
+  console.log('[活動商品] 跳轉商品 ID:', id)
   void router.push(`/product/${id}`)
 }
 
@@ -232,7 +233,7 @@ watch(promotionId, () => {
 .promotion-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 16px 48px;
+  padding: 24px 16px 48px;
 }
 
 /* ── Hero ── */
