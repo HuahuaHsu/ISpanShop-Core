@@ -8,6 +8,7 @@ interface Props {
   discountAmount?: number | null   // 優惠券折抵
   couponTitle?: string | null      // 優惠券名稱
   levelDiscount?: number | null    // 會員等級折抵
+  promotionDiscount?: number | null // 新增：活動促銷折抵
   finalAmount: number       // 最終總計
   paymentMethod?: string    // 付款方式
   showPaymentMethod?: boolean // 是否顯示付款方式 (選填，預設 true)
@@ -18,6 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
   pointDiscount: 0,
   discountAmount: 0,
   levelDiscount: 0,
+  promotionDiscount: 0,
   couponTitle: '',
   paymentMethod: '線上支付',
   showPaymentMethod: true
@@ -38,6 +40,11 @@ const formatPrice = (price: number | null | undefined) => {
     <div class="summary-row">
       <span class="label">運費</span>
       <span class="value">${{ formatPrice(shippingFee) }}</span>
+    </div>
+
+    <div v-if="promotionDiscount && promotionDiscount > 0" class="summary-row">
+      <span class="label">活動促銷折抵</span>
+      <span class="value discount">-${{ formatPrice(promotionDiscount) }}</span>
     </div>
 
     <div v-if="pointDiscount && pointDiscount > 0" class="summary-row">

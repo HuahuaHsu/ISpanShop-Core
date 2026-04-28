@@ -18,6 +18,7 @@ namespace ISpanShop.Models.DTOs.Orders
         public decimal? LevelDiscount { get; set; }
         public int? CouponId { get; set; }
         public string CouponTitle { get; set; }
+        public decimal? PromotionDiscount { get; set; } // 新增：賣場活動促銷折抵總額
         public decimal FinalAmount { get; set; }
         public OrderStatus Status { get; set; }
         public string StatusName { get; set; }
@@ -70,5 +71,6 @@ namespace ISpanShop.Models.DTOs.Orders
         public decimal Price { get; set; }
         public int Quantity { get; set; }
         public int StoreStatus { get; set; }
+        public List<string> PromotionTags { get; set; } = new List<string>(); // 新增：活動標籤
     }
 }

@@ -83,6 +83,7 @@ namespace ISpanShop.Services.Orders
                 LevelDiscount = o.LevelDiscount, // 從資料庫讀取
                 CouponId = o.CouponId,
                 CouponTitle = o.Coupon?.Title ?? (o.CouponId.HasValue ? "優惠券" : null),
+                PromotionDiscount = o.PromotionDiscount, // 從資料庫讀取活動折抵
                 FinalAmount = o.FinalAmount,
                 Status = (OrderStatus)(o.Status ?? 0),
                 StatusName = GetStatusName(o.Status),
@@ -104,7 +105,8 @@ namespace ISpanShop.Services.Orders
                     CoverImage = GetFinalImage(od),
                     Price = od.Price ?? 0,
                     Quantity = od.Quantity,
-                    StoreStatus = o.Store?.StoreStatus ?? 1
+                    StoreStatus = o.Store?.StoreStatus ?? 1,
+                    PromotionTags = od.AllocatedDiscountAmount > 0 ? new List<string> { "活動優惠" } : new List<string>()
                 }).ToList(),
                 IsReviewed = o.OrderReviews.Any(),
                 

@@ -27,6 +27,7 @@ export interface OrderItem {
   coverImage: string;
   price: number;
   quantity: number;
+  promotionTags?: string[];
 }
 
 export interface OrderDetail {
@@ -42,6 +43,7 @@ export interface OrderDetail {
   levelDiscount: number | null;
   couponId: number | null;
   couponTitle: string | null;
+  promotionDiscount?: number | null;
   finalAmount: number;
   status: number;
   statusName: string;
