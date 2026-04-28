@@ -133,20 +133,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from 'vue';
+import { ref, watch, nextTick, computed, onMounted } from 'vue';
 import { 
   ChatDotRound, Close, ChatLineSquare, Search, 
   Picture, VideoCamera, FolderOpened, Document
 } from '@element-plus/icons-vue';
 import { useAuthStore } from '../../stores/auth';
 import { useChatStore } from '../../stores/chat';
-import { useChat } from '../../composables/useChat';
 import { ElMessage } from 'element-plus';
+import { storeToRefs } from 'pinia';
 import axios from 'axios';
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
-const { messages, sessions, fetchSessions, fetchHistory, sendMessage } = useChat();
+// 使用 storeToRefs 直接解構 Store
+const { messages, sessions, lastMessageAt } = storeToRefs(chatStore);
+
+onMounted(() => {
+  if (authStore.isLoggedIn) {
+    chatStore.initConnection();
+    chatStore.fetchSessions();
+  }
+});
 
 const inputMsg = ref('');
 const messageBox = ref<HTMLElement | null>(null);
@@ -232,7 +240,7 @@ const handleImageUpload = async (e: Event) => {
       headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' }
     });
     const fileUrl = 'https://localhost:7125' + res.data.url;
-    await sendMessage(chatStore.currentChatUser!.id!, fileUrl, 1);
+    await chatStore.sendMessage(chatStore.currentChatUser!.id!, fileUrl, 1);
   } catch (err) { ElMessage.error('圖片上傳失敗'); }
   finally { (e.target as HTMLInputElement).value = ''; }
 };
@@ -248,7 +256,7 @@ const handleVideoUpload = async (e: Event) => {
       headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' }
     });
     const fileUrl = 'https://localhost:7125' + res.data.url;
-    await sendMessage(chatStore.currentChatUser!.id!, fileUrl, 2);
+    await chatStore.sendMessage(chatStore.currentChatUser!.id!, fileUrl, 2);
     loading.close();
   } catch (err) { loading.close(); ElMessage.error('影片上傳失敗'); }
   finally { (e.target as HTMLInputElement).value = ''; }
@@ -264,7 +272,7 @@ const handleFileUpload = async (e: Event) => {
       headers: { Authorization: `Bearer ${authStore.token}`, 'Content-Type': 'multipart/form-data' }
     });
     const fileUrl = 'https://localhost:7125' + res.data.url;
-    await sendMessage(chatStore.currentChatUser!.id!, fileUrl, 3);
+    await chatStore.sendMessage(chatStore.currentChatUser!.id!, fileUrl, 3);
   } catch (err) { ElMessage.error('檔案上傳失敗'); }
   finally { (e.target as HTMLInputElement).value = ''; }
 };
@@ -283,28 +291,55 @@ const totalUnread = computed(() => {
 
 const toggleChat = () => {
   chatStore.isChatOpen = !chatStore.isChatOpen;
-  if (chatStore.isChatOpen) fetchSessions();
+  if (chatStore.isChatOpen) chatStore.fetchSessions();
 };
 
-const selectUser = async (session: any) => {
-  // 先切換使用者，這會讓標題立刻改變
-  chatStore.openChatWithUser(session.otherUserId, session.otherUserName);
-  // fetchHistory 內部現在會清空訊息，所以畫面會立刻變空白
-  await fetchHistory(session.otherUserId);
+// 核心修正：深度監聽訊息陣列變化，確保即時刷新
+watch(() => messages.value, (newVal) => {
+  console.log('[ChatUI] Messages Changed! Count:', newVal.length);
   scrollToBottom();
-  fetchSessions();
+}, { deep: true });
+
+// 監聽聊天開啟狀態
+watch(() => chatStore.isChatOpen, (isOpen) => {
+  if (isOpen) {
+    chatStore.fetchSessions();
+    if (chatStore.currentChatUser?.id) {
+      chatStore.fetchHistory(chatStore.currentChatUser.id);
+    }
+  }
+});
+
+// 監聽聊天對象 ID 的變化
+watch(() => chatStore.currentChatUser?.id, (newId) => {
+  if (newId && chatStore.isChatOpen) {
+    chatStore.fetchHistory(newId);
+    scrollToBottom();
+  }
+});
+
+const selectUser = async (session: any) => {
+  chatStore.openChatWithUser(session.otherUserId, session.otherUserName);
 };
 
 const handleSend = async () => {
   if (!inputMsg.value.trim() || !chatStore.currentChatUser?.id) return;
-  await sendMessage(chatStore.currentChatUser.id, inputMsg.value);
-  inputMsg.value = '';
+  
+  const tempMsg = inputMsg.value;
+  inputMsg.value = ''; // 立即清空輸入框，提升使用者體驗
+  
+  await chatStore.sendMessage(chatStore.currentChatUser.id, tempMsg);
+  // 發送後再次強制滾動
   scrollToBottom();
 };
 
 const scrollToBottom = async () => {
   await nextTick();
-  if (messageBox.value) messageBox.value.scrollTop = messageBox.value.scrollHeight;
+  setTimeout(() => {
+    if (messageBox.value) {
+      messageBox.value.scrollTop = messageBox.value.scrollHeight;
+    }
+  }, 100);
 };
 
 const formatDate = (dateStr?: string) => {
@@ -318,23 +353,6 @@ const formatTime = (dateStr?: string) => {
   const date = new Date(dateStr);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
-
-watch(() => chatStore.isChatOpen, (newVal) => {
-  if (newVal) {
-    fetchSessions();
-    if (chatStore.currentChatUser?.id) fetchHistory(chatStore.currentChatUser.id);
-  }
-});
-
-// --- 新增：監聽聊天對象 ID 的變化 ---
-watch(() => chatStore.currentChatUser?.id, (newId) => {
-  if (newId && chatStore.isChatOpen) {
-    fetchHistory(newId);
-    scrollToBottom();
-  }
-});
-
-watch(() => messages.value.length, () => scrollToBottom());
 </script>
 
 <style scoped>

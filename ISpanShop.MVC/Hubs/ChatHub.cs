@@ -25,6 +25,7 @@ namespace ISpanShop.MVC.Hubs
         public async Task SendMessage(int receiverId, string content, byte type)
         {
             var senderIdStr = Context.UserIdentifier;
+            _logger.LogInformation($"SendMessage called: Sender={senderIdStr}, Receiver={receiverId}, Content={content}");
             
             if (int.TryParse(senderIdStr, out int senderId))
             {
@@ -33,52 +34,48 @@ namespace ISpanShop.MVC.Hubs
                     var chatService = scope.ServiceProvider.GetRequiredService<IChatService>();
                     var botService = scope.ServiceProvider.GetRequiredService<IBotService>();
 
-                    // --- 核心模擬邏輯：將買家訊息導向 fuen50 ---
-                    int finalReceiverId = receiverId;
-                    bool isBuyerSending = false;
-                    
-                    if (!string.IsNullOrEmpty(_simulatedSellerId) && int.TryParse(_simulatedSellerId, out int sellerId))
+                    // 1. 執行正規的發送流程 (存入資料庫)
+                    try 
                     {
-                        if (senderId != sellerId)
-                        {
-                            finalReceiverId = sellerId;
-                            isBuyerSending = true;
-                        }
+                        await chatService.SendMessageAsync(senderId, receiverId, content, type);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to save message to database");
                     }
 
-                    // 1. 執行正規的發送流程 (存入資料庫)
-                    await chatService.SendMessageAsync(senderId, finalReceiverId, content, type);
-
                     // 2. 傳送給接收者
-                    await Clients.User(finalReceiverId.ToString()).SendAsync("ReceiveMessage", senderId, content, type);
+                    await Clients.User(receiverId.ToString()).SendAsync("ReceiveMessage", senderId, content, type);
                     
-                    // 3. 也傳送給發送者本人
+                    // 3. 也傳送給發送者本人 (同步 UI)
                     await Clients.Caller.SendAsync("ReceiveMessage", senderId, content, type);
 
                     // --- 機器人自動回覆邏輯 ---
-                    if (isBuyerSending && type == 0) 
+                    // 只要不是發送給自己，就嘗試觸發機器人
+                    if (receiverId != senderId && type == 0) 
                     {
-                        // 使用全新的 Scope 處理非同步回覆，避免 Service 被回收
                         _ = Task.Run(async () => {
                             try {
-                                await Task.Delay(1500);
+                                await Task.Delay(1000); 
                                 using (var botScope = _scopeFactory.CreateScope())
                                 {
-                                    var innerChatService = botScope.ServiceProvider.GetRequiredService<IChatService>();
                                     var innerBotService = botScope.ServiceProvider.GetRequiredService<IBotService>();
+                                    var innerChatService = botScope.ServiceProvider.GetRequiredService<IChatService>();
 
-                                    string botReply = await innerBotService.GetResponseAsync(content);
+                                    // 嘗試獲取機器人回覆
+                                    string botReply = await innerBotService.GetResponseAsync(content, senderId.ToString());
                                     
-                                    // 機器人以賣家 (finalReceiverId) 的身分回覆
-                                    await innerChatService.SendMessageAsync(finalReceiverId, senderId, botReply, 0);
-                                    
-                                    // 透過 SignalR 發送
-                                    await Clients.User(senderId.ToString()).SendAsync("ReceiveMessage", finalReceiverId, botReply, 0);
-                                    await Clients.User(finalReceiverId.ToString()).SendAsync("ReceiveMessage", finalReceiverId, botReply, 0);
+                                    if (!string.IsNullOrEmpty(botReply))
+                                    {
+                                        // 機器人以「接收者」的身分回覆給「發送者」
+                                        await innerChatService.SendMessageAsync(receiverId, senderId, botReply, 0);
+                                        await Clients.User(senderId.ToString()).SendAsync("ReceiveMessage", receiverId, botReply, 0);
+                                    }
                                 }
                             }
                             catch (System.Exception ex) {
-                                _logger.LogError(ex, "Bot Auto-Reply Error");
+                                // 機器人失敗時僅記錄 Log，不再傳送錯誤訊息給前端，確保一般對話順暢
+                                _logger.LogWarning($"Bot response skipped or failed: {ex.Message}");
                             }
                         });
                     }
@@ -89,11 +86,13 @@ namespace ISpanShop.MVC.Hubs
         public override async Task OnConnectedAsync()
         {
             var userId = Context.UserIdentifier;
-            // 檢查所有 Claims 以確保抓到帳號名稱
             var userName = Context.User?.Identity?.Name 
                          ?? Context.User?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
             
             _logger.LogInformation($"ChatHub: Connection from User {userName} (ID: {userId})");
+
+            // 建立連線時發送一個歡迎訊息，確認連線成功
+            await Clients.Caller.SendAsync("ReceiveMessage", 0, $"系統：連線成功，歡迎 {userName}！(ID: {userId})", 0);
 
             // 如果帳號包含 fuen50，就鎖定為賣家
             if (!string.IsNullOrEmpty(userName) && userName.ToLower().Contains("fuen50"))
@@ -101,11 +100,7 @@ namespace ISpanShop.MVC.Hubs
                 _simulatedSellerId = userId;
                 _logger.LogInformation($"[Simulation] Seller Identified: {userName} (ID: {userId})");
             }
-            else if (string.IsNullOrEmpty(_simulatedSellerId) && !string.IsNullOrEmpty(userName) && !userName.Contains("fuen49"))
-            {
-                _simulatedSellerId = userId;
-            }
-
+            
             await base.OnConnectedAsync();
         }
     }

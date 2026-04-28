@@ -5,12 +5,12 @@ namespace ISpanShop.Services.Communication
     public interface IBotService
     {
         // 取得機器人的回覆文字
-        Task<string> GetResponseAsync(string userMessage);
+        Task<string> GetResponseAsync(string userMessage, string sessionId = null);
     }
 
     public class MockBotService : IBotService
     {
-        public Task<string> GetResponseAsync(string userMessage)
+        public Task<string> GetResponseAsync(string userMessage, string sessionId = null)
         {
             string response = "🤖 [自動回覆] 您好！我是好聊 AI 助理。您的訊息店主已收到，會盡快親自回覆您！";
 

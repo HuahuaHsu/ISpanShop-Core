@@ -4,6 +4,7 @@ import { loginApi } from '../api/auth';
 import { getMemberProfile } from '../api/member'
 import type { LoginRequest } from '../types/auth';
 import { storage } from '../utils/storage';
+import { useChatStore } from './chat';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -87,7 +88,11 @@ export const useAuthStore = defineStore('auth', () => {
       isSeller: false
     };
 
-    // 2. 清除 localStorage
+    // 2. 清除聊天連線
+    const chatStore = useChatStore();
+    chatStore.stopConnection();
+
+    // 3. 清除 localStorage
     storage.clearAll();
   }
 

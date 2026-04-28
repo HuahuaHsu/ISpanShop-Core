@@ -205,7 +205,7 @@ namespace ISpanShop.MVC
 			// 聊天系統 (SignalR)
 			builder.Services.AddScoped<IChatRepository, ChatRepository>();
 			builder.Services.AddScoped<IChatService, ChatService>();
-			builder.Services.AddScoped<IBotService, MockBotService>();
+			builder.Services.AddScoped<IBotService, LexBotService>();
 			builder.Services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 			builder.Services.AddSignalR();
 

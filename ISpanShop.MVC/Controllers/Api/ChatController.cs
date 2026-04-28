@@ -75,5 +75,21 @@ namespace ISpanShop.MVC.Controllers.Api
             
             return Unauthorized(new { message = "無法識別使用者身份" });
         }
+
+        // 標記特定對象的訊息為已讀
+        [HttpPost("read/{senderId}")]
+        public async Task<IActionResult> MarkAsRead(int senderId)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                         ?? User.FindFirst("sub")?.Value;
+            
+            if (int.TryParse(userIdStr, out int userId))
+            {
+                await _chatService.MarkMessagesAsReadAsync(senderId, userId);
+                return Ok(new { success = true });
+            }
+            
+            return Unauthorized(new { message = "無法識別使用者身份" });
+        }
     }
 }
