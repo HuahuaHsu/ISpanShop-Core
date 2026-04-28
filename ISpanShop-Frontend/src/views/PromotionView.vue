@@ -93,9 +93,17 @@
           <div class="product-info">
             <h3 class="product-name">{{ item.productName }}</h3>
             <div class="price-row">
-              <span class="current-price">${{ item.discountPrice ?? item.originalPrice }}</span>
-              <span v-if="item.discountPrice" class="original-price">${{ item.originalPrice }}</span>
-              <span v-if="item.discountPercent" class="discount-tag">{{ item.discountPercent }}折</span>
+              <!-- 條件一：當商品有實質打折時 -->
+              <template v-if="item.discountPrice && item.discountPrice < item.originalPrice && item.discountPrice > 0">
+                <span class="current-price">${{ formatNumber(item.discountPrice) }}</span>
+                <span class="original-price">${{ formatNumber(item.originalPrice) }}</span>
+                <span v-if="item.discountPercent" class="discount-tag">{{ item.discountPercent }}折</span>
+              </template>
+              <!-- 條件二：當商品是滿額折扣或沒有打折時 -->
+              <template v-else>
+                <span class="current-price">${{ formatNumber(item.originalPrice) }}</span>
+                <span v-if="isDiscountType" class="full-discount-tag">符合滿額折</span>
+              </template>
             </div>
             <div class="sales-info">已售出 {{ item.soldCount }}</div>
           </div>
@@ -412,6 +420,15 @@ watch(promotionId, () => {
   font-size: 11px;
   padding: 1px 6px;
   border-radius: 3px;
+}
+.full-discount-tag {
+  background-color: #ffebee;
+  color: #e53935;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  font-weight: 500;
 }
 .sales-info { color: #999; font-size: 12px; margin-top: 4px; }
 
