@@ -332,5 +332,6 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             var keywords = await _productService.GetHotKeywordsAsync();
             return Ok(new { success = true, data = keywords });
         }
+
     }
 }

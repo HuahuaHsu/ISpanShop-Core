@@ -180,6 +180,34 @@ export interface SellerVariantDetail {
   specValueJson: string | null
 }
 
+/** 商品活動促銷規則 */
+export interface ProductPromotionRule {
+  ruleType: number
+  threshold: number
+  discountType: number
+  discountValue: number
+}
+
+/** 商品目前參加的活動（對應 GET /api/promotions/product/{productId} 回傳）
+ *  type: flashSale=限時特賣 / discount=滿額折扣 / limitedBuy=限量搶購
+ */
+export interface ProductPromotion {
+  id: number
+  title: string
+  type: 'flashSale' | 'discount' | 'limitedBuy' | 'other'
+  typeLabel: string
+  endDate: string
+  originalPrice: number
+  discountPrice: number | null
+  discountPercent: number | null
+  quantityLimit: number | null
+  stockLimit: number | null
+  soldCount: number
+  remainingStock: number | null
+  linkUrl: string
+  rule: ProductPromotionRule | null
+}
+
 /** GET /api/products 查詢參數 */
 export interface FetchProductsParams {
   page?: number

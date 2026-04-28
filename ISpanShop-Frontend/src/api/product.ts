@@ -5,6 +5,7 @@ import type {
   ProductListResponse,
   ProductDetail,
   ProductListItem,
+  ProductPromotion,
   SellerProductListResponse,
   SellerProductDetail,
 } from '@/types/product'
@@ -28,6 +29,13 @@ export async function fetchRelatedProducts(
   const response = await request.get<ApiResponse<ProductListItem[]>>(
     `/api/products/${id}/related`,
     { params: { limit } },
+  )
+  return response.data
+}
+
+export async function fetchProductPromotions(id: number): Promise<ApiResponse<ProductPromotion[]>> {
+  const response = await request.get<ApiResponse<ProductPromotion[]>>(
+    `/api/promotions/product/${id}`,
   )
   return response.data
 }
