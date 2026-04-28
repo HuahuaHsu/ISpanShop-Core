@@ -10,6 +10,16 @@
 
       <!-- 狀態提示區 -->
       <el-alert
+        v-if="order?.status === 6"
+        title="退款已完成"
+        type="success"
+        description="您的退款申請已審核通過並完成撥款。退款金額已依原支付方式退還，實際入帳時間請依銀行或第三方支付通知為準。"
+        show-icon
+        :closable="false"
+        class="status-alert"
+      />
+      <el-alert
+        v-else-if="order?.status === 5"
         title="退貨/退款申請審核中"
         type="warning"
         description="賣家正在審核您的退貨申請，這通常需要 1-3 個工作天。審核通過後，系統將會更新您的退款進度。"
@@ -40,6 +50,39 @@
           </div>
           <div v-if="!order?.returnInfo?.items?.length" class="empty-items-tip">
             (整筆訂單退貨)
+          </div>
+        </div>
+
+        <!-- 費用折抵分攤明細 -->
+        <div v-if="order?.returnInfo" class="refund-summary-detail">
+          <div class="summary-row">
+            <span>退貨商品原價小計</span>
+            <span>NT$ {{ formatPrice(returnedItemsSubtotal) }}</span>
+          </div>
+          <div v-if="levelDiscountShare !== 0" class="summary-row">
+            <span class="label-with-hint">
+              會員等級折抵分攤
+              <el-tooltip content="按商品金額比例分攤當初享有的會員折扣" placement="top">
+                <el-icon class="info-icon"><InfoFilled /></el-icon>
+              </el-tooltip>
+            </span>
+            <span class="discount">- NT$ {{ formatPrice(Math.abs(levelDiscountShare)) }}</span>
+          </div>
+          <div v-if="couponDiscountShare !== 0" class="summary-row">
+            <span>優惠券折抵分攤</span>
+            <span class="discount">- NT$ {{ formatPrice(Math.abs(couponDiscountShare)) }}</span>
+          </div>
+          <div v-if="pointDiscountShare !== 0" class="summary-row">
+            <span>點數折抵分攤</span>
+            <span class="discount">- NT$ {{ formatPrice(Math.abs(pointDiscountShare)) }}</span>
+          </div>
+          <div class="summary-row final">
+            <span>退款金額</span>
+            <span class="price">NT$ {{ formatPrice(order.returnInfo.refundAmount) }}</span>
+          </div>
+          <div class="refund-hint">
+            <small v-if="isFullReturn">* 已退還訂單最終實付金額 (含運費)。</small>
+            <small v-else>* 部分退貨已依比例扣除折抵金額，且不退還運費。</small>
           </div>
         </div>
       </el-card>
@@ -103,17 +146,54 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowLeft } from '@element-plus/icons-vue';
+import { ArrowLeft, InfoFilled } from '@element-plus/icons-vue';
 import { getOrderDetailApi } from '@/api/order';
 import type { OrderDetail } from '@/types/order';
 import { ElMessage } from 'element-plus';
+import { useChatStore } from '@/stores/chat';
 
 const route = useRoute();
 const router = useRouter();
+const chatStore = useChatStore();
 const loading = ref(false);
 const order = ref<OrderDetail | null>(null);
+
+// 計算屬性：退貨商品原價小計
+const returnedItemsSubtotal = computed(() => {
+  if (!order.value?.returnInfo?.items) return 0;
+  return order.value.returnInfo.items.reduce((sum, item) => sum + (item.price * item.returnQuantity), 0);
+});
+
+// 計算屬性：判斷是否為全額退貨
+const isFullReturn = computed(() => {
+  if (!order.value || returnedItemsSubtotal.value === 0) return false;
+  return Math.abs(returnedItemsSubtotal.value - order.value.totalAmount) < 1;
+});
+
+// 計算分攤比例
+const ratio = computed(() => {
+  if (!order.value || order.value.totalAmount === 0) return 0;
+  return returnedItemsSubtotal.value / order.value.totalAmount;
+});
+
+// 各項折抵分攤
+const levelDiscountShare = computed(() => {
+  if (!order.value) return 0;
+  return isFullReturn.value ? (order.value.levelDiscount || 0) : Math.round((order.value.levelDiscount || 0) * ratio.value);
+});
+
+const couponDiscountShare = computed(() => {
+  if (!order.value) return 0;
+  return isFullReturn.value ? (order.value.discountAmount || 0) : Math.round((order.value.discountAmount || 0) * ratio.value);
+});
+
+const pointDiscountShare = computed(() => {
+  if (!order.value) return 0;
+  return isFullReturn.value ? (order.value.pointDiscount || 0) : Math.round((order.value.pointDiscount || 0) * ratio.value);
+});
+
 
 const fetchOrderDetail = async () => {
   const id = Number(route.params.id);
@@ -132,7 +212,11 @@ const fetchOrderDetail = async () => {
 };
 
 const handleContactSeller = () => {
-  ElMessage.info('正在開啟聊聊...');
+  if (order.value?.sellerId) {
+    chatStore.openChatWithUser(order.value.sellerId, order.value.storeName);
+  } else {
+    ElMessage.warning('無法取得賣家資訊');
+  }
 };
 
 const formatPrice = (price: number) => {
@@ -251,6 +335,43 @@ onMounted(fetchOrderDetail);
         .qty { color: #ee4d2d; font-weight: 500; }
       }
     }
+  }
+}
+
+.refund-summary-detail {
+  margin-top: 10px;
+  padding: 15px;
+  background-color: #fafafa;
+  border-radius: 4px;
+  border: 1px dashed #e4e4e4;
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #666;
+
+    .discount { color: #ee4d2d; }
+    .label-with-hint { display: flex; align-items: center; gap: 4px; }
+    .info-icon { font-size: 14px; color: #909399; cursor: pointer; }
+
+    &.final {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e4e4e4;
+      font-size: 15px;
+      font-weight: bold;
+      color: #333;
+      .price { color: #ee4d2d; font-size: 18px; }
+    }
+  }
+
+  .refund-hint {
+    margin-top: 10px;
+    text-align: right;
+    color: #999;
+    font-size: 11px;
   }
 }
 

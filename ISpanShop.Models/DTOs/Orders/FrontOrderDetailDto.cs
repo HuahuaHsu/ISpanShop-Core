@@ -22,6 +22,8 @@ namespace ISpanShop.Models.DTOs.Orders
         public OrderStatus Status { get; set; }
         public string StatusName { get; set; }
         
+        public int StoreId { get; set; }
+        public int SellerId { get; set; }
         public string StoreName { get; set; }
         public int StoreStatus { get; set; }
         

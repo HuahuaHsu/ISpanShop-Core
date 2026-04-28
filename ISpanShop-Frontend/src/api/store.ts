@@ -31,8 +31,8 @@ export const uploadStoreLogoApi = (file: File) => {
 /**
  * 取得賣家數據中心資料
  */
-export const getSellerDashboardApi = () => {
-  return axios.get<SellerDashboardData>('/api/front/store/dashboard')
+export const getSellerDashboardApi = (params: { days?: number } = {}) => {
+  return axios.get<SellerDashboardData>('/api/front/store/dashboard', { params })
 }
 /**
  * 取得賣場訂單列表
@@ -76,6 +76,13 @@ export const getSellerReturnDetailApi = (orderId: string | number) => {
  */
 export const reviewReturnApi = (orderId: number, data: { isApproved: boolean, remark: string }) => {
   return axios.post<ApiResponse>(`/api/front/store/returns/${orderId}/review`, data)
+}
+
+/**
+ * 賣家回覆評價
+ */
+export const replyToReviewApi = (data: { orderId: number, replyText: string }) => {
+  return axios.post<ApiResponse>('/api/front/store/reviews/reply', data)
 }
 
 /**

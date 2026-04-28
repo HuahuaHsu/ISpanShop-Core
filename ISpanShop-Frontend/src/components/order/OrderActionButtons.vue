@@ -29,8 +29,8 @@
       <el-button type="primary" size="default" @click="handleRebuy">再次購買</el-button>
     </template>
 
-    <!-- 狀態 5: 退貨/款中 -->
-    <template v-if="status === 5 && isDetail">
+    <!-- 狀態 5: 退貨/款中, 狀態 6: 已退款 -->
+    <template v-if="(status === 5 || status === 6) && isDetail">
       <el-button size="default" @click="handleRefundDetail">查看退貨/款詳情</el-button>
     </template>
   </div>

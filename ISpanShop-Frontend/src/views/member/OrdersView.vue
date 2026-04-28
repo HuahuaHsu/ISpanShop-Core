@@ -61,10 +61,13 @@
               </div>
             </div>
             <div class="price-info">
-              <div class="discount-tags" v-if="(order.discountAmount && order.discountAmount > 0) || (order.levelDiscount && order.levelDiscount > 0)">
-                <el-tag v-if="order.discountAmount && order.discountAmount > 0" size="small" type="danger" effect="plain">優惠券折抵</el-tag>
-                <el-tag v-if="order.levelDiscount && order.levelDiscount > 0" size="small" type="warning" effect="plain">會員折扣</el-tag>
-              </div>
+              <OrderDiscountTags 
+                :discount-amount="order.discountAmount"
+                :level-discount="order.levelDiscount"
+                :point-discount="order.pointDiscount"
+                :promotion-discount="order.promotionDiscount"
+                class="mb-2"
+              />
               <div class="total-label">訂單金額：</div>
               <div class="total-amount">${{ formatPrice(order.finalAmount) }}</div>
             </div>
@@ -111,6 +114,7 @@ import { getMyOrdersApi } from '@/api/order';
 import type { OrderListItem } from '@/types/order';
 import { ElMessage } from 'element-plus';
 import OrderActionButtons from '@/components/order/OrderActionButtons.vue';
+import OrderDiscountTags from '@/components/order/OrderDiscountTags.vue';
 import { useChatStore } from '@/stores/chat';
 
 const router = useRouter();

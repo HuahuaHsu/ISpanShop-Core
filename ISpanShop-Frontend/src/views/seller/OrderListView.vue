@@ -85,8 +85,16 @@
               </div>
             </div>
             <div class="price-info">
-              <div class="total-label">訂單總額：</div>
-              <div class="total-amount">NT$ {{ order.finalAmount.toLocaleString() }}</div>
+              <div class="total-row">
+                <OrderDiscountTags 
+                  :discount-amount="order.discountAmount"
+                  :level-discount="order.levelDiscount"
+                  :point-discount="order.pointDiscount"
+                  :promotion-discount="order.promotionDiscount"
+                />
+                <span class="total-label">訂單總額：</span>
+                <span class="total-amount">NT$ {{ order.finalAmount.toLocaleString() }}</span>
+              </div>
             </div>
           </div>
 
@@ -110,13 +118,47 @@
                 <el-button type="primary" plain class="action-btn" @click="handleComplete(order.id)">模擬買家收貨</el-button>
               </template>
 
-              <el-button @click="goToDetail(order.id)" class="action-btn detail-btn">
-                查看訂單詳情
-              </el-button>
+              <!-- 已完成訂單且有評價時顯示回覆按鈕 -->
+              <template v-else-if="order.status === 3 && order.hasReview">
+                <el-button class="action-btn secondary" @click="handleReplyReview(order.id)">回應評價</el-button>
+              </template>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- 評價回覆對話框 -->
+      <el-dialog
+        v-model="replyDialogVisible"
+        title="回應買家評價"
+        width="500px"
+        destroy-on-close
+      >
+        <div v-if="selectedOrderReview" class="review-preview">
+          <div class="buyer-comment">
+            <div class="label">買家評價：</div>
+            <div class="content">{{ selectedOrderReview.comment }}</div>
+          </div>
+          <el-form :model="replyForm" label-position="top">
+            <el-form-item label="您的回覆：">
+              <el-input
+                v-model="replyForm.replyText"
+                type="textarea"
+                :rows="4"
+                placeholder="請輸入您對買家評價的回應..."
+              />
+            </el-form-item>
+          </el-form>
+        </div>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="replyDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="submitReply" :loading="submittingReply">
+              提交回覆
+            </el-button>
+          </span>
+        </template>
+      </el-dialog>
 
       <!-- ── 分頁 ── -->
       <div class="pagination-wrapper" v-if="totalCount > 0">
@@ -139,10 +181,11 @@
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Search, Picture, Location, ChatDotRound } from '@element-plus/icons-vue';
-import { getSellerOrdersApi, updateSellerOrderStatusApi } from '@/api/store';
-import type { SellerOrder } from '@/types/store';
+import { getSellerOrdersApi, updateSellerOrderStatusApi, getSellerOrderDetailApi, replyToReviewApi } from '@/api/store';
+import type { SellerOrder, OrderReview } from '@/types/store';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useChatStore } from '@/stores/chat';
+import OrderDiscountTags from '@/components/order/OrderDiscountTags.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -154,6 +197,56 @@ const activeTab = ref('all');
 const searchQuery = ref('');
 const currentPage = ref(1);
 const pageSize = ref(10);
+
+// 評價回覆相關
+const replyDialogVisible = ref(false);
+const submittingReply = ref(false);
+const selectedOrderReview = ref<OrderReview | null>(null);
+const currentOrderId = ref<number | null>(null);
+const replyForm = ref({
+  replyText: ''
+});
+
+const handleReplyReview = async (orderId: number) => {
+  try {
+    loading.value = true;
+    const res = await getSellerOrderDetailApi(orderId);
+    if (res.data.review) {
+      selectedOrderReview.value = res.data.review;
+      currentOrderId.value = orderId;
+      replyForm.value.replyText = res.data.review.storeReply || '';
+      replyDialogVisible.value = true;
+    } else {
+      ElMessage.warning('找不到該訂單的評價資訊');
+    }
+  } catch (error) {
+    ElMessage.error('獲取評價資訊失敗');
+  } finally {
+    loading.value = false;
+  }
+};
+
+const submitReply = async () => {
+  if (!currentOrderId.value || !replyForm.value.replyText.trim()) {
+    ElMessage.warning('請輸入回覆內容');
+    return;
+  }
+
+  submittingReply.value = true;
+  try {
+    await replyToReviewApi({
+      orderId: currentOrderId.value,
+      replyText: replyForm.value.replyText
+    });
+    ElMessage.success('回覆成功');
+    replyDialogVisible.value = false;
+    fetchOrders(); // 重新整理列表
+  } catch (error) {
+    ElMessage.error('回覆失敗');
+  } finally {
+    submittingReply.value = false;
+  }
+};
 
 const fetchOrders = async () => {
   loading.value = true;
@@ -362,7 +455,7 @@ onMounted(() => {
       gap: 6px;
 
       .buyer-tag {
-        background-color: #3b82f6;
+        background-color: #ee4d2d;
         color: #fff;
         font-size: 12px;
         padding: 1px 6px;
@@ -471,8 +564,18 @@ onMounted(() => {
 
     .price-info {
       text-align: right;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+
+      .total-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
       .total-label { font-size: 14px; color: #333; }
-      .total-amount { font-size: 24px; color: #ee4d2d; font-weight: 500; margin-top: 5px; }
+      .total-amount { font-size: 24px; color: #ee4d2d; font-weight: 500; }
     }
   }
 
@@ -506,12 +609,6 @@ onMounted(() => {
         height: 36px;
         border-radius: 2px;
         
-        &.detail-btn:hover {
-          color: #ee4d2d;
-          border-color: #ee4d2d;
-          background-color: #fff;
-        }
-        
         &.secondary {
           border-color: rgba(0,0,0,.09);
           color: #555;
@@ -543,6 +640,26 @@ onMounted(() => {
     border-color: #ee4d2d;
     background-color: #fff;
     &:hover { background-color: #fffbf8; }
+  }
+}
+
+.review-preview {
+  .buyer-comment {
+    background-color: #f8fafc;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    
+    .label {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    
+    .content {
+      font-size: 14px;
+      color: #1e293b;
+    }
   }
 }
 </style>

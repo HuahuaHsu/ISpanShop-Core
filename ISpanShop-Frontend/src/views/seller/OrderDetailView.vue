@@ -91,7 +91,69 @@
             />
           </div>
         </el-card>
+
+        <!-- 評價資訊 -->
+        <el-card v-if="order?.review" class="review-card" shadow="never" header="買家評價">
+          <div class="review-content">
+            <div class="review-header">
+              <el-rate v-model="order.review.rating" disabled show-score text-color="#ff9900" />
+              <span class="review-date">{{ formatDate(order.review.createdAt) }}</span>
+            </div>
+            <div class="buyer-comment">
+              {{ order.review.comment }}
+            </div>
+            <div v-if="order.review.imageUrls?.length" class="review-images">
+              <el-image
+                v-for="(url, index) in order.review.imageUrls"
+                :key="index"
+                :src="url"
+                class="review-img"
+                :preview-src-list="order.review.imageUrls"
+                :initial-index="index"
+                fit="cover"
+              />
+            </div>
+            
+            <div class="store-reply-section">
+              <div v-if="order.review.storeReply" class="reply-box">
+                <div class="reply-label">您的回覆：</div>
+                <div class="reply-content">{{ order.review.storeReply }}</div>
+                <el-button link type="primary" size="small" @click="openReplyDialog" class="edit-reply-btn">修改回覆</el-button>
+              </div>
+              <div v-else class="no-reply">
+                <el-button type="warning" plain @click="openReplyDialog">回應評價</el-button>
+              </div>
+            </div>
+          </div>
+        </el-card>
       </el-col>
+
+      <!-- 評價回覆對話框 -->
+      <el-dialog
+        v-model="replyDialogVisible"
+        title="回應買家評價"
+        width="500px"
+        destroy-on-close
+      >
+        <el-form :model="replyForm" label-position="top">
+          <el-form-item label="您的回覆：">
+            <el-input
+              v-model="replyForm.replyText"
+              type="textarea"
+              :rows="4"
+              placeholder="請輸入您對買家評價的回應..."
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="replyDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="submitReply" :loading="submittingReply">
+              提交回覆
+            </el-button>
+          </span>
+        </template>
+      </el-dialog>
 
       <!-- 右側：訂單狀態、買家與收件資訊 -->
       <el-col :span="8">
@@ -150,7 +212,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Picture, ArrowLeft } from '@element-plus/icons-vue'
-import { getSellerOrderDetailApi, updateSellerOrderStatusApi } from '@/api/store'
+import { getSellerOrderDetailApi, updateSellerOrderStatusApi, replyToReviewApi } from '@/api/store'
 import type { SellerOrderDetail } from '@/types/store'
 import { useChatStore } from '@/stores/chat'
 import OrderSteps from '@/components/order/OrderSteps.vue'
@@ -163,6 +225,42 @@ const loading = ref(false)
 const order = ref<SellerOrderDetail | null>(null)
 
 const orderId = computed(() => route.params.id as string)
+
+// 評價回覆相關
+const replyDialogVisible = ref(false)
+const submittingReply = ref(false)
+const replyForm = ref({
+  replyText: ''
+})
+
+const openReplyDialog = () => {
+  if (order.value?.review) {
+    replyForm.value.replyText = order.value.review.storeReply || ''
+    replyDialogVisible.value = true
+  }
+}
+
+const submitReply = async () => {
+  if (!order.value || !replyForm.value.replyText.trim()) {
+    ElMessage.warning('請輸入回覆內容')
+    return
+  }
+
+  submittingReply.value = true
+  try {
+    await replyToReviewApi({
+      orderId: order.value.id,
+      replyText: replyForm.value.replyText
+    })
+    ElMessage.success('回覆成功')
+    replyDialogVisible.value = false
+    fetchDetail() // 重新獲取詳情以顯示回覆內容
+  } catch (error) {
+    ElMessage.error('回覆失敗')
+  } finally {
+    submittingReply.value = false
+  }
+}
 
 const fetchDetail = async () => {
   if (!orderId.value) return
@@ -178,15 +276,25 @@ const fetchDetail = async () => {
   }
 }
 
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 const statusClass = computed(() => {
   if (!order.value) return ''
   const statusMap: Record<number, string> = {
-    1: 'pending-payment', // 待付款
-    2: 'processing',      // 待出貨
-    3: 'shipping',        // 運送中
-    4: 'completed',       // 已完成
-    5: 'cancelled',       // 已取消
-    6: 'refunding',       // 退貨中
+    0: 'status-pending',    // 待付款
+    1: 'status-processing', // 待出貨
+    2: 'status-shipped',    // 運送中
+    3: 'status-completed',  // 已完成
+    4: 'status-cancelled',  // 已取消
+    5: 'status-refunding',  // 退貨/款中
   }
   return statusMap[order.value.status] || ''
 })
@@ -271,10 +379,12 @@ onMounted(() => {
   font-size: 24px;
   font-weight: 700;
 }
-.status-value.processing { color: #f59e0b; }
-.status-value.completed  { color: #10b981; }
-.status-value.cancelled  { color: #ef4444; }
-.status-value.shipping   { color: #3b82f6; }
+.status-value.status-pending { color: #ee4d2d; }
+.status-value.status-processing { color: #26aa99; }
+.status-value.status-shipped { color: #26aa99; }
+.status-value.status-completed { color: #ee4d2d; }
+.status-value.status-cancelled { color: #929292; }
+.status-value.status-refunding { color: #ee4d2d; }
 
 .timeline {
   font-size: 13px;
@@ -352,5 +462,70 @@ onMounted(() => {
   border-radius: 4px;
   color: #64748b;
   font-style: italic;
+}
+
+/* 評價卡片樣式 */
+.review-card {
+  margin-top: 20px;
+  border-radius: 8px;
+}
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.review-date {
+  font-size: 13px;
+  color: #94a3b8;
+}
+.buyer-comment {
+  font-size: 15px;
+  color: #1e293b;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+}
+.review-images {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.review-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  cursor: zoom-in;
+}
+
+.store-reply-section {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}
+.reply-box {
+  background-color: #fffbf8;
+  padding: 12px 16px;
+  border-radius: 4px;
+  border-left: 3px solid #ee4d2d;
+  position: relative;
+}
+.reply-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ee4d2d;
+  margin-bottom: 4px;
+}
+.reply-content {
+  font-size: 14px;
+  color: #1e293b;
+  line-height: 1.5;
+}
+.edit-reply-btn {
+  margin-top: 8px;
+  padding: 0;
+}
+.no-reply {
+  text-align: right;
 }
 </style>

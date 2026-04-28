@@ -17,6 +17,7 @@ namespace ISpanShop.Models.DTOs.Stores
         public string OrderNumber { get; set; }
         public string BuyerName { get; set; }
         public string ProductName { get; set; } // 顯示第一件商品或摘要
+        public string ProductImage { get; set; } // 新增：商品圖片
         public decimal Amount { get; set; }
         public string Status { get; set; }
         public string CreatedAt { get; set; }

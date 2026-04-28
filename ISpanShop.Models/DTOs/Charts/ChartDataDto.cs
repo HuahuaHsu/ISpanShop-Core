@@ -24,6 +24,7 @@ namespace ISpanShop.Models.DTOs
 	{
 		public int ProductId { get; set; }
 		public string ProductName { get; set; }
+		public string ProductImage { get; set; }
 		public string CategoryName { get; set; } // 新增：用於統一顏色
 		public int SalesVolume { get; set; }
 		public decimal SalesRevenue { get; set; }

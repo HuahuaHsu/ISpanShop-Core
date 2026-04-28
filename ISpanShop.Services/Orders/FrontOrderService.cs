@@ -42,6 +42,8 @@ namespace ISpanShop.Services.Orders
                     FinalAmount = o.FinalAmount,
                     DiscountAmount = o.DiscountAmount,
                     LevelDiscount = o.LevelDiscount, // 從資料庫讀取
+                    PointDiscount = o.PointDiscount,
+                    PromotionDiscount = o.OrderDetails.Sum(od => od.AllocatedDiscountAmount ?? 0),
                     Status = (OrderStatus)(o.Status ?? 0),
                     StatusName = GetStatusName(o.Status),
                     StoreName = o.Store?.StoreName ?? "未知商店",
@@ -84,6 +86,8 @@ namespace ISpanShop.Services.Orders
                 FinalAmount = o.FinalAmount,
                 Status = (OrderStatus)(o.Status ?? 0),
                 StatusName = GetStatusName(o.Status),
+                StoreId = o.StoreId,
+                SellerId = o.Store?.UserId ?? 0,
                 StoreName = o.Store?.StoreName ?? "未知商店",
                 StoreStatus = o.Store?.StoreStatus ?? 1,
                 RecipientName = o.RecipientName,
@@ -231,9 +235,6 @@ namespace ISpanShop.Services.Orders
 
             await _orderRepository.CreateReturnRequestAsync(request);
             await _orderRepository.UpdateStatusAsync(orderId, 5); // 5 = 退貨/款中
-
-            // 退回點數與優惠券 (假設發起退貨就先退回，或可依需求改為管理員核准後才退)
-            await ReturnOrderAssetsAsync(o);
 
             return true;
         }

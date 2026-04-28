@@ -8,19 +8,29 @@ using ISpanShop.Models.DTOs.Orders;
 using ISpanShop.Models.EfModels;
 using Microsoft.EntityFrameworkCore;
 using ISpanShop.Common.Enums;
+using ISpanShop.Services.Coupons;
+using ISpanShop.Services.Payments;
+using ISpanShop.Models.DTOs.Members;
 
 namespace ISpanShop.Services.Stores
 {
     public class FrontStoreService : IFrontStoreService
     {
         private readonly ISpanShopDBContext _context;
+        private readonly ICouponService _couponService;
+        private readonly PointService _pointService;
 
-        public FrontStoreService(ISpanShopDBContext context)
+        public FrontStoreService(
+            ISpanShopDBContext context,
+            ICouponService couponService,
+            PointService pointService)
         {
             _context = context;
+            _couponService = couponService;
+            _pointService = pointService;
         }
 
-        public async Task<FrontSellerDashboardDto> GetDashboardDataAsync(int userId)
+        public async Task<FrontSellerDashboardDto> GetDashboardDataAsync(int userId, int days = 7)
         {
             var store = await _context.Stores
                 .FirstOrDefaultAsync(s => s.UserId == userId);
@@ -32,47 +42,47 @@ namespace ISpanShop.Services.Stores
 
             var storeId = store.Id;
 
-            // 0. 計算對等週期訂單數 (近 7 天 vs 前一個 7 天)
+            // 0. 計算週期
             var now = DateTime.Today.AddDays(1);
-            var last7DaysStart = DateTime.Today.AddDays(-6);
-            var prev7DaysStart = last7DaysStart.AddDays(-7);
+            var currentStart = DateTime.Today.AddDays(-(days - 1));
+            var prevStart = currentStart.AddDays(-days);
 
-            var ordersLast7Days = await _context.Orders
-                .CountAsync(o => o.StoreId == storeId && o.CreatedAt >= last7DaysStart && o.CreatedAt < now);
+            // 當期與上期的訂單數 (用於成長率)
+            var ordersCurrent = await _context.Orders
+                .CountAsync(o => o.StoreId == storeId && o.CreatedAt >= currentStart && o.CreatedAt < now);
+            var ordersPrev = await _context.Orders
+                .CountAsync(o => o.StoreId == storeId && o.CreatedAt >= prevStart && o.CreatedAt < currentStart);
 
-            var ordersPrev7Days = await _context.Orders
-                .CountAsync(o => o.StoreId == storeId && o.CreatedAt >= prev7DaysStart && o.CreatedAt < last7DaysStart);
-
-            var revenueLast7Days = await _context.Orders
-                .Where(o => o.StoreId == storeId && o.CreatedAt >= last7DaysStart && o.CreatedAt < now && o.Status == (byte)OrderStatus.Completed)
+            // 當期與上期的營收 (已完成訂單)
+            var revenueCurrent = await _context.Orders
+                .Where(o => o.StoreId == storeId && o.CreatedAt >= currentStart && o.CreatedAt < now && o.Status == (byte)OrderStatus.Completed)
                 .SumAsync(o => o.FinalAmount);
-
-            var revenuePrev7Days = await _context.Orders
-                .Where(o => o.StoreId == storeId && o.CreatedAt >= prev7DaysStart && o.CreatedAt < last7DaysStart && o.Status == (byte)OrderStatus.Completed)
+            var revenuePrev = await _context.Orders
+                .Where(o => o.StoreId == storeId && o.CreatedAt >= prevStart && o.CreatedAt < currentStart && o.Status == (byte)OrderStatus.Completed)
                 .SumAsync(o => o.FinalAmount);
 
             string orderGrowthRateStr = "0%";
             string orderGrowthType = "neutral";
-            if (ordersPrev7Days == 0)
+            if (ordersPrev == 0)
             {
-                if (ordersLast7Days > 0) { orderGrowthRateStr = "100%"; orderGrowthType = "up"; }
+                if (ordersCurrent > 0) { orderGrowthRateStr = "100%"; orderGrowthType = "up"; }
             }
             else
             {
-                double rate = (double)(ordersLast7Days - ordersPrev7Days) / ordersPrev7Days;
+                double rate = (double)(ordersCurrent - ordersPrev) / ordersPrev;
                 orderGrowthRateStr = Math.Abs(rate).ToString("P0");
                 orderGrowthType = rate > 0 ? "up" : (rate < 0 ? "down" : "neutral");
             }
 
             string revGrowthRateStr = "0%";
             string revGrowthType = "neutral";
-            if (revenuePrev7Days == 0)
+            if (revenuePrev == 0)
             {
-                if (revenueLast7Days > 0) { revGrowthRateStr = "100%"; revGrowthType = "up"; }
+                if (revenueCurrent > 0) { revGrowthRateStr = "100%"; revGrowthType = "up"; }
             }
             else
             {
-                decimal rate = (revenueLast7Days - revenuePrev7Days) / revenuePrev7Days;
+                decimal rate = (revenueCurrent - revenuePrev) / revenuePrev;
                 revGrowthRateStr = Math.Abs(rate).ToString("P0");
                 revGrowthType = rate > 0 ? "up" : (rate < 0 ? "down" : "neutral");
             }
@@ -84,22 +94,22 @@ namespace ISpanShop.Services.Stores
                     .Where(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Completed)
                     .SumAsync(o => o.FinalAmount),
 
-                RevenueLast7Days = revenueLast7Days,
+                RevenueLast7Days = revenueCurrent, // 雖然變數名沒改，但回傳的是當期(days)營收
                 RevenueGrowthRate = revGrowthRateStr,
                 RevenueGrowthType = revGrowthType,
 
                 TotalOrders = await _context.Orders
                     .CountAsync(o => o.StoreId == storeId),
 
-                OrdersLast7Days = ordersLast7Days,
+                OrdersLast7Days = ordersCurrent,
                 OrdersGrowthRate = orderGrowthRateStr,
                 OrdersGrowthType = orderGrowthType,
 
                 PendingOrders = await _context.Orders
-                    .CountAsync(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Processing), // 待出貨
+                    .CountAsync(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Processing),
 
                 PendingRefundCount = await _context.Orders
-                    .CountAsync(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Returning && o.ReturnRequests.Any(r => r.Status == 0)), // 待審核退貨 (Status 0 代表申請待審核)
+                    .CountAsync(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Returning && o.ReturnRequests.Any(r => r.Status == 0)),
 
                 TotalProducts = await _context.Products
                     .CountAsync(p => p.StoreId == storeId && p.IsDeleted != true),
@@ -112,41 +122,39 @@ namespace ISpanShop.Services.Stores
                     .SumAsync(p => p.ViewCount ?? 0)
             };
 
-            // 計算轉換率
-            int totalOrders = kpis.TotalOrders;
             int totalViews = kpis.TotalViews;
             kpis.ConversionRate = totalViews > 0 
-                ? ((double)totalOrders / totalViews).ToString("P2") 
+                ? ((double)kpis.TotalOrders / totalViews).ToString("P2") 
                 : "0.00%";
 
-            // 2. 銷售趨勢 (近 7 日)
-            var endDate = DateTime.Today.AddDays(1);
-            var startDate = DateTime.Today.AddDays(-6);
-
-            var dailySales = await _context.Orders
-                .Where(o => o.StoreId == storeId && o.Status == (byte)OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt < endDate)
+            // 2. 訂單量趨勢 (根據傳入天數動態產生)
+            var dailyOrders = await _context.Orders
+                .Where(o => o.StoreId == storeId && o.CreatedAt >= currentStart && o.CreatedAt < now)
                 .GroupBy(o => o.CreatedAt.Value.Date)
-                .Select(g => new { Date = g.Key, Amount = g.Sum(o => o.FinalAmount) })
+                .Select(g => new { Date = g.Key, Count = g.Count() })
                 .ToListAsync();
 
             var salesTrend = new ApexChartDataDto();
-            var series = new ChartSeriesDto { Name = "營收" };
+            var series = new ChartSeriesDto { Name = "訂單數" };
 
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < days; i++)
             {
-                var date = startDate.AddDays(i);
+                var date = currentStart.AddDays(i);
                 salesTrend.Labels.Add(date.ToString("MM/dd"));
-                var dayData = dailySales.FirstOrDefault(d => d.Date == date);
-                series.Data.Add(dayData?.Amount ?? 0);
+                var dayData = dailyOrders.FirstOrDefault(d => d.Date == date);
+                series.Data.Add(dayData?.Count ?? 0);
             }
             salesTrend.Series.Add(series);
 
-            // 3. 熱銷商品排行 (前 10 名)
-            var topProducts = await _context.OrderDetails
+            // 3. 熱銷商品排行 (過濾該段時間內的銷量)
+            var topProductsQuery = await _context.OrderDetails
                 .Include(od => od.Order)
-                .Where(od => od.Order.StoreId == storeId && od.Order.Status == (byte)OrderStatus.Completed)
+                .Where(od => od.Order.StoreId == storeId 
+                          && od.Order.Status == (byte)OrderStatus.Completed
+                          && od.Order.CreatedAt >= currentStart
+                          && od.Order.CreatedAt < now)
                 .GroupBy(od => new { od.ProductId, od.ProductName })
-                .Select(g => new TopProductSalesDto
+                .Select(g => new
                 {
                     ProductId = g.Key.ProductId,
                     ProductName = g.Key.ProductName,
@@ -157,24 +165,63 @@ namespace ISpanShop.Services.Stores
                 .Take(10)
                 .ToListAsync();
 
+            var topProducts = new List<TopProductSalesDto>();
+            foreach (var p in topProductsQuery)
+            {
+                var image = await _context.ProductImages
+                    .Where(pi => pi.ProductId == p.ProductId && pi.IsMain == true)
+                    .Select(pi => pi.ImageUrl)
+                    .FirstOrDefaultAsync() 
+                    ?? await _context.ProductImages
+                        .Where(pi => pi.ProductId == p.ProductId)
+                        .Select(pi => pi.ImageUrl)
+                        .FirstOrDefaultAsync();
+
+                topProducts.Add(new TopProductSalesDto
+                {
+                    ProductId = p.ProductId,
+                    ProductName = p.ProductName,
+                    ProductImage = image ?? "",
+                    SalesVolume = p.SalesVolume,
+                    SalesRevenue = p.SalesRevenue
+                });
+            }
+
             // 4. 近期訂單 (前 10 筆)
-            var recentOrders = await _context.Orders
+            var recentOrdersRaw = await _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.OrderDetails)
                 .Where(o => o.StoreId == storeId)
                 .OrderByDescending(o => o.CreatedAt)
                 .Take(10)
-                .Select(o => new RecentOrderDto
+                .ToListAsync();
+
+            var recentOrders = new List<RecentOrderDto>();
+            foreach (var o in recentOrdersRaw)
+            {
+                var firstDetail = o.OrderDetails.FirstOrDefault();
+                string image = firstDetail?.CoverImage;
+
+                if (string.IsNullOrEmpty(image) && firstDetail != null)
+                {
+                    image = await _context.ProductImages
+                        .Where(pi => pi.ProductId == firstDetail.ProductId && pi.IsMain == true)
+                        .Select(pi => pi.ImageUrl)
+                        .FirstOrDefaultAsync();
+                }
+
+                recentOrders.Add(new RecentOrderDto
                 {
                     OrderId = o.Id,
                     OrderNumber = o.OrderNumber,
                     BuyerName = o.User.Account,
-                    ProductName = o.OrderDetails.Select(od => od.ProductName).FirstOrDefault() ?? "未知商品",
+                    ProductName = firstDetail?.ProductName ?? "未知商品",
+                    ProductImage = image ?? "",
                     Amount = o.FinalAmount,
                     Status = ((OrderStatus)o.Status).GetDisplayName(),
                     CreatedAt = o.CreatedAt.Value.ToString("yyyy/MM/dd HH:mm")
-                })
-                .ToListAsync();
+                });
+            }
 
             return new FrontSellerDashboardDto
             {
@@ -266,6 +313,12 @@ namespace ISpanShop.Services.Stores
             };
         }
 
+        public async Task<Store?> GetStoreByUserIdAsync(int userId)
+        {
+            return await _context.Stores
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+        }
+
         public async Task<bool> UpdateStoreInfoAsync(int userId, UpdateStoreInfoRequestDto dto)
         {
             var store = await _context.Stores
@@ -330,6 +383,7 @@ namespace ISpanShop.Services.Stores
             var query = _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.OrderDetails)
+                .Include(o => o.OrderReviews)
                 .Where(o => o.StoreId == store.Id);
 
             if (status.HasValue)
@@ -370,6 +424,10 @@ namespace ISpanShop.Services.Stores
                     OrderNumber = o.OrderNumber,
                     CreatedAt = o.CreatedAt,
                     FinalAmount = o.FinalAmount,
+                    DiscountAmount = o.DiscountAmount,
+                    LevelDiscount = o.LevelDiscount,
+                    PointDiscount = o.PointDiscount,
+                    PromotionDiscount = o.OrderDetails.Sum(od => od.AllocatedDiscountAmount ?? 0),
                     Status = (OrderStatus)o.Status,
                     StatusName = GetStatusName(o.Status),
                     BuyerName = o.User?.Account ?? "未知買家",
@@ -377,7 +435,8 @@ namespace ISpanShop.Services.Stores
                     RecipientName = o.RecipientName,
                     FirstProductName = firstDetail?.ProductName,
                     FirstProductImage = image,
-                    TotalItemCount = o.OrderDetails.Sum(od => od.Quantity)
+                    TotalItemCount = o.OrderDetails.Sum(od => od.Quantity),
+                    HasReview = o.OrderReviews.Any()
                 };
             }).ToList();
 
@@ -424,9 +483,13 @@ namespace ISpanShop.Services.Stores
                 .Include(o => o.User)
                     .ThenInclude(u => u.MemberProfile)
                 .Include(o => o.OrderDetails)
+                .Include(o => o.OrderReviews)
+                    .ThenInclude(r => r.ReviewImages)
                 .FirstOrDefaultAsync(o => o.Id == orderId && o.StoreId == store.Id);
 
             if (order == null) throw new Exception("找不到該筆訂單或該訂單不屬於您的賣場");
+
+            var review = order.OrderReviews.FirstOrDefault();
 
             return new SellerOrderDetailDto
             {
@@ -486,8 +549,42 @@ namespace ISpanShop.Services.Stores
                         Price = od.Price ?? 0,
                         Quantity = od.Quantity
                     };
-                }).ToList()
+                }).ToList(),
+
+                // 評價資訊
+                Review = review == null ? null : new OrderReviewDto
+                {
+                    Id = review.Id,
+                    UserId = review.UserId,
+                    OrderId = review.OrderId,
+                    Rating = review.Rating,
+                    Comment = review.Comment,
+                    StoreReply = review.StoreReply,
+                    IsHidden = review.IsHidden ?? false,
+                    CreatedAt = review.CreatedAt ?? DateTime.MinValue,
+                    ImageUrls = review.ReviewImages.Select(ri => ri.ImageUrl).ToList()
+                }
             };
+        }
+
+        public async Task<bool> ReplyToReviewAsync(int userId, SellerReplyDto dto)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) throw new Exception("找不到您的賣場");
+
+            var review = await _context.OrderReviews
+                .Include(r => r.Order)
+                .FirstOrDefaultAsync(r => r.OrderId == dto.OrderId && r.Order.StoreId == store.Id);
+
+            if (review == null) throw new Exception("找不到該筆訂單的評價");
+
+            review.StoreReply = dto.ReplyText;
+            
+            _context.OrderReviews.Update(review);
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<PagedResultDto<SellerReturnListDto>> GetSellerReturnsAsync(int userId, bool? isProcessed = null, int page = 1, int pageSize = 10)
@@ -649,6 +746,9 @@ namespace ISpanShop.Services.Stores
             {
                 order.Status = (byte)OrderStatus.Refunded;
                 latestReturn.Status = 1; // 已同意
+
+                // 同意退貨時，才退回點數與優惠券
+                await ReturnOrderAssetsAsync(order);
             }
             else
             {
@@ -661,6 +761,27 @@ namespace ISpanShop.Services.Stores
 
             _context.Orders.Update(order);
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        private async Task ReturnOrderAssetsAsync(Order o)
+        {
+            // 1. 退回點數
+            if (o.PointDiscount.HasValue && o.PointDiscount.Value > 0)
+            {
+                await _pointService.UpdatePointsAsync(new PointUpdateDTO
+                {
+                    UserId = o.UserId,
+                    ChangeAmount = o.PointDiscount.Value,
+                    Description = $"退貨審核通過退回點數 (訂單編號: {o.OrderNumber})",
+                    OrderNumber = o.OrderNumber
+                });
+            }
+
+            // 2. 退回優惠券
+            if (o.CouponId.HasValue)
+            {
+                await _couponService.ReturnCouponAsync(o.Id);
+            }
         }
 
         private string GetStatusName(byte? status)

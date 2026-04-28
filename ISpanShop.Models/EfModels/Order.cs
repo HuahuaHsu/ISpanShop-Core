@@ -45,7 +45,13 @@ public partial class Order
 
     public int? CouponId { get; set; }
 
+    public decimal? PromotionDiscount { get; set; }
+
+    public int? PromotionId { get; set; }
+
     public virtual Coupon Coupon { get; set; }
+
+    public virtual Promotion Promotion { get; set; }
 
     public virtual ICollection<MemberCoupon> MemberCoupons { get; set; } = new List<MemberCoupon>();
 

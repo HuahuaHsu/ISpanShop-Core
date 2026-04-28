@@ -21,5 +21,6 @@ namespace ISpanShop.Services.Stores
         (bool IsSuccess, string Message) ToggleVerified(int storeId, bool isVerified);
         (bool IsSuccess, string Message) ToggleBlacklist(int storeId, bool isBlacklisted);
         (bool IsSuccess, string Message) UpdateStoreStatus(int storeId, int status);
+        Task<SellerTrafficDto> GetTrafficAnalyticsAsync(int storeId);
     }
 }

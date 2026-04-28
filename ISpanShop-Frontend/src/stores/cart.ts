@@ -10,17 +10,31 @@ import {
   clearCartApi
 } from '@/api/cart'
 
+export interface CartPromotion {
+  promotionId: number
+  name: string
+  promotionType: number
+  promotionTypeText: string
+  threshold: number
+  discountValue: number
+  discountType: number
+  description: string
+}
+
 export interface CartItem {
   productId: number
   variantId: number | null
   name: string
   image: string
-  price: number
+  price: number // 原價
+  promoPrice: number | null // 活動價
   quantity: number
   selected: boolean
   specLabel: string
   storeId: number
   storeName: string
+  storeStatus: number
+  promotions: CartPromotion[]
 }
 
 const CART_KEY = 'cart_items'
@@ -56,11 +70,14 @@ export const useCartStore = defineStore('cart', () => {
         name: item.productName,
         image: item.productImage,
         price: item.unitPrice,
+        promoPrice: item.promotionPrice,
         quantity: item.quantity,
         selected: true, // 預設選中
         specLabel: item.variantName || '',
         storeId: item.storeId,
-        storeName: item.storeName
+        storeName: item.storeName,
+        storeStatus: item.storeStatus,
+        promotions: item.promotions || []
       }))
     } catch (error) {
       console.error('獲取購物車失敗:', error)
@@ -93,11 +110,14 @@ export const useCartStore = defineStore('cart', () => {
         name: item.productName,
         image: item.productImage,
         price: item.unitPrice,
+        promoPrice: item.promotionPrice,
         quantity: item.quantity,
         selected: true,
         specLabel: item.variantName || '',
         storeId: item.storeId,
-        storeName: item.storeName
+        storeName: item.storeName,
+        storeStatus: item.storeStatus,
+        promotions: item.promotions || []
       }))
       // 同步完後清除 localStorage 的暫存，因為已經進資料庫了
       localStorage.removeItem(CART_KEY)
@@ -111,9 +131,10 @@ export const useCartStore = defineStore('cart', () => {
 
   // ── 操作功能 ──
 
-  async function addItem(newItem: Omit<CartItem, 'quantity' | 'selected'> & { quantity?: number, selected?: boolean }) {
+  async function addItem(newItem: Omit<CartItem, 'quantity' | 'selected' | 'promoPrice'> & { quantity?: number, selected?: boolean, promoPrice?: number | null }) {
     const qty = newItem.quantity ?? 1
     const selected = newItem.selected ?? true
+    const promoPrice = newItem.promoPrice ?? null
 
     if (authStore.isLoggedIn) {
       try {
@@ -133,7 +154,7 @@ export const useCartStore = defineStore('cart', () => {
       if (existing) {
         existing.quantity += qty
       } else {
-        items.value.push({ ...newItem, quantity: qty, selected })
+        items.value.push({ ...newItem, quantity: qty, selected, promoPrice })
       }
     }
   }
@@ -204,9 +225,9 @@ export const useCartStore = defineStore('cart', () => {
 
   const totalCount = computed(() => items.value.length)
   const totalQuantity = computed(() => items.value.reduce((sum, item) => sum + item.quantity, 0))
-  const totalPrice = computed(() => items.value.reduce((sum, item) => sum + item.price * item.quantity, 0))
+  const totalPrice = computed(() => items.value.reduce((sum, item) => sum + (item.promoPrice ?? item.price) * item.quantity, 0))
   const selectedQuantity = computed(() => items.value.filter(i => i.selected).reduce((sum, item) => sum + item.quantity, 0))
-  const selectedPrice = computed(() => items.value.filter(i => i.selected).reduce((sum, item) => sum + item.price * item.quantity, 0))
+  const selectedPrice = computed(() => items.value.filter(i => i.selected).reduce((sum, item) => sum + (item.promoPrice ?? item.price) * item.quantity, 0))
   const selectedItems = computed(() => items.value.filter(i => i.selected))
   const isAllSelected = computed({
     get: () => items.value.length > 0 && items.value.every(i => i.selected),

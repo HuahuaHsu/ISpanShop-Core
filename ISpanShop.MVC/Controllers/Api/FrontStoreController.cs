@@ -169,7 +169,7 @@ namespace ISpanShop.MVC.Controllers.Api
         /// 取得賣場儀表板數據 (僅限已通過審核的賣家)
         /// </summary>
         [HttpGet("dashboard")]
-        public async Task<IActionResult> GetDashboardData()
+        public async Task<IActionResult> GetDashboardData([FromQuery] int days = 7)
         {
             try
             {
@@ -186,7 +186,7 @@ namespace ISpanShop.MVC.Controllers.Api
                     return Forbid("您的賣場尚未通過審核或已被停權");
                 }
 
-                var data = await _storeService.GetDashboardDataAsync(userId);
+                var data = await _storeService.GetDashboardDataAsync(userId, days);
                 return Ok(data);
             }
             catch (Exception ex)
@@ -308,6 +308,26 @@ namespace ISpanShop.MVC.Controllers.Api
 
                 var success = await _storeService.ReviewReturnRequestAsync(userId, orderId, dto);
                 return success ? Ok(new { message = "審核結果已提交" }) : BadRequest(new { message = "審核提交失敗" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 賣家回覆評價
+        /// </summary>
+        [HttpPost("reviews/reply")]
+        public async Task<IActionResult> ReplyToReview([FromBody] SellerReplyDto dto)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+                var success = await _storeService.ReplyToReviewAsync(userId, dto);
+                return success ? Ok(new { message = "回覆成功" }) : BadRequest(new { message = "回覆失敗" });
             }
             catch (Exception ex)
             {

@@ -46,7 +46,7 @@
       <div class="items-card">
         <div class="store-header">
           <span class="store-name">{{ order?.storeName }}</span>
-          <el-button size="small">查看賣場</el-button>
+          <el-button size="small" @click="goToStore">查看賣場</el-button>
         </div>
         
         <div v-for="item in order?.items" :key="item.id" class="order-item">
@@ -125,6 +125,14 @@ const fetchOrderDetail = async () => {
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('zh-TW').format(price);
+};
+
+const goToStore = () => {
+  if (order.value?.storeId) {
+    router.push(`/store/${order.value.storeId}`);
+  } else {
+    ElMessage.warning('無法取得賣場資訊');
+  }
 };
 
 onMounted(() => {

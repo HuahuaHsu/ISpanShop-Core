@@ -9,6 +9,10 @@ namespace ISpanShop.Models.DTOs.Stores
         public string OrderNumber { get; set; }
         public DateTime? CreatedAt { get; set; }
         public decimal FinalAmount { get; set; }
+        public decimal? DiscountAmount { get; set; }
+        public decimal? LevelDiscount { get; set; }
+        public int? PointDiscount { get; set; }
+        public decimal? PromotionDiscount { get; set; }
         public OrderStatus Status { get; set; }
         public string StatusName { get; set; }
         public string BuyerName { get; set; }
@@ -19,5 +23,6 @@ namespace ISpanShop.Models.DTOs.Stores
         public string FirstProductName { get; set; }
         public string FirstProductImage { get; set; }
         public int TotalItemCount { get; set; }
+        public bool HasReview { get; set; }
     }
 }
