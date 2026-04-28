@@ -383,6 +383,7 @@ namespace ISpanShop.Services.Stores
             var query = _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.OrderDetails)
+                .Include(o => o.OrderReviews)
                 .Where(o => o.StoreId == store.Id);
 
             if (status.HasValue)
@@ -434,7 +435,8 @@ namespace ISpanShop.Services.Stores
                     RecipientName = o.RecipientName,
                     FirstProductName = firstDetail?.ProductName,
                     FirstProductImage = image,
-                    TotalItemCount = o.OrderDetails.Sum(od => od.Quantity)
+                    TotalItemCount = o.OrderDetails.Sum(od => od.Quantity),
+                    HasReview = o.OrderReviews.Any()
                 };
             }).ToList();
 
@@ -481,9 +483,13 @@ namespace ISpanShop.Services.Stores
                 .Include(o => o.User)
                     .ThenInclude(u => u.MemberProfile)
                 .Include(o => o.OrderDetails)
+                .Include(o => o.OrderReviews)
+                    .ThenInclude(r => r.ReviewImages)
                 .FirstOrDefaultAsync(o => o.Id == orderId && o.StoreId == store.Id);
 
             if (order == null) throw new Exception("找不到該筆訂單或該訂單不屬於您的賣場");
+
+            var review = order.OrderReviews.FirstOrDefault();
 
             return new SellerOrderDetailDto
             {
@@ -543,8 +549,42 @@ namespace ISpanShop.Services.Stores
                         Price = od.Price ?? 0,
                         Quantity = od.Quantity
                     };
-                }).ToList()
+                }).ToList(),
+
+                // 評價資訊
+                Review = review == null ? null : new OrderReviewDto
+                {
+                    Id = review.Id,
+                    UserId = review.UserId,
+                    OrderId = review.OrderId,
+                    Rating = review.Rating,
+                    Comment = review.Comment,
+                    StoreReply = review.StoreReply,
+                    IsHidden = review.IsHidden ?? false,
+                    CreatedAt = review.CreatedAt ?? DateTime.MinValue,
+                    ImageUrls = review.ReviewImages.Select(ri => ri.ImageUrl).ToList()
+                }
             };
+        }
+
+        public async Task<bool> ReplyToReviewAsync(int userId, SellerReplyDto dto)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (store == null) throw new Exception("找不到您的賣場");
+
+            var review = await _context.OrderReviews
+                .Include(r => r.Order)
+                .FirstOrDefaultAsync(r => r.OrderId == dto.OrderId && r.Order.StoreId == store.Id);
+
+            if (review == null) throw new Exception("找不到該筆訂單的評價");
+
+            review.StoreReply = dto.ReplyText;
+            
+            _context.OrderReviews.Update(review);
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<PagedResultDto<SellerReturnListDto>> GetSellerReturnsAsync(int userId, bool? isProcessed = null, int page = 1, int pageSize = 10)

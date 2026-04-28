@@ -79,6 +79,13 @@ export const reviewReturnApi = (orderId: number, data: { isApproved: boolean, re
 }
 
 /**
+ * 賣家回覆評價
+ */
+export const replyToReviewApi = (data: { orderId: number, replyText: string }) => {
+  return axios.post<ApiResponse>('/api/front/store/reviews/reply', data)
+}
+
+/**
  * 取得賣場公開資訊（名稱、評分、商品數、粉絲數、加入時間等）
 ...
  * GET /api/stores/:id

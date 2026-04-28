@@ -28,5 +28,8 @@ namespace ISpanShop.Services.Stores
         Task<PagedResultDto<SellerReturnListDto>> GetSellerReturnsAsync(int userId, bool? isProcessed = null, int page = 1, int pageSize = 10);
         Task<SellerReturnDetailDto> GetSellerReturnDetailAsync(int userId, long orderId);
         Task<bool> ReviewReturnRequestAsync(int userId, long orderId, ReviewReturnRequestDto dto);
+
+        // 賣家評價回覆
+        Task<bool> ReplyToReviewAsync(int userId, SellerReplyDto dto);
 	}
 }

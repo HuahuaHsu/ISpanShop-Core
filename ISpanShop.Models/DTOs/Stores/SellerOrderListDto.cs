@@ -23,5 +23,6 @@ namespace ISpanShop.Models.DTOs.Stores
         public string FirstProductName { get; set; }
         public string FirstProductImage { get; set; }
         public int TotalItemCount { get; set; }
+        public bool HasReview { get; set; }
     }
 }

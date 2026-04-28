@@ -68,6 +68,7 @@ export interface SellerOrder {
   firstProductName: string
   firstProductImage: string
   totalItemCount: number
+  hasReview: boolean
 }
 
 export interface SellerOrderDetail {
@@ -98,6 +99,18 @@ export interface SellerOrderDetail {
   finalAmount: number
 
   items: SellerOrderItem[]
+  review: OrderReview | null
+}
+
+export interface OrderReview {
+  id: number
+  userId: number
+  orderId: number
+  rating: number
+  comment: string
+  storeReply: string | null
+  createdAt: string
+  imageUrls: string[]
 }
 
 export interface SellerOrderItem {

@@ -1,4 +1,5 @@
 using ISpanShop.Common.Enums;
+using ISpanShop.Models.DTOs;
 using System;
 using System.Collections.Generic;
 
@@ -38,6 +39,9 @@ namespace ISpanShop.Models.DTOs.Orders
 
         // 商品明細
         public List<SellerOrderItemDto> Items { get; set; } = new();
+
+        // 評價資訊
+        public OrderReviewDto Review { get; set; }
     }
 
     public class SellerOrderItemDto

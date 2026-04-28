@@ -314,5 +314,25 @@ namespace ISpanShop.MVC.Controllers.Api
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// 賣家回覆評價
+        /// </summary>
+        [HttpPost("reviews/reply")]
+        public async Task<IActionResult> ReplyToReview([FromBody] SellerReplyDto dto)
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+                var success = await _storeService.ReplyToReviewAsync(userId, dto);
+                return success ? Ok(new { message = "回覆成功" }) : BadRequest(new { message = "回覆失敗" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
