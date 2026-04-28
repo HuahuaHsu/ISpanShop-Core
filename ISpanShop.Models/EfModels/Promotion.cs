@@ -41,8 +41,6 @@ public partial class Promotion
 
     public virtual ICollection<PromotionRule> PromotionRules { get; set; } = new List<PromotionRule>();
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-
     public virtual User ReviewedByNavigation { get; set; }
 
     public virtual User Seller { get; set; }

@@ -43,6 +43,8 @@ public partial class Order
 
     public int? CouponId { get; set; }
 
+    public decimal? LevelDiscount { get; set; }
+
     public decimal? PromotionDiscount { get; set; }
 
     public int? PromotionId { get; set; }
@@ -58,8 +60,6 @@ public partial class Order
     public virtual ICollection<OrderReview> OrderReviews { get; set; } = new List<OrderReview>();
 
     public virtual ICollection<PaymentLog> PaymentLogs { get; set; } = new List<PaymentLog>();
-
-    public virtual Promotion Promotion { get; set; }
 
     public virtual ICollection<ReturnRequest> ReturnRequests { get; set; } = new List<ReturnRequest>();
 
