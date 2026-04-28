@@ -79,12 +79,17 @@ namespace ISpanShop.MVC.Areas.Admin.Controllers.Orders
         [HttpPost]
         public async Task<IActionResult> ClearAllReviews()
         {
+            // 清空所有評論相關圖片 (避免 FK 衝突)
+            var allReviewImages = await _context.ReviewImages.ToListAsync();
+            _context.ReviewImages.RemoveRange(allReviewImages);
+
             // 清空所有評論資料
             var allReviews = await _context.OrderReviews.ToListAsync();
             _context.OrderReviews.RemoveRange(allReviews);
+            
             await _context.SaveChangesAsync();
             
-            TempData["SuccessMessage"] = "已成功清除所有商品評論！";
+            TempData["SuccessMessage"] = "已成功清除所有商品評論與相關圖片！";
             return RedirectToAction(nameof(Index));
         }
 
