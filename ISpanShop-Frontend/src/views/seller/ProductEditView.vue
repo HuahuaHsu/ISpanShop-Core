@@ -370,22 +370,6 @@
                       class="spec-option-row"
                     >
                       <span class="option-label">選項 {{ optIndex + 1 }}</span>
-                      <el-upload
-                        v-if="specIndex === 0"
-                        class="option-image-upload"
-                        :show-file-list="false"
-                        :auto-upload="false"
-                        accept="image/*"
-                        :on-change="(file: UploadFile) => handleOptionImageChange(specIndex, optIndex, file)"
-                      >
-                        <img
-                          v-if="option.imagePreview"
-                          :src="option.imagePreview"
-                          class="option-image-preview"
-                          :alt="option.name"
-                        />
-                        <el-icon v-else class="upload-icon"><Picture /></el-icon>
-                      </el-upload>
                       <el-input
                         v-model="option.name"
                         placeholder="輸入選項，例如：紅色"
@@ -549,7 +533,7 @@
             <!-- 價格 -->
             <div class="preview-price">
               <span class="price-symbol">NT$</span>
-              <span class="price-value">{{ formatPrice(form.price) }}</span>
+              <span class="price-value">{{ form.price }}</span>
             </div>
 
             <!-- 屬性 -->
@@ -666,8 +650,6 @@ const tabs = [
 
 interface SpecOption {
   name: string
-  image: File | null
-  imagePreview: string | null
 }
 
 interface Spec {
@@ -787,7 +769,7 @@ const form = reactive<ProductForm>({
   specs: [
     {
       name: '',
-      options: [{ name: '', image: null, imagePreview: null }],
+      options: [{ name: '' }],
     },
   ],
   isOnShelf: true,
@@ -1074,12 +1056,9 @@ async function loadProductData(): Promise<void> {
         if (Array.isArray(specsDef) && specsDef.length > 0) {
           reconstructedSpecs = specsDef.map((s: any) => ({
             name: s.name || '',
-            // 如果 specDefinitionJson 裡已經有 options，就直接用；否則初始化為空陣列
             options: Array.isArray(s.options) 
               ? s.options.map((opt: any) => ({
-                  name: typeof opt === 'string' ? opt : (opt.name || ''),
-                  image: null,
-                  imagePreview: null
+                  name: typeof opt === 'string' ? opt : (opt.name || '')
                 }))
               : []
           }))
@@ -1117,9 +1096,7 @@ async function loadProductData(): Promise<void> {
         reconstructedSpecs = specNamesOrder.map(name => ({
           name,
           options: Array.from(specOptionsMap.get(name) || []).map(optName => ({
-            name: optName,
-            image: null,
-            imagePreview: null
+            name: optName
           }))
         }))
         console.log('偵測到舊資料，已自動重建規格定義結構')
@@ -1365,33 +1342,11 @@ async function handleDescriptionImageFileChange(event: Event): Promise<void> {
   }
 }
 
-function handleOptionImageChange(specIndex: number, optIndex: number, file: UploadFile): void {
-  const raw = file.raw
-  if (!raw) return
-  const validTypes = ['image/jpeg', 'image/png', 'image/webp']
-  if (!validTypes.includes(raw.type)) {
-    ElMessage.error('只支援 JPG、PNG、WEBP 格式')
-    return
-  }
-  if (raw.size > 2 * 1024 * 1024) {
-    ElMessage.error('圖片大小不能超過 2MB')
-    return
-  }
-  const option = form.specs[specIndex]?.options[optIndex]
-  if (!option) return
-  option.image = raw
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    option.imagePreview = e.target?.result as string ?? null
-  }
-  reader.readAsDataURL(raw)
-}
-
 function addSpec(): void {
   if (form.specs.length < 2) {
     form.specs.push({
       name: '',
-      options: [{ name: '', image: null, imagePreview: null }],
+      options: [{ name: '' }],
     })
   }
 }
@@ -1401,7 +1356,7 @@ function removeSpec(index: number): void {
 }
 
 function addSpecOption(specIndex: number): void {
-  form.specs[specIndex].options.push({ name: '', image: null, imagePreview: null })
+  form.specs[specIndex].options.push({ name: '' })
 }
 
 function removeSpecOption(specIndex: number, optionIndex: number): void {
@@ -1417,10 +1372,6 @@ function applyBatch(): void {
     if (batchSku.value) variant.sku = batchSku.value
   })
   ElMessage.success('批量套用成功')
-}
-
-function formatPrice(price: number): string {
-  return price.toLocaleString('zh-TW')
 }
 
 function getBrandName(brandId: number): string {
