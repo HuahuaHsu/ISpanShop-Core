@@ -352,9 +352,13 @@ namespace ISpanShop.Services.Stores
         {
             var store = await _context.Stores
                 .AsNoTracking()
+                .Include(s => s.User)
                 .FirstOrDefaultAsync(s => s.Id == storeId);
 
             if (store == null) return null;
+
+            // 賣場被停權或店主被黑名單 → 視為不存在
+            if (store.StoreStatus == 3 || store.User?.IsBlacklisted == true) return null;
 
             var productCount = await _context.Products
                 .CountAsync(p => p.StoreId == storeId && p.Status == 1 && p.IsDeleted != true);

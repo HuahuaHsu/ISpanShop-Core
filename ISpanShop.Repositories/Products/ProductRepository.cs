@@ -1271,6 +1271,7 @@ namespace ISpanShop.Repositories.Products
                 .Where(p => p.IsDeleted != true
                          && p.Status == 1
                          && p.Store.StoreStatus != 3
+                         && p.Store.User.IsBlacklisted != true
                          && p.Id != productId
                          && p.CategoryId == categoryId)
                 .OrderByDescending(p => p.TotalSales ?? 0)
@@ -1305,7 +1306,7 @@ namespace ISpanShop.Repositories.Products
         public async Task<List<string>> GetHotKeywordsAsync(int limit)
         {
             return await _context.Products
-                .Where(p => p.Status == 1 && p.IsDeleted == false && p.Store.StoreStatus != 3)
+                .Where(p => p.Status == 1 && p.IsDeleted == false && p.Store.StoreStatus != 3 && p.Store.User.IsBlacklisted != true)
                 .OrderByDescending(p => p.ViewCount)
                 .Take(limit)
                 .Select(p => p.Name.Length > 10 ? p.Name.Substring(0, 10) : p.Name)

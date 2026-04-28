@@ -57,12 +57,17 @@ namespace ISpanShop.MVC.Controllers.Api.Stores
         [HttpGet("{storeId:int}/products")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetStoreProducts(
+        public async Task<IActionResult> GetStoreProducts(
             int storeId,
             [FromQuery] int     page     = 1,
             [FromQuery] int     pageSize = 20,
             [FromQuery] string? sortBy   = null)
         {
+            // 停權賣場 / 黑名單店主 → GetPublicStoreProfileAsync 回傳 null
+            var profile = await _frontStoreService.GetPublicStoreProfileAsync(storeId);
+            if (profile == null)
+                return NotFound(new { success = false, message = "找不到此賣場" });
+
             page     = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 1, 50);
 
