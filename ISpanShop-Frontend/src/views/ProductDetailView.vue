@@ -57,6 +57,21 @@
           <el-breadcrumb-item class="pd-breadcrumb-product">{{ safeProduct.name }}</el-breadcrumb-item>
         </el-breadcrumb>
 
+        <!-- 促銷活動橫幅（麵包屑下方、商品主區塊上方） -->
+        <div v-if="activePromotion" class="promo-banner-strip" :class="`promo-banner--${activePromotion.type}`">
+          <div class="promo-banner-content">
+            <span class="promo-banner-tag">{{ activePromotion.typeLabel }}</span>
+            <span class="promo-banner-title">{{ activePromotion.title }}</span>
+            <span class="promo-banner-sep">·</span>
+            <span class="promo-banner-desc">{{ promoBannerDesc }}</span>
+            <template v-if="countdownText">
+              <span class="promo-banner-sep">·</span>
+              <span class="promo-banner-countdown">⏱ {{ countdownText }}</span>
+            </template>
+            <a :href="activePromotion.linkUrl" class="promo-banner-link">查看活動 ›</a>
+          </div>
+        </div>
+
         <!-- 主區塊：左圖 + 右資訊 -->
         <div class="pd-main-section">
 
@@ -108,85 +123,6 @@
               <template v-else>
                 <span class="pd-review-count">{{ formatSoldCount(safeProduct.soldCount) }} 已售出</span>
               </template>
-            </div>
-
-            <!-- 活動促銷提示區塊 -->
-            <div v-if="activePromotion" class="pd-promo-alert">
-
-              <!-- 限時特賣 -->
-              <template v-if="activePromotion.type === 'flashSale'">
-                <div class="promo-alert-header">
-                  <el-tag type="danger" effect="dark" size="small" class="promo-type-tag">{{ activePromotion.typeLabel }}</el-tag>
-                  <span class="promo-title">{{ activePromotion.title }}</span>
-                </div>
-                <div class="promo-flash-body">
-                  <div class="promo-price-row">
-                    <span class="promo-price-label">活動價</span>
-                    <span v-if="activePromotion.discountPrice" class="promo-price-value">${{ formatPrice(activePromotion.discountPrice) }}</span>
-                    <span class="promo-original-price">${{ formatPrice(activePromotion.originalPrice) }}</span>
-                    <el-tag
-                      v-if="activePromotion.discountPercent"
-                      type="danger"
-                      size="small"
-                      effect="plain"
-                    >{{ activePromotion.discountPercent }}% OFF</el-tag>
-                  </div>
-                  <div v-if="countdownText" class="promo-countdown-row">
-                    <span class="promo-countdown-label">距結束</span>
-                    <span class="promo-countdown-value">{{ countdownText }}</span>
-                  </div>
-                </div>
-                <a :href="activePromotion.linkUrl" class="promo-link">查看活動頁面 &rsaquo;</a>
-              </template>
-
-              <!-- 滿額折扣 -->
-              <template v-else-if="activePromotion.type === 'discount'">
-                <div class="promo-alert-header">
-                  <el-tag type="warning" effect="dark" size="small" class="promo-type-tag">{{ activePromotion.typeLabel }}</el-tag>
-                  <span class="promo-title">{{ activePromotion.title }}</span>
-                </div>
-                <div v-if="discountRuleText" class="promo-rule-list">
-                  <span class="benefit-icon">🎁</span> {{ discountRuleText }}
-                </div>
-                <a :href="activePromotion.linkUrl" class="promo-link">查看活動頁面 &rsaquo;</a>
-              </template>
-
-              <!-- 限量搶購 -->
-              <template v-else-if="activePromotion.type === 'limitedBuy'">
-                <div class="promo-alert-header">
-                  <el-tag type="danger" effect="dark" size="small" class="promo-type-tag">{{ activePromotion.typeLabel }}</el-tag>
-                  <span class="promo-title">{{ activePromotion.title }}</span>
-                </div>
-                <div class="promo-flash-body">
-                  <div class="promo-price-row">
-                    <span class="promo-price-label">活動價</span>
-                    <span v-if="activePromotion.discountPrice" class="promo-price-value">${{ formatPrice(activePromotion.discountPrice) }}</span>
-                    <span class="promo-original-price">${{ formatPrice(activePromotion.originalPrice) }}</span>
-                  </div>
-                  <div v-if="activePromotion.quantityLimit" class="promo-limit-row">
-                    <el-tag type="info" size="small" effect="plain">每人限購 {{ activePromotion.quantityLimit }} 件</el-tag>
-                  </div>
-                  <template v-if="activePromotion.stockLimit">
-                    <div class="promo-stock-row">
-                      <span class="promo-stock-label">剩餘數量</span>
-                      <el-progress
-                        :percentage="activePromotion.remainingStock != null
-                          ? Math.max(0, Math.round(activePromotion.remainingStock / activePromotion.stockLimit * 100))
-                          : 100"
-                        :stroke-width="10"
-                        status="exception"
-                        :show-text="false"
-                        style="flex:1; min-width:100px;"
-                      />
-                      <span class="promo-stock-num">
-                        {{ activePromotion.remainingStock ?? 0 }} / {{ activePromotion.stockLimit }}
-                      </span>
-                    </div>
-                  </template>
-                </div>
-                <a :href="activePromotion.linkUrl" class="promo-link">查看活動頁面 &rsaquo;</a>
-              </template>
-
             </div>
 
             <div class="pd-price-block">
@@ -431,6 +367,25 @@ const discountRuleText = computed<string>(() => {
   if (r.discountType === 2) return `滿 ${r.threshold} 打 ${r.discountValue} 折`
   return `滿 ${r.threshold} 享優惠`
 })
+
+/** 橫幅顯示的優惠摘要（不含具體價格） */
+const promoBannerDesc = computed<string>(() => {
+  const promo = activePromotion.value
+  if (!promo) return ''
+  if (promo.type === 'flashSale') {
+    if (promo.discountPercent != null) return `${promo.discountPercent}% OFF`
+    return '限時特惠'
+  }
+  if (promo.type === 'discount') return discountRuleText.value || '滿額享折扣'
+  if (promo.type === 'limitedBuy') return promo.quantityLimit ? `每人限購 ${promo.quantityLimit} 件` : '限量搶購中'
+  return '活動進行中'
+})
+
+function getRemainingDays(endDate: string): number {
+  if (!endDate) return 0
+  const diff = Math.ceil((new Date(endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  return diff > 0 ? diff : 0
+}
 
 /** 活動結束倒數（格式：HH:mm:ss 或 X 天 HH:mm:ss） */
 const countdownText = ref('')
@@ -760,9 +715,6 @@ watch(() => route.params.id, (newId) => {
 .pd-rating-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; }
 .pd-vacation-alert { margin-bottom: 20px; }
 .pd-price-block { background: #fffbf8; border-radius: 4px; padding: 16px; margin-bottom: 20px; }
-.pd-promo-tag-row { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-.pd-promo-hint { font-size: 12px; color: #f59e0b; font-weight: 500; }
-.pd-promo-hint.success { color: #10b981; }
 .pd-price-row { display: flex; align-items: baseline; gap: 12px; }
 .pd-price-original { font-size: 16px; color: #94a3b8; text-decoration: line-through; }
 .pd-price-main { font-size: 30px; font-weight: 700; color: #EE4D2D; line-height: 1; }
@@ -875,39 +827,55 @@ watch(() => route.params.id, (newId) => {
   margin-left: 2px;
 }
 
-/* 促銷活動提示區塊 */
-.pd-promo-alert {
-  background: linear-gradient(135deg, #fff7ed 0%, #fff3e0 100%);
-  border: 1.5px solid #f97316;
-  border-radius: 8px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
+/* 促銷活動橫幅（麵包屑下方全寬條） */
+.promo-banner-strip {
+  border-radius: 4px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
 }
-.promo-alert-header {
+.promo-banner--flashSale  { background: linear-gradient(90deg, #c2141e 0%, #ef4444 100%); }
+.promo-banner--discount   { background: linear-gradient(90deg, #c2510c 0%, #f97316 100%); }
+.promo-banner--limitedBuy { background: linear-gradient(90deg, #7f1d1d 0%, #dc2626 100%); }
+.promo-banner--other      { background: linear-gradient(90deg, #374151 0%, #6b7280 100%); }
+.promo-banner-content {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: #fff;
+  font-size: 14px;
 }
-.promo-type-tag { flex-shrink: 0; }
-.promo-title { font-size: 14px; font-weight: 600; color: #9a3412; }
-.promo-flash-body { display: flex; flex-direction: column; gap: 8px; }
-.promo-price-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.promo-price-label { font-size: 13px; color: #ea580c; font-weight: 500; }
-.promo-price-value { font-size: 22px; font-weight: 700; color: #dc2626; }
-.promo-original-price { font-size: 14px; color: #94a3b8; text-decoration: line-through; }
-.promo-countdown-row { display: flex; align-items: center; gap: 8px; }
-.promo-countdown-label { font-size: 13px; color: #92400e; }
-.promo-countdown-value { font-size: 16px; font-weight: 700; color: #dc2626; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
-.promo-rule-list { list-style: none; padding: 0; margin: 0 0 4px; display: flex; flex-direction: column; gap: 6px; }
-.promo-rule-list li { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #78350f; font-weight: 700; }
-.benefit-icon { font-size: 16px; }
-.promo-limit-row { display: flex; align-items: center; gap: 8px; }
-.promo-stock-row { display: flex; align-items: center; gap: 8px; }
-.promo-stock-label { font-size: 13px; color: #92400e; white-space: nowrap; }
-.promo-stock-num { font-size: 13px; color: #dc2626; font-weight: 600; white-space: nowrap; }
-.promo-link { display: inline-block; margin-top: 10px; font-size: 13px; color: #ea580c; text-decoration: none; font-weight: 500; }
-.promo-link:hover { text-decoration: underline; }
+.promo-banner-tag {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.promo-banner-title { font-weight: 700; }
+.promo-banner-sep { color: rgba(255, 255, 255, 0.55); }
+.promo-banner-desc { font-weight: 600; }
+.promo-banner-countdown {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.promo-banner-link {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 3px;
+  padding: 3px 10px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.promo-banner-link:hover { background: rgba(255, 255, 255, 0.18); }
 .pd-description { font-size: 14px; color: #334155; line-height: 1.8; margin: 0; font-family: inherit; }
 .pd-description :deep(img) { max-width: 100%; height: auto; display: block; margin: 8px 0; }
 .pd-related-section { margin-top: 24px; }
