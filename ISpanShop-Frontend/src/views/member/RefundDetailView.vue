@@ -60,6 +60,11 @@
             <span>退貨商品原價小計</span>
             <span>NT$ {{ formatPrice(returnedItemsSubtotal) }}</span>
           </div>
+          <!-- 全額退貨時，顯示退還運費 -->
+          <div v-if="isFullReturn && (order.shippingFee || 0) > 0" class="summary-row">
+            <span>運費 (全額退貨退還)</span>
+            <span>NT$ {{ formatPrice(order.shippingFee || 0) }}</span>
+          </div>
           <div v-if="promotionDiscountShare !== 0" class="summary-row">
             <span class="label-with-hint">
               活動促銷折抵分攤

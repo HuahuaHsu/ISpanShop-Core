@@ -43,6 +43,7 @@ namespace ISpanShop.Models.DTOs.Orders
         public decimal? LevelDiscount { get; set; }
         public decimal? DiscountAmount { get; set; }
         public int? PointDiscount { get; set; }
+        public decimal? PromotionDiscount { get; set; }
         public decimal FinalAmount { get; set; }
         
         // 商品明細 (退款通常是整筆訂單，或由明細決定金額)

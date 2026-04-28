@@ -36,6 +36,7 @@ const getVal = (obj: any, key: string) => {
 
 const totalAmount = computed(() => getVal(props.order, 'totalAmount'))
 const finalAmount = computed(() => getVal(props.order, 'finalAmount'))
+const shippingFee = computed(() => getVal(props.order, 'shippingFee')) // 新增運費
 const levelDiscount = computed(() => getVal(props.order, 'levelDiscount'))
 const discountAmount = computed(() => getVal(props.order, 'discountAmount'))
 const pointDiscount = computed(() => getVal(props.order, 'pointDiscount'))
@@ -101,6 +102,12 @@ defineExpose({
       <div class="summary-row">
         <span>退貨商品小計</span>
         <span>NT$ {{ formatPrice(itemsSubtotal) }}</span>
+      </div>
+
+      <!-- 全額退貨時，顯示退還運費 -->
+      <div v-if="isFullReturn && shippingFee > 0" class="summary-row">
+        <span>運費 (全額退還)</span>
+        <span>NT$ {{ formatPrice(shippingFee) }}</span>
       </div>
 
       <!-- 活動促銷折抵分攤 -->

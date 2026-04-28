@@ -56,6 +56,7 @@
               <template #default="{ row }">
                 <div class="product-info">
                   <div class="product-name">{{ row.productName }}</div>
+                  <PromotionTags :tags="row.promotionTags" />
                   <div class="product-variant" v-if="row.variantName">規格：{{ row.variantName }}</div>
                 </div>
               </template>
@@ -170,6 +171,7 @@ import { ArrowLeft, UserFilled, InfoFilled, Picture, Goods } from '@element-plus
 import { getSellerReturnDetailApi, reviewReturnApi } from '@/api/store'
 import type { SellerReturnDetail } from '@/types/store'
 import RefundSummary from '@/components/order/RefundSummary.vue'
+import PromotionTags from '@/components/common/PromotionTags.vue'
 
 const route = useRoute()
 const router = useRouter()

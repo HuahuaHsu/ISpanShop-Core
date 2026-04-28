@@ -163,6 +163,7 @@ export interface SellerReturnDetail {
   levelDiscount: number | null
   discountAmount: number | null
   pointDiscount: number | null
+  promotionDiscount?: number | null // 活動促銷折抵
   finalAmount: number
 
   items: SellerOrderItem[]

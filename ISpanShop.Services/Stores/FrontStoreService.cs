@@ -696,6 +696,7 @@ namespace ISpanShop.Services.Stores
                 LevelDiscount = order.LevelDiscount,
                 DiscountAmount = order.DiscountAmount,
                 PointDiscount = order.PointDiscount,
+                PromotionDiscount = order.PromotionDiscount,
                 FinalAmount = order.FinalAmount,
 
                 // 關鍵：這裡只列出「退貨品項」及其數量
@@ -717,6 +718,11 @@ namespace ISpanShop.Services.Stores
                         image = "/" + image;
                     }
 
+                    var tags = new List<string>();
+                    decimal originalPrice = ri.OrderDetail.Product?.ProductVariants?.FirstOrDefault(v => v.Id == ri.OrderDetail.VariantId)?.Price ?? ri.OrderDetail.Product?.MinPrice ?? 0;
+                    if (originalPrice > 0 && ri.OrderDetail.Price < originalPrice) tags.Add("單品特價優惠");
+                    if ((order.PromotionDiscount ?? 0) > 0) tags.Add("符合賣場滿額活動");
+
                     return new SellerOrderItemDto
                     {
                         Id = ri.OrderDetailId,
@@ -727,7 +733,8 @@ namespace ISpanShop.Services.Stores
                         SkuCode = ri.OrderDetail.SkuCode,
                         CoverImage = image,
                         Price = ri.OrderDetail.Price ?? 0,
-                        Quantity = ri.Quantity // 這是退貨的數量
+                        Quantity = ri.Quantity, // 這是退貨的數量
+                        PromotionTags = tags.Distinct().ToList()
                     };
                 }).ToList()
             };
