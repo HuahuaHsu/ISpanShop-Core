@@ -6,7 +6,7 @@
       <div class="store-hero-inner">
         <!-- 左：Logo -->
         <div class="store-logo-wrap">
-          <el-avatar v-if="store.logoUrl" :src="store.logoUrl" :size="80" class="store-logo" />
+          <el-avatar v-if="store.logoUrl" :src="getFullImageUrl(store.logoUrl)" :size="80" class="store-logo" />
           <el-avatar v-else :size="80" class="store-logo store-logo-fallback">
             {{ store.name?.charAt(0) ?? '?' }}
           </el-avatar>
@@ -85,6 +85,7 @@ import { ElMessage } from 'element-plus'
 import { ChatDotRound } from '@element-plus/icons-vue'
 import { getStoreInfo, getStoreProducts } from '@/api/store'
 import ProductCard from '@/components/product/ProductCard.vue'
+import { getFullImageUrl } from '@/utils/format'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import type { StoreInfo } from '@/types/product'

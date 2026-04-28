@@ -30,6 +30,7 @@
         <div class="seller-logo" @click="router.push('/seller')">
           <img src="@/assets/images/howbuyLogo.png" class="logo-icon" alt="HowBuy Logo">
           <span class="logo-text">HowBuy <span class="logo-sub">賣家中心</span></span>
+          
         </div>
       </div>
       <div class="header-right">

@@ -144,7 +144,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 UserId         = product.Store?.UserId ?? 0,
                 Name           = product.Store?.StoreName ?? string.Empty,
                 Status         = product.Store?.StoreStatus ?? 1,
-                LogoUrl        = null,
+                LogoUrl        = product.Store?.LogoUrl,
                 Rating         = null,
                 ProductCount   = storeProductCount,
                 FollowerCount  = null,

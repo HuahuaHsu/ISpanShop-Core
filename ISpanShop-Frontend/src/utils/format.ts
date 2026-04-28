@@ -21,6 +21,20 @@ export function formatPrice(price: number): string {
 }
 
 /**
+ * 組合完整圖片 URL
+ * @param url 相對或絕對路徑
+ * @returns 完整 URL
+ */
+export function getFullImageUrl(url: string | null | undefined): string {
+  if (!url) return ''
+  if (url.startsWith('blob:') || url.startsWith('http') || url.startsWith('data:')) return url
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7125'
+  // 確保 url 開頭有 /
+  const normalizedUrl = url.startsWith('/') ? url : `/${url}`
+  return `${baseUrl}${normalizedUrl}`
+}
+
+/**
  * 格式化相對時間顯示
  * @param dateStr ISO 日期字串
  * @returns 相對時間格式（例如：3年前、2個月前、5天前、今天）

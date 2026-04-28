@@ -64,7 +64,7 @@
           <div class="pd-gallery">
             <div class="pd-main-image-wrap" style="position:relative;overflow:hidden;">
               <el-image
-                :src="activeImageUrl || fallbackImage"
+                :src="getFullImageUrl(activeImageUrl) || fallbackImage"
                 :alt="safeProduct.name"
                 fit="contain"
                 class="pd-main-image"
@@ -90,7 +90,7 @@
                   :class="{ active: activeImageUrl === img.url }"
                   @click="activeImageUrl = img.url"
                 >
-                  <el-image :src="img.url" fit="cover" class="thumb-img" />
+                  <el-image :src="getFullImageUrl(img.url)" fit="cover" class="thumb-img" />
                 </div>
               </div>
             </div>
@@ -162,7 +162,7 @@
                   >
                     <img
                       v-if="getSpecOptionImage(spec.name, option)"
-                      :src="getSpecOptionImage(spec.name, option)!"
+                      :src="getFullImageUrl(getSpecOptionImage(spec.name, option))!"
                       class="pd-spec-btn-img"
                       :alt="option"
                     />
@@ -238,8 +238,8 @@
             <!-- 左側區塊 -->
             <div class="store-left">
               <div class="store-avatar-wrap">
-                <el-avatar v-if="safeProduct.store.logoUrl" :src="safeProduct.store.logoUrl" :size="64" />
-                <el-avatar v-else :size="64" class="store-avatar-fallback">{{ safeProduct.store.name.charAt(0) }}</el-avatar>
+                <el-avatar v-if="safeProduct.storeLogo" :src="getFullImageUrl(safeProduct.storeLogo)" :size="64" />
+                <el-avatar v-else :size="64" class="store-avatar-fallback">{{ safeProduct.storeName.charAt(0) }}</el-avatar>
               </div>
               <div class="store-info">
                 <div class="store-name">{{ safeProduct.store.name }}</div>
@@ -310,7 +310,7 @@ import { getCategoryAttributes } from '@/api/categoryAttribute'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
-import { formatPrice, formatSoldCount, formatRelativeTime } from '@/utils/format'
+import { formatPrice, formatSoldCount, formatRelativeTime, getFullImageUrl } from '@/utils/format'
 import type {
   ProductDetail,
   ProductListItem,
@@ -376,6 +376,7 @@ const safeProduct = computed(() => {
     description: p.description || '賣家尚未提供商品描述',
     storeName: p.store?.name || '—',
     brandName: p.brand?.name || '—',
+    storeLogo: p.store?.logoUrl || '',
     totalStock: p.totalStock || 0,
     priceRange: p.priceRange || { min: 0, max: 0 },
     categoryPath: (p.categoryPath || []) as CategoryPathItem[],

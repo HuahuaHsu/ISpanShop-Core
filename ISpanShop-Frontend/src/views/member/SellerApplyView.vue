@@ -63,9 +63,10 @@
               :show-file-list="false"
               :on-change="handleLogoChange"
             >
-              <img v-if="form.logoUrl" :src="form.logoUrl.startsWith('http') ? form.logoUrl : baseUrl + form.logoUrl" class="preview-logo" />
+              <img v-if="form.logoUrl" :src="getFullImageUrl(form.logoUrl)" class="preview-logo" />
               <el-icon v-else class="uploader-icon"><Plus /></el-icon>
             </el-upload>
+
             <div class="el-upload__tip">建議尺寸 200x200，大小不超過 2MB</div>
           </el-form-item>
 
@@ -88,6 +89,7 @@ import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules, UploadFile } from 'element-plus'
 import { applyStoreApi, getStoreStatusApi, uploadStoreLogoApi } from '@/api/store'
+import { getFullImageUrl } from '@/utils/format'
 import type { StoreStatus } from '@/types/store'
 
 const router = useRouter()
@@ -95,7 +97,6 @@ const formRef = ref<FormInstance>()
 const submitting = ref(false)
 const initialLoading = ref(true)
 const status = ref<StoreStatus | ''>('')
-const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7125'
 
 const form = reactive({
   storeName: '',

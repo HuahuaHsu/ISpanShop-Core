@@ -3,7 +3,7 @@
     <div class="product-card">
       <div class="card-image-wrap">
         <el-image
-          :src="product.imageUrl || fallbackImage"
+          :src="getFullImageUrl(product.imageUrl) || fallbackImage"
           :alt="product.name"
           lazy
           fit="cover"
@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { Picture } from '@element-plus/icons-vue'
 import type { ProductListItem } from '@/types/product'
-import { formatPrice, formatSoldCount } from '@/utils/format'
+import { formatPrice, formatSoldCount, getFullImageUrl } from '@/utils/format'
 
 const props = defineProps<{
   product: ProductListItem

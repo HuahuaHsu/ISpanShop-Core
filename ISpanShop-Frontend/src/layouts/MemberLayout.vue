@@ -12,7 +12,7 @@
               boxShadow: `0 4px 12px ${levelStyle.shadow}`
             }">
             <img v-if="authStore.memberInfo?.avatarUrl"
-            :src="`https://localhost:7125${authStore.memberInfo.avatarUrl}`"
+            :src="getFullImageUrl(authStore.memberInfo.avatarUrl)"
             style="width:100%; height:100%; border-radius:50%; object-fit:cover;"/>
             <span v-else>
               {{ authStore.memberInfo?.account?.charAt(0).toUpperCase() || 'U' }}
@@ -69,6 +69,7 @@ import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { User, Document, Wallet, Menu } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
+import { getFullImageUrl } from '../utils/format'
 
 const route = useRoute()
 const router = useRouter()

@@ -7,6 +7,7 @@ import { User, Message, Iphone, Calendar, SuccessFilled } from '@element-plus/ic
 import { getMemberProfile, updateMemberProfile, uploadAvatar, type UpdateMemberProfileDto, type MemberDto } from '../../api/member'
 import { unbindOAuth } from '../../api/auth'
 import { storage } from '../../utils/storage'
+import { getFullImageUrl } from '../../utils/format'
 
 const authStore = useAuthStore()
 const profileFormRef = ref<FormInstance>()
@@ -155,15 +156,6 @@ const handleSave = async (formEl: FormInstance | undefined) => {
 // ── 頭像處理 (預覽) ──────────────────────────────────
 // ── 上傳狀態 ──────────────────────────────────────
 const isUploading = ref(false)
-
-// ── 組合完整圖片 URL ───────────────────────────────
-// 後端回傳的是相對路徑 /uploads/avatars/xxx.jpg
-// 需要補上後端 base URL 才能正確顯示
-const getFullImageUrl = (url: string) => {
-  if (!url) return ''
-  if (url.startsWith('blob:') || url.startsWith('http')) return url
-  return `https://localhost:7125${url}`
-}
 
 // ── 頭像上傳（完整流程）──────────────────────────────
 const handleAvatarUpload = async (rawFile: File) => {

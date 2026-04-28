@@ -62,7 +62,7 @@
                   :show-file-list="false"
                   :on-change="handleLogoChange"
                 >
-                  <img v-if="form.logoUrl" :src="getFullUrl(form.logoUrl)" class="preview-logo" />
+                  <img v-if="form.logoUrl" :src="getFullImageUrl(form.logoUrl)" class="preview-logo" />
                   <el-icon v-else class="uploader-icon"><Plus /></el-icon>
                   <div class="upload-hover">
                     <el-icon><Camera /></el-icon>
@@ -104,12 +104,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Camera, VideoPlay, CoffeeCup, Delete } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules, UploadFile } from 'element-plus'
 import { getStoreProfileApi, updateStoreProfileApi, uploadStoreLogoApi, getPendingOrdersCountApi } from '@/api/store'
+import { getFullImageUrl } from '@/utils/format'
 import type { StoreProfileData } from '@/types/store'
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 const submitting = ref(false)
-const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7125'
 
 const form = reactive<StoreProfileData>({
   storeName: '',
@@ -130,11 +130,6 @@ const rules = reactive<FormRules>({
     { max: 500, message: '介紹字數不能超過 500 字', trigger: 'blur' }
   ]
 })
-
-const getFullUrl = (url: string) => {
-  if (!url) return ''
-  return url.startsWith('http') ? url : baseUrl + url
-}
 
 const fetchStoreInfo = async () => {
   loading.value = true
