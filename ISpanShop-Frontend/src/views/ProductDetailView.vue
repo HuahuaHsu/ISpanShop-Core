@@ -126,17 +126,29 @@
             </div>
 
             <div class="pd-price-block">
+              <!-- 折扣價 + 折數標籤 -->
               <div class="pd-price-row">
                 <span class="pd-price-main">
                   ${{ formatPrice(displayPriceInfo.current) }}
-                  <template v-if="!selectedVariant && safeProduct.priceRange.max !== safeProduct.priceRange.min">
-                    &nbsp;-&nbsp;${{ formatPrice(safeProduct.priceRange.max) }}
+                  <template v-if="displayPriceInfo.currentMax != null">
+                    &nbsp;-&nbsp;${{ formatPrice(displayPriceInfo.currentMax) }}
                   </template>
                 </span>
-                <span
-                  v-if="safeProduct.discountRate !== null"
-                  class="pd-discount-tag"
-                >{{ safeProduct.discountRate.toFixed(1) }} 折</span>
+                <span v-if="displayPriceInfo.discountLabel" class="pd-discount-tag">
+                  {{ displayPriceInfo.discountLabel }}
+                </span>
+                <span v-else-if="safeProduct.discountRate !== null" class="pd-discount-tag">
+                  {{ safeProduct.discountRate.toFixed(1) }} 折
+                </span>
+              </div>
+              <!-- 原價刪除線（只在有活動折扣時顯示） -->
+              <div v-if="displayPriceInfo.original != null" class="pd-price-original-row">
+                <span class="pd-price-original">
+                  原價 ${{ formatPrice(displayPriceInfo.original) }}
+                  <template v-if="displayPriceInfo.originalMax != null">
+                    &nbsp;-&nbsp;${{ formatPrice(displayPriceInfo.originalMax) }}
+                  </template>
+                </span>
               </div>
             </div>
 
@@ -341,12 +353,43 @@ const product = ref<ProductDetail | null>(null)
 const categoryAttributes = ref<CategoryAttribute[]>([])
 const productPromotions = ref<ProductPromotion[]>([])
 
-/** 目前選中/最低價格 */
+/** 目前選中/最低價格（含活動折扣計算） */
 const displayPriceInfo = computed(() => {
   const p = product.value
-  if (!p) return { current: 0 }
-  const currentPrice = selectedVariant.value ? selectedVariant.value.price : p.priceRange.min
-  return { current: currentPrice }
+  const nullResult = { current: 0, currentMax: null as number | null, original: null as number | null, originalMax: null as number | null, discountLabel: null as string | null }
+  if (!p) return nullResult
+
+  // 基準價：選了規格用規格價，否則用有庫存的最低/最高價
+  const baseMin = selectedVariant.value ? selectedVariant.value.price : (availableMinPrice.value ?? p.priceRange?.min ?? 0)
+  const baseMax = selectedVariant.value ? selectedVariant.value.price : (availableMaxPrice.value ?? p.priceRange?.max ?? 0)
+
+  const promo = activePromotion.value
+  const hasDiscount =
+    promo != null &&
+    (promo.type === 'flashSale' || promo.type === 'limitedBuy') &&
+    promo.discountPercent != null &&
+    promo.discountPercent > 0
+
+  if (hasDiscount) {
+    const pct = promo!.discountPercent!
+    const discMin = Math.round(baseMin * pct / 100)
+    const discMax = Math.round(baseMax * pct / 100)
+    return {
+      current: discMin,
+      currentMax: discMax !== discMin ? discMax : null,
+      original: baseMin,
+      originalMax: baseMax !== baseMin ? baseMax : null,
+      discountLabel: `${pct}折`,
+    }
+  }
+
+  return {
+    current: baseMin,
+    currentMax: baseMax !== baseMin ? baseMax : null,
+    original: null,
+    originalMax: null,
+    discountLabel: null,
+  }
 })
 
 /** 第一個進行中活動（優先 flashSale > limitedBuy > discount） */
@@ -502,9 +545,27 @@ const allSpecsSelected = computed(() => {
 
 const selectedVariant = computed(() => {
   if (!isReady.value || !allSpecsSelected.value) return null
-  return safeProduct.value.variants.find(v => 
+  return safeProduct.value.variants.find(v =>
     safeProduct.value.specs.every(s => v.specValues[s.name] === selectedSpecs.value[s.name])
   ) || null
+})
+
+/** 有庫存（stock > 0）的規格 */
+const availableVariants = computed(() => {
+  if (!isReady.value) return []
+  return safeProduct.value.variants.filter(v => v.stock > 0)
+})
+
+/** 有庫存規格的最低價；無庫存規格時回退至 priceRange.min */
+const availableMinPrice = computed<number>(() => {
+  const prices = availableVariants.value.map(v => v.price)
+  return prices.length > 0 ? Math.min(...prices) : (safeProduct.value.priceRange.min ?? 0)
+})
+
+/** 有庫存規格的最高價；無庫存規格時回退至 priceRange.max */
+const availableMaxPrice = computed<number>(() => {
+  const prices = availableVariants.value.map(v => v.price)
+  return prices.length > 0 ? Math.max(...prices) : (safeProduct.value.priceRange.max ?? 0)
 })
 
 const currentStock = computed(() => {
@@ -530,6 +591,20 @@ function getSpecOptionImage(specName: string, optionValue: string): string | nul
     v => v.specValues[specName] === optionValue && v.imageUrl
   )
   return variant?.imageUrl ?? null
+}
+
+/** 套用活動折扣後的實際價格（flashSale / limitedBuy 時打折，其餘原價） */
+function getEffectivePrice(originalPrice: number): number {
+  const promo = activePromotion.value
+  if (
+    promo != null &&
+    (promo.type === 'flashSale' || promo.type === 'limitedBuy') &&
+    promo.discountPercent != null &&
+    promo.discountPercent > 0
+  ) {
+    return Math.round(originalPrice * promo.discountPercent / 100)
+  }
+  return originalPrice
 }
 
 function selectSpec(specName: string, optionValue: string) {
@@ -598,7 +673,7 @@ function handleAddToCart() {
   if (hasSpecs.value && !allSpecsSelected.value) { ElMessage.warning('請選擇規格'); return }
   const p = safeProduct.value
   const variant = selectedVariant.value
-  const price = variant ? variant.price : p.priceRange.min
+  const price = getEffectivePrice(variant ? variant.price : availableMinPrice.value)
   cartStore.addItem({
     productId: p.id,
     variantId: variant?.id ?? null,
@@ -625,7 +700,7 @@ function handleBuyNow(): void {
   const p = safeProduct.value
   const variant = selectedVariant.value
   const image = activeImageUrl.value || p.images[0]?.url || ''
-  const price = variant ? variant.price : p.priceRange.min
+  const price = getEffectivePrice(variant ? variant.price : availableMinPrice.value)
   const variantId = variant?.id ?? null
   const specLabel = variant
     ? Object.entries(variant.specValues).map(([k, v]) => `${k}: ${v}`).join('、')
@@ -716,7 +791,8 @@ watch(() => route.params.id, (newId) => {
 .pd-vacation-alert { margin-bottom: 20px; }
 .pd-price-block { background: #fffbf8; border-radius: 4px; padding: 16px; margin-bottom: 20px; }
 .pd-price-row { display: flex; align-items: baseline; gap: 12px; }
-.pd-price-original { font-size: 16px; color: #94a3b8; text-decoration: line-through; }
+.pd-price-original-row { margin-top: 4px; }
+.pd-price-original { font-size: 14px; color: #94a3b8; text-decoration: line-through; }
 .pd-price-main { font-size: 30px; font-weight: 700; color: #EE4D2D; line-height: 1; }
 .pd-discount-tag { background: #EE4D2D; color: #fff; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 2px; }
 .pd-spec-row { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px; }

@@ -172,7 +172,9 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                           && !pi.Product.IsDeleted
                           && pi.Product.Status == 1)   // 只顯示已上架商品，防止點擊後 404
                 .Include(pi => pi.Product)
-                    .ThenInclude(p => p.ProductImages);
+                    .ThenInclude(p => p.ProductImages)
+                .Include(pi => pi.Product)
+                    .ThenInclude(p => p.ProductVariants);
 
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -193,29 +195,55 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                     : query.OrderByDescending(pi => pi.DiscountPrice ?? pi.OriginalPrice);
             }
 
-            var items = await ordered
+            // Step 1：DB 查詢，取出有庫存規格的最低價（nullable，空時為 null）
+            var rawItems = await ordered
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(pi => new
                 {
-                    productId     = pi.ProductId,
-                    productName   = pi.Product.Name,
-                    imageUrl      = pi.Product.ProductImages
-                                       .Where(img => img.IsMain == true)
-                                       .Select(img => img.ImageUrl)
-                                       .FirstOrDefault()
-                                   ?? pi.Product.ProductImages
-                                       .OrderBy(img => img.SortOrder)
-                                       .Select(img => img.ImageUrl)
-                                       .FirstOrDefault(),
-                    originalPrice = pi.OriginalPrice,
-                    discountPrice = pi.DiscountPrice,
-                    discountPercent = pi.DiscountPercent,
-                    soldCount     = pi.SoldCount,
-                    quantityLimit = pi.QuantityLimit,
-                    stockLimit    = pi.StockLimit,
+                    productId           = pi.ProductId,
+                    productName         = pi.Product.Name,
+                    imageUrl            = pi.Product.ProductImages
+                                            .Where(img => img.IsMain == true)
+                                            .Select(img => img.ImageUrl)
+                                            .FirstOrDefault()
+                                        ?? pi.Product.ProductImages
+                                            .OrderBy(img => img.SortOrder)
+                                            .Select(img => img.ImageUrl)
+                                            .FirstOrDefault(),
+                    storedOriginalPrice = pi.OriginalPrice,
+                    storedDiscountPrice = pi.DiscountPrice,
+                    discountPercent     = pi.DiscountPercent,
+                    soldCount           = pi.SoldCount,
+                    quantityLimit       = pi.QuantityLimit,
+                    stockLimit          = pi.StockLimit,
+                    // 有庫存（Stock > 0 且未刪除）的規格最低價；無庫存時為 null
+                    minInStockPrice     = pi.Product.ProductVariants
+                                            .Where(v => v.IsDeleted != true && v.Stock > 0)
+                                            .Min(v => (decimal?)v.Price),
                 })
                 .ToListAsync();
+
+            // Step 2：在記憶體中計算正確的原價與折扣價
+            var items = rawItems.Select(r =>
+            {
+                var originalPrice = r.minInStockPrice ?? r.storedOriginalPrice;
+                var discountPrice = r.discountPercent != null && r.discountPercent > 0
+                    ? (decimal?)Math.Round(originalPrice * r.discountPercent.Value / 100m, 0)
+                    : r.storedDiscountPrice;
+                return new
+                {
+                    productId       = r.productId,
+                    productName     = r.productName,
+                    imageUrl        = r.imageUrl,
+                    originalPrice,
+                    discountPrice,
+                    discountPercent = r.discountPercent,
+                    soldCount       = r.soldCount,
+                    quantityLimit   = r.quantityLimit,
+                    stockLimit      = r.stockLimit,
+                };
+            }).ToList();
 
             return Ok(new
             {
@@ -253,11 +281,23 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                           && pi.Promotion.EndTime >= now)
                 .Include(pi => pi.Promotion)
                     .ThenInclude(p => p.PromotionRules)
+                .Include(pi => pi.Product)
+                    .ThenInclude(p => p.ProductVariants)
                 .ToListAsync();
 
             var data = promotionItems.Select(pi =>
             {
                 var rule = pi.Promotion.PromotionRules.FirstOrDefault();
+
+                // 有庫存（Stock > 0 且未刪除）的規格最低價；回退至 OriginalPrice
+                var minAvailablePrice = pi.Product?.ProductVariants
+                    .Where(v => v.IsDeleted != true && (v.Stock ?? 0) > 0)
+                    .Min(v => (decimal?)v.Price) ?? pi.OriginalPrice;
+
+                var discountPrice = pi.DiscountPercent != null && pi.DiscountPercent > 0
+                    ? (decimal?)Math.Round(minAvailablePrice * pi.DiscountPercent.Value / 100m, 0)
+                    : pi.DiscountPrice;
+
                 return new
                 {
                     id              = pi.Promotion.Id,
@@ -265,8 +305,8 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                     type            = PromotionService.GetTypeCode(pi.Promotion.PromotionType),
                     typeLabel       = PromotionService.GetTypeLabel(pi.Promotion.PromotionType),
                     endDate         = pi.Promotion.EndTime,
-                    originalPrice   = pi.OriginalPrice,
-                    discountPrice   = pi.DiscountPrice,
+                    originalPrice   = minAvailablePrice,
+                    discountPrice,
                     discountPercent = pi.DiscountPercent,
                     quantityLimit   = pi.QuantityLimit,
                     stockLimit      = pi.StockLimit,
