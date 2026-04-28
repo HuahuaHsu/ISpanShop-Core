@@ -46,6 +46,7 @@ namespace ISpanShop.Services.Payments
 						decimal pointDiscountAmount = 0;
 						decimal couponDiscountAmount = 0;
 						decimal levelDiscountAmount = dto.LevelDiscount ?? 0;
+						decimal promotionDiscountAmount = dto.PromotionDiscount ?? 0;
 						Coupon? coupon = null;
 
 						var orderNumber = "ORD" + DateTime.Now.ToString("yyyyMMddHHmmss");
@@ -54,32 +55,36 @@ namespace ISpanShop.Services.Payments
 						if (dto.CouponId.HasValue)
 						{
 							var productIds = dto.Items.Select(i => i.ProductId).Distinct().ToList();
-							var valRes = await _couponService.ValidateCouponAsync(dto.UserId, dto.CouponId.Value, subtotal, productIds);
+							// 注意：優惠券計算邏輯應與前端一致。
+							// 這裡假設活動折扣(promotionDiscountAmount)會先扣除，再套用優惠券。
+							// 如果不扣除直接套用，則使用 subtotal。
+							var valRes = await _couponService.ValidateCouponAsync(dto.UserId, dto.CouponId.Value, subtotal - promotionDiscountAmount, productIds);
 
 							if (!valRes.IsValid) return (false, valRes.Message, null);
 
 							coupon = valRes.Coupon;
 							if (coupon != null)
 							{
+								decimal baseForCoupon = subtotal - promotionDiscountAmount;
 								if (coupon.CouponType == 1) // 固定金額
 								{
 									couponDiscountAmount = coupon.DiscountValue;
 								}
 								else if (coupon.CouponType == 2) // 百分比
 								{
-									couponDiscountAmount = Math.Round(subtotal * (coupon.DiscountValue / 100m), 0);
+									couponDiscountAmount = Math.Round(baseForCoupon * (coupon.DiscountValue / 100m), 0);
 									if (coupon.MaximumDiscount.HasValue)
 									{
 										couponDiscountAmount = Math.Min(couponDiscountAmount, coupon.MaximumDiscount.Value);
 									}
 								}
-								// 確保折扣不超過總額
-								couponDiscountAmount = Math.Min(couponDiscountAmount, subtotal);
+								// 確保折扣不超過剩餘總額
+								couponDiscountAmount = Math.Min(couponDiscountAmount, baseForCoupon);
 							}
 						}
 
-						// --- C. 處理點數折抵邏輯 (在扣除優惠券與等級折扣後的剩餘金額基礎上折抵) ---
-						decimal totalDiscountAmount = couponDiscountAmount + levelDiscountAmount;
+						// --- C. 處理點數折抵邏輯 (在扣除活動、優惠券與等級折扣後的剩餘金額基礎上折抵) ---
+						decimal totalDiscountAmount = promotionDiscountAmount + couponDiscountAmount + levelDiscountAmount;
 						decimal remainingAmount = subtotal - totalDiscountAmount;
 
 						if (dto.UsePoints)
@@ -134,6 +139,7 @@ namespace ISpanShop.Services.Payments
 							CouponId = dto.CouponId,
 							DiscountAmount = couponDiscountAmount, // 僅存優惠券折扣
 							LevelDiscount = levelDiscountAmount,   // 存入會員等級折扣
+							PromotionDiscount = promotionDiscountAmount, // 存入活動促銷折扣
 							PointDiscount = (int)pointDiscountAmount, // 點數折扣
 							FinalAmount = (subtotal + shippingFee) - totalDiscountAmount - pointDiscountAmount,
 							Status = 0, // 0: 待付款

@@ -87,8 +87,52 @@ const checkoutItems = computed(() => {
   return cartStore.selectedItems
 })
 
+// 修改：小計應為 (活動價或原價) * 數量
 const subtotal = computed(() => {
-  return checkoutItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  return checkoutItems.value.reduce((sum, item) => {
+    const price = item.promoPrice ?? item.price
+    return sum + price * item.quantity
+  }, 0)
+})
+
+// 新增：計算賣場活動促銷折抵 (滿額折扣等)
+const totalStoreDiscount = computed(() => {
+  const groups: Record<number, { items: any[] }> = {}
+  
+  checkoutItems.value.forEach(item => {
+    if (!groups[item.storeId]) {
+      groups[item.storeId] = { items: [] }
+    }
+    groups[item.storeId].items.push(item)
+  })
+
+  let totalDiscount = 0
+  
+  Object.values(groups).forEach(group => {
+    const promoMap: Record<number, any> = {}
+    group.items.forEach(item => {
+      const currentPrice = item.promoPrice ?? item.price
+      item.promotions?.forEach((p: any) => {
+        if (!promoMap[p.promotionId]) {
+          promoMap[p.promotionId] = { ...p, currentTotal: 0 }
+        }
+        promoMap[p.promotionId].currentTotal += currentPrice * item.quantity
+      })
+    })
+    
+    // 計算滿額折扣 (Type 2)
+    Object.values(promoMap).forEach(promo => {
+      if (promo.promotionType === 2 && promo.currentTotal >= promo.threshold) {
+        if (promo.discountType === 1) { // 固定金額
+          totalDiscount += promo.discountValue
+        } else if (promo.discountType === 2) { // 百分比
+          totalDiscount += Math.round(promo.currentTotal * (promo.discountValue / 100), 0)
+        }
+      }
+    })
+  })
+
+  return totalDiscount
 })
 
 // ── 檢查休假狀態 ──
@@ -102,26 +146,28 @@ const selectedCoupon = computed(() => availableCoupons.value.find(c => c.id === 
 const couponDiscount = computed(() => {
   if (!selectedCoupon.value) return 0
   const c = selectedCoupon.value
-  if (c.couponType === 1) return c.discountValue
+  // 優惠券計算應基於「小計扣除活動折扣」後，或依需求而定。這裡先依小計計算。
+  const base = subtotal.value - totalStoreDiscount.value
+  if (c.couponType === 1) return Math.min(c.discountValue, base)
   if (c.couponType === 2) {
-    let disc = Math.round(subtotal.value * (c.discountValue / 100), 0)
+    let disc = Math.round(base * (c.discountValue / 100), 0)
     if (c.maximumDiscount) disc = Math.min(disc, c.maximumDiscount)
-    return disc
+    return Math.min(disc, base)
   }
   return 0
 })
 
 const levelDiscount = computed(() => {
   if (memberLevel.value.discountRate >= 1.0) return 0
-  // 計算折扣金額 (小計扣除優惠券後再計算等級折扣)
-  const afterCoupon = subtotal.value - couponDiscount.value
-  return Math.round(afterCoupon * (1 - memberLevel.value.discountRate))
+  // 計算折扣金額 (小計扣除活動折抵與優惠券後再計算等級折扣)
+  const afterOther = subtotal.value - totalStoreDiscount.value - couponDiscount.value
+  return Math.round(Math.max(afterOther, 0) * (1 - memberLevel.value.discountRate))
 })
 
 const pointDiscount = computed(() => {
   if (!usePoints.value) return 0
-  const remaining = subtotal.value - couponDiscount.value - levelDiscount.value
-  return Math.min(walletBalance.value, remaining)
+  const remaining = subtotal.value - totalStoreDiscount.value - couponDiscount.value - levelDiscount.value
+  return Math.max(Math.min(walletBalance.value, remaining), 0)
 })
 
 // 會員等級配色與權益
@@ -153,7 +199,7 @@ const levelBenefits = computed(() => {
 })
 
 const finalAmount = computed(() => {
-  const amt = subtotal.value + shippingFee.value - couponDiscount.value - levelDiscount.value - pointDiscount.value
+  const amt = subtotal.value + shippingFee.value - totalStoreDiscount.value - couponDiscount.value - levelDiscount.value - pointDiscount.value
   return Math.max(amt, 0)
 })
 
@@ -296,10 +342,11 @@ async function handleSubmit() {
       usePoints: usePoints.value,
       couponId: selectedCouponId.value,
       levelDiscount: levelDiscount.value,
+      promotionDiscount: totalStoreDiscount.value,
       items: checkoutItems.value.map(i => ({
         productId: i.productId,
         variantId: i.variantId || 0,
-        unitPrice: i.price,
+        unitPrice: i.promoPrice ?? i.price,
         quantity: i.quantity,
         productName: i.name,
         variantName: i.variantName || i.specLabel || '預設規格'
@@ -381,9 +428,24 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
               <el-tag v-if="item.storeStatus === 2" type="warning" size="small" effect="dark" class="mr-1">休假中</el-tag>
               {{ item.name || item.productName }}
             </div>
-            <div class="item-price">NT$ {{ formatPrice(item.price) }} x {{ item.quantity }}</div>
+            <!-- 新增：活動標籤 -->
+            <div v-if="item.promotions && item.promotions.length > 0" class="item-promo-tags">
+              <el-tag v-for="p in item.promotions" :key="p.promotionId" size="small" type="danger" effect="plain" class="promo-mini-tag">
+                {{ p.name }}
+              </el-tag>
+            </div>
+            <div class="item-price">
+              <template v-if="item.promoPrice">
+                <span class="original-price">NT$ {{ formatPrice(item.price) }}</span>
+                <span class="promo-price">NT$ {{ formatPrice(item.promoPrice) }}</span>
+              </template>
+              <template v-else>
+                NT$ {{ formatPrice(item.price) }}
+              </template>
+              x {{ item.quantity }}
+            </div>
           </div>
-          <div class="item-total">NT$ {{ formatPrice(item.price * item.quantity) }}</div>
+          <div class="item-total">NT$ {{ formatPrice((item.promoPrice ?? item.price) * item.quantity) }}</div>
         </div>
       </el-card>
 
@@ -516,12 +578,16 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
           <span>NT$ {{ formatPrice(shippingFee) }}</span>
         </div>
         
+        <div v-if="totalStoreDiscount > 0" class="summary-row">
+          <span>活動促銷折抵</span>
+          <span class="discount">- NT$ {{ formatPrice(totalStoreDiscount) }}</span>
+        </div>
         <div v-if="couponDiscount > 0" class="summary-row">
           <span>優惠券折抵</span>
           <span class="discount">- NT$ {{ formatPrice(couponDiscount) }}</span>
         </div>
         <div v-if="levelDiscount > 0" class="summary-row">
-          <span>{{ memberLevel.name }} 專屬折扣 ({{ memberLevel.discountRate * 10 }}折)</span>
+          <span>{{ memberLevel.name }} 專屬折扣 ({{ (memberLevel.discountRate * 10).toFixed(1) }}折)</span>
           <span class="discount">- NT$ {{ formatPrice(levelDiscount) }}</span>
         </div>
         <div v-if="pointDiscount > 0" class="summary-row">
@@ -604,11 +670,15 @@ function formatPrice(val: number) { return val.toLocaleString('zh-TW') }
   border-bottom: 1px solid #eee;
 }
 .item-row:last-child { border-bottom: none; }
-.item-img { width: 64px; height: 64px; border-radius: 8px; margin-right: 16px; background: #f1f5f9; }
-.item-info { flex: 1; }
-.item-name { font-size: 14px; }
-.item-price { font-size: 12px; color: #999; }
-.item-total { font-weight: bold; }
+.item-img { width: 64px; height: 64px; border-radius: 8px; margin-right: 16px; background: #f1f5f9; object-fit: cover; }
+.item-info { flex: 1; min-width: 0; }
+.item-name { font-size: 14px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-promo-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+.promo-mini-tag { font-size: 10px; padding: 0 4px; height: 18px; line-height: 16px; }
+.item-price { font-size: 13px; color: #666; }
+.original-price { text-decoration: line-through; color: #999; margin-right: 6px; font-size: 12px; }
+.promo-price { color: #ee4d2d; font-weight: 600; margin-right: 6px; }
+.item-total { font-weight: bold; min-width: 90px; text-align: right; }
 
 .discount-row {
   display: flex;

@@ -15,6 +15,7 @@ export interface CheckoutRequest {
   usePoints: boolean;
   couponId: number | null;
   levelDiscount?: number; // 會員等級折扣金額
+  promotionDiscount?: number; // 賣場活動促銷折扣總額
   items: CheckoutItem[];
   recipientName: string;
   recipientPhone: string;
