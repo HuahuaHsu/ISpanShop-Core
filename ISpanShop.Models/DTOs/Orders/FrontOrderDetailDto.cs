@@ -58,6 +58,7 @@ namespace ISpanShop.Models.DTOs.Orders
         public string CoverImage { get; set; }
         public decimal Price { get; set; }
         public int ReturnQuantity { get; set; }
+        public List<string> PromotionTags { get; set; } = new List<string>(); // 新增：活動標籤
     }
 
     public class FrontOrderItemDto

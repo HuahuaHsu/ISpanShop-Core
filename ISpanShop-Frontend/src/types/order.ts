@@ -75,4 +75,5 @@ export interface ReturnItem {
   coverImage: string;
   price: number;
   returnQuantity: number;
+  promotionTags?: string[];
 }

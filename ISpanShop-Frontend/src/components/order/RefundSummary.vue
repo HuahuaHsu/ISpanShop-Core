@@ -39,6 +39,7 @@ const finalAmount = computed(() => getVal(props.order, 'finalAmount'))
 const levelDiscount = computed(() => getVal(props.order, 'levelDiscount'))
 const discountAmount = computed(() => getVal(props.order, 'discountAmount'))
 const pointDiscount = computed(() => getVal(props.order, 'pointDiscount'))
+const promotionDiscount = computed(() => getVal(props.order, 'promotionDiscount')) // 新增
 
 // 2. 退貨商品原價小計
 const itemsSubtotal = computed(() => {
@@ -76,10 +77,14 @@ const pointDiscountShare = computed(() =>
   isFullReturn.value ? pointDiscount.value : Math.round(pointDiscount.value * ratio.value)
 )
 
+const promotionDiscountShare = computed(() => 
+  isFullReturn.value ? promotionDiscount.value : Math.round(promotionDiscount.value * ratio.value)
+) // 新增
+
 // 6. 最終預計退款金額
 const finalRefundAmount = computed(() => {
   if (isFullReturn.value) return finalAmount.value
-  const amount = itemsSubtotal.value - levelDiscountShare.value - couponDiscountShare.value - pointDiscountShare.value
+  const amount = itemsSubtotal.value - levelDiscountShare.value - couponDiscountShare.value - pointDiscountShare.value - promotionDiscountShare.value
   return amount > 0 ? amount : 0
 })
 
@@ -96,6 +101,17 @@ defineExpose({
       <div class="summary-row">
         <span>退貨商品小計</span>
         <span>NT$ {{ formatPrice(itemsSubtotal) }}</span>
+      </div>
+
+      <!-- 活動促銷折抵分攤 -->
+      <div v-if="promotionDiscountShare !== 0" class="summary-row">
+        <span class="label-with-hint">
+          活動促銷折抵分攤
+          <el-tooltip content="按商品金額比例分攤當初享有的活動折扣" placement="top">
+            <el-icon class="info-icon"><InfoFilled /></el-icon>
+          </el-tooltip>
+        </span>
+        <span class="discount">- NT$ {{ formatPrice(Math.abs(promotionDiscountShare)) }}</span>
       </div>
 
       <!-- 會員等級折抵分攤 -->

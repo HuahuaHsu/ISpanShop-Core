@@ -95,18 +95,35 @@ namespace ISpanShop.Services.Orders
                 RecipientPhone = o.RecipientPhone,
                 RecipientAddress = o.RecipientAddress,
                 Note = o.Note,
-                Items = o.OrderDetails.Select(od => new FrontOrderItemDto
-                {
-                    Id = od.Id,
-                    ProductId = od.ProductId,
-                    VariantId = od.VariantId,
-                    ProductName = od.ProductName,
-                    VariantName = od.VariantName,
-                    CoverImage = GetFinalImage(od),
-                    Price = od.Price ?? 0,
-                    Quantity = od.Quantity,
-                    StoreStatus = o.Store?.StoreStatus ?? 1,
-                    PromotionTags = (o.PromotionDiscount ?? 0) > 0 ? new List<string> { "符合賣場促銷活動" } : new List<string>()
+                Items = o.OrderDetails.Select(od => {
+                    var tags = new List<string>();
+                    
+                    // 檢查單品活動：如果結帳單價小於商品原價
+                    decimal originalPrice = od.Product?.ProductVariants?.FirstOrDefault(v => v.Id == od.VariantId)?.Price ?? od.Product?.MinPrice ?? 0;
+                    if (originalPrice > 0 && od.Price < originalPrice)
+                    {
+                        tags.Add("單品特價優惠");
+                    }
+                    
+                    // 檢查滿額活動：整筆訂單有活動折抵
+                    if ((o.PromotionDiscount ?? 0) > 0)
+                    {
+                        tags.Add("符合賣場滿額活動");
+                    }
+
+                    return new FrontOrderItemDto
+                    {
+                        Id = od.Id,
+                        ProductId = od.ProductId,
+                        VariantId = od.VariantId,
+                        ProductName = od.ProductName,
+                        VariantName = od.VariantName,
+                        CoverImage = GetFinalImage(od),
+                        Price = od.Price ?? 0,
+                        Quantity = od.Quantity,
+                        StoreStatus = o.Store?.StoreStatus ?? 1,
+                        PromotionTags = tags.Distinct().ToList()
+                    };
                 }).ToList(),
                 IsReviewed = o.OrderReviews.Any(),
                 
@@ -128,13 +145,19 @@ namespace ISpanShop.Services.Orders
                             img = "/" + img;
                         }
 
+                        var tags = new List<string>();
+                        decimal originalPrice = ri.OrderDetail.Product?.ProductVariants?.FirstOrDefault(v => v.Id == ri.OrderDetail.VariantId)?.Price ?? ri.OrderDetail.Product?.MinPrice ?? 0;
+                        if (originalPrice > 0 && ri.OrderDetail.Price < originalPrice) tags.Add("單品特價優惠");
+                        if ((o.PromotionDiscount ?? 0) > 0) tags.Add("符合賣場滿額活動");
+
                         return new FrontReturnItemDto
                         {
                             ProductName = ri.OrderDetail.ProductName,
                             VariantName = ri.OrderDetail.VariantName,
                             CoverImage = img,
                             Price = ri.OrderDetail.Price ?? 0,
-                            ReturnQuantity = ri.Quantity
+                            ReturnQuantity = ri.Quantity,
+                            PromotionTags = tags.Distinct().ToList()
                         };
                     }).ToList()
                 }).FirstOrDefault()

@@ -41,6 +41,11 @@
             <el-image :src="item.coverImage" class="item-img" fit="cover" />
             <div class="item-info">
               <div class="name">{{ item.productName }}</div>
+              <div v-if="item.promotionTags && item.promotionTags.length > 0" class="item-promo-tags">
+                <el-tag v-for="(tag, index) in item.promotionTags" :key="index" size="small" type="danger" effect="plain" class="promo-mini-tag">
+                  {{ tag }}
+                </el-tag>
+              </div>
               <div class="variant" v-if="item.variantName">規格：{{ item.variantName }}</div>
               <div class="price-qty">
                 <span class="price">${{ formatPrice(item.price) }}</span>
@@ -58,6 +63,15 @@
           <div class="summary-row">
             <span>退貨商品原價小計</span>
             <span>NT$ {{ formatPrice(returnedItemsSubtotal) }}</span>
+          </div>
+          <div v-if="promotionDiscountShare !== 0" class="summary-row">
+            <span class="label-with-hint">
+              活動促銷折抵分攤
+              <el-tooltip content="按商品金額比例分攤當初享有的活動折扣" placement="top">
+                <el-icon class="info-icon"><InfoFilled /></el-icon>
+              </el-tooltip>
+            </span>
+            <span class="discount">- NT$ {{ formatPrice(Math.abs(promotionDiscountShare)) }}</span>
           </div>
           <div v-if="levelDiscountShare !== 0" class="summary-row">
             <span class="label-with-hint">
@@ -194,6 +208,11 @@ const pointDiscountShare = computed(() => {
   return isFullReturn.value ? (order.value.pointDiscount || 0) : Math.round((order.value.pointDiscount || 0) * ratio.value);
 });
 
+const promotionDiscountShare = computed(() => {
+  if (!order.value) return 0;
+  return isFullReturn.value ? (order.value.promotionDiscount || 0) : Math.round((order.value.promotionDiscount || 0) * ratio.value);
+});
+
 
 const fetchOrderDetail = async () => {
   const id = Number(route.params.id);
@@ -327,6 +346,18 @@ onMounted(fetchOrderDetail);
     .item-info {
       flex: 1;
       .name { font-size: 14px; font-weight: 500; color: #333; margin-bottom: 4px; }
+      .item-promo-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 4px;
+      }
+      .promo-mini-tag {
+        font-size: 10px;
+        padding: 0 4px;
+        height: 18px;
+        line-height: 16px;
+      }
       .variant { font-size: 12px; color: #999; margin-bottom: 8px; }
       .price-qty {
         display: flex;
