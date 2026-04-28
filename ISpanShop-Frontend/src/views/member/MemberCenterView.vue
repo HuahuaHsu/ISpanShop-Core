@@ -32,14 +32,19 @@ const promoGlassColors = [
   { border: 'rgba(217, 119, 6, 0.3)', tag: '#D97706' },  // 橘
 ];
 
-// ── 首頁靜態活動資料 (移除 bg，僅保留資訊與 Emoji) ──
+// ── 首頁靜態活動資料 (同步 HomeView.vue) ──
 const staticBanners = [
-  { tag: '🎉 會員專屬', title: '購物節送 8 折券', subtitle: '全站 $49 起免運', emoji: '🚚' },
-  { tag: '🔥 限時搶購', title: '3C 家電季', subtitle: '滿萬折千 再送好禮', emoji: '📱' },
-  { tag: '💚 新品上架', title: '春夏新品', subtitle: '時尚穿搭一次擁有', emoji: '👗' },
-  { tag: '商城', title: '新品喇叭上市', subtitle: '領券現折 $100', emoji: '🔊' },
-  { tag: '商城', title: '幫你換新機', subtitle: 'AI 筆電專區', emoji: '💻' },
+  { tag: '🎉 會員專屬', title: '購物節送 8 折券', subtitle: '全站 $49 起免運', bg: 'linear-gradient(135deg, #1e293b 0%, #1e1b4b 100%)', emoji: '🚚' },
+  { tag: '🔥 限時搶購', title: '3C 家電季', subtitle: '滿萬折千 再送好禮', bg: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)', emoji: '📱' },
+  { tag: '💚 新品上架', title: '春夏新品', subtitle: '時尚穿搭一次擁有', bg: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', emoji: '👗' },
 ];
+
+const staticSideBanners = [
+  { tag: '商城', title: '新品喇叭上市', desc: '領券現折 $100', bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', emoji: '🔊' },
+  { tag: '商城', title: '幫你換新機', desc: 'AI 筆電專區', bg: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', emoji: '💻' },
+];
+
+const allStaticBanners = computed(() => [...staticBanners, ...staticSideBanners]);
 
 onMounted(async () => {
   // 活動資料與其他 API 並行
@@ -109,8 +114,10 @@ const services = [
   { label: "客服專區", icon: "🎧", bg: "#EDFAF4" },
 ];
 
-// ── 活動跳轉（同首頁邏輯） ───────────────────────
-const goToPromo = (title: string) => {
+// ── 活動跳轉（同步首頁邏輯） ───────────────────────
+const goToPromo = (banner: any) => {
+  if (!banner) return;
+  const title = banner.title || '';
   const query: Record<string, string> = {};
   if (title) query['promoText'] = title;
   router.push({ path: '/products', query });
@@ -222,7 +229,7 @@ const fakeRecommend = [
             :style="{
               borderColor: promoGlassColors[i % promoGlassColors.length].border
             }"
-            @click="goToPromo(promo.title)"
+            @click="goToPromo(promo)"
           >
             <span
               class="promo-tag"
@@ -235,15 +242,17 @@ const fakeRecommend = [
 
         <template v-else>
           <div
-            v-for="(banner, idx) in staticBanners"
+            v-for="(banner, idx) in allStaticBanners"
             :key="idx"
             class="promo-item glass-item fallback-glass"
-            @click="goToPromo(banner.title)"
+            @click="goToPromo(banner)"
           >
             <div class="promo-content">
               <span class="promo-tag gray-tag">{{ banner.tag }}</span>
               <div class="promo-title dark-text">{{ banner.title }}</div>
-              <div class="promo-sub dark-sub">{{ banner.subtitle }}</div>
+              <div v-if="banner.subtitle || (banner as any).desc" class="promo-sub dark-sub">
+                {{ banner.subtitle || (banner as any).desc }}
+              </div>
             </div>
             <div class="promo-emoji">{{ banner.emoji }}</div>
           </div>
