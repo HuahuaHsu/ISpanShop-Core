@@ -15,6 +15,23 @@
       </div>
     </div>
 
+    <!-- 活動優惠提示橫幅 -->
+    <div v-if="isDiscountType" class="promo-benefit-banner">
+      <div class="benefit-icon">🎉</div>
+      <div class="benefit-text">
+        <strong>滿額折扣優惠</strong>
+        <span v-if="discountRule">本活動商品消費滿 <em>NT$ {{ formatNumber(discountRule.threshold) }}</em> 立即折抵 <em>NT$ {{ formatNumber(discountRule.discountValue) }}</em>，結帳時自動折扣！</span>
+        <span v-else>本活動商品享滿額折扣優惠，結帳時自動折扣！</span>
+      </div>
+    </div>
+    <div v-if="isLimitedType" class="promo-benefit-banner limited">
+      <div class="benefit-icon">⏰</div>
+      <div class="benefit-text">
+        <strong>限量搶購中</strong>
+        <span>商品數量有限，每人限購，售完為止！</span>
+      </div>
+    </div>
+
     <div class="promotion-body">
       <!-- 篩選排序列 -->
       <div class="promotion-toolbar">
@@ -69,7 +86,9 @@
         >
           <div class="product-img-wrap">
             <img :src="formatImg(item.imageUrl)" :alt="item.productName" />
-            <span class="promo-badge">促銷中</span>
+            <span class="promo-badge" :class="{ discount: isDiscountType, limited: isLimitedType }">
+              {{ isDiscountType ? '滿額折扣' : isLimitedType ? '限量搶購' : '促銷中' }}
+            </span>
           </div>
           <div class="product-info">
             <h3 class="product-name">{{ item.productName }}</h3>
@@ -117,6 +136,16 @@ const products = ref<PromotionProductItem[]>([])
 const loading = ref<boolean>(false)
 const sortBy = ref<string>('default')
 const priceOrder = ref<string>('')
+
+interface DiscountRule { threshold: number; discountValue: number }
+const discountRule = ref<DiscountRule | null>(null)
+
+const isDiscountType = computed(() => promotion.value?.type === 'discount')
+const isLimitedType  = computed(() => promotion.value?.type === 'limitedBuy')
+
+function formatNumber(num: number | null | undefined): string {
+  return Number(num ?? 0).toLocaleString()
+}
 const pagination = ref<Omit<PromotionProductsResult, 'items'>>({
   totalCount: 0,
   page: 1,
@@ -393,4 +422,48 @@ watch(promotionId, () => {
   padding-top: 16px;
   border-top: 1px solid #f0f0f0;
 }
+
+/* ── 活動優惠提示橫幅 ── */
+.promo-benefit-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #ff7849 0%, #f97316 100%);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25);
+}
+.promo-benefit-banner.limited {
+  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+}
+.benefit-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.benefit-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 14px;
+}
+.benefit-text strong {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.benefit-text em {
+  font-style: normal;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── 商品徽章 ── */
+.promo-badge.discount { background: #f97316; }
+.promo-badge.limited  { background: #7c3aed; }
 </style>

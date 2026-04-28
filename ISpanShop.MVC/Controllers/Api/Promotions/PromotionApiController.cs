@@ -94,6 +94,7 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                 .Include(p => p.PromotionItems)
                     .ThenInclude(pi => pi.Product)
                         .ThenInclude(prod => prod.ProductImages)
+                .Include(p => p.PromotionRules)
                 .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted && p.Status == 1);
 
             if (promo == null)
@@ -109,21 +110,32 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                 .Take(4)
                 .ToList();
 
+            var rules = promo.PromotionRules
+                .Select(r => new
+                {
+                    ruleType     = r.RuleType,
+                    threshold    = r.Threshold,
+                    discountType = r.DiscountType,
+                    discountValue= r.DiscountValue
+                })
+                .ToList();
+
             return Ok(new
             {
                 success = true,
-                data = new PromotionListItemDto
+                data = new
                 {
-                    Id             = promo.Id,
-                    Title          = promo.Name,
-                    Subtitle       = string.IsNullOrWhiteSpace(promo.Description) ? null : promo.Description,
-                    Type           = PromotionService.GetTypeCode(promo.PromotionType),
-                    TypeLabel      = PromotionService.GetTypeLabel(promo.PromotionType),
-                    BannerImageUrl = productImageUrls.FirstOrDefault(),
-                    ProductImages  = productImageUrls!,
-                    LinkUrl        = $"/promotion/{promo.Id}",
-                    StartDate      = promo.StartTime,
-                    EndDate        = promo.EndTime,
+                    id             = promo.Id,
+                    title          = promo.Name,
+                    subtitle       = string.IsNullOrWhiteSpace(promo.Description) ? null : promo.Description,
+                    type           = PromotionService.GetTypeCode(promo.PromotionType),
+                    typeLabel      = PromotionService.GetTypeLabel(promo.PromotionType),
+                    bannerImageUrl = productImageUrls.FirstOrDefault(),
+                    productImages  = productImageUrls!,
+                    linkUrl        = $"/promotion/{promo.Id}",
+                    startDate      = promo.StartTime,
+                    endDate        = promo.EndTime,
+                    rules
                 }
             });
         }
