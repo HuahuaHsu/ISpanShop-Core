@@ -31,57 +31,33 @@ namespace ISpanShop.MVC.Hubs
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     var chatService = scope.ServiceProvider.GetRequiredService<IChatService>();
-                    var botService = scope.ServiceProvider.GetRequiredService<IBotService>();
 
-                    // --- 核心模擬邏輯：將買家訊息導向 fuen50 ---
+                    // --- 核心模擬邏輯：確保訊息能正確傳遞 ---
                     int finalReceiverId = receiverId;
-                    bool isBuyerSending = false;
                     
                     if (!string.IsNullOrEmpty(_simulatedSellerId) && int.TryParse(_simulatedSellerId, out int sellerId))
                     {
                         if (senderId != sellerId)
                         {
                             finalReceiverId = sellerId;
-                            isBuyerSending = true;
                         }
                     }
 
                     // 1. 執行正規的發送流程 (存入資料庫)
-                    await chatService.SendMessageAsync(senderId, finalReceiverId, content, type);
+                    try 
+                    {
+                        await chatService.SendMessageAsync(senderId, finalReceiverId, content, type);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to save message to database");
+                    }
 
                     // 2. 傳送給接收者
                     await Clients.User(finalReceiverId.ToString()).SendAsync("ReceiveMessage", senderId, content, type);
                     
-                    // 3. 也傳送給發送者本人
+                    // 3. 也傳送給發送者本人 (同步 UI)
                     await Clients.Caller.SendAsync("ReceiveMessage", senderId, content, type);
-
-                    // --- 機器人自動回覆邏輯 ---
-                    if (isBuyerSending && type == 0) 
-                    {
-                        // 使用全新的 Scope 處理非同步回覆，避免 Service 被回收
-                        _ = Task.Run(async () => {
-                            try {
-                                await Task.Delay(1500);
-                                using (var botScope = _scopeFactory.CreateScope())
-                                {
-                                    var innerChatService = botScope.ServiceProvider.GetRequiredService<IChatService>();
-                                    var innerBotService = botScope.ServiceProvider.GetRequiredService<IBotService>();
-
-                                    string botReply = await innerBotService.GetResponseAsync(content);
-                                    
-                                    // 機器人以賣家 (finalReceiverId) 的身分回覆
-                                    await innerChatService.SendMessageAsync(finalReceiverId, senderId, botReply, 0);
-                                    
-                                    // 透過 SignalR 發送
-                                    await Clients.User(senderId.ToString()).SendAsync("ReceiveMessage", finalReceiverId, botReply, 0);
-                                    await Clients.User(finalReceiverId.ToString()).SendAsync("ReceiveMessage", finalReceiverId, botReply, 0);
-                                }
-                            }
-                            catch (System.Exception ex) {
-                                _logger.LogError(ex, "Bot Auto-Reply Error");
-                            }
-                        });
-                    }
                 }
             }
         }
@@ -89,7 +65,6 @@ namespace ISpanShop.MVC.Hubs
         public override async Task OnConnectedAsync()
         {
             var userId = Context.UserIdentifier;
-            // 檢查所有 Claims 以確保抓到帳號名稱
             var userName = Context.User?.Identity?.Name 
                          ?? Context.User?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
             
@@ -101,11 +76,7 @@ namespace ISpanShop.MVC.Hubs
                 _simulatedSellerId = userId;
                 _logger.LogInformation($"[Simulation] Seller Identified: {userName} (ID: {userId})");
             }
-            else if (string.IsNullOrEmpty(_simulatedSellerId) && !string.IsNullOrEmpty(userName) && !userName.Contains("fuen49"))
-            {
-                _simulatedSellerId = userId;
-            }
-
+            
             await base.OnConnectedAsync();
         }
     }
