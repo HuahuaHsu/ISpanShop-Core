@@ -21,8 +21,8 @@ const handleLogout = () => {
           <el-button @click="handleLogout">登出</el-button>
         </template>
         <template v-else>
-          <el-button @click="router.push('/login')">登入</el-button>
-          <el-button type="primary" @click="router.push('/register')">註冊</el-button>
+          <el-button @click="authStore.openLoginDialog()">登入</el-button>
+          <el-button type="primary" @click="authStore.openRegisterDialog()">註冊</el-button>
         </template>
       </div>
     </div>

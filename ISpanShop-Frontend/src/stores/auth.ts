@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   // State
   const token = ref<string | null>(storage.getToken());
   const isLoginDialogOpen = ref(false); // 控制彈窗顯示
+  const authDialogMode = ref<'login' | 'register'>('login'); // 控制彈窗模式
   const memberInfo = ref<{
     memberId: number | null;
     email: string | null;
@@ -152,7 +153,17 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function openLoginDialog() {
+    authDialogMode.value = 'login';
     isLoginDialogOpen.value = true;
+  }
+
+  function openRegisterDialog() {
+    authDialogMode.value = 'register';
+    isLoginDialogOpen.value = true;
+  }
+
+  function switchDialogMode(mode: 'login' | 'register') {
+    authDialogMode.value = mode;
   }
 
   function closeLoginDialog() {
@@ -162,6 +173,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token,
     isLoginDialogOpen,
+    authDialogMode,
     memberInfo,
     isLoggedIn,
     isBlacklisted,
@@ -172,6 +184,8 @@ export const useAuthStore = defineStore('auth', () => {
     updateSellerStatus,
     fetchUserInfo,
     openLoginDialog,
+    openRegisterDialog,
+    switchDialogMode,
     closeLoginDialog
   };
 });

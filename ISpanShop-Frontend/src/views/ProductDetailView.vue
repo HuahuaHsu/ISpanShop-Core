@@ -733,7 +733,7 @@ function handleViewStore() {
 function handleOpenChat() {
   if (!authStore.isLoggedIn) {
     ElMessage.warning('請先登入後再使用好聊功能')
-    router.push('/login')
+    authStore.openLoginDialog()
     return
   }
   const store = safeProduct.value.store

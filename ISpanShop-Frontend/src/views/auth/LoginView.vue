@@ -158,7 +158,7 @@ const handleGoogleLogin = () => {
         </div>
 
         <div class="footer-links">
-          還沒有帳號？ <router-link to="/register" class="link">立即註冊</router-link>
+          還沒有帳號？ <span class="link" @click="authStore.openRegisterDialog()">立即註冊</span>
         </div>
       </el-form>
     </el-card>
@@ -291,6 +291,7 @@ const handleGoogleLogin = () => {
   color: #409eff;
   text-decoration: none;
   font-weight: 500;
+  cursor: pointer;
 }
 
 .link:hover {

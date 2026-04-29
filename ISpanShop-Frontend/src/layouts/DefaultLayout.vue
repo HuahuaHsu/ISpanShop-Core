@@ -33,7 +33,7 @@
           <template v-if="!authStore.isLoggedIn">
             <a href="#" @click.prevent="authStore.openLoginDialog()">會員中心</a>
             <span class="divider">|</span>
-            <a href="#" @click.prevent="router.push('/register')">註冊</a>
+            <a href="#" @click.prevent="authStore.openRegisterDialog()">註冊</a>
             <a href="#" @click.prevent="authStore.openLoginDialog()">登入</a>
           </template>
 
