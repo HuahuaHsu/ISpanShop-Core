@@ -8,6 +8,8 @@ const props = defineProps<{
   productId: number
 }>()
 
+const emit = defineEmits(['refresh'])
+
 const reviews = ref<any[]>([])
 const loading = ref(false)
 const generating = ref(false)
@@ -67,6 +69,7 @@ const handleGenerateMock = async () => {
     await generateMockReviews(props.productId, 5)
     ElMessage.success('已成功生成 5 筆測試評論')
     await loadReviews()
+    emit('refresh')
   } catch (error) {
     ElMessage.error('生成失敗')
     console.error(error)
