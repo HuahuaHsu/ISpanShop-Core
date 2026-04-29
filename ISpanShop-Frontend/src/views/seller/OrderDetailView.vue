@@ -48,7 +48,7 @@
           <el-table :data="order.items" style="width: 100%">
             <el-table-column label="商品資訊" min-width="300">
               <template #default="{ row }">
-                <div class="product-info">
+                <div class="product-info-wrapper clickable" @click="goToProduct(row.productId)">
                   <el-image 
                     :src="row.coverImage" 
                     class="product-img" 
@@ -58,6 +58,7 @@
                   </el-image>
                   <div class="product-text">
                     <div class="name">{{ row.productName }}</div>
+                    <PromotionTags :tags="row.promotionTags" />
                     <div class="variant" v-if="row.variantName">規格：{{ row.variantName }}</div>
                     <div class="sku">SKU: {{ row.skuCode }}</div>
                   </div>
@@ -77,7 +78,7 @@
             </el-table-column>
           </el-table>
 
-          <!-- 價格結算 (使用抽取的組件) -->
+          <!-- 價格結算 -->
           <div class="seller-summary-wrapper">
             <OrderSummary 
               v-if="order"
@@ -156,9 +157,8 @@
         </template>
       </el-dialog>
 
-      <!-- 右側：訂單狀態、買家與收件資訊 -->
+      <!-- 右側：資訊欄 -->
       <el-col :span="8">
-        <!-- 精簡版訂單狀態 -->
         <el-card class="info-card condensed-status-card" shadow="never">
           <div class="status-box">
             <div class="status-label">目前訂單狀態</div>
@@ -218,6 +218,7 @@ import type { SellerOrderDetail } from '@/types/store'
 import { useChatStore } from '@/stores/chat'
 import OrderSteps from '@/components/order/OrderSteps.vue'
 import OrderSummary from '@/components/order/OrderSummary.vue'
+import PromotionTags from '@/components/common/PromotionTags.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -226,6 +227,15 @@ const loading = ref(false)
 const order = ref<SellerOrderDetail | null>(null)
 
 const orderId = computed(() => route.params.id as string)
+
+// 跳轉商品頁面
+function goToProduct(productId: number) {
+  if (!productId) {
+    ElMessage.warning('無法取得商品編號')
+    return
+  }
+  router.push(`/product/${productId}`)
+}
 
 // 評價回覆相關
 const replyDialogVisible = ref(false)
@@ -255,7 +265,7 @@ const submitReply = async () => {
     })
     ElMessage.success('回覆成功')
     replyDialogVisible.value = false
-    fetchDetail() // 重新獲取詳情以顯示回覆內容
+    fetchDetail()
   } catch (error) {
     ElMessage.error('回覆失敗')
   } finally {
@@ -287,39 +297,34 @@ const formatDate = (dateStr: string) => {
     minute: '2-digit'
   })
 }
+
 const statusClass = computed(() => {
   if (!order.value) return ''
   const statusMap: Record<number, string> = {
-    0: 'status-pending',    // 待付款
-    1: 'status-processing', // 待出貨
-    2: 'status-shipped',    // 運送中
-    3: 'status-completed',  // 已完成
-    4: 'status-cancelled',  // 已取消
-    5: 'status-refunding',  // 退貨/款中
+    0: 'status-pending',
+    1: 'status-processing',
+    2: 'status-shipped',
+    3: 'status-completed',
+    4: 'status-cancelled',
+    5: 'status-refunding',
   }
   return statusMap[order.value.status] || ''
 })
 
 const handleShip = async () => {
   if (!order.value) return
-  
   try {
     await ElMessageBox.confirm('確定要將此訂單標記為「出貨中」嗎？', '確認出貨', {
       confirmButtonText: '確定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-    
     loading.value = true
-    // 假設 3 代表運送中 (需對應後端 OrderStatus Enum)
     await updateSellerOrderStatusApi(order.value.id, 3)
     ElMessage.success('訂單已標記為出貨中')
     fetchDetail()
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('出貨操作失敗', error)
-      ElMessage.error('操作失敗')
-    }
+    if (error !== 'cancel') ElMessage.error('操作失敗')
   } finally {
     loading.value = false
   }
@@ -333,12 +338,10 @@ const contactBuyer = () => {
   }
 }
 
-onMounted(() => {
-  fetchDetail()
-})
+onMounted(fetchDetail)
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .order-detail-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -363,10 +366,6 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-.status-card {
-  margin-bottom: 20px;
-  border-radius: 8px;
-}
 .status-box {
   display: flex;
   flex-direction: column;
@@ -379,19 +378,12 @@ onMounted(() => {
 .status-value {
   font-size: 24px;
   font-weight: 700;
-}
-.status-value.status-pending { color: #ee4d2d; }
-.status-value.status-processing { color: #26aa99; }
-.status-value.status-shipped { color: #26aa99; }
-.status-value.status-completed { color: #ee4d2d; }
-.status-value.status-cancelled { color: #929292; }
-.status-value.status-refunding { color: #ee4d2d; }
-
-.timeline {
-  font-size: 13px;
-  color: #94a3b8;
-  display: flex;
-  gap: 24px;
+  &.status-pending { color: #ee4d2d; }
+  &.status-processing { color: #26aa99; }
+  &.status-shipped { color: #26aa99; }
+  &.status-completed { color: #ee4d2d; }
+  &.status-cancelled { color: #929292; }
+  &.status-refunding { color: #ee4d2d; }
 }
 
 .items-card {
@@ -399,10 +391,20 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-.product-info {
+.product-info-wrapper {
   display: flex;
   gap: 12px;
+  padding: 4px 0;
+  
+  &.clickable {
+    cursor: pointer;
+    transition: opacity 0.2s;
+    &:hover {
+      opacity: 0.8;
+    }
+  }
 }
+
 .product-img {
   width: 60px;
   height: 60px;
@@ -443,26 +445,19 @@ onMounted(() => {
 }
 .info-group {
   margin-bottom: 16px;
-}
-.info-group:last-child {
-  margin-bottom: 0;
-}
-.info-group .label {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-bottom: 4px;
-}
-.info-group .value {
-  font-size: 14px;
-  color: #1e293b;
-  font-weight: 500;
-}
-.info-group .value.note {
-  background: #f8fafc;
-  padding: 8px;
-  border-radius: 4px;
-  color: #64748b;
-  font-style: italic;
+  .label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .value {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+    &.note {
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: 4px;
+      color: #64748b;
+      font-style: italic;
+    }
+  }
 }
 
 /* 評價卡片樣式 */
@@ -476,10 +471,7 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 12px;
 }
-.review-date {
-  font-size: 13px;
-  color: #94a3b8;
-}
+.review-date { font-size: 13px; color: #94a3b8; }
 .buyer-comment {
   font-size: 15px;
   color: #1e293b;
@@ -493,12 +485,7 @@ onMounted(() => {
   flex-wrap: wrap;
   margin-bottom: 20px;
 }
-.review-img {
-  width: 80px;
-  height: 80px;
-  border-radius: 4px;
-  cursor: zoom-in;
-}
+.review-img { width: 80px; height: 80px; border-radius: 4px; cursor: zoom-in; }
 
 .store-reply-section {
   border-top: 1px solid #f1f5f9;
@@ -511,22 +498,8 @@ onMounted(() => {
   border-left: 3px solid #ee4d2d;
   position: relative;
 }
-.reply-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ee4d2d;
-  margin-bottom: 4px;
-}
-.reply-content {
-  font-size: 14px;
-  color: #1e293b;
-  line-height: 1.5;
-}
-.edit-reply-btn {
-  margin-top: 8px;
-  padding: 0;
-}
-.no-reply {
-  text-align: right;
-}
+.reply-label { font-size: 13px; font-weight: 600; color: #ee4d2d; margin-bottom: 4px; }
+.reply-content { font-size: 14px; color: #1e293b; line-height: 1.5; }
+.edit-reply-btn { margin-top: 8px; padding: 0; }
+.no-reply { text-align: right; }
 </style>

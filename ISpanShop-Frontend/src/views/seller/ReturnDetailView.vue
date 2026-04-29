@@ -49,12 +49,17 @@
           <el-table :data="detail.items" style="width: 100%">
             <el-table-column label="商品圖片" width="100">
               <template #default="{ row }">
-                <el-image :src="row.coverImage" class="table-product-img" fit="cover" />
+                <el-image 
+                  :src="row.coverImage" 
+                  class="table-product-img clickable" 
+                  fit="cover" 
+                  @click="router.push(`/product/${row.productId}`)"
+                />
               </template>
             </el-table-column>
             <el-table-column label="商品資訊" min-width="200">
               <template #default="{ row }">
-                <div class="product-info">
+                <div class="product-info clickable" @click="router.push(`/product/${row.productId}`)">
                   <div class="product-name">{{ row.productName }}</div>
                   <PromotionTags :tags="row.promotionTags" />
                   <div class="product-variant" v-if="row.variantName">規格：{{ row.variantName }}</div>
@@ -338,6 +343,13 @@ onMounted(fetchDetail)
 
 .table-product-img { width: 50px; height: 50px; border-radius: 4px; }
 .product-name { font-size: 14px; font-weight: 500; color: #1e293b; }
+.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+  &:hover {
+    opacity: 0.8;
+  }
+}
 .product-variant { font-size: 12px; color: #64748b; margin-top: 4px; }
 .qty-highlight { font-weight: 700; color: #ee4d2d; font-size: 16px; }
 
