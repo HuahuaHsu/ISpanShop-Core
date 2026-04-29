@@ -145,10 +145,41 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 VideoUrl           = request.VideoUrl,
                 SpecDefinitionJson = request.SpecDefinitionJson ?? "[]",
                 Variants           = new List<ProductVariantCreateDto>(),
-                Status             = 0, // 絕對規則：新增商品一律設為 0 (未上架)
+                Status             = (byte)(mode == "submit" ? 2 : 0), // submit=2(待審核), draft=0(未上架)
                 ReviewStatus       = (mode == "submit") ? 0 : 4, // 0=待審核, 4=草稿
                 AttributesJson     = request.AttributesJson
             };
+
+            // 解析 VariantsJson → 有規格時填入 dto.Variants
+            if (!string.IsNullOrWhiteSpace(request.VariantsJson) && request.VariantsJson != "[]")
+            {
+                try
+                {
+                    var parsed = System.Text.Json.JsonSerializer.Deserialize<List<ProductVariantCreateDto>>(
+                        request.VariantsJson,
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (parsed != null && parsed.Count > 0)
+                        dto.Variants = parsed;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("解析 VariantsJson 失敗: " + ex.Message);
+                }
+            }
+
+            // 無規格商品：以 Price / Stock 建立預設 variant
+            if (dto.Variants.Count == 0)
+            {
+                dto.Variants.Add(new ProductVariantCreateDto
+                {
+                    VariantName   = "預設",
+                    SpecValueJson = "{}",
+                    Price         = request.Price ?? 0,
+                    Stock         = request.Stock ?? 0,
+                });
+            }
+
+            Console.WriteLine($"=== CreateProduct Debug === mode={mode} Status={dto.Status} ReviewStatus={dto.ReviewStatus} Price={dto.Variants.FirstOrDefault()?.Price} Stock={dto.Variants.FirstOrDefault()?.Stock} Variants={dto.Variants.Count}");
 
             var productId = _productService.CreateProduct(dto);
 
