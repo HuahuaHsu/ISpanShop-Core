@@ -315,9 +315,24 @@ onMounted(() => {
   padding: 24px 0 20px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
-.main-header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 40px; padding: 0 30px; }
+.main-header-inner { 
+  max-width: 1400px; 
+  margin: 0 auto; 
+  display: flex; 
+  align-items: center; 
+  gap: 40px; 
+  padding: 0 30px;
+  flex-wrap: nowrap; /* 防止換行 */
+}
 
-.logo { display: flex; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.3s; }
+.logo { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  cursor: pointer; 
+  transition: transform 0.3s;
+  flex-shrink: 0; /* Logo 不縮小 */
+}
 .logo:hover { transform: scale(1.05); }
 .logo-icon { height: 70px; width: auto; object-fit: contain; }
 .logo-text {
@@ -326,24 +341,125 @@ onMounted(() => {
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-.search-box { flex: 1; }
+.search-box { 
+  flex: 1; 
+  min-width: 0; /* 允許 flex 項目縮小 */
+  max-width: 650px; /* 限制搜尋框最大寬度 */
+}
 .search-bar-container {
   display: flex; width: 100%; height: 44px; border: 2px solid #EE4D2D;
   border-radius: 4px; background: white; overflow: hidden;
 }
-.seamless-input { flex: 1; }
+.seamless-input { flex: 1; min-width: 0; }
 .seamless-input :deep(.el-input__wrapper) { box-shadow: none !important; background: transparent; padding-left: 16px; }
 .seamless-btn {
   background: #EE4D2D; color: white; border: none; padding: 0 40px;
   font-size: 16px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  flex-shrink: 0; /* 按鈕不縮小 */
 }
 .seamless-btn:hover { background: #BE3E24; }
-.hot-keywords { margin-top: 10px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
-.hot-label { color: #fbbf24; margin-right: 6px; }
-.hot-keywords a { color: #cbd5e1; text-decoration: none; margin-right: 12px; }
+.hot-keywords { margin-top: 10px; font-size: 12px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.hot-label { color: #fbbf24; margin-right: 6px; white-space: nowrap; }
+.hot-keywords a { color: #cbd5e1; text-decoration: none; margin-right: 12px; white-space: nowrap; margin-bottom: 4px; }
 .hot-keywords a:hover { color: #EE4D2D; }
 
-.header-actions { display: flex; gap: 30px; color: white; }
+/* 響應式：中等螢幕 (1024px ~ 768px) */
+@media (max-width: 1024px) {
+  .main-header-inner {
+    gap: 20px;
+    padding: 0 20px;
+  }
+  .logo-icon { height: 50px; }
+  .logo-text { font-size: 24px; }
+  .search-box {
+    max-width: none; /* 移除最大寬度限制 */
+  }
+  .seamless-btn { padding: 0 20px; font-size: 14px; }
+  .hot-keywords { font-size: 11px; }
+}
+
+/* 響應式：小螢幕 (平板/手機) */
+@media (max-width: 768px) {
+  .top-bar {
+    font-size: 11px;
+    padding: 4px 0;
+  }
+  
+  .top-bar-inner {
+    padding: 0 12px;
+  }
+  
+  .main-header-inner {
+    flex-wrap: wrap; /* 允許換行 */
+    padding: 12px 15px;
+    gap: 10px;
+  }
+  
+  /* 第一行：Logo (左) + 使用者名稱 (右) */
+  .logo { 
+    order: 1; 
+    flex: 0 0 auto;
+  }
+  .logo-icon { height: 40px; }
+  .logo-text { font-size: 20px; }
+  
+  .top-right,
+  .user-dropdown-trigger {
+    order: 2;
+    flex: 0 0 auto;
+    margin-left: auto; /* 推到右邊 */
+  }
+  
+  /* 第二行：搜尋框 (左，佔大部分) + 購物車 (右) */
+  .search-box { 
+    order: 3;
+    flex: 1 1 auto;
+    width: calc(100% - 60px); /* 為購物車預留空間 */
+    max-width: none;
+    margin-top: 0;
+    margin-right: 0;
+  }
+  
+  .header-actions { 
+    order: 4;
+    flex: 0 0 auto;
+    margin-left: 10px; /* 與搜尋框間隔 */
+    gap: 16px;
+  }
+  
+  .search-bar-container {
+    height: 40px;
+  }
+  
+  .seamless-btn { 
+    padding: 0 16px; 
+    font-size: 14px; 
+  }
+  
+  /* 熱搜關鍵字在小螢幕隱藏 */
+  .hot-keywords {
+    display: none;
+  }
+  
+  /* 購物車圖標和文字調整 */
+  .action-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  
+  .action-label {
+    font-size: 10px;
+  }
+}
+
+.header-actions { 
+  display: flex; 
+  gap: 30px; 
+  color: white;
+  flex-shrink: 0; /* 右側不縮小 */
+}
 .action-icon { cursor: pointer; text-align: center; transition: transform 0.2s; }
 .action-icon:hover { transform: translateY(-3px); color: #EE4D2D; }
 .action-label { font-size: 12px; margin-top: 4px; }

@@ -1,0 +1,250 @@
+完成！手機版 RWD 排版問題已修復
+
+═══════════════════════════════════════════════════════════════════
+
+## (a) Header 在手機版的排版
+
+### 修復前問題
+- 購物車跑到 Logo 旁邊
+- 搜尋框佔據整行
+
+### 修復後排版（768px 以下）
+
+**第一行：**
+┌─────────────────────────────────────┐
+│ [Logo] HowBuy          使用者名稱 ▼ │
+└─────────────────────────────────────┘
+
+**第二行：**
+┌─────────────────────────────────────┐
+│ [🔍 搜尋框................][搜尋] 🛒│
+└─────────────────────────────────────┘
+
+**實際排版順序：**
+1. Logo (order: 1, 左側)
+2. 使用者名稱/登入按鈕 (order: 2, 右側，margin-left: auto)
+3. 搜尋框 (order: 3, 佔大部分寬度)
+4. 購物車 (order: 4, 緊貼搜尋框右側)
+
+**關鍵 CSS：**
+- Logo: \order: 1; flex: 0 0 auto;\
+- 使用者區: \order: 2; margin-left: auto;\
+- 搜尋框: \order: 3; flex: 1 1 auto; width: calc(100% - 60px);\
+- 購物車: \order: 4; flex: 0 0 auto; margin-left: 10px;\
+
+═══════════════════════════════════════════════════════════════════
+
+## (b) Banner 在手機版的顯示方式
+
+### 修復前問題
+- 輪播太高（280px），佔據太多空間
+- 文字置中，不夠精簡
+- 右側小卡片被隱藏
+
+### 修復後設計（768px 以下）
+
+**主輪播（200px 高）：**
+採用簡潔卡片風格，類似右側小卡片
+
+┌────────────────────────────────┐
+│ [限時特賣] ⏱ 23:59:45         │
+│                                │
+│ 雙11特賣                       │
+│ 全站8折起，滿千再折百          │
+│                                │
+│ [立即搶購]                     │
+└────────────────────────────────┘
+
+**特點：**
+- 高度降為 200px（原 280px）
+- 文字靠左對齊（不是置中）
+- 標題 18px，最多 2 行
+- 描述 12px，最多 2 行
+- 按鈕縮小至 6px 16px
+- 倒數計時精簡至 11px
+- **隱藏右側商品圖片和裝飾圖**
+- 遮罩加深（0.55-0.75）讓文字更清晰
+
+**關鍵調整：**
+`css
+.carousel-slide { height: 200px !important; }
+.slide-content { text-align: left; align-items: flex-start; }
+.slide-title { font-size: 18px; -webkit-line-clamp: 2; }
+.slide-desc { font-size: 12px; -webkit-line-clamp: 2; }
+.slide-products, .slide-main-img { display: none !important; }
+`
+
+═══════════════════════════════════════════════════════════════════
+
+## (c) 右側小卡片：改成橫向滾動
+
+### 修復前問題
+- 右側小卡片在手機版被完全隱藏
+- 使用者看不到其他活動
+
+### 修復後顯示（768px 以下）
+
+**橫向滾動列表：**
+┌──────────┬──────────┬──────────┐
+│[活動1]   │[活動2]   │[活動3...│→
+│          │          │          │
+└──────────┴──────────┴──────────┘
+      ↑ 滑動查看更多
+
+**特點：**
+- \display: flex; flex-direction: row;\
+- \overflow-x: auto;\ 橫向滾動
+- \scroll-snap-type: x mandatory;\ 滑動對齊
+- 每張卡片寬度 85%，最小 280px
+- 卡片高度固定 120px
+- 顯示滾動條（高 4px，半透明橘色）
+
+**CSS 實作：**
+`css
+.side-banners-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 10px;
+}
+
+.side-banner-dynamic {
+  flex: 0 0 85%;
+  min-width: 280px;
+  height: 120px;
+  scroll-snap-align: start;
+}
+`
+
+**卡片內容精簡：**
+- 標籤 10px
+- 標題 15px
+- 描述 12px，最多 2 行
+- 倒數計時 10px
+
+═══════════════════════════════════════════════════════════════════
+
+## (d) 實際修改的檔案
+
+### 1. src/layouts/DefaultLayout.vue
+
+**修改內容：**
+- 768px 以下的 Header 排版
+- 調整 flex order 順序
+- 新增 top-bar 手機版樣式
+- 搜尋框寬度計算（預留購物車空間）
+- 購物車與搜尋框同行顯示
+
+**關鍵變更：**
+`css
+@media (max-width: 768px) {
+  /* 第一行 */
+  .logo { order: 1; }
+  .top-right { order: 2; margin-left: auto; }
+  
+  /* 第二行 */
+  .search-box { order: 3; flex: 1 1 auto; width: calc(100% - 60px); }
+  .header-actions { order: 4; margin-left: 10px; }
+}
+`
+
+---
+
+### 2. src/views/HomeView.vue
+
+**修改內容：**
+- Banner section 改為 flex 縮排
+- 主輪播降為 200px，文字靠左精簡
+- 右側小卡片改橫向滾動
+- 快捷功能列改橫向滾動
+
+**關鍵變更：**
+`css
+@media (max-width: 768px) {
+  /* Banner 精簡化 */
+  .carousel-slide { height: 200px !important; }
+  .slide-content { text-align: left; }
+  .slide-title { font-size: 18px; }
+  
+  /* 右側卡片橫向滾動 */
+  .side-banners-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+  }
+  .side-banner-dynamic {
+    flex: 0 0 85%;
+    min-width: 280px;
+    height: 120px;
+  }
+  
+  /* 快捷功能橫向滾動 */
+  .quick-icons {
+    display: flex !important;
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+  }
+}
+`
+
+═══════════════════════════════════════════════════════════════════
+
+## 修復重點總結
+
+### ✅ 1. Header 購物車位置
+**問題：** 購物車跑到 Logo 旁邊
+**解決：** 使用 flex order 和 margin-left: auto 控制排版
+- Logo（左）+ 使用者（右）第一行
+- 搜尋框（佔大部分）+ 購物車（右側）第二行
+
+### ✅ 2. Banner 輪播優化
+**問題：** 輪播太高、排版亂
+**解決：** 
+- 降低高度至 200px
+- 文字靠左、精簡顯示
+- 隱藏裝飾圖片
+- 標題/描述限制 2 行
+
+### ✅ 3. 右側小卡片顯示
+**問題：** 小卡片被完全隱藏
+**解決：**
+- 改為橫向滾動顯示
+- 每張卡片 85% 寬、120px 高
+- 支援觸控滑動
+- 顯示滾動條提示
+
+### ✅ 4. 快捷功能列
+- 改為橫向滾動
+- 防止換行擠壓
+
+═══════════════════════════════════════════════════════════════════
+
+## 測試建議
+
+### 手機瀏覽器測試（寬度 < 768px）
+
+**Header：**
+- ✅ 第一行：Logo 在左，使用者名稱在右
+- ✅ 第二行：搜尋框佔大部分，購物車在右側
+- ✅ 熱搜關鍵字已隱藏
+- ✅ 頂部公告列字體縮小
+
+**Banner：**
+- ✅ 主輪播高度 200px
+- ✅ 文字靠左對齊
+- ✅ 標題最多 2 行
+- ✅ 描述最多 2 行
+- ✅ 右側商品圖片已隱藏
+
+**右側小卡片：**
+- ✅ 以橫向滾動方式顯示
+- ✅ 可觸控滑動
+- ✅ 每張卡片約佔螢幕 85%
+- ✅ 高度 120px
+
+**快捷功能：**
+- ✅ 橫向滾動
+- ✅ 不換行
+
+═══════════════════════════════════════════════════════════════════

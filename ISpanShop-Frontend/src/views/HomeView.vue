@@ -36,8 +36,8 @@
                       <span v-else class="slide-countdown-inline expired">已結束</span>
                     </template>
                   </div>
-                  <h2 class="slide-title">{{ promo.title }}</h2>
-                  <p v-if="promo.subtitle" class="slide-desc">{{ promo.subtitle }}</p>
+                  <h2 class="slide-title" style="font-size: clamp(20px, 5vw, 36px); line-height: 1.2; word-break: break-word;">{{ promo.title }}</h2>
+                  <p v-if="promo.subtitle" class="slide-desc" style="font-size: clamp(14px, 3vw, 18px); line-height: 1.5; margin-top: 8px;">{{ promo.subtitle }}</p>
                   <el-button type="danger" round size="large" @click.stop="goToActivity(promo)">立即搶購</el-button>
                 </div>
                 <!-- 右側商品圖拼貼（最多 3 張） -->
@@ -122,8 +122,8 @@
                 <!-- 文字與按鈕 -->
                 <div class="slide-content">
                   <span class="slide-tag">{{ banner.tag }}</span>
-                  <h2 class="slide-title">{{ banner.title }}</h2>
-                  <p class="slide-desc">{{ banner.subtitle }}</p>
+                  <h2 class="slide-title" style="font-size: clamp(20px, 5vw, 36px); line-height: 1.2; word-break: break-word;">{{ banner.title }}</h2>
+                  <p class="slide-desc" style="font-size: clamp(14px, 3vw, 18px); line-height: 1.5; margin-top: 8px;">{{ banner.subtitle }}</p>
                   <el-button type="danger" round size="large" @click.stop="goToActivity(banner)">立即搶購</el-button>
                 </div>
                 <span class="slide-static-emoji">{{ banner.emoji }}</span>
@@ -775,6 +775,221 @@ const quickItems = [
   gap: 16px;
   margin-bottom: 24px;
 }
+
+/* 響應式：中等螢幕 (1024px ~ 768px) - Banner 佔滿，右側卡片改橫排 */
+@media (max-width: 1024px) {
+  .banner-section {
+    grid-template-columns: 1fr !important;
+  }
+  .side-banners-grid, .side-banners {
+    height: auto !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-rows: 1fr !important;
+    display: grid !important;
+    gap: 16px;
+  }
+  .quick-icons { 
+    grid-template-columns: repeat(5, 1fr); 
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .quick-icons::-webkit-scrollbar {
+    height: 4px;
+  }
+  .quick-icons::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+}
+
+/* 響應式：小螢幕 (平板直向/手機) */
+@media (max-width: 768px) {
+  .home {
+    padding: 12px 15px;
+  }
+  
+  .banner-section {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  
+  /* 主輪播改成簡潔卡片風格 */
+  :deep(.el-carousel__container) {
+    height: 200px !important;
+  }
+  
+  .carousel-slide {
+    height: 200px !important;
+    padding: 16px 20px;
+  }
+  
+  /* 文字區域精簡 */
+  .slide-content {
+    padding: 0 !important;
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    justify-content: flex-start;
+    align-items: flex-start !important;
+    text-align: left;
+  }
+  
+  .slide-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px !important;
+  }
+  
+  .slide-tag {
+    font-size: 11px !important;
+    padding: 3px 10px !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .slide-title {
+    font-size: 18px !important;
+    line-height: 1.3 !important;
+    margin: 6px 0 !important;
+    /* 最多兩行 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .slide-desc {
+    font-size: 12px !important;
+    margin-bottom: 10px !important;
+    line-height: 1.4;
+    /* 最多兩行 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* 倒數計時精簡 */
+  .slide-countdown-inline {
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+  }
+  .slide-countdown-inline .cd-num {
+    font-size: 11px !important;
+    min-width: 18px !important;
+    padding: 2px 4px !important;
+  }
+  .slide-countdown-inline .cd-label,
+  .slide-countdown-inline .cd-sep {
+    font-size: 10px !important;
+  }
+  
+  /* 按鈕縮小 */
+  .slide-content :deep(.el-button--large) {
+    padding: 6px 16px !important;
+    font-size: 13px !important;
+    min-height: 34px !important;
+  }
+  
+  /* 隱藏右側商品圖片和主圖 */
+  .slide-products,
+  .slide-main-img,
+  .slide-static-emoji {
+    display: none !important;
+  }
+  
+  /* 遮罩加深讓文字更清晰 */
+  .slide-overlay {
+    background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 100%) !important;
+  }
+  
+  /* 右側小卡片：改成垂直排列 */
+  .side-banners-grid, 
+  .side-banners {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
+    grid-template-rows: unset !important;
+    gap: 10px;
+    overflow-x: visible !important;
+    padding-bottom: 0;
+  }
+  
+  .side-banner-dynamic,
+  .side-banner {
+    flex: none !important;
+    min-width: unset !important;
+    max-width: none !important;
+    width: 100% !important;
+    height: 110px !important;
+    min-height: 110px !important;
+  }
+  
+  .sb-content {
+    padding: 12px 16px !important;
+  }
+  
+  .sb-tag {
+    font-size: 10px !important;
+    padding: 2px 8px !important;
+    margin-bottom: 6px !important;
+  }
+  
+  .sb-title {
+    font-size: 15px !important;
+    margin-bottom: 4px !important;
+    line-height: 1.3;
+  }
+  
+  .sb-subtitle {
+    font-size: 12px !important;
+    line-height: 1.4;
+    -webkit-line-clamp: 2;
+  }
+  
+  .sb-countdown-bar {
+    font-size: 10px !important;
+    margin-top: 6px !important;
+  }
+  
+  .sb-countdown-bar .cd-num-sm {
+    font-size: 10px !important;
+    min-width: 16px !important;
+  }
+  
+  /* 快捷功能列：自動換行，不用拖拉 */
+  .quick-icons { 
+    display: flex !important;
+    grid-template-columns: unset !important;
+    flex-wrap: wrap !important;
+    justify-content: center;
+    overflow-x: visible !important;
+    padding: 12px 8px; 
+    gap: 8px 10px;
+  }
+  
+  .quick-item {
+    flex: 0 0 auto;
+    width: calc(20% - 8px);
+    min-width: 60px;
+    max-width: 70px;
+  }
+  
+  .quick-circle { 
+    width: 42px; 
+    height: 42px; 
+    font-size: 18px; 
+    margin: 0 auto 6px;
+  }
+  
+  .quick-label { 
+    font-size: 10px;
+    line-height: 1.2;
+  }
+}
+
 .main-carousel {
   border-radius: 12px;
   overflow: hidden;
@@ -914,6 +1129,25 @@ const quickItems = [
 }
 .side-banner-dynamic:hover { transform: translateY(-3px); }
 
+/* 靜態 side-banner 補位與 fallback */
+.side-banner {
+  position: relative;
+  padding: 16px 20px;
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.3s;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.side-banner:hover { transform: translateY(-3px); }
+.side-banner h3 { margin: 0 0 4px; font-size: 18px; font-weight: 700; position: relative; z-index: 2; }
+.side-banner p { margin: 0; font-size: 13px; opacity: 0.85; position: relative; z-index: 2; }
+.sb-emoji { position: absolute; right: 10px; bottom: -10px; font-size: 60px; opacity: 0.2; z-index: 1; }
+
 .sb-bg-img {
   position: absolute;
   inset: 0;
@@ -1016,8 +1250,40 @@ const quickItems = [
   grid-template-columns: repeat(7, 1fr);
   gap: 12px;
 }
-@media (max-width: 768px) { .category-grid { grid-template-columns: repeat(4, 1fr); } }
-@media (max-width: 480px) { .category-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* 響應式：中等螢幕 */
+@media (max-width: 1024px) { 
+  .category-grid { 
+    grid-template-columns: repeat(6, 1fr); 
+  } 
+}
+
+@media (max-width: 768px) { 
+  .category-grid { 
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .category-section {
+    padding: 16px;
+  }
+  .cat-image {
+    width: 56px;
+    height: 56px;
+  }
+  .cat-emoji {
+    font-size: 24px;
+  }
+  .cat-name {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) { 
+  .category-grid { 
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+}
 
 .category-item {
   text-align: center;
@@ -1116,13 +1382,51 @@ const quickItems = [
 .with-sidebar .product-grid {
   grid-template-columns: repeat(5, 1fr);
 }
+
+/* 響應式：大螢幕筆電 (1200px ~ 1024px) */
 @media (max-width: 1200px) {
-  .product-grid { grid-template-columns: repeat(4, 1fr); }
-  .with-sidebar .product-grid { grid-template-columns: repeat(3, 1fr); }
+  .product-grid { 
+    grid-template-columns: repeat(5, 1fr); 
+  }
+  .with-sidebar .product-grid { 
+    grid-template-columns: repeat(4, 1fr); 
+  }
 }
-@media (max-width: 767px) {
-  .product-grid { grid-template-columns: repeat(2, 1fr); }
-  .with-sidebar .product-grid { grid-template-columns: repeat(2, 1fr); }
+
+/* 響應式：中等筆電/平板橫向 (1024px ~ 768px) */
+@media (max-width: 1024px) {
+  .product-grid { 
+    grid-template-columns: repeat(4, 1fr); 
+  }
+  .with-sidebar .product-grid { 
+    grid-template-columns: repeat(3, 1fr); 
+  }
+}
+
+/* 響應式：平板直向 (768px ~ 576px) */
+@media (max-width: 768px) {
+  .product-grid { 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 8px;
+  }
+  .with-sidebar .product-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 8px;
+  }
+  
+  /* 邊欄在小螢幕隱藏，使用抽屜 */
+  .filter-aside {
+    display: none;
+  }
+}
+
+/* 響應式：手機 (< 576px) */
+@media (max-width: 576px) {
+  .product-grid,
+  .with-sidebar .product-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 8px;
+  }
 }
 
 /* 排序列 */
