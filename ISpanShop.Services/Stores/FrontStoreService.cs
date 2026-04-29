@@ -288,12 +288,14 @@ namespace ISpanShop.Services.Stores
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.UserId == userId);
 
+            bool isBanned = (store?.User?.IsBlacklisted == true) || (store?.StoreStatus == 3);
+
             string status;
             if (store == null) status = "NotApplied";
+            else if (isBanned) status = "Suspended";
             else if (store.IsVerified == null) status = "Pending";
             else status = store.IsVerified.Value ? "Approved" : "Rejected";
 
-            bool isBanned = (store?.User?.IsBlacklisted == true) || (store?.StoreStatus == 3);
             return (status, isBanned);
         }
 

@@ -135,8 +135,24 @@ const handleRegister = async (formEl: FormInstance | undefined) => {
         <el-form-item label="電話" prop="phoneNumber">
           <el-input v-model="registerForm.phoneNumber" placeholder="09xx-xxx-xxx" />
         </el-form-item>
+
+        <div class="divider">
+          <span>或者使用以下方式註冊</span>
+        </div>
+
+        <div class="oauth-actions">
+          <el-button class="oauth-btn google" size="large" @click="handleGoogleLogin">
+            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" width="20" />
+            Google 註冊
+          </el-button>
+          <el-button class="oauth-btn facebook" size="large">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook" width="20" />
+            Facebook 註冊
+          </el-button>
+        </div>
+
         <el-form-item>
-          <el-button type="success" class="w-full" @click="handleRegister(registerFormRef)">
+          <el-button type="primary" class="w-full" @click="handleRegister(registerFormRef)">
             確認註冊
           </el-button>
         </el-form-item>
