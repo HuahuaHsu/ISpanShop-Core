@@ -470,7 +470,7 @@ import {
   ArrowDown, ArrowUp, DCaret, CaretTop, CaretBottom,
   MoreFilled, WarningFilled, View, ChatDotRound,
 } from '@element-plus/icons-vue'
-import { fetchSellerProducts, updateProductStatus, deleteSellerProduct } from '@/api/product'
+import { fetchSellerProducts, updateProductStatus, deleteSellerProduct, submitProductForReview } from '@/api/product'
 import { fetchMainCategories } from '@/api/category'
 import { useSellerStore } from '@/stores/seller'
 import type { SellerProductListItem } from '@/types/product'
@@ -921,7 +921,7 @@ async function handleSubmitReview(product: SellerProduct): Promise<void> {
       }
     )
 
-    await updateProductStatus(product.id, 2)
+    await submitProductForReview(product.id)
 
     const idx = allProducts.value.findIndex(p => p.id === product.id)
     if (idx !== -1) {

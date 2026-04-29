@@ -210,16 +210,16 @@
             <div class="pd-action-buttons">
               <el-button
                 class="btn-cart"
-                :disabled="isSoldOut"
+                :disabled="isSoldOut || isPreview"
                 @click="handleAddToCart"
-              >加入購物車</el-button>
+              >{{ isPreview ? '預覽模式' : '加入購物車' }}</el-button>
               <el-button
                 type="primary"
                 class="btn-buy"
-                :disabled="isSoldOut || safeProduct.store?.status === 2"
+                :disabled="isSoldOut || safeProduct.store?.status === 2 || isPreview"
                 @click="handleBuyNow"
               >
-                {{ safeProduct.store?.status === 2 ? '賣場休假中' : '直接購買' }}
+                {{ isPreview ? '預覽模式' : safeProduct.store?.status === 2 ? '賣場休假中' : '直接購買' }}
               </el-button>
             </div>
           </div>
@@ -324,7 +324,7 @@ import { ElMessage } from 'element-plus'
 import { Picture, ChatDotRound, Shop } from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
 import ProductReview from '@/components/product/ProductReview.vue'
-import { fetchProductDetail, fetchRelatedProducts, fetchProductPromotions } from '@/api/product'
+import { fetchProductDetail, fetchRelatedProducts, fetchProductPromotions, getSellerProductDetail } from '@/api/product'
 import { getCategoryAttributes } from '@/api/categoryAttribute'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
@@ -340,8 +340,17 @@ import type {
   ProductSpec,
   StoreInfo,
   ProductPromotion,
+  SellerProductDetail,
 } from '@/types/product'
 import type { CategoryAttribute } from '@/api/categoryAttribute'
+
+const props = withDefaults(defineProps<{
+  previewId?: number
+  isPreview?: boolean
+}>(), {
+  previewId: undefined,
+  isPreview: false,
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -615,41 +624,133 @@ function selectSpec(specName: string, optionValue: string) {
   if (selectedVariant.value?.imageUrl) activeImageUrl.value = selectedVariant.value.imageUrl
 }
 
+/** 把賣家 API 的 SellerProductDetail 轉換成前台 ProductDetail 格式 */
+function mapSellerToProductDetail(seller: SellerProductDetail): ProductDetail {
+  // 解析規格定義
+  let specs: ProductSpec[] = []
+  if (seller.specDefinitionJson) {
+    try {
+      const parsed = JSON.parse(seller.specDefinitionJson) as Array<{ name: string; values: string[] }>
+      specs = parsed.map(s => ({ name: s.name, options: s.values }))
+    } catch { /* ignore */ }
+  }
+
+  // string[] → ProductImage[]
+  const images: ProductImage[] = seller.images.map((url, idx) => ({
+    id: idx,
+    url,
+    isMain: idx === 0,
+    sortOrder: idx,
+  }))
+
+  // 解析規格組合
+  const variants: ProductVariant[] = seller.variants.map(v => {
+    let specValues: Record<string, string> = {}
+    if (v.specValueJson) {
+      try { specValues = JSON.parse(v.specValueJson) } catch { /* ignore */ }
+    }
+    return {
+      id: v.id,
+      specValues,
+      price: v.price,
+      originalPrice: null,
+      stock: v.stock ?? 0,
+      imageUrl: null,
+    }
+  })
+
+  const prices = seller.variants.map(v => v.price)
+  const minPrice = seller.minPrice ?? (prices.length ? Math.min(...prices) : 0)
+  const maxPrice = seller.maxPrice ?? (prices.length ? Math.max(...prices) : 0)
+
+  return {
+    id: seller.id,
+    name: seller.name,
+    description: seller.description,
+    categoryId: seller.categoryId,
+    categoryPath: seller.categoryName
+      ? [{ id: seller.categoryId, name: seller.categoryName }]
+      : null,
+    brand: seller.brandId ? { id: seller.brandId, name: seller.brandName ?? '', logoUrl: null } : null,
+    store: {
+      id: seller.storeId,
+      userId: 0,
+      name: seller.storeName ?? '',
+      status: 1,
+      logoUrl: null,
+      rating: null,
+      productCount: 0,
+      followerCount: null,
+      location: null,
+      responseRate: null,
+      joinedYearsAgo: 0,
+    },
+    images,
+    priceRange: { min: minPrice, max: maxPrice },
+    originalPriceRange: null,
+    discountRate: null,
+    specs,
+    variants,
+    totalStock: seller.variants.reduce((sum, v) => sum + (v.stock ?? 0), 0),
+    soldCount: 0,
+    rating: null,
+    reviewCount: null,
+    isOnShelf: seller.status === 1,
+    createdAt: seller.createdAt,
+    attributesJson: null,
+  }
+}
+
 async function loadProduct(id: number, silent = false) {
   if (!silent) loading.value = true
   productPromotions.value = []
   if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null }
   try {
-    const res = await fetchProductDetail(id)
-    if (res.success) {
-      product.value = res.data
-      const mainImg = res.data.images.find(img => img.isMain) || res.data.images[0]
+    if (props.isPreview) {
+      // 預覽模式：呼叫賣家 API（不過濾狀態）
+      const seller = await getSellerProductDetail(id)
+      product.value = mapSellerToProductDetail(seller)
+      const mainImg = product.value.images?.[0]
       activeImageUrl.value = mainImg?.url || ''
-      res.data.specs.forEach(s => selectedSpecs.value[s.name] = null)
+      product.value.specs?.forEach(s => selectedSpecs.value[s.name] = null)
 
-      // 載入屬性定義
       try {
-        const attrRes = await getCategoryAttributes(res.data.categoryId)
+        const attrRes = await getCategoryAttributes(seller.categoryId)
         if (attrRes.success) categoryAttributes.value = attrRes.data
       } catch (e) {
         console.error('載入屬性定義失敗:', e)
       }
+      // 預覽模式跳過促銷與相關商品
+    } else {
+      const res = await fetchProductDetail(id)
+      if (res.success) {
+        product.value = res.data
+        const mainImg = res.data.images?.find(img => img.isMain) || res.data.images?.[0]
+        activeImageUrl.value = mainImg?.url || ''
+        res.data.specs?.forEach(s => selectedSpecs.value[s.name] = null)
 
-      // 載入活動促銷資訊
-      try {
-        const promoRes = await fetchProductPromotions(id)
-        if (promoRes.success) {
-          productPromotions.value = promoRes.data
-          if (promoRes.data.length) {
-            updateCountdown()
-            countdownTimer = setInterval(updateCountdown, 1000)
-          }
+        try {
+          const attrRes = await getCategoryAttributes(res.data.categoryId)
+          if (attrRes.success) categoryAttributes.value = attrRes.data
+        } catch (e) {
+          console.error('載入屬性定義失敗:', e)
         }
-      } catch (e) {
-        console.error('載入活動資訊失敗:', e)
-      }
 
-      void loadRelated(id)
+        try {
+          const promoRes = await fetchProductPromotions(id)
+          if (promoRes.success) {
+            productPromotions.value = promoRes.data
+            if (promoRes.data.length) {
+              updateCountdown()
+              countdownTimer = setInterval(updateCountdown, 1000)
+            }
+          }
+        } catch (e) {
+          console.error('載入活動資訊失敗:', e)
+        }
+
+        void loadRelated(id)
+      }
     }
   } catch (err) {
     loadError.value = '載入失敗'
@@ -759,7 +860,7 @@ function formatJoinedTime(years: number | null | undefined): string {
 }
 
 onMounted(() => {
-  const id = Number(route.params.id)
+  const id = props.previewId || Number(route.params.id)
   if (id) loadProduct(id)
 })
 
@@ -768,7 +869,7 @@ onUnmounted(() => {
 })
 
 watch(() => route.params.id, (newId) => {
-  if (newId) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadProduct(Number(newId)) }
+  if (!props.isPreview && newId) { window.scrollTo({ top: 0, behavior: 'smooth' }); loadProduct(Number(newId)) }
 })
 </script>
 

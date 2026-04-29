@@ -490,6 +490,39 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         }
 
         // ──────────────────────────────────────────────────────────
+        // PUT api/seller/products/{id}/submit-review
+        // 草稿商品送出審核：把 Status=0（草稿）改為 Status=2（待審核）
+        // ──────────────────────────────────────────────────────────
+        [HttpPut("{id:int}/submit-review")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult SubmitProductForReview(int id)
+        {
+            var storeIdClaim = User.FindFirst("StoreId")?.Value
+                            ?? User.FindFirst(c => c.Type.EndsWith("/StoreId"))?.Value;
+            if (string.IsNullOrEmpty(storeIdClaim) || !int.TryParse(storeIdClaim, out var storeId))
+                return Unauthorized(new { success = false, message = "無法識別賣家身份" });
+
+            var existing = _productService.GetProductDetail(id);
+            if (existing == null)
+                return NotFound(new { success = false, message = "商品不存在" });
+
+            if (existing.StoreId != storeId)
+                return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "無權操作此商品" });
+
+            if (existing.Status == 1)
+                return BadRequest(new { success = false, message = "商品已上架，無需重新送審" });
+
+            if (existing.Status == 2)
+                return BadRequest(new { success = false, message = "商品已在審核中" });
+
+            _productService.ChangeProductStatus(id, 2);
+            return Ok(new { success = true, message = "商品已送出審核，請等待管理員審核" });
+        }
+
+        // ──────────────────────────────────────────────────────────
         // POST api/seller/products/upload-image
         // 上傳商品描述圖片 (供編輯器使用)
         // ──────────────────────────────────────────────────────────
