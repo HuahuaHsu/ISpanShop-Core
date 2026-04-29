@@ -119,8 +119,9 @@
           {{ row.productCount ?? '--' }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="150" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
+          <!-- 編輯：已拒絕（完整）、即將開始（部分） -->
           <el-button
             v-if="canEdit(row.statusText)"
             link
@@ -128,14 +129,39 @@
             size="small"
             @click="openEditDialog(row)"
           >編輯</el-button>
+
+          <!-- 撤銷送審：待審核 -->
+          <el-button
+            v-if="canCancelReview(row.statusText)"
+            link
+            type="warning"
+            size="small"
+            @click="handleCancelReview(row)"
+          >撤銷送審</el-button>
+
+          <!-- 提早結束：進行中 -->
+          <el-button
+            v-if="canEndEarly(row.statusText)"
+            link
+            type="warning"
+            size="small"
+            @click="handleEndEarly(row)"
+          >提早結束</el-button>
+
+          <!-- 刪除：已拒絕、即將開始、已結束 -->
           <el-button
             v-if="canDelete(row.statusText)"
             link
             type="danger"
             size="small"
-            @click="handleDelete(row.id)"
+            @click="handleDelete(row)"
           >刪除</el-button>
-          <span v-if="!canEdit(row.statusText) && !canDelete(row.statusText)" class="text-muted">—</span>
+
+          <!-- 無操作（進行中已有提早結束；其餘狀態都有對應按鈕，此處兜底） -->
+          <span
+            v-if="!canEdit(row.statusText) && !canCancelReview(row.statusText) && !canEndEarly(row.statusText) && !canDelete(row.statusText)"
+            class="text-muted"
+          >—</span>
         </template>
       </el-table-column>
     </el-table>
@@ -168,6 +194,18 @@
           @click="fillDemoCampaign"
         >🎲 快速填入測試資料</el-button>
       </div>
+
+      <!-- 即將開始的部分編輯提示 -->
+      <el-alert
+        v-if="isEdit && isPartialEdit"
+        type="warning"
+        show-icon
+        :closable="false"
+        style="margin-bottom: 16px;"
+      >
+        此活動已通過審核並即將開始，僅能修改商品清單和描述，無法調整活動時間、類型和折扣條件。如需大幅調整，請提早結束本活動後重新建立。
+      </el-alert>
+
       <el-form
         ref="formRef"
         :model="formData"
@@ -188,7 +226,7 @@
           />
         </el-form-item>
         <el-form-item label="活動類型" prop="promotionType">
-          <el-select v-model="formData.promotionType" placeholder="請選擇活動類型" style="width: 100%;">
+          <el-select v-model="formData.promotionType" placeholder="請選擇活動類型" style="width: 100%;" :disabled="isPartialEdit">
             <el-option
               v-for="opt in promotionTypeOptions"
               :key="opt.value"
@@ -209,6 +247,7 @@
               :step="100"
               placeholder="例如：1000 代表消費滿 1000 元"
               style="width: 100%;"
+              :disabled="isPartialEdit"
             />
             <span class="form-hint">消費滿多少元才能使用此折扣</span>
           </el-form-item>
@@ -222,6 +261,7 @@
               :step="10"
               placeholder="例如：100 代表折扣 100 元"
               style="width: 100%;"
+              :disabled="isPartialEdit"
             />
             <span class="form-hint">例如：100 代表滿額折 100 元</span>
           </el-form-item>
@@ -239,6 +279,7 @@
               :step="5"
               placeholder="例如：20 代表打 8 折"
               style="width: 100%;"
+              :disabled="isPartialEdit"
             />
             <span class="form-hint">例如：20 代表打 8 折（20% off）</span>
           </el-form-item>
@@ -255,6 +296,7 @@
               :step="10"
               placeholder="例如：100 代表限量 100 件"
               style="width: 100%;"
+              :disabled="isPartialEdit"
             />
             <span class="form-hint">此活動限量多少件商品</span>
           </el-form-item>
@@ -268,6 +310,7 @@
               :step="10"
               placeholder="例如：100 代表每件折 100 元"
               style="width: 100%;"
+              :disabled="isPartialEdit"
             />
             <span class="form-hint">例如：100 代表每件折 100 元</span>
           </el-form-item>
@@ -280,6 +323,7 @@
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DDTHH:mm:ss"
             :disabled-date="disabledDate"
+            :disabled="isPartialEdit"
             style="width: 100%;"
           />
         </el-form-item>
@@ -291,6 +335,7 @@
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DDTHH:mm:ss"
             :disabled-date="disabledDate"
+            :disabled="isPartialEdit"
             style="width: 100%;"
           />
         </el-form-item>
@@ -393,7 +438,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules, ElTable } from 'element-plus'
@@ -402,6 +447,8 @@ import {
   createSellerPromotion,
   updateSellerPromotion,
   deleteSellerPromotion,
+  cancelSellerPromotion,
+  endSellerPromotionEarly,
   fetchPromotionProducts,
   bindPromotionProducts,
   unbindPromotionProduct,
@@ -510,6 +557,7 @@ const stats = computed(() => ({
 
 const dialogVisible = ref(false)
 const isEdit = ref(false)
+const isPartialEdit = ref(false) // 即將開始的活動只能改名稱/描述/商品
 const editingId = ref<number | null>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
@@ -762,15 +810,17 @@ async function fillDemoCampaign(): Promise<void> {
     const pickCount = Math.min(Math.floor(Math.random() * 4) + 2, shuffled.length)
     const picked = shuffled.slice(0, pickCount)
 
-    // 8. 填入表單（先重設所有數值欄位，避免不同類型殘留）
+    // 8. 填入表單：先設 promotionType，等 watch 清空舊欄位後，再填數值
     formData.value.name = generatedName
     formData.value.description = generatedDescription
+    formData.value.startTime = getFormattedDate(startDate)
+    formData.value.endTime = getFormattedDate(endDate)
     formData.value.promotionType = cfg.type
+    await nextTick() // 等 watch(promotionType) 把欄位清空後，再寫入數值
+
     formData.value.discountValue = cfg.discount
     formData.value.minimumAmount = cfg.minAmount ?? null
     formData.value.limitQuantity = cfg.quantity ?? null
-    formData.value.startTime = getFormattedDate(startDate)
-    formData.value.endTime = getFormattedDate(endDate)
 
     // 9. 帶入商品（轉成 PromotionProduct 格式）
     selectedProducts.value = picked.map(p => ({
@@ -803,6 +853,7 @@ async function fillDemoCampaign(): Promise<void> {
 
 function openCreateDialog(): void {
   isEdit.value = false
+  isPartialEdit.value = false
   editingId.value = null
   const dates = getDefaultDates()
   formData.value = {
@@ -822,6 +873,7 @@ function openCreateDialog(): void {
 
 async function openEditDialog(row: SellerPromotion): Promise<void> {
   isEdit.value = true
+  isPartialEdit.value = row.statusText === '即將開始'
   editingId.value = row.id
 
   console.log('editing item:', JSON.stringify(row))
@@ -1037,21 +1089,54 @@ function removeProduct(productId: number): void {
   selectedProducts.value = selectedProducts.value.filter(p => p.productId !== productId)
 }
 
-async function handleDelete(id: number): Promise<void> {
+async function handleDelete(row: SellerPromotion): Promise<void> {
   try {
-    await ElMessageBox.confirm('確定要刪除此活動嗎？', '提示', {
-      confirmButtonText: '確定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
-
-    await deleteSellerPromotion(id)
+    await ElMessageBox.confirm(
+      `確定要刪除「${row.name}」嗎？此操作無法復原。`,
+      '刪除活動',
+      { confirmButtonText: '確定刪除', cancelButtonText: '取消', type: 'warning' }
+    )
+    await deleteSellerPromotion(row.id)
     ElMessage.success('刪除成功')
     await loadPromotions()
   } catch (error: any) {
     if (error === 'cancel') return
     console.error('刪除活動失敗:', error)
-    ElMessage.error('刪除失敗，請稍後再試')
+    ElMessage.error(error.response?.data?.message || '刪除失敗，請稍後再試')
+  }
+}
+
+async function handleCancelReview(row: SellerPromotion): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      `確定要撤銷「${row.name}」的送審申請嗎？活動將被刪除，您可以重新建立並再次送審。`,
+      '撤銷送審',
+      { confirmButtonText: '確定撤銷', cancelButtonText: '取消', type: 'warning' }
+    )
+    await cancelSellerPromotion(row.id)
+    ElMessage.success('已撤銷送審')
+    await loadPromotions()
+  } catch (error: any) {
+    if (error === 'cancel') return
+    console.error('撤銷送審失敗:', error)
+    ElMessage.error(error.response?.data?.message || '撤銷失敗，請稍後再試')
+  }
+}
+
+async function handleEndEarly(row: SellerPromotion): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      `確定要提早結束「${row.name}」嗎？\n\n活動將立即停止，買家無法再享用優惠。已套用此活動的訂單不受影響。\n\n此操作無法復原。`,
+      '提早結束活動',
+      { confirmButtonText: '確定提早結束', cancelButtonText: '取消', type: 'warning' }
+    )
+    await endSellerPromotionEarly(row.id)
+    ElMessage.success('活動已提早結束')
+    await loadPromotions()
+  } catch (error: any) {
+    if (error === 'cancel') return
+    console.error('提早結束失敗:', error)
+    ElMessage.error(error.response?.data?.message || '提早結束失敗，請稍後再試')
   }
 }
 
@@ -1111,11 +1196,19 @@ function getStatusLabel(status: number): string {
 }
 
 function canEdit(statusText: string): boolean {
-  return statusText === '待審核' || statusText === '已拒絕'
+  return statusText === '已拒絕' || statusText === '即將開始'
 }
 
 function canDelete(statusText: string): boolean {
+  return statusText === '已拒絕' || statusText === '即將開始' || statusText === '已結束'
+}
+
+function canCancelReview(statusText: string): boolean {
   return statusText === '待審核'
+}
+
+function canEndEarly(statusText: string): boolean {
+  return statusText === '進行中'
 }
 
 /** 限制活動時間不能選擇過去的日期 */
