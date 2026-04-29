@@ -292,11 +292,11 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
 
                 if (isUpcoming)
                 {
-                    // 即將開始：僅允許更新名稱和描述，保持 status=1 不重新送審
-                    promotion.Name = dto.Name;
+                    // 即將開始：僅允許更新描述，保持 status=1 不重新送審
+                    // 名稱、時間、類型、折扣一律不可修改（保障買家期待）
                     promotion.Description = dto.Description ?? string.Empty;
                     await _promotionService.UpdatePromotionAsync(promotion);
-                    return Ok(new { success = true, message = "活動已更新" });
+                    return Ok(new { success = true, message = "活動描述已更新" });
                 }
 
                 // 已拒絕：完整編輯，重新送審（status → 0）

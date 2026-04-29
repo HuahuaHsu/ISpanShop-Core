@@ -203,7 +203,8 @@
         :closable="false"
         style="margin-bottom: 16px;"
       >
-        此活動已通過審核並即將開始，僅能修改商品清單和描述，無法調整活動時間、類型和折扣條件。如需大幅調整，請提早結束本活動後重新建立。
+        此活動已通過審核並即將開始，為保障買家權益，僅能新增商品和修改活動描述。
+        無法移除商品、修改活動名稱、調整活動時間、類型和折扣條件。如需大幅調整，請提早結束本活動後重新建立。
       </el-alert>
 
       <el-form
@@ -213,7 +214,7 @@
         label-width="100px"
       >
         <el-form-item label="活動名稱" prop="name">
-          <el-input v-model="formData.name" placeholder="請輸入活動名稱" maxlength="50" show-word-limit />
+          <el-input v-model="formData.name" placeholder="請輸入活動名稱" maxlength="50" show-word-limit :disabled="isPartialEdit" />
         </el-form-item>
         <el-form-item label="活動描述" prop="description">
           <el-input
@@ -355,7 +356,21 @@
                   <div class="product-name">{{ p.productName }}</div>
                   <div class="product-price">NT$ {{ p.minPrice ?? p.originalPrice }}</div>
                 </div>
-                <el-button link type="danger" size="small" @click="removeProduct(p.productId)">移除</el-button>
+                <!-- 即將開始：移除按鈕禁用並加說明 Tooltip -->
+                <el-tooltip
+                  v-if="isPartialEdit"
+                  content="即將開始的活動無法移除商品，以保障已加購物車的買家權益"
+                  placement="top"
+                >
+                  <el-button link type="danger" size="small" disabled>移除</el-button>
+                </el-tooltip>
+                <el-button
+                  v-else
+                  link
+                  type="danger"
+                  size="small"
+                  @click="removeProduct(p.productId)"
+                >移除</el-button>
               </div>
             </div>
             <div v-else class="no-products-hint">尚未選擇商品（選填）</div>
@@ -380,6 +395,16 @@
       @closed="handleSelectorClosed"
     >
       <div class="selector-toolbar">
+        <!-- 即將開始：新增商品的說明 -->
+        <el-alert
+          v-if="isPartialEdit"
+          type="info"
+          show-icon
+          :closable="false"
+          style="margin-bottom: 12px;"
+        >
+          新增的商品將立即享有此活動的優惠條件，活動開始時即生效。
+        </el-alert>
         <el-input
           v-model="selectorKeyword"
           placeholder="搜尋商品名稱"

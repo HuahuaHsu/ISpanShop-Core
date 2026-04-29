@@ -175,8 +175,15 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
             var userId = GetUserId();
             if (userId == null) return Unauthorized(new { success = false, message = "無法識別使用者身份" });
 
-            var (_, err) = await ResolvePromoAsync(promotionId, userId.Value);
+            var (promo, err) = await ResolvePromoAsync(promotionId, userId.Value);
             if (err != null) return err;
+
+            // 即將開始的活動不能移除商品（保障已加購物車的買家）
+            var now = DateTime.Now;
+            if (promo!.Status == 1 && promo.StartTime > now)
+            {
+                return BadRequest(new { success = false, message = "即將開始的活動不能移除商品，以保障已加購物車的買家權益" });
+            }
 
             var item = await _db.PromotionItems
                 .FirstOrDefaultAsync(i => i.PromotionId == promotionId && i.ProductId == productId);
