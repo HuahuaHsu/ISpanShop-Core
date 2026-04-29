@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ISpanShop.Repositories.Products;
+using ISpanShop.Models.EfModels;
 
 namespace ISpanShop.Services.Orders
 {
@@ -17,12 +19,14 @@ namespace ISpanShop.Services.Orders
 		private readonly IOrderRepository _orderRepository;
 		private readonly PointService _pointService;
 		private readonly ICouponService _couponService;
+		private readonly IProductRepository _productRepository;
 
-		public OrderService(IOrderRepository orderRepository, PointService pointService, ICouponService couponService)
+		public OrderService(IOrderRepository orderRepository, PointService pointService, ICouponService couponService, IProductRepository productRepository)
 		{
 			_orderRepository = orderRepository;
 			_pointService = pointService;
 			_couponService = couponService;
+			_productRepository = productRepository;
 		}
 
 		public async Task<IDictionary<byte, int>> GetOrderStatusCountsAsync()
@@ -144,6 +148,9 @@ namespace ISpanShop.Services.Orders
 					{
 						await _couponService.ReturnCouponAsync(order.Id);
 					}
+
+					// 3. 歸還庫存
+					await ReturnStockAsync(order.OrderDetails);
 				}
 			}
 		}
@@ -157,10 +164,22 @@ namespace ISpanShop.Services.Orders
 			if (order.Status == 0 || order.Status == 1)
 			{
 				await _orderRepository.UpdateStatusAsync(id, (byte)OrderStatus.Cancelled);
+
+				// 歸還庫存
+				await ReturnStockAsync(order.OrderDetails);
+
 				return true;
 			}
 
 			return false;
+		}
+
+		private async Task ReturnStockAsync(IEnumerable<OrderDetail> details)
+		{
+			foreach (var detail in details)
+			{
+				await _productRepository.UpdateStockAsync(detail.ProductId, detail.VariantId, detail.Quantity);
+			}
 		}
 
 		public async Task<bool> ReturnOrderAsync(long id)
