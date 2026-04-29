@@ -301,7 +301,20 @@ onMounted(() => {
 
 /* 頂部公告列 */
 .top-bar { background: #0f172a; color: #cbd5e1; font-size: 13px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.top-bar-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; padding: 0 30px; }
+.top-bar-inner { 
+  max-width: 1400px; /* 與下方內容區對齊 */
+  margin: 0 auto; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  padding: 0 30px; /* 與 HomeView 的 padding 一致 */
+}
+.top-left {
+  flex: 0 0 auto;
+}
+.top-right {
+  flex: 0 0 auto;
+}
 .top-bar a { color: #cbd5e1; text-decoration: none; margin: 0 10px; transition: color 0.2s; }
 .top-bar a:hover { color: #EE4D2D; }
 .divider { opacity: 0.3; margin: 0 5px; }
@@ -315,13 +328,15 @@ onMounted(() => {
   padding: 24px 0 20px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
+
 .main-header-inner { 
-  max-width: 1400px; 
+  max-width: 1400px; /* 與下方內容區對齊 */
   margin: 0 auto; 
   display: flex; 
   align-items: center; 
-  gap: 40px; 
-  padding: 0 30px;
+  justify-content: space-between; /* 改用 space-between */
+  gap: 20px; /* 減小間距讓搜尋框更長 */
+  padding: 0 30px; /* 與 HomeView 的 padding 一致 */
   flex-wrap: nowrap; /* 防止換行 */
 }
 
@@ -342,9 +357,8 @@ onMounted(() => {
 }
 
 .search-box { 
-  flex: 1; 
-  min-width: 0; /* 允許 flex 項目縮小 */
-  max-width: 650px; /* 限制搜尋框最大寬度 */
+  flex: 1; /* 佔滿剩餘空間 */
+  min-width: 300px; /* 最小寬度防止太小 */
 }
 .search-bar-container {
   display: flex; width: 100%; height: 44px; border: 2px solid #EE4D2D;
@@ -363,8 +377,19 @@ onMounted(() => {
 .hot-keywords a { color: #cbd5e1; text-decoration: none; margin-right: 12px; white-space: nowrap; margin-bottom: 4px; }
 .hot-keywords a:hover { color: #EE4D2D; }
 
+.header-actions { 
+  display: flex; 
+  gap: 30px; 
+  color: white;
+  flex-shrink: 0; /* 右側不縮小 */
+}
+
 /* 響應式：中等螢幕 (1024px ~ 768px) */
 @media (max-width: 1024px) {
+  .top-bar-inner {
+    padding: 0 20px;
+  }
+  
   .main-header-inner {
     gap: 20px;
     padding: 0 20px;
