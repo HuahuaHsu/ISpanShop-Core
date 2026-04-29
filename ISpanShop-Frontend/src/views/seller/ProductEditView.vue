@@ -338,6 +338,15 @@
 
               <!-- 規格設定區塊 -->
               <div v-else class="specs-config">
+                <!-- 規格標題列（含關閉按鈕） -->
+                <div class="specs-config-header">
+                  <span class="specs-config-title">規格設定</span>
+                  <el-button type="danger" text size="small" @click="closeSpecs">
+                    <el-icon><Close /></el-icon>
+                    關閉規格
+                  </el-button>
+                </div>
+
                 <!-- 規格1 -->
                 <div
                   v-for="(spec, specIndex) in form.specs"
@@ -1365,6 +1374,21 @@ function removeSpecOption(specIndex: number, optionIndex: number): void {
   }
 }
 
+async function closeSpecs(): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      '關閉規格後，已設定的規格資料將會清除，確定要關閉嗎？',
+      '提示',
+      { confirmButtonText: '確定關閉', cancelButtonText: '取消', type: 'warning' }
+    )
+    specsEnabled.value = false
+    form.specs = [{ name: '', options: [{ name: '' }] }]
+    variantData.value = []
+  } catch {
+    // user cancelled
+  }
+}
+
 function applyBatch(): void {
   variantData.value.forEach((variant) => {
     if (batchPrice.value !== null) variant.price = batchPrice.value
@@ -1964,6 +1988,19 @@ async function handleReShelf(): Promise<void> {
 }
 
 /* 規格設定 */
+.specs-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.specs-config-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
 .enable-specs-btn {
   padding: 20px;
   text-align: center;
