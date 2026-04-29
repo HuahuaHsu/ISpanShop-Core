@@ -1454,5 +1454,43 @@ namespace ISpanShop.Repositories.Products
 
             _context.SaveChanges();
         }
+
+        /// <inheritdoc/>
+        public async Task<bool> UpdateStockAsync(int productId, int? variantId, int quantityChange)
+        {
+            // 1. 更新規格庫存
+            if (variantId.HasValue && variantId.Value > 0)
+            {
+                var variant = await _context.ProductVariants.FindAsync(variantId.Value);
+                if (variant == null) return false;
+
+                // 如果是扣除庫存 (quantityChange < 0)，檢查是否足夠
+                if (quantityChange < 0 && (variant.Stock ?? 0) < Math.Abs(quantityChange))
+                {
+                    _logger.LogWarning("商品規格 {VariantId} 庫存不足。現有: {Stock}, 欲扣除: {Change}", variantId, variant.Stock, quantityChange);
+                    return false;
+                }
+
+                variant.Stock = (variant.Stock ?? 0) + quantityChange;
+            }
+
+            // 2. 更新商品總銷量 (只有扣除庫存時才增加銷量，歸還時不減少銷量，或是視業務需求而定)
+            // 這裡採取下單扣庫存時增加 TotalSales，取消/退貨時不減少 (除非是為了報表準確性)
+            if (quantityChange < 0)
+            {
+                var product = await _context.Products.FindAsync(productId);
+                if (product != null)
+                {
+                    product.TotalSales = (product.TotalSales ?? 0) + Math.Abs(quantityChange);
+                }
+            }
+
+            // 注意：這裡不呼叫 SaveChanges，交給外部 Transaction 統一處理
+            // 但如果外部沒有 Transaction，這裡應該呼叫。
+            // 考量到 CheckoutService 有 Transaction，這裡我們維持不呼叫 save，或是讓呼叫者決定。
+            // 為了通用性，我們還是在這裡 SaveChangesAsync。
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

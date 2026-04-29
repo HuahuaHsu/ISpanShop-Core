@@ -9,6 +9,7 @@ using ISpanShop.Repositories.Orders;
 using ISpanShop.Services.Coupons;
 using ISpanShop.Services.Payments;
 using ISpanShop.Models.DTOs.Members;
+using ISpanShop.Repositories.Products;
 
 namespace ISpanShop.Services.Orders
 {
@@ -17,15 +18,18 @@ namespace ISpanShop.Services.Orders
         private readonly IOrderRepository _orderRepository;
         private readonly PointService _pointService;
         private readonly ICouponService _couponService;
+        private readonly IProductRepository _productRepository;
 
         public FrontOrderService(
             IOrderRepository orderRepository,
             PointService pointService,
-            ICouponService couponService)
+            ICouponService couponService,
+            IProductRepository productRepository)
         {
             _orderRepository = orderRepository;
             _pointService = pointService;
             _couponService = couponService;
+            _productRepository = productRepository;
         }
 
         public async Task<List<FrontOrderListDto>> GetMemberOrdersAsync(int memberId)
@@ -98,15 +102,22 @@ namespace ISpanShop.Services.Orders
                 Items = o.OrderDetails.Select(od => {
                     var tags = new List<string>();
                     
-                    // 檢查單品活動：如果結帳單價小於商品原價
+                    // 1. 檢查單品活動：如果結帳單價小於商品原價
                     decimal originalPrice = od.Product?.ProductVariants?.FirstOrDefault(v => v.Id == od.VariantId)?.Price ?? od.Product?.MinPrice ?? 0;
-                    if (originalPrice > 0 && od.Price < originalPrice)
+                    bool isSingleProductDiscount = originalPrice > 0 && od.Price < originalPrice;
+
+                    if (isSingleProductDiscount)
                     {
                         tags.Add("單品特價優惠");
                     }
                     
-                    // 檢查滿額活動：整筆訂單有活動折抵
-                    if ((o.PromotionDiscount ?? 0) > 0)
+                    // 2. 檢查滿額活動：整筆訂單有活動折抵
+                    // 修正邏輯：如果該品項已有單品特價，通常不重複顯示滿額標籤（除非有明確分攤金額證明兩者並存）
+                    // 對於舊訂單（無 AllocatedDiscountAmount），我們採用互斥邏輯；對於新訂單，檢查 AllocatedDiscountAmount
+                    bool hasAllocatedPromotion = od.AllocatedDiscountAmount.HasValue && od.AllocatedDiscountAmount.Value > 0;
+                    bool shouldShowThresholdTag = hasAllocatedPromotion || ((o.PromotionDiscount ?? 0) > 0 && !isSingleProductDiscount);
+
+                    if (shouldShowThresholdTag)
                     {
                         tags.Add("符合賣場滿額活動");
                     }
@@ -147,8 +158,14 @@ namespace ISpanShop.Services.Orders
 
                         var tags = new List<string>();
                         decimal originalPrice = ri.OrderDetail.Product?.ProductVariants?.FirstOrDefault(v => v.Id == ri.OrderDetail.VariantId)?.Price ?? ri.OrderDetail.Product?.MinPrice ?? 0;
-                        if (originalPrice > 0 && ri.OrderDetail.Price < originalPrice) tags.Add("單品特價優惠");
-                        if ((o.PromotionDiscount ?? 0) > 0) tags.Add("符合賣場滿額活動");
+                        bool isSingleProductDiscount = originalPrice > 0 && ri.OrderDetail.Price < originalPrice;
+                        if (isSingleProductDiscount) tags.Add("單品特價優惠");
+                        
+                        bool hasAllocatedPromotion = ri.OrderDetail.AllocatedDiscountAmount.HasValue && ri.OrderDetail.AllocatedDiscountAmount.Value > 0;
+                        if (hasAllocatedPromotion || ((o.PromotionDiscount ?? 0) > 0 && !isSingleProductDiscount))
+                        {
+                            tags.Add("符合賣場滿額活動");
+                        }
 
                         return new FrontReturnItemDto
                         {
@@ -174,6 +191,9 @@ namespace ISpanShop.Services.Orders
 
             // 退回點數與優惠券
             await ReturnOrderAssetsAsync(o);
+
+            // 歸還庫存
+            await ReturnStockAsync(o.OrderDetails);
 
             await _orderRepository.UpdateStatusAsync(orderId, 4); // 4 = 已取消
             return true;
@@ -281,6 +301,14 @@ namespace ISpanShop.Services.Orders
             if (o.CouponId.HasValue)
             {
                 await _couponService.ReturnCouponAsync(o.Id);
+            }
+        }
+
+        private async Task ReturnStockAsync(IEnumerable<OrderDetail> details)
+        {
+            foreach (var detail in details)
+            {
+                await _productRepository.UpdateStockAsync(detail.ProductId, detail.VariantId, detail.Quantity);
             }
         }
 

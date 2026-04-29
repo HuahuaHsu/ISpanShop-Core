@@ -219,5 +219,14 @@ namespace ISpanShop.Repositories.Products
 
         /// <summary>更新商品主圖設定。</summary>
         void UpdateMainImage(int productId, int mainImageIndex);
+
+        /// <summary>
+        /// [Async] 更新商品規格庫存與商品總銷量
+        /// </summary>
+        /// <param name="productId">商品 ID</param>
+        /// <param name="variantId">規格 ID (為 null 則不更新規格庫存，僅更新商品總銷量)</param>
+        /// <param name="quantityChange">變動數量 (負數為扣除，正數為歸還)</param>
+        /// <returns>更新是否成功</returns>
+        Task<bool> UpdateStockAsync(int productId, int? variantId, int quantityChange);
     }
 }
