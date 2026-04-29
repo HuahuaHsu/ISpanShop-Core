@@ -265,6 +265,11 @@ onMounted(() => {
     .item-main {
       display: flex;
       gap: 15px;
+      transition: opacity 0.2s;
+
+      &:hover {
+        opacity: 0.8;
+      }
 
       .item-image {
         width: 80px;
