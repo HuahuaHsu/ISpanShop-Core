@@ -196,7 +196,8 @@ namespace ISpanShop.Services.Payments
 								ProductName = item.ProductName ?? "未知商品",
 								VariantName = item.VariantName ?? "預設規格",
 								SkuCode = "", // 補上空字串避免資料庫 Not Null 報錯
-								CoverImage = "" // 補上空字串避免資料庫 Not Null 報錯
+								CoverImage = "", // 補上空字串避免資料庫 Not Null 報錯
+								AllocatedDiscountAmount = allocatedDiscount // 修正：將計算好的分攤折扣存入
 							});
 						}
 
