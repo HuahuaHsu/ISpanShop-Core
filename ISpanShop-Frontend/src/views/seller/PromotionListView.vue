@@ -119,8 +119,16 @@
           {{ row.productCount ?? '--' }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column label="操作" width="240" fixed="right">
         <template #default="{ row }">
+          <!-- 檢視：所有狀態都可以 -->
+          <el-button
+            link
+            type="info"
+            size="small"
+            @click="handleView(row)"
+          >檢視</el-button>
+
           <!-- 編輯：已拒絕（完整）、即將開始（部分） -->
           <el-button
             v-if="canEdit(row.statusText)"
@@ -156,12 +164,6 @@
             size="small"
             @click="handleDelete(row)"
           >刪除</el-button>
-
-          <!-- 無操作（進行中已有提早結束；其餘狀態都有對應按鈕，此處兜底） -->
-          <span
-            v-if="!canEdit(row.statusText) && !canCancelReview(row.statusText) && !canEndEarly(row.statusText) && !canDelete(row.statusText)"
-            class="text-muted"
-          >—</span>
         </template>
       </el-table-column>
     </el-table>
@@ -459,13 +461,118 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- ─── 檢視活動詳情 Dialog ─────────────────────────────────── -->
+    <el-dialog
+      v-model="viewDialogVisible"
+      title="活動詳情"
+      width="760px"
+      align-center
+      :close-on-click-modal="true"
+    >
+      <div v-if="viewingRow" class="view-content">
+        <!-- 狀態列 -->
+        <div class="view-status-row">
+          <el-tag :type="statusTagType(viewingRow.statusText)" size="large" effect="light">
+            {{ viewingRow.statusText }}
+          </el-tag>
+          <span v-if="viewingRow.rejectReason" class="view-reject-note">
+            拒絕原因：{{ viewingRow.rejectReason }}
+          </span>
+        </div>
+
+        <el-divider style="margin: 12px 0;" />
+
+        <!-- 基本資訊 -->
+        <el-descriptions :column="2" border size="small">
+          <el-descriptions-item label="活動名稱" :span="2">
+            {{ viewingRow.name }}
+          </el-descriptions-item>
+          <el-descriptions-item label="活動描述" :span="2">
+            <span v-if="viewingRow.description">{{ viewingRow.description }}</span>
+            <span v-else class="text-muted">（無）</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="活動類型">
+            <el-tag size="small">{{ viewingRow.promotionTypeLabel }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="折扣條件">
+            {{ viewDiscountText(viewingRow) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="開始時間">{{ formatDateTime(viewingRow.startTime) }}</el-descriptions-item>
+          <el-descriptions-item label="結束時間">{{ formatDateTime(viewingRow.endTime) }}</el-descriptions-item>
+          <el-descriptions-item label="建立時間">{{ formatDateTime(viewingRow.createdAt) }}</el-descriptions-item>
+          <el-descriptions-item label="審核時間">
+            {{ viewingRow.reviewedAt ? formatDateTime(viewingRow.reviewedAt) : '尚未審核' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="活動商品數" :span="2">
+            {{ viewingRow.productCount ?? 0 }} 件
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 活動商品列表 -->
+        <div class="view-section-title">活動商品</div>
+        <div v-if="viewProductsLoading" class="view-loading">
+          <el-icon class="is-loading"><Loading /></el-icon> 載入商品中...
+        </div>
+        <div v-else-if="viewProducts.length === 0" class="view-empty">
+          此活動未綁定商品
+        </div>
+        <el-table v-else :data="viewProducts" size="small" max-height="280" style="width:100%;margin-top:8px;">
+          <el-table-column label="圖片" width="64" align="center">
+            <template #default="{ row: p }">
+              <el-image
+                :src="p.imageUrl ?? ''"
+                fit="cover"
+                style="width:44px;height:44px;border-radius:4px;"
+              >
+                <template #error>
+                  <div class="view-img-error">無圖</div>
+                </template>
+              </el-image>
+            </template>
+          </el-table-column>
+          <el-table-column prop="productName" label="商品名稱" min-width="200" show-overflow-tooltip />
+          <el-table-column label="原價" width="110" align="right">
+            <template #default="{ row: p }">
+              NT$ {{ (p.originalPrice ?? p.minPrice ?? 0).toLocaleString() }}
+            </template>
+          </el-table-column>
+          <el-table-column label="活動價" width="130" align="right">
+            <template #default="{ row: p }">
+              <!-- 滿額折扣是整單折，無法顯示單品活動價 -->
+              <el-tooltip
+                v-if="viewingRow.promotionType === 2"
+                content="此為整單滿額折扣，依結帳總金額計算"
+                placement="top"
+              >
+                <span class="text-muted">—</span>
+              </el-tooltip>
+              <span v-else class="view-discount-price">
+                NT$ {{ calcDiscountedPrice(p.originalPrice ?? p.minPrice ?? 0, viewingRow).toLocaleString() }}
+              </span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <template #footer>
+        <el-button @click="viewDialogVisible = false">關閉</el-button>
+        <el-button
+          v-if="viewingRow && canEdit(viewingRow.statusText)"
+          type="primary"
+          @click="openEditFromView"
+        >
+          編輯活動
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Loading } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules, ElTable } from 'element-plus'
 import {
   fetchSellerPromotions,
@@ -1220,6 +1327,77 @@ function getStatusLabel(status: number): string {
   return labels[status] || `狀態${status}`
 }
 
+// ─── 檢視活動詳情 ──────────────────────────────────────────────────
+
+const viewDialogVisible = ref(false)
+const viewingRow = ref<SellerPromotion | null>(null)
+const viewProducts = ref<PromotionProduct[]>([])
+const viewProductsLoading = ref(false)
+
+function statusTagType(statusText: string): '' | 'success' | 'warning' | 'danger' | 'info' | 'primary' {
+  const map: Record<string, '' | 'success' | 'warning' | 'danger' | 'info' | 'primary'> = {
+    '待審核': 'warning',
+    '即將開始': 'primary',
+    '進行中': 'success',
+    '已拒絕': 'danger',
+    '已結束': 'info',
+  }
+  return map[statusText] ?? 'info'
+}
+
+function viewDiscountText(row: SellerPromotion): string {
+  if (row.promotionType === 1) {
+    const pct = row.discountValue ?? 0
+    const fold = ((100 - pct) / 10).toFixed(1)
+    return `折扣 ${pct}% off（打 ${fold} 折）`
+  }
+  if (row.promotionType === 2) {
+    return `滿 NT$${(row.minimumAmount ?? 0).toLocaleString()} 折 NT$${(row.discountValue ?? 0).toLocaleString()}`
+  }
+  if (row.promotionType === 3) {
+    return `每件折 NT$${(row.discountValue ?? 0).toLocaleString()}`
+  }
+  return '—'
+}
+
+function calcDiscountedPrice(originalPrice: number, row: SellerPromotion): number {
+  if (row.promotionType === 1) {
+    return Math.round(originalPrice * (100 - (row.discountValue ?? 0)) / 100)
+  }
+  if (row.promotionType === 3) {
+    return Math.max(0, originalPrice - (row.discountValue ?? 0))
+  }
+  return originalPrice
+}
+
+function formatDateTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleString('zh-TW', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+async function handleView(row: SellerPromotion): Promise<void> {
+  viewingRow.value = row
+  viewProducts.value = []
+  viewDialogVisible.value = true
+  viewProductsLoading.value = true
+  try {
+    const res = await fetchPromotionProducts(row.id)
+    viewProducts.value = (res as any)?.data ?? []
+  } catch (err) {
+    console.error('載入活動商品失敗:', err)
+  } finally {
+    viewProductsLoading.value = false
+  }
+}
+
+function openEditFromView(): void {
+  viewDialogVisible.value = false
+  if (viewingRow.value) openEditDialog(viewingRow.value)
+}
+
 function canEdit(statusText: string): boolean {
   return statusText === '已拒絕' || statusText === '即將開始'
 }
@@ -1422,4 +1600,51 @@ onMounted(() => {
   justify-content: center;
   margin-top: 12px;
 }
+
+/* ─── 檢視活動詳情 Dialog ─── */
+.view-content { padding: 4px 0; }
+.view-status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.view-reject-note {
+  color: #f56c6c;
+  background: #fef0f0;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+  flex-basis: 100%;
+  margin-top: 6px;
+}
+.view-section-title {
+  margin: 20px 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+.view-loading,
+.view-empty {
+  text-align: center;
+  color: #909399;
+  padding: 24px 0;
+  font-size: 13px;
+}
+.view-discount-price {
+  color: #f56c6c;
+  font-weight: 600;
+}
+.view-img-error {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 4px;
+  color: #c0c4cc;
+  font-size: 11px;
+}
+.text-muted { color: #c0c4cc; }
 </style>
