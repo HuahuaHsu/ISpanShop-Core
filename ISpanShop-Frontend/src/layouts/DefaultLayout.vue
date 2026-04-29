@@ -479,7 +479,102 @@ onMounted(() => {
 .footer-col h4 { color: white; font-size: 15px; margin-bottom: 18px; position: relative; padding-bottom: 10px; }
 .footer-col h4::after { content: ''; position: absolute; bottom: 0; left: 0; width: 30px; height: 2px; background: #EE4D2D; }
 .footer-col a { display: block; color: #94a3b8; text-decoration: none; font-size: 13px; margin-bottom: 10px; }
+.footer-col p { color: #94a3b8; font-size: 13px; margin: 8px 0; }
 .footer-bottom { text-align: center; padding: 20px; background: #020617; color: #64748b; font-size: 13px; }
+
+/* Footer 手機版 RWD */
+@media (max-width: 768px) {
+  /* 保障區塊：改成 2x2 排列 */
+  .footer-top {
+    padding: 20px 0;
+  }
+  
+  .footer-features {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+    padding: 0 16px !important;
+  }
+  
+  .feature-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px !important;
+    padding: 12px 8px;
+  }
+  
+  .feature-item :deep(.el-icon) {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 32px !important;
+  }
+  
+  .feature-item h4 {
+    font-size: 13px !important;
+    line-height: 1.3;
+    margin: 0 !important;
+  }
+  
+  .feature-item p {
+    font-size: 11px !important;
+    line-height: 1.4;
+    margin: 0 !important;
+    color: #cbd5e1;
+  }
+  
+  /* Footer 主容器改成單欄垂直 */
+  .footer-inner {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    padding: 30px 20px 20px !important;
+  }
+  
+  /* Logo 區塊置中 */
+  .footer-brand {
+    text-align: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .footer-brand .footer-logo {
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  
+  .footer-logo-img {
+    height: 26px;
+  }
+  
+  .footer-brand p {
+    font-size: 12px !important;
+    color: #94a3b8;
+  }
+  
+  /* 各欄標題 */
+  .footer-col h4 {
+    font-size: 14px !important;
+    margin-bottom: 12px !important;
+  }
+  
+  /* 連結和文字 */
+  .footer-col a {
+    font-size: 12px !important;
+    line-height: 1.8 !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .footer-col p {
+    font-size: 12px !important;
+    margin: 6px 0 !important;
+    word-break: break-all;
+  }
+  
+  /* 底部版權文字 */
+  .footer-bottom {
+    font-size: 11px !important;
+    padding: 16px 20px !important;
+  }
+}
 
 :global(.cart-popover) { padding: 0 !important; border-radius: 4px; }
 .cart-preview { display: flex; flex-direction: column; }
