@@ -139,7 +139,6 @@ function formatPrice(price: number): string {
 function handleCheckout(): void {
   if (cartStore.selectedQuantity === 0) return
   
-  // 安全檢查：是否真的只有一個賣場
   const selectedStoreIds = new Set(cartStore.items.filter(i => i.selected).map(i => i.storeId))
   if (selectedStoreIds.size > 1) {
     ElMessage.error('一次只能結帳同一個賣場的商品')
@@ -186,25 +185,22 @@ function handleCheckout(): void {
         </div>
 
         <div class="cart-groups">
-          <!-- 購物車表頭 -->
-          <div class="cart-list-header">
-            <div class="header-main">
-              <span class="ml-1">商品</span>
-            </div>
-            <div class="header-unit-price">單價</div>
-            <div class="header-qty">數量</div>
-            <div class="header-total">總價</div>
-          </div>
-
           <div v-for="group in groupedItems" :key="group.id" class="store-group">
             <div class="store-header">
-              <el-checkbox 
-                v-model="group.allSelected" 
-                @change="(val: boolean) => toggleStore(group.id, val)" 
-                class="store-checkbox"
-              />
-              <el-icon class="store-icon"><svg viewBox="0 0 1024 1024" width="16" height="16"><path d="M912 216H112c-17.7 0-32 14.3-32 32v560c0 17.7 14.3 32 32 32h800c17.7 0 32-14.3 32-32V248c0-17.7-14.3-32-32-32zM216 752H144V280h72v472z m664 0h-72V280h72v472z m-136 0H288V280h356v472z" fill="currentColor"></path></svg></el-icon>
-              <span class="store-name">{{ group.name }}</span>
+              <div class="store-info-side">
+                <el-checkbox 
+                  v-model="group.allSelected" 
+                  @change="(val: boolean) => toggleStore(group.id, val)" 
+                  class="store-checkbox"
+                />
+                <el-icon class="store-icon"><svg viewBox="0 0 1024 1024" width="16" height="16"><path d="M912 216H112c-17.7 0-32 14.3-32 32v560c0 17.7 14.3 32 32 32h800c17.7 0 32-14.3 32-32V248c0-17.7-14.3-32-32-32zM216 752H144V280h72v472z m664 0h-72V280h72v472z m-136 0H288V280h356v472z" fill="currentColor"></path></svg></el-icon>
+                <span class="store-name">{{ group.name }}</span>
+              </div>
+              <div class="header-labels">
+                <div class="label-unit-price">單價</div>
+                <div class="label-qty">數量</div>
+                <div class="label-total">總價</div>
+              </div>
             </div>
 
             <!-- 活動提示區 -->
@@ -365,21 +361,6 @@ function handleCheckout(): void {
   gap: 16px;
   margin-bottom: 24px;
 }
-.cart-list-header {
-  display: flex;
-  align-items: center;
-  padding: 12px 20px;
-  background: white;
-  border-radius: 8px;
-  color: #909399;
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.header-main { flex: 1; display: flex; align-items: center; }
-.header-unit-price { width: 120px; text-align: center; }
-.header-qty { width: 120px; text-align: center; }
-.header-total { width: 120px; text-align: center; }
-.ml-1 { margin-left: 8px; }
 
 .store-group {
   background: white;
@@ -393,7 +374,13 @@ function handleCheckout(): void {
   border-bottom: 1px solid #f0f0f0;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+}
+.store-info-side {
+  display: flex;
+  align-items: center;
   gap: 12px;
+  flex: 1;
 }
 .store-checkbox {
   margin-right: 4px;
@@ -406,6 +393,18 @@ function handleCheckout(): void {
   font-weight: 600;
   color: #303133;
 }
+
+/* 賣場標題列標籤 */
+.header-labels {
+  display: flex;
+  align-items: center;
+  color: #909399;
+  font-size: 14px;
+}
+.label-unit-price { width: 120px; text-align: center; }
+.label-qty { width: 120px; text-align: center; }
+.label-total { width: 120px; text-align: center; }
+
 .promotion-alerts {
   padding: 10px 20px;
   background: #fffafa;
@@ -417,9 +416,6 @@ function handleCheckout(): void {
   gap: 10px;
   font-size: 13px;
   margin-bottom: 4px;
-}
-.promo-alert:last-child {
-  margin-bottom: 0;
 }
 .promo-text {
   color: #606266;
