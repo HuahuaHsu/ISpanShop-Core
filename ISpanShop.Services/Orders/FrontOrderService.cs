@@ -56,7 +56,8 @@ namespace ISpanShop.Services.Orders
                     FirstProductName = firstDetail?.ProductName,
                     FirstProductImage = GetFinalImage(firstDetail),
                     TotalItemCount = o.OrderDetails.Sum(od => od.Quantity),
-                    IsReviewed = o.OrderReviews.Any()
+                    IsReviewed = o.OrderReviews.Any(),
+                    HasAppealed = o.SupportTickets.Any()
                 };
             }).ToList();
         }
