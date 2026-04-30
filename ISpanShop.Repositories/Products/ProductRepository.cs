@@ -236,6 +236,7 @@ namespace ISpanShop.Repositories.Products
                 "stock_desc"   => query.OrderByDescending(p => p.ProductVariants.Where(v => v.IsDeleted != true).Sum(v => (int?)v.Stock ?? 0)),
                 "stock_asc"    => query.OrderBy(p => p.ProductVariants.Where(v => v.IsDeleted != true).Sum(v => (int?)v.Stock ?? 0)),
                 "sales_desc"   => query.OrderByDescending(p => p.TotalSales ?? 0),
+                "sales_asc"    => query.OrderBy(p => p.TotalSales ?? 0),
                 "updated_desc" => query.OrderByDescending(p => p.UpdatedAt),
                 "date_desc"    => query.OrderByDescending(p => p.CreatedAt),
                 _              => query.OrderBy(p => p.MinPrice)
@@ -533,6 +534,7 @@ namespace ISpanShop.Repositories.Products
                 "stock_desc"   => query.OrderByDescending(p => p.ProductVariants.Where(v => v.IsDeleted != true).Sum(v => (int?)v.Stock ?? 0)),
                 "stock_asc"    => query.OrderBy(p => p.ProductVariants.Where(v => v.IsDeleted != true).Sum(v => (int?)v.Stock ?? 0)),
                 "sales_desc"   => query.OrderByDescending(p => p.TotalSales ?? 0),
+                "sales_asc"    => query.OrderBy(p => p.TotalSales ?? 0),
                 "updated_desc" => query.OrderByDescending(p => p.UpdatedAt),
                 "date_desc"    => query.OrderByDescending(p => p.CreatedAt),
                 _              => query.OrderBy(p => p.MinPrice)

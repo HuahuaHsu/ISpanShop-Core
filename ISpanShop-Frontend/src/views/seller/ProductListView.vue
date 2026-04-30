@@ -310,7 +310,7 @@
                   </el-image>
                   <div class="table-info">
                     <div class="table-name">{{ row.name }}</div>
-                    <div class="table-id">ID: {{ row.id }}</div>
+                    <div class="table-meta">建立於 {{ formatDate(row.createdAt) }}</div>
                     <div v-if="row.status === 'rejected' && row.rejectReason" class="table-reject-reason">
                       <el-icon :size="12"><WarningFilled /></el-icon>
                       {{ row.rejectReason }}
@@ -498,7 +498,7 @@ function getProductPrice(product: SellerProduct): string {
 // ── 型別定義 ──────────────────────────────────────────────────────
 type ProductStatus = 'on' | 'off' | 'deleted' | 'review' | 'rejected' | 'draft'
 type TabKey = 'all' | 'on' | 'off' | 'deleted' | 'review' | 'rejected' | 'draft'
-type SortField = 'minPrice' | 'createdAt'
+type SortField = 'minPrice' | 'createdAt' | 'totalStock' | 'totalSales'
 type SortDir = 'asc' | 'desc' | null
 
 /** 將後端 status 數字 + reviewStatus 對應至 tab key 字串
@@ -571,9 +571,10 @@ const level1Tabs: Array<{ key: TabKey; label: string }> = [
 ]
 
 const sortOptions: Array<{ field: string; label: string }> = [
-  { field: 'minPrice',   label: '價格' },
-  { field: 'createdAt',  label: '建立時間' },
-  // TODO: totalStock / soldCount 後端尚未回傳，排序暫時停用
+  { field: 'minPrice',    label: '價格' },
+  { field: 'createdAt',   label: '建立時間' },
+  { field: 'totalSales',  label: '已售出' },
+  { field: 'totalStock',  label: '商品數量' },
 ]
 
 // ── Computed ──────────────────────────────────────────────────────
@@ -703,11 +704,14 @@ async function loadCategories(): Promise<void> {
 async function loadProducts(): Promise<void> {
   loading.value = true
   try {
-    // 後端 SortOrder 接受組合字串（date_desc / date_asc / price_asc / price_desc）
-    // 而非分開的 field + direction，需在前端組好後一起送
+    // 後端 SortOrder 接受組合字串（date_desc / date_asc / price_asc / price_desc / stock_asc / stock_desc / sales_desc）
     let sortByParam: string
     if (sortField.value === 'minPrice') {
       sortByParam = sortDir.value === 'asc' ? 'price_asc' : 'price_desc'
+    } else if (sortField.value === 'totalStock') {
+      sortByParam = sortDir.value === 'asc' ? 'stock_asc' : 'stock_desc'
+    } else if (sortField.value === 'totalSales') {
+      sortByParam = sortDir.value === 'asc' ? 'sales_asc' : 'sales_desc'
     } else {
       sortByParam = sortDir.value === 'asc' ? 'date_asc' : 'date_desc'
     }
@@ -788,14 +792,16 @@ function handleReset(): void {
 
 // ── 排序 ──────────────────────────────────────────────────────────
 function toggleSort(field: SortField): void {
-  pagination.page = 1 // 關鍵：切換排序時重置頁碼
+  pagination.page = 1
 
   if (sortField.value !== field) {
     sortField.value = field
-    // 預設行為：價格用 asc，建立時間用 desc
-    sortDir.value = field === 'createdAt' ? 'desc' : 'asc'
+    // 庫存預設 asc（找低庫存）；已售出預設 desc（找熱賣）；時間預設 desc；價格預設 asc
+    if (field === 'totalStock') sortDir.value = 'asc'
+    else if (field === 'totalSales') sortDir.value = 'desc'
+    else if (field === 'createdAt') sortDir.value = 'desc'
+    else sortDir.value = 'asc'
   } else {
-    // 同欄位切換方向
     sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
   }
 }
@@ -1294,7 +1300,7 @@ function getStockClass(stock: number): string {
   text-overflow: ellipsis;
   max-width: 180px;
 }
-.table-id { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.table-meta { font-size: 11px; color: #94a3b8; margin-top: 2px; }
 .table-reject-reason {
   display: flex;
   align-items: center;
