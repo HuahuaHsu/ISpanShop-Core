@@ -250,14 +250,6 @@
                           下架
                         </el-dropdown-item>
 
-                        <!-- 低庫存提醒：已上架和未上架可設定 -->
-                        <el-dropdown-item
-                          v-if="product.status === 'on' || product.status === 'off'"
-                          command="stock"
-                        >
-                          低庫存提醒
-                        </el-dropdown-item>
-
                         <!-- 刪除：草稿、未上架、已退回可刪除 -->
                         <el-dropdown-item
                           v-if="product.status === 'draft' || product.status === 'off' || product.status === 'rejected'"
@@ -328,20 +320,9 @@
 
             <el-table-column label="商品數量" width="100" align="center">
               <template #default="{ row }">
-                <span :class="getStockClass(row.totalStock ?? 0)">
+                <span>
                   {{ row.totalStock === 0 ? '售完' : (row.totalStock ?? 0) }}
                 </span>
-              </template>
-            </el-table-column>
-
-            <el-table-column label="低庫存提醒" width="120" align="center">
-              <template #default="{ row }">
-                <el-switch
-                  :model-value="row.lowStockAlert"
-                  size="small"
-                  active-color="#ee4d2d"
-                  @change="openStockDialog(row)"
-                />
               </template>
             </el-table-column>
 
@@ -412,49 +393,6 @@
       </div>
     </el-card>
 
-    <!-- ── 低庫存提醒 Dialog ── -->
-    <el-dialog
-      v-model="stockDialogVisible"
-      title="低庫存提醒"
-      width="460px"
-      :close-on-click-modal="false"
-    >
-      <p class="dialog-hint">
-        當您的庫存數量少於您在此處設定的安全庫存，系統將會通知您
-      </p>
-      <div v-if="stockDialogProduct" class="dialog-product-row">
-        <el-image
-          :src="stockDialogProduct.mainImageUrl || defaultProductImage"
-          fit="cover"
-          class="dialog-img"
-        />
-        <span class="dialog-product-name">{{ stockDialogProduct.name }}</span>
-      </div>
-      <el-form label-position="top">
-        <el-form-item label="安全庫存數量">
-          <el-input-number
-            v-model="stockForm.threshold"
-            :min="0"
-            :max="99999"
-            controls-position="right"
-            placeholder="商品數量"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="提醒狀態">
-          <el-switch
-            v-model="stockForm.enabled"
-            active-text="開啟提醒"
-            inactive-text="關閉提醒"
-            active-color="#ee4d2d"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="stockDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveStockAlert">儲存</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -518,13 +456,10 @@ function mapStatusToKey(status: number, reviewStatus: number): ProductStatus {
 /**
  * 擴充 SellerProductListItem：
  * - 覆寫 status 為 tab key 字串（原始數字已透過 mapStatusToKey 轉換）
- * - 加入前端本地欄位（lowStockAlert 等，尚未串接後端）
  */
 interface SellerProduct extends Omit<SellerProductListItem, 'status'> {
   status: ProductStatus
   isDeleted: boolean
-  lowStockAlert: boolean
-  lowStockThreshold: number
   rejectReason: string | null
   reviewStatus: number
 }
@@ -553,11 +488,6 @@ const viewMode = ref<'grid' | 'list'>('grid')
 
 // 分頁
 const pagination = reactive({ page: 1, pageSize: 20 })
-
-// Dialog — 低庫存
-const stockDialogVisible = ref<boolean>(false)
-const stockDialogProduct = ref<SellerProduct | null>(null)
-const stockForm = reactive({ threshold: 0, enabled: false })
 
 // ── 常數 ─────────────────────────────────────────────────────────
 const level1Tabs: Array<{ key: TabKey; label: string }> = [
@@ -737,8 +667,6 @@ async function loadProducts(): Promise<void> {
         status: isDeleted ? 'deleted' : mapStatusToKey(status, p.reviewStatus ?? 0),
         statusText: isDeleted ? '已刪除' : p.statusText,
         isDeleted,
-        lowStockAlert: false,
-        lowStockThreshold: 5,
         rejectReason: p.rejectReason ?? null,
         reviewStatus: p.reviewStatus ?? 0,
       }
@@ -834,9 +762,6 @@ async function handleCardCommand(cmd: string, product: SellerProduct): Promise<v
       break
     case 'shelf':
       await handleToggleShelf(product)
-      break
-    case 'stock':
-      openStockDialog(product)
       break
     case 'delete':
       await handleDeleteProduct(product)
@@ -943,27 +868,6 @@ async function handleSubmitReview(product: SellerProduct): Promise<void> {
   }
 }
 
-// ── 低庫存 Dialog ─────────────────────────────────────────────────
-function openStockDialog(product: SellerProduct): void {
-  stockDialogProduct.value = product
-  stockForm.threshold = product.lowStockThreshold
-  stockForm.enabled = product.lowStockAlert
-  stockDialogVisible.value = true
-}
-
-function saveStockAlert(): void {
-  if (!stockDialogProduct.value) return
-  // TODO: 呼叫 PUT /api/seller/products/{id}/stock-alert { threshold, enabled }
-  console.log(
-    '[TODO] PUT /api/seller/products/' + stockDialogProduct.value.id + '/stock-alert',
-    { ...stockForm },
-  )
-  stockDialogProduct.value.lowStockAlert = stockForm.enabled
-  stockDialogProduct.value.lowStockThreshold = stockForm.threshold
-  ElMessage.success('低庫存提醒設定已儲存（TODO: 串接後端）')
-  stockDialogVisible.value = false
-}
-
 // ── Helpers ───────────────────────────────────────────────────────
 function formatDate(dateString: string | undefined): string {
   if (!dateString) return '—'
@@ -988,11 +892,6 @@ function getStatusTagType(status: ProductStatus): 'success' | 'warning' | 'dange
   }
 }
 
-function getStockClass(stock: number): string {
-  if (stock === 0) return 'stock-zero'
-  if (stock < 10) return 'stock-low'
-  return ''
-}
 </script>
 
 <style scoped>
@@ -1375,6 +1274,4 @@ function getStockClass(stock: number): string {
 @media (max-width: 600px) {
   .product-grid { grid-template-columns: repeat(2, 1fr); }
 }
-.stock-zero { color: #f56c6c; font-weight: 600; }
-.stock-low  { color: #e6a23c; font-weight: 600; }
 </style>
