@@ -215,8 +215,9 @@ async function checkStoreStatus() {
   try {
     const res = await getStoreStatusApi()
     const currentStatus = res.data.status
+    const isBanned = res.data.isBanned
 
-    if (currentStatus === 'Suspended') {
+    if (currentStatus === 'Suspended' || isBanned === true) {
       isSuspended.value = true
     } else if (currentStatus === 'Approved') {
       isSuspended.value = false

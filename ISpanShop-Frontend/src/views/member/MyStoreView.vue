@@ -63,8 +63,9 @@ const checkStatus = async () => {
   try {
     const res = await getStoreStatusApi();
     status.value = res.data.status;
+    const isBanned = res.data.isBanned;
 
-    if (status.value === 'Approved' || status.value === 'Suspended') {
+    if (status.value === 'Approved' || status.value === 'Suspended' || isBanned === true) {
       authStore.updateSellerStatus(true);
       // 直接跳轉，不關閉 loading，達到完全無感
       router.replace('/seller');

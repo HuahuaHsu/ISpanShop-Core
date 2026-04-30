@@ -222,7 +222,8 @@ const hotKeywords = ref<string[]>(['iPhone 16', '無線耳機', '機械鍵盤', 
 const showBlacklistDialog = computed(() => {
   const isProtectedPath = route.path.startsWith('/member') || 
                           route.path.startsWith('/member/support') ||
-                          route.path.startsWith('/member/orders');
+                          route.path.startsWith('/member/orders') ||
+                          route.path.startsWith('/seller');
   return authStore.isLoggedIn && authStore.isBlacklisted && !isProtectedPath;
 });
 
@@ -263,7 +264,7 @@ function handleDropdownCommand(command: string) {
 
 function handleSellerCenterClick() {
   if (!authStore.isLoggedIn) { authStore.openLoginDialog(); return; }
-  if (authStore.isBlacklisted) { ElMessage.error('您的帳號已被停權，無法使用賣家中心'); return; }
+  // 移除直接阻斷，交由 SellerLayout 的 checkStoreStatus 統一處理停權 UI
   if (authStore.memberInfo.isSeller === true) router.push('/seller')
   else router.push('/member/mystore')
 }
