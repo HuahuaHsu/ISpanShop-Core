@@ -90,10 +90,20 @@
           <el-input-number v-model="formData.perUserLimit" :min="1" />
         </el-form-item>
         <el-form-item label="開始時間" prop="startTime">
-          <el-date-picker v-model="formData.startTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" />
+          <el-date-picker 
+            v-model="formData.startTime" 
+            type="datetime" 
+            value-format="YYYY-MM-DDTHH:mm:ss" 
+            :disabled-date="disabledDate"
+          />
         </el-form-item>
         <el-form-item label="結束時間" prop="endTime">
-          <el-date-picker v-model="formData.endTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" />
+          <el-date-picker 
+            v-model="formData.endTime" 
+            type="datetime" 
+            value-format="YYYY-MM-DDTHH:mm:ss" 
+            :disabled-date="disabledEndDate"
+          />
         </el-form-item>
         <el-form-item label="狀態" prop="status">
           <el-select v-model="formData.status">
@@ -164,6 +174,22 @@ const rules = {
   couponCode: [{ required: true, message: '請輸入代碼', trigger: 'blur' }],
   startTime: [{ required: true, message: '請選擇開始時間', trigger: 'change' }],
   endTime: [{ required: true, message: '請選擇結束時間', trigger: 'change' }],
+};
+
+// 限制不能選擇過去的日期
+const disabledDate = (time: Date) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return time.getTime() < today.getTime();
+};
+
+const disabledEndDate = (time: Date) => {
+  if (formData.value.startTime) {
+    const startDate = new Date(formData.value.startTime);
+    startDate.setHours(0, 0, 0, 0);
+    return time.getTime() < startDate.getTime();
+  }
+  return disabledDate(time);
 };
 
 const loadCoupons = async () => {

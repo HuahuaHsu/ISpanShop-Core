@@ -337,7 +337,7 @@
             placeholder="選擇結束時間"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DDTHH:mm:ss"
-            :disabled-date="disabledDate"
+            :disabled-date="disabledEndDate"
             :disabled="isPartialEdit"
             style="width: 100%;"
           />
@@ -1435,6 +1435,15 @@ const disabledDate = (time: Date) => {
 
   // 只要月曆上的時間小於今天凌晨 00:00，就禁用 (回傳 true)
   return time.getTime() < today.getTime()
+}
+
+const disabledEndDate = (time: Date) => {
+  if (formData.value.startTime) {
+    const startDate = new Date(formData.value.startTime)
+    startDate.setHours(0, 0, 0, 0)
+    return time.getTime() < startDate.getTime()
+  }
+  return disabledDate(time)
 }
 
 // ─── 生命週期 ─────────────────────────────────────────────────────
