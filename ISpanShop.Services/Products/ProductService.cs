@@ -666,19 +666,20 @@ namespace ISpanShop.Services.Products
         // ═══════════════════════════════════════════════════════════
 
         /// <inheritdoc/>
-        public async Task<(ISpanShop.Models.EfModels.Product? Product, decimal? Rating, int ReviewCount, int StoreProductCount)>
+        public async Task<(ISpanShop.Models.EfModels.Product? Product, decimal? Rating, int ReviewCount, int StoreProductCount, decimal? StoreRating)>
             GetProductDetailAsync(int id)
         {
             var product = await _productRepository.GetProductDetailAsync(id);
 
             // 找不到、已刪除、非上架狀態、或賣家被停權 → 回傳 null
             if (product == null || product.Status != 1 || product.Store?.StoreStatus == 3 || product.Store?.User?.IsBlacklisted == true)
-                return (null, null, 0, 0);
+                return (null, null, 0, 0, null);
 
             var (rating, reviewCount) = await _productRepository.GetProductRatingAsync(id);
             var storeCount = await _productRepository.GetStoreActiveProductCountAsync(product.StoreId);
+            var storeRating = await _productRepository.GetStoreRatingAsync(product.StoreId);
 
-            return (product, rating, reviewCount, storeCount);
+            return (product, rating, reviewCount, storeCount, storeRating);
         }
 
         /// <inheritdoc/>

@@ -8,10 +8,14 @@ const props = defineProps<{
   productId: number
 }>()
 
+const emit = defineEmits(['refresh'])
+
 const reviews = ref<any[]>([])
 const loading = ref(false)
 const generating = ref(false)
 const activeFilter = ref('all') // 'all', '5', '4', '3', '2', '1', 'withComment', 'withMedia'
+const currentPage = ref(1)
+const pageSize = ref(5)
 
 const averageRating = computed(() => {
   if (reviews.value.length === 0) return 0
@@ -33,18 +37,29 @@ const counts = computed(() => {
 })
 
 const filteredReviews = computed(() => {
-  if (activeFilter.value === 'all') return reviews.value
-  if (['5', '4', '3', '2', '1'].includes(activeFilter.value)) {
-    return reviews.value.filter(r => r.rating === parseInt(activeFilter.value))
+  let result = reviews.value
+  if (activeFilter.value !== 'all') {
+    if (['5', '4', '3', '2', '1'].includes(activeFilter.value)) {
+      result = reviews.value.filter(r => r.rating === parseInt(activeFilter.value))
+    } else if (activeFilter.value === 'withComment') {
+      result = reviews.value.filter(r => r.comment && r.comment.trim())
+    } else if (activeFilter.value === 'withMedia') {
+      result = reviews.value.filter(r => r.imageUrls && r.imageUrls.length > 0)
+    }
   }
-  if (activeFilter.value === 'withComment') {
-    return reviews.value.filter(r => r.comment && r.comment.trim())
-  }
-  if (activeFilter.value === 'withMedia') {
-    return reviews.value.filter(r => r.imageUrls && r.imageUrls.length > 0)
-  }
-  return reviews.value
+  return result
 })
+
+const paginatedReviews = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredReviews.value.slice(start, end)
+})
+
+const handleFilterChange = (filter: string) => {
+  activeFilter.value = filter
+  currentPage.value = 1
+}
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -67,6 +82,7 @@ const handleGenerateMock = async () => {
     await generateMockReviews(props.productId, 5)
     ElMessage.success('已成功生成 5 筆測試評論')
     await loadReviews()
+    emit('refresh')
   } catch (error) {
     ElMessage.error('生成失敗')
     console.error(error)
@@ -79,61 +95,65 @@ onMounted(loadReviews)
 </script>
 
 <template>
-  <div class="product-reviews mt-8 bg-white p-6 rounded shadow-sm border border-gray-100">
-    <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
-      <h3 class="text-xl font-bold m-0">商品評價</h3>
-      <el-button 
-        type="warning" 
-        plain 
-        size="small" 
-        :loading="generating"
-        @click="handleGenerateMock"
-      >
-        <el-icon class="mr-1"><MagicStick /></el-icon>
-        一鍵生成測試評價 (展示用)
-      </el-button>
-    </div>
-    
-    <!-- 總覽 (Shopee 風格) -->
-    <div v-if="reviews.length > 0" class="rating-summary flex items-center p-8 bg-[#fffbf8] rounded-sm mb-8 border border-[#f9ede5]">
-      <div class="text-center px-12">
-        <div class="text-3xl font-medium text-[#ee4d2d]">
-          <span class="text-3xl">{{ averageRating }}</span> <span class="text-xl">滿分 5</span>
+  <div class="product-reviews-section">
+    <el-card class="review-card" shadow="never">
+      <template #header>
+        <div class="reviews-header">
+          <h3 class="reviews-title">商品評價</h3>
+          <el-button 
+            type="warning" 
+            plain 
+            size="small" 
+            :loading="generating"
+            @click="handleGenerateMock"
+          >
+            <el-icon class="mr-1"><MagicStick /></el-icon>
+            一鍵生成測試評價 (展示用)
+          </el-button>
         </div>
-        <div class="mt-2 text-xl">
-          <el-rate v-model="averageRating" disabled text-color="#ee4d2d" />
-        </div>
-      </div>
+      </template>
       
-      <div class="flex-1 ml-4 flex flex-wrap gap-3">
-        <el-button 
-          :class="{ 'filter-active': activeFilter === 'all' }"
-          size="default" 
-          plain 
-          @click="activeFilter = 'all'"
-        >全部 ({{ counts.all }})</el-button>
+      <!-- 總覽 (Shopee 風格) -->
+      <div v-if="reviews.length > 0" class="rating-summary">
+        <div class="summary-score">
+          <div class="score-value">
+            <span class="big-score">{{ averageRating }}</span>
+            <span class="total-score">/5</span>
+          </div>
+          <div class="score-stars">
+            <el-rate v-model="averageRating" disabled />
+          </div>
+        </div>
         
-        <el-button 
-          v-for="i in [5,4,3,2,1]" 
-          :key="i" 
-          :class="{ 'filter-active': activeFilter === String(i) }"
+        <div class="filter-options">
+          <el-button 
+            :class="{ 'filter-active': activeFilter === 'all' }"
+            size="default" 
+            plain 
+            @click="handleFilterChange('all')"
+          >全部 ({{ counts.all }})</el-button>
+          
+          <el-button 
+            v-for="i in [5,4,3,2,1]" 
+            :key="i" 
+            :class="{ 'filter-active': activeFilter === String(i) }"
+            size="default" 
+            plain 
+            @click="handleFilterChange(String(i))"
+          >{{ i }} 星 ({{ counts[i] }})</el-button>
+          
+          <el-button 
+            :class="{ 'filter-active': activeFilter === 'withComment' }"
+            size="default" 
+            plain 
+            @click="handleFilterChange('withComment')"
+          >附上評論 ({{ counts.withComment }})</el-button>
+          
+          <el-button 
+            :class="{ 'filter-active': activeFilter === 'withMedia' }"
           size="default" 
           plain 
-          @click="activeFilter = String(i)"
-        >{{ i }} 星 ({{ counts[i] }})</el-button>
-        
-        <el-button 
-          :class="{ 'filter-active': activeFilter === 'withComment' }"
-          size="default" 
-          plain 
-          @click="activeFilter = 'withComment'"
-        >附上評論 ({{ counts.withComment }})</el-button>
-        
-        <el-button 
-          :class="{ 'filter-active': activeFilter === 'withMedia' }"
-          size="default" 
-          plain 
-          @click="activeFilter = 'withMedia'"
+          @click="handleFilterChange('withMedia')"
         >附上照片/影片 ({{ counts.withMedia }})</el-button>
       </div>
     </div>
@@ -142,56 +162,124 @@ onMounted(loadReviews)
     <div v-loading="loading" class="review-list">
       <el-empty v-if="filteredReviews.length === 0 && activeFilter !== 'all'" description="找不到符合條件的評價" />
       
-      <div v-for="review in filteredReviews" :key="review.id" class="review-item py-8 border-b border-gray-200 last:border-0">
-        <div class="flex items-start gap-4">
+      <div v-for="review in paginatedReviews" :key="review.id" class="review-item">
+        <div class="review-user-avatar">
           <el-avatar :size="40" :src="review.userAvatar" icon="UserFilled" />
-          <div class="flex-1">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-xs text-gray-800">{{ review.userName }}</span>
-            </div>
+        </div>
+        <div class="review-main-content">
+          <div class="review-user-name">{{ review.userName }}</div>
+          <div class="review-rating">
             <el-rate v-model="review.rating" disabled size="small" />
-            
-            <div style="font-size: 12px; color: #999; margin: 8px 0; display: flex; align-items: center;">
-              <span>{{ formatDate(review.createdAt) }}</span>
-              <span v-if="review.variantName" style="margin: 0 8px; color: #eee;">|</span>
-              <span v-if="review.variantName">規格：{{ review.variantName }}</span>
-            </div>
-            
-            <div style="font-size: 17px; color: #333; line-height: 1.5; margin-bottom: 15px; white-space: pre-wrap;">
-              {{ review.comment }}
-            </div>
+          </div>
+          
+          <div class="review-meta">
+            <span>{{ formatDate(review.createdAt) }}</span>
+            <span v-if="review.variantName" class="meta-divider">|</span>
+            <span v-if="review.variantName">規格：{{ review.variantName }}</span>
+          </div>
+          
+          <div class="review-comment">
+            {{ review.comment }}
+          </div>
 
-            <!-- 評價圖片 -->
-            <div v-if="review.imageUrls && review.imageUrls.length > 0" class="flex flex-wrap gap-2 mb-4">
-              <div v-for="(url, index) in review.imageUrls" :key="index" 
-                   style="width: 80px; height: 80px; overflow: hidden; border-radius: 2px; border: 1px solid #eee; flex-shrink: 0; cursor: zoom-in;">
-                <el-image 
-                  :src="url" 
-                  :preview-src-list="review.imageUrls"
-                  :initial-index="index"
-                  fit="cover"
-                  style="width: 100%; height: 100%; display: block;"
-                />
-              </div>
+          <!-- 評價圖片 -->
+          <div v-if="review.imageUrls && review.imageUrls.length > 0" class="review-images">
+            <div v-for="(url, index) in review.imageUrls" :key="index" class="review-img-wrap">
+              <el-image 
+                :src="url" 
+                :preview-src-list="review.imageUrls"
+                :initial-index="index"
+                fit="cover"
+                class="review-img"
+              />
             </div>
+          </div>
 
-            <!-- 賣家回覆 -->
-            <div v-if="review.storeReply" class="bg-[#f5f5f5] p-4 rounded-sm mt-4 relative">
-              <div class="text-sm text-gray-600">
-                <span class="font-medium text-gray-700">賣家回覆：</span>
-                {{ review.storeReply }}
-              </div>
+          <!-- 賣家回覆 -->
+          <div v-if="review.storeReply" class="store-reply">
+            <div class="reply-content">
+              <span class="reply-label">賣家回覆：</span>
+              {{ review.storeReply }}
             </div>
           </div>
         </div>
       </div>
+
+      <!-- 分頁器 -->
+      <div v-if="filteredReviews.length > pageSize" class="pagination-wrap">
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="filteredReviews.length"
+          layout="prev, pager, next"
+          background
+          hide-on-single-page
+        />
+      </div>
     </div>
+    </el-card>
   </div>
 </template>
 
 <style scoped>
+.product-reviews-section {
+  margin-top: 16px;
+}
+
+.review-card {
+  border-radius: 4px;
+}
+
+.reviews-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reviews-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
 .rating-summary {
-  min-height: 100px;
+  display: flex;
+  align-items: center;
+  padding: 32px;
+  background-color: #fffbf8;
+  border-radius: 2px;
+  margin-bottom: 24px;
+  border: 1px solid #f9ede5;
+}
+
+.summary-score {
+  text-align: center;
+  padding-right: 48px;
+}
+
+.score-value {
+  color: #ee4d2d;
+  font-weight: 500;
+}
+
+.big-score {
+  font-size: 30px;
+}
+
+.total-score {
+  font-size: 18px;
+}
+
+.score-stars {
+  margin-top: 8px;
+}
+
+.filter-options {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .filter-active {
@@ -204,47 +292,104 @@ onMounted(loadReviews)
   --el-rate-fill-color: #ee4d2d;
 }
 
-.review-item:hover { background-color: #fafafa; transition: 0.2s; }
-
-.review-img-wrap {
-  width: 80px !important;
-  height: 80px !important;
-  overflow: hidden;
-  border-radius: 2px;
-  border: 1px solid #eee;
-  flex-shrink: 0;
-  cursor: zoom-in;
+.review-item {
+  display: flex;
+  gap: 16px;
+  padding: 24px 0;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.review-img {
-  width: 100% !important;
-  height: 100% !important;
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-item:hover {
+  background-color: #fafafa;
+  transition: 0.2s;
+}
+
+.review-user-avatar {
+  flex-shrink: 0;
+}
+
+.review-main-content {
+  flex: 1;
+}
+
+.review-user-name {
+  font-size: 12px;
+  color: #1e293b;
+  margin-bottom: 4px;
 }
 
 .review-meta {
-  font-size: 11px;
-  color: rgba(0, 0, 0, 0.4);
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 8px 0;
   display: flex;
   align-items: center;
 }
 
 .meta-divider {
   margin: 0 8px;
-  color: #eee;
+  color: #e2e8f0;
 }
 
-.review-content {
-  font-size: 15px;
-  color: rgba(0, 0, 0, 0.87);
-  line-height: 1.5;
-  margin-top: 10px;
-  word-break: break-word;
+.review-comment {
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.6;
+  margin-bottom: 12px;
   white-space: pre-wrap;
 }
 
-:deep(.review-img img) {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
+.review-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.review-img-wrap {
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  border-radius: 2px;
+  border: 1px solid #f1f5f9;
+  flex-shrink: 0;
+  cursor: zoom-in;
+}
+
+.review-img {
+  width: 100%;
+  height: 100%;
+}
+
+.store-reply {
+  background-color: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-top: 12px;
+}
+
+.reply-content {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.reply-label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.mr-1 {
+  margin-right: 4px;
 }
 </style>

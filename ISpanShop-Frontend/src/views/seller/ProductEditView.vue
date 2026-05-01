@@ -44,6 +44,16 @@
                 <span>新增品牌資訊</span>
               </div>
             </div>
+          <el-button
+            v-if="isNewProduct"
+            type="warning"
+            plain
+            :loading="demoLoading"
+            @click="fillDemoData"
+            style="margin-top: 16px; width: 100%"
+          >
+            🚀 快速填入測試資料
+          </el-button>
           </div>
         </div>
       </aside>
@@ -338,6 +348,15 @@
 
               <!-- 規格設定區塊 -->
               <div v-else class="specs-config">
+                <!-- 規格標題列（含關閉按鈕） -->
+                <div class="specs-config-header">
+                  <span class="specs-config-title">規格設定</span>
+                  <el-button type="danger" text size="small" @click="closeSpecs">
+                    <el-icon><Close /></el-icon>
+                    關閉規格
+                  </el-button>
+                </div>
+
                 <!-- 規格1 -->
                 <div
                   v-for="(spec, specIndex) in form.specs"
@@ -616,7 +635,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules, UploadUserFile, UploadProps, UploadFile } from 'element-plus'
@@ -1365,6 +1384,21 @@ function removeSpecOption(specIndex: number, optionIndex: number): void {
   }
 }
 
+async function closeSpecs(): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      '關閉規格後，已設定的規格資料將會清除，確定要關閉嗎？',
+      '提示',
+      { confirmButtonText: '確定關閉', cancelButtonText: '取消', type: 'warning' }
+    )
+    specsEnabled.value = false
+    form.specs = [{ name: '', options: [{ name: '' }] }]
+    variantData.value = []
+  } catch {
+    // user cancelled
+  }
+}
+
 function applyBatch(): void {
   variantData.value.forEach((variant) => {
     if (batchPrice.value !== null) variant.price = batchPrice.value
@@ -1377,6 +1411,190 @@ function applyBatch(): void {
 function getBrandName(brandId: number): string {
   const brand = brands.value.find((b) => b.id === brandId)
   return brand?.name || ''
+}
+
+// ── 快速填入測試資料 ───────────────────────────────────────────────
+
+const demoLoading = ref<boolean>(false)
+
+interface DemoSpec {
+  name: string
+  options: string[]
+}
+
+interface DemoProduct {
+  name: string
+  categoryId: number
+  categoryPath: string
+  brandKeyword: string
+  description: string
+  price: number
+  stock: number
+  images: string[]
+  specs: DemoSpec[]
+}
+
+const demoProducts: DemoProduct[] = [
+  {
+    name: 'ASUS ROG Strix G16 電競筆電',
+    categoryId: 11,
+    categoryPath: '筆記型電腦',
+    brandKeyword: 'ASUS',
+    description: '<p>搭載第 13 代 Intel Core i9 處理器與 NVIDIA GeForce RTX 4070 獨立顯卡，輕鬆駕馭 3A 大作與專業創作需求。16 吋 QHD 240Hz 高刷新率螢幕，色彩準確度達 100% DCI-P3 廣色域。MUX Switch 獨立顯卡直連技術大幅提升遊戲效能，搭配 ROG 智慧散熱系統，長時間高負載也能維持穩定性能。RGB 背光鍵盤支援 Aura Sync 燈效同步。</p>',
+    price: 52900,
+    stock: 45,
+    images: [
+      'https://cdn.dummyjson.com/products/images/laptops/Apple%20MacBook%20Pro%2014%20Inch%20Space%20Grey/1.png',
+      'https://cdn.dummyjson.com/products/images/laptops/Apple%20MacBook%20Pro%2014%20Inch%20Space%20Grey/2.png',
+      'https://cdn.dummyjson.com/products/images/laptops/Apple%20MacBook%20Pro%2014%20Inch%20Space%20Grey/3.png',
+    ],
+    specs: [
+      { name: '顏色', options: ['消光黑', '月光白'] },
+      { name: '規格', options: ['i9/RTX4070/32G', 'i7/RTX4060/16G'] },
+    ],
+  },
+  {
+    name: '北歐風實木餐桌 180cm 六人座',
+    categoryId: 5,
+    categoryPath: '大型家具',
+    brandKeyword: 'MUJI',
+    description: '<p>嚴選北美白橡木原木製作，展現自然溫潤的木紋質感。180cm 寬敞桌面可舒適容納六人用餐，圓角設計安全防撞，特別適合有小朋友的家庭。桌面厚度 3cm，堅固耐用承重力強。四隻實木桌腳搭配金屬腳墊，可微調高度適應不平地面。表面採用食品級木蠟油塗裝，無甲醛無異味，觸感滑順好清理。</p>',
+    price: 18500,
+    stock: 30,
+    images: [
+      'https://cdn.dummyjson.com/products/images/furniture/Annibale%20Colombo%20Bed/1.png',
+      'https://cdn.dummyjson.com/products/images/furniture/Annibale%20Colombo%20Bed/2.png',
+      'https://cdn.dummyjson.com/products/images/furniture/Annibale%20Colombo%20Bed/3.png',
+    ],
+    specs: [
+      { name: '顏色', options: ['原木色', '胡桃色'] },
+      { name: '尺寸', options: ['150cm', '180cm'] },
+    ],
+  },
+  {
+    name: 'Chanel N°5 經典淡香精 100ml',
+    categoryId: 3,
+    categoryPath: '香水與香氛',
+    brandKeyword: 'Chanel',
+    description: '<p>自 1921 年問世以來，Chanel N°5 一直是香水界的傳奇經典。由調香大師恩尼斯·鮑創作，以大量茉莉與五月玫瑰為核心，搭配乙醛的獨特氣息，創造出既優雅又現代的花香調。前調散發清新的柑橘與乙醛香氣，中調綻放茉莉與玫瑰的華麗花香，後調以檀香與香草收尾，留下溫暖持久的餘韻。</p>',
+    price: 5200,
+    stock: 80,
+    images: [
+      'https://cdn.dummyjson.com/products/images/fragrances/Calvin%20Klein%20CK%20One/1.png',
+      'https://cdn.dummyjson.com/products/images/fragrances/Calvin%20Klein%20CK%20One/2.png',
+    ],
+    specs: [
+      { name: '濃度', options: ['淡香水 EDT', '淡香精 EDP'] },
+      { name: '容量', options: ['50ml', '100ml'] },
+    ],
+  },
+  {
+    name: 'Nike Air Jordan 1 Retro High OG 黑紅',
+    categoryId: 14,
+    categoryPath: '男士鞋款',
+    brandKeyword: 'Nike',
+    description: '<p>向 1985 年的經典致敬，Air Jordan 1 Retro High OG 以最接近元年的規格重新復刻。招牌的黑紅配色「Bred」是球鞋文化中最具代表性的配色之一。全粒面皮革鞋面質感細膩，Nike Air 氣墊緩震舒適，Wings Logo 印於鞋領處。無論是籃球場上還是街頭穿搭，AJ1 都是永不退流行的經典。附原廠鞋盒與防塵袋。</p>',
+    price: 5980,
+    stock: 60,
+    images: [
+      'https://cdn.dummyjson.com/products/images/mens-shoes/Nike%20Air%20Jordan%201%20Red%20And%20Black/1.png',
+      'https://cdn.dummyjson.com/products/images/mens-shoes/Nike%20Air%20Jordan%201%20Red%20And%20Black/2.png',
+      'https://cdn.dummyjson.com/products/images/mens-shoes/Nike%20Air%20Jordan%201%20Red%20And%20Black/3.png',
+    ],
+    specs: [
+      { name: '顏色', options: ['黑紅 Bred', '皇家藍', '芝加哥'] },
+      { name: '尺寸', options: ['US8', 'US9', 'US10', 'US11'] },
+    ],
+  },
+]
+
+async function fillDemoData(): Promise<void> {
+  demoLoading.value = true
+  const demo = demoProducts[Math.floor(Math.random() * demoProducts.length)]
+  if (!demo) { demoLoading.value = false; return }
+
+  try {
+    // 1. 基本資料
+    form.name = demo.name
+    form.price = demo.price
+    form.stock = demo.stock
+
+    // 2. 分類（watcher 會自動載入屬性）
+    form.categoryId = demo.categoryId
+    form.categoryPath = demo.categoryPath
+
+    // 3. 品牌（模糊比對）
+    form.attributes.brandId = null
+    if (demo.brandKeyword) {
+      const keyword = demo.brandKeyword.toLowerCase()
+      const matched = brands.value.find((b) => b.name.toLowerCase().includes(keyword))
+      if (matched) form.attributes.brandId = matched.id
+    }
+
+    // 4. 規格：先開啟規格模式，再寫入 spec 結構
+    specsEnabled.value = true
+    form.specs = demo.specs.map((s) => ({
+      name: s.name,
+      options: s.options.map((o) => ({ name: o })),
+    }))
+
+    // 等 variants computed 重算 + watcher 更新 variantData 後，再填入價格/庫存
+    await nextTick()
+    variantData.value = variantData.value.map((v) => ({
+      ...v,
+      price: demo.price,
+      stock: demo.stock,
+    }))
+
+    // 5. 圖片（嘗試從 CDN 下載為 File 物件，CORS 失敗則只保留 URL 供預覽）
+    const loadedImages: UploadUserFile[] = []
+    await Promise.all(
+      demo.images.map(async (imageUrl, i) => {
+        try {
+          const response = await fetch(imageUrl)
+          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          const blob = await response.blob()
+          const fileName = `demo-product-${i + 1}.png`
+          const file = new File([blob], fileName, { type: blob.type || 'image/png' })
+          loadedImages[i] = {
+            uid: Date.now() + i,
+            name: fileName,
+            raw: file,
+            url: URL.createObjectURL(file),
+            status: 'success',
+          } as UploadUserFile
+        } catch {
+          loadedImages[i] = {
+            uid: Date.now() + i,
+            name: `demo-product-${i + 1}.png`,
+            url: imageUrl,
+            status: 'success',
+          } as UploadUserFile
+        }
+      })
+    )
+    form.images = loadedImages.filter(Boolean)
+
+    // 6. 富文本描述：先設值，再透過 nextTick 呼叫 Quill 實體強制更新畫面
+    form.description = demo.description
+    await nextTick()
+    if (quillEditorRef.value) {
+      const quill = quillEditorRef.value.getQuill?.()
+      if (quill) {
+        quill.deleteText(0, quill.getLength())
+        quill.clipboard.dangerouslyPasteHTML(0, demo.description)
+      }
+    }
+
+    const hasRaw = form.images.some((img) => (img as any).raw)
+    const imgMsg = form.images.length > 0
+      ? `已載入 ${form.images.length} 張圖片${hasRaw ? '' : '（預覽用，送審前請重新上傳）'}`
+      : '（圖片載入失敗，請手動上傳）'
+
+    ElMessage.success(`已填入：${demo.name}　${imgMsg}`)
+  } finally {
+    demoLoading.value = false
+  }
 }
 
 async function handleSubmit(publishNow: boolean, redirectAfter = true, isDraftAction = false): Promise<boolean> {
@@ -1964,6 +2182,19 @@ async function handleReShelf(): Promise<void> {
 }
 
 /* 規格設定 */
+.specs-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.specs-config-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
 .enable-specs-btn {
   padding: 20px;
   text-align: center;

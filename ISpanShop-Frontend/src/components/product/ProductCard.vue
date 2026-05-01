@@ -19,17 +19,47 @@
           <span class="sold-out-text">已售完</span>
         </div>
 
-        <!-- 活動標籤 (當網址帶有 promoText 時顯示) -->
-        <div v-if="route.query.promoText" class="promo-badge">
-          促銷中
-        </div>
+        <!-- 活動標籤 -->
+        <span v-if="product.promotion" class="card-promo-badge" :class="product.promotion.type">
+          {{ product.promotion.typeLabel }}
+        </span>
       </div>
 
       <div class="card-body">
         <p class="card-name">{{ product.name }}</p>
-        <div class="card-price-row">
-          <span class="card-price">${{ formatPrice(product.price) }}</span>
-          <span class="card-sold">{{ formatSoldCount(product.soldCount) }}</span>
+
+        <!-- 價格區域 -->
+        <div class="card-price-area">
+          <!-- 有打折活動（限時特賣/限量搶購） -->
+          <template v-if="product.promotion && (product.promotion.type === 'flashSale' || product.promotion.type === 'limitedBuy') && product.promotion.discountPrice">
+            <div class="card-price-row">
+              <span class="card-promo-price">${{ formatPrice(product.promotion.discountPrice) }}</span>
+              <span class="card-sold">{{ formatSoldCount(product.soldCount) }}</span>
+            </div>
+            <div class="card-original-row">
+              <span class="card-original-price">${{ formatPrice(product.promotion.originalPrice) }}</span>
+              <span class="card-discount-tag">{{ Math.floor(product.promotion.discountPercent! / 10) }}折</span>
+            </div>
+          </template>
+          
+          <!-- 滿額折扣活動 -->
+          <template v-else-if="product.promotion && product.promotion.type === 'discount'">
+            <div class="card-price-row">
+              <span class="card-price">${{ formatPrice(product.price) }}</span>
+              <span class="card-sold">{{ formatSoldCount(product.soldCount) }}</span>
+            </div>
+            <span v-if="product.promotion.rule && product.promotion.rule.discountType === 1" class="card-promo-hint">
+              滿{{ formatPrice(product.promotion.rule.threshold) }}折{{ product.promotion.rule.discountValue }}
+            </span>
+          </template>
+          
+          <!-- 沒有活動 -->
+          <template v-else>
+            <div class="card-price-row">
+              <span class="card-price">${{ formatPrice(product.price) }}</span>
+              <span class="card-sold">{{ formatSoldCount(product.soldCount) }}</span>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -37,12 +67,10 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
 import { Picture } from '@element-plus/icons-vue'
 import type { ProductListItem } from '@/types/product'
 import { formatPrice, formatSoldCount, getFullImageUrl } from '@/utils/format'
 
-const route = useRoute()
 const props = defineProps<{
   product: ProductListItem
 }>()
@@ -122,6 +150,11 @@ void props
   height: 36px;
 }
 
+/* 價格區域 */
+.card-price-area {
+  min-height: 44px;
+}
+
 .card-price-row {
   display: flex;
   justify-content: space-between;
@@ -141,6 +174,67 @@ void props
   color: #999;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* 活動折扣價 */
+.card-promo-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.card-original-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.card-original-price {
+  font-size: 13px;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.card-discount-tag {
+  display: inline-block;
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* 滿額折扣提示 */
+.card-promo-hint {
+  display: block;
+  font-size: 12px;
+  color: #ea580c;
+  margin-top: 4px;
+}
+
+/* 活動標籤（圖片左上角） */
+.card-promo-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  z-index: 2;
+}
+.card-promo-badge.flashSale {
+  background: #ef4444;
+}
+.card-promo-badge.discount {
+  background: #f97316;
+}
+.card-promo-badge.limitedBuy {
+  background: #7c3aed;
 }
 
 .sold-out-overlay {
@@ -163,20 +257,5 @@ void props
   background: rgba(0, 0, 0, 0.7);
   padding: 6px 16px;
   border-radius: 4px;
-}
-
-/* 促銷標籤 */
-.promo-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background-color: #EE4D2D;
-  color: white;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: bold;
-  border-bottom-left-radius: 8px;
-  z-index: 2;
-  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
 }
 </style>

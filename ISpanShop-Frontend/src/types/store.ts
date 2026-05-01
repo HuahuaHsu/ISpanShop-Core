@@ -130,6 +130,7 @@ export interface SellerOrderItem {
   price: number
   quantity: number
   subtotal: number
+  promotionTags?: string[]
 }
 
 export interface SellerReturnItem {

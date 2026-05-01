@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, Plus, Minus } from '@element-plus/icons-vue'
+import { Plus, Minus } from '@element-plus/icons-vue'
 import { useCartStore } from '@/stores/cart'
 
 const router = useRouter()
@@ -16,7 +16,8 @@ const groupedItems = computed(() => {
     name: string, 
     status: number, 
     items: any[], 
-    storePromotions: any[] 
+    storePromotions: any[],
+    allSelected: boolean
   }> = {}
   
   cartStore.items.forEach(item => {
@@ -26,14 +27,17 @@ const groupedItems = computed(() => {
         name: item.storeName,
         status: item.storeStatus,
         items: [],
-        storePromotions: []
+        storePromotions: [],
+        allSelected: false
       }
     }
     groups[item.storeId].items.push(item)
   })
 
-  // 計算每個賣場的活動進度與折扣
+  // 計算每個賣場的活動進度、折扣與全選狀態
   Object.values(groups).forEach(group => {
+    group.allSelected = group.items.length > 0 && group.items.every(i => i.selected)
+    
     const promoMap: Record<number, any> = {}
     group.items.forEach(item => {
       const currentPrice = item.promoPrice ?? item.price
@@ -62,6 +66,29 @@ const groupedItems = computed(() => {
 
   return Object.values(groups)
 })
+
+/** 賣場全選：選取某賣場時，自動取消其他賣場的勾選 */
+function toggleStore(storeId: number, checked: boolean) {
+  cartStore.items.forEach(item => {
+    if (item.storeId === storeId) {
+      item.selected = checked
+    } else if (checked) {
+      item.selected = false
+    }
+  })
+}
+
+/** 單一商品勾選：限制僅能勾選同一賣場 */
+function handleItemSelect(item: any) {
+  if (item.selected) {
+    const hasOtherStoreSelected = cartStore.items.some(i => i.selected && i.storeId !== item.storeId)
+    if (hasOtherStoreSelected) {
+      cartStore.items.forEach(i => {
+        if (i.storeId !== item.storeId) i.selected = false
+      })
+    }
+  }
+}
 
 // 計算整台購物車的最終折扣金額 (滿額折扣總和)
 const totalStoreDiscount = computed(() => {
@@ -101,7 +128,7 @@ async function confirmRemove(productId: number, variantId: number | null): Promi
     cartStore.removeItem(productId, variantId)
     ElMessage.success('已移除商品')
   } catch {
-    // 取消，不做任何事
+    // 取消
   }
 }
 
@@ -110,6 +137,14 @@ function formatPrice(price: number): string {
 }
 
 function handleCheckout(): void {
+  if (cartStore.selectedQuantity === 0) return
+  
+  const selectedStoreIds = new Set(cartStore.items.filter(i => i.selected).map(i => i.storeId))
+  if (selectedStoreIds.size > 1) {
+    ElMessage.error('一次只能結帳同一個賣場的商品')
+    return
+  }
+
   if (hasVacationItems.value) {
     ElMessage.error('購物車包含休假中賣場的商品，請先移除後再結帳')
     return
@@ -152,8 +187,20 @@ function handleCheckout(): void {
         <div class="cart-groups">
           <div v-for="group in groupedItems" :key="group.id" class="store-group">
             <div class="store-header">
-              <el-icon class="store-icon"><svg viewBox="0 0 1024 1024" width="16" height="16"><path d="M912 216H112c-17.7 0-32 14.3-32 32v560c0 17.7 14.3 32 32 32h800c17.7 0 32-14.3 32-32V248c0-17.7-14.3-32-32-32zM216 752H144V280h72v472z m664 0h-72V280h72v472z m-136 0H288V280h356v472z" fill="currentColor"></path></svg></el-icon>
-              <span class="store-name">{{ group.name }}</span>
+              <div class="store-info-side">
+                <el-checkbox 
+                  v-model="group.allSelected" 
+                  @change="(val: boolean) => toggleStore(group.id, val)" 
+                  class="store-checkbox"
+                />
+                <el-icon class="store-icon"><svg viewBox="0 0 1024 1024" width="16" height="16"><path d="M912 216H112c-17.7 0-32 14.3-32 32v560c0 17.7 14.3 32 32 32h800c17.7 0 32-14.3 32-32V248c0-17.7-14.3-32-32-32zM216 752H144V280h72v472z m664 0h-72V280h72v472z m-136 0H288V280h356v472z" fill="currentColor"></path></svg></el-icon>
+                <span class="store-name">{{ group.name }}</span>
+              </div>
+              <div class="header-labels">
+                <div class="label-unit-price">單價</div>
+                <div class="label-qty">數量</div>
+                <div class="label-total">總價</div>
+              </div>
             </div>
 
             <!-- 活動提示區 -->
@@ -186,64 +233,70 @@ function handleCheckout(): void {
                 class="cart-item"
                 :class="{ 'is-vacation': item.storeStatus === 2 }"
               >
-                <!-- 勾選框 -->
-                <el-checkbox v-model="item.selected" class="item-checkbox" />
+                <!-- 商品主要資訊欄位 -->
+                <div class="item-main-info">
+                  <el-checkbox 
+                    v-model="item.selected" 
+                    @change="handleItemSelect(item)"
+                    class="item-checkbox" 
+                  />
 
-            <!-- 商品圖片 -->
-            <el-image
-              :src="item.image"
-              fit="cover"
-              class="item-image"
-              @click="router.push(`/product/${item.productId}`)"
-            >
-              <template #error>
-                <div class="image-fallback">🖼️</div>
-              </template>
-            </el-image>
+                  <el-image
+                    :src="item.image"
+                    fit="cover"
+                    class="item-image"
+                    @click="router.push(`/product/${item.productId}`)"
+                  >
+                    <template #error>
+                      <div class="image-fallback">🖼️</div>
+                    </template>
+                  </el-image>
 
-            <!-- 商品資訊 -->
-            <div class="item-info">
-              <div
-                class="item-name"
-                @click="router.push(`/product/${item.productId}`)"
-              >
-                <el-tag v-if="item.storeStatus === 2" type="warning" size="small" effect="dark" class="mr-1">休假中</el-tag>
-                {{ item.name }}
+                  <div class="item-info">
+                    <div
+                      class="item-name"
+                      @click="router.push(`/product/${item.productId}`)"
+                    >
+                      <el-tag v-if="item.storeStatus === 2" type="warning" size="small" effect="dark" class="mr-1">休假中</el-tag>
+                      {{ item.name }}
+                    </div>
+                    <div v-if="item.specLabel" class="item-spec">{{ item.specLabel }}</div>
+                  </div>
+                </div>
+
+                <!-- 單價 -->
+                <div class="item-unit-price">
+                  <template v-if="item.promoPrice">
+                    <span class="original-price">NT$ {{ formatPrice(item.price) }}</span>
+                    <span class="promo-price">NT$ {{ formatPrice(item.promoPrice) }}</span>
+                  </template>
+                  <template v-else>
+                    NT$ {{ formatPrice(item.price) }}
+                  </template>
+                </div>
+
+                <!-- 數量控制 -->
+                <div class="item-qty">
+                  <div class="qty-control">
+                    <el-button
+                      size="small"
+                      :icon="Minus"
+                      @click="decrement(item.productId, item.variantId, item.quantity)"
+                    />
+                    <span class="qty-num">{{ item.quantity }}</span>
+                    <el-button
+                      size="small"
+                      :icon="Plus"
+                      @click="increment(item.productId, item.variantId, item.quantity)"
+                    />
+                  </div>
+                </div>
+
+                <!-- 小計 -->
+                <div class="item-subtotal">
+                  NT$ {{ formatPrice((item.promoPrice ?? item.price) * item.quantity) }}
+                </div>
               </div>
-              <div v-if="item.specLabel" class="item-spec">{{ item.specLabel }}</div>
-              <div class="item-price">
-                <template v-if="item.promoPrice">
-                  <span class="original-price">NT$ {{ formatPrice(item.price) }}</span>
-                  <span class="promo-price">NT$ {{ formatPrice(item.promoPrice) }}</span>
-                </template>
-                <template v-else>
-                  NT$ {{ formatPrice(item.price) }}
-                </template>
-              </div>
-            </div>
-
-            <!-- 數量控制 -->
-            <div class="item-qty">
-              <el-button
-                circle
-                size="small"
-                :icon="Minus"
-                @click="decrement(item.productId, item.variantId, item.quantity)"
-              />
-              <span class="qty-num">{{ item.quantity }}</span>
-              <el-button
-                circle
-                size="small"
-                :icon="Plus"
-                @click="increment(item.productId, item.variantId, item.quantity)"
-              />
-            </div>
-
-            <!-- 小計 -->
-            <div class="item-subtotal">
-              NT$ {{ formatPrice((item.promoPrice ?? item.price) * item.quantity) }}
-            </div>
-          </div>
             </div>
           </div>
         </div>
@@ -294,14 +347,6 @@ function handleCheckout(): void {
   color: #909399;
   font-size: 15px;
 }
-.cart-selection-header {
-  background: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-}
 .cart-empty {
   background: white;
   border-radius: 8px;
@@ -313,30 +358,53 @@ function handleCheckout(): void {
 .cart-groups {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   margin-bottom: 24px;
 }
+
 .store-group {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0,0,0,0.05);
 }
 .store-header {
   padding: 12px 20px;
-  background: #fafafa;
+  background: #fff;
   border-bottom: 1px solid #f0f0f0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+}
+.store-info-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.store-checkbox {
+  margin-right: 4px;
 }
 .store-icon {
   color: #606266;
+  margin-left: 4px;
 }
 .store-name {
   font-weight: 600;
   color: #303133;
 }
+
+/* 賣場標題列標籤 */
+.header-labels {
+  display: flex;
+  align-items: center;
+  color: #909399;
+  font-size: 14px;
+}
+.label-unit-price { width: 120px; text-align: center; }
+.label-qty { width: 120px; text-align: center; }
+.label-total { width: 120px; text-align: center; }
+
 .promotion-alerts {
   padding: 10px 20px;
   background: #fffafa;
@@ -348,9 +416,6 @@ function handleCheckout(): void {
   gap: 10px;
   font-size: 13px;
   margin-bottom: 4px;
-}
-.promo-alert:last-child {
-  margin-bottom: 0;
 }
 .promo-text {
   color: #606266;
@@ -376,7 +441,6 @@ function handleCheckout(): void {
 .cart-item {
   display: flex;
   align-items: center;
-  gap: 16px;
   padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
   transition: background 0.2s;
@@ -393,13 +457,21 @@ function handleCheckout(): void {
 }
 .cart-item:last-child { border-bottom: none; }
 .cart-item:hover { background: #fafafa; }
+
+.item-main-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
 .item-checkbox {
   margin-right: 4px;
 }
 .item-image {
   width: 80px;
   height: 80px;
-  border-radius: 6px;
+  border-radius: 4px;
   flex-shrink: 0;
   cursor: pointer;
   border: 1px solid #eee;
@@ -433,10 +505,12 @@ function handleCheckout(): void {
 .item-spec {
   font-size: 12px;
   color: #909399;
-  margin-bottom: 6px;
 }
-.item-price {
-  font-size: 13px;
+
+.item-unit-price {
+  width: 120px;
+  text-align: center;
+  font-size: 14px;
   color: #606266;
   display: flex;
   flex-direction: column;
@@ -447,32 +521,61 @@ function handleCheckout(): void {
   font-size: 12px;
 }
 .promo-price {
-  color: #EE4D2D;
+  color: #303133;
   font-weight: 500;
 }
+
 .item-qty {
+  width: 120px;
+  display: flex;
+  justify-content: center;
+}
+.qty-control {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+.qty-control :deep(.el-button) {
+  border: none;
+  border-radius: 0;
+  padding: 6px 10px;
+  background: transparent;
+  color: #606266;
+  transition: all 0.2s ease;
+}
+.qty-control :deep(.el-button:hover) {
+  background: #f5f7fa;
+  color: #EE4D2D;
+}
+.qty-control :deep(.el-button:active) {
+  background: #e4e7ed;
 }
 .qty-num {
-  min-width: 28px;
+  width: 40px;
+  height: 28px;
+  line-height: 28px;
+  border-left: 1px solid #dcdfe6;
+  border-right: 1px solid #dcdfe6;
   text-align: center;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
+  color: #303133;
 }
+
 .item-subtotal {
-  min-width: 90px;
-  text-align: right;
-  font-size: 15px;
+  width: 120px;
+  text-align: center;
+  font-size: 14px;
   font-weight: 600;
   color: #EE4D2D;
-  flex-shrink: 0;
 }
+
 .cart-footer {
   position: sticky;
-  bottom: 20px; /* Leave some space from bottom or set to 0 for full width */
+  bottom: 20px;
   z-index: 100;
   background: white;
   border-radius: 8px;

@@ -1,0 +1,319 @@
+完成！全螢幕 Header 搜尋框排版已優化
+
+═══════════════════════════════════════════════════════════════════
+
+## (a) Header 的實際 HTML 結構
+
+### 第一行：頂部公告列（top-bar）
+
+\\\html
+<div class="top-bar">
+  <div class="top-bar-inner">
+    <!-- 左側：賣家中心 -->
+    <div class="top-left">
+      <a>賣家中心</a>
+    </div>
+    
+    <!-- 中間：促銷訊息（新增） -->
+    <div class="top-center">
+      <span class="promo-text">🎉 全站滿千免運中</span>
+    </div>
+    
+    <!-- 右側：會員中心 / 使用者名稱 -->
+    <div class="top-right">
+      <template v-if="未登入">
+        會員中心 | 註冊 | 登入
+      </template>
+      <template v-else>
+        <el-dropdown>使用者名稱</el-dropdown>
+      </template>
+    </div>
+  </div>
+</div>
+\\\
+
+### 第二行：主 Header（main-header）
+
+\\\html
+<header class="main-header">
+  <div class="main-header-inner">
+    <!-- Logo（左側，不縮小） -->
+    <div class="logo">
+      <img class="logo-icon">
+      <span class="logo-text">HowBuy</span>
+    </div>
+    
+    <!-- 搜尋框（中間，最大 600px） -->
+    <div class="search-box">
+      <div class="search-bar-container">
+        <el-autocomplete class="seamless-input" />
+        <button class="seamless-btn">搜尋</button>
+      </div>
+      
+      <!-- 熱搜關鍵字（搜尋框下方） -->
+      <div class="hot-keywords">
+        <span class="hot-label">🔥 熱搜:</span>
+        <a>iPhone 16</a>
+        <a>無線耳機</a>
+        ...
+      </div>
+    </div>
+    
+    <!-- 購物車（右側，不縮小） -->
+    <div class="header-actions">
+      <el-popover>
+        <div class="action-icon cart">
+          <el-badge>購物車</el-badge>
+        </div>
+      </el-popover>
+    </div>
+  </div>
+</header>
+\\\
+
+### 層級結構
+
+\\\
+top-bar（深色背景）
+  ├─ top-bar-inner（最大寬度 1280px，居中）
+      ├─ top-left（賣家中心）
+      ├─ top-center（促銷訊息）✨ 新增
+      └─ top-right（使用者名稱）
+
+main-header（漸層背景）
+  └─ main-header-inner（最大寬度 1280px，居中）
+      ├─ logo（flex-shrink: 0）
+      ├─ search-box（flex: 0 1 600px, max-width: 600px）
+      │   ├─ search-bar-container
+      │   └─ hot-keywords
+      └─ header-actions（flex-shrink: 0）
+\\\
+
+═══════════════════════════════════════════════════════════════════
+
+## (b) 搜尋框的 max-width 設了多少
+
+### 修復前
+\\\css
+.search-box { 
+  flex: 1;              /* 會撐滿所有可用空間 */
+  max-width: 650px;     /* 最大 650px */
+}
+\\\
+
+**問題：** \lex: 1\ 會讓搜尋框盡可能撐大，把購物車推到最右邊
+
+### 修復後
+\\\css
+.search-box { 
+  flex: 0 1 600px;      /* 基礎寬度 600px，可縮小但不放大 */
+  max-width: 600px;     /* 最大 600px */
+  min-width: 0;         /* 允許縮小 */
+}
+\\\
+
+**優點：**
+- ✅ 搜尋框固定基礎寬度 600px
+- ✅ 不會無限撐大
+- ✅ 購物車緊貼在搜尋框右側
+- ✅ 整體排版更緊湊美觀
+
+### 其他相關調整
+
+**main-header-inner 容器：**
+\\\css
+.main-header-inner { 
+  max-width: 1280px;              /* 從 1400px 改為 1280px */
+  justify-content: space-between; /* 新增，讓元素分散對齊 */
+  gap: 32px;                      /* 從 40px 改為 32px */
+}
+\\\
+
+**top-bar-inner 容器：**
+\\\css
+.top-bar-inner {
+  max-width: 1280px;    /* 改為 1280px，與 header 對齊 */
+}
+\\\
+
+═══════════════════════════════════════════════════════════════════
+
+## (c) 購物車是否在搜尋框右側
+
+### 修復前佈局（全螢幕）
+
+\\\
+[Logo]────[搜尋框撐很寬──────────────────]────────🛒
+         ↑ flex: 1 會盡可能撐大              ↑ 被推到最右邊
+\\\
+
+購物車距離搜尋框太遠，排版鬆散
+
+### 修復後佈局（全螢幕）
+
+\\\
+[Logo]────[搜尋框(600px)]──🛒
+         ↑ 固定最大寬度    ↑ 緊貼右側
+\\\
+
+**特點：**
+- ✅ Logo 在最左側（flex-shrink: 0）
+- ✅ 搜尋框在中間（最大 600px）
+- ✅ **購物車緊貼搜尋框右側**（flex-shrink: 0）
+- ✅ 使用 \justify-content: space-between\ 讓三者適當分散
+- ✅ 整體排版緊湊有序
+
+### 寬度分配（1280px 容器）
+
+假設全螢幕 1920px：
+
+| 元素 | 寬度 | 說明 |
+|------|------|------|
+| Logo | ~200px | flex-shrink: 0，不縮小 |
+| Gap | 32px | 間距 |
+| 搜尋框 | 600px | flex: 0 1 600px, max-width: 600px |
+| Gap | 32px | 間距 |
+| 購物車 | ~80px | flex-shrink: 0，不縮小 |
+| **總計** | ~944px | 在 1280px 容器內，兩側留白適中 |
+
+═══════════════════════════════════════════════════════════════════
+
+## 新增功能：頂部促銷訊息
+
+### 第一行佈局（top-bar）
+
+**修復前：**
+\\\
+[賣家中心]                    [使用者名稱]
+ ← 左對齊                       右對齊 →
+\\\
+
+**修復後：**
+\\\
+[賣家中心]    🎉 全站滿千免運中    [使用者名稱]
+ ← 左        ↑ 置中顯示            右 →
+\\\
+
+### 實作細節
+
+\\\css
+.top-bar-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.top-left {
+  flex: 0 0 auto;  /* 左側不伸縮 */
+}
+
+.top-center {
+  flex: 1;         /* 中間可伸縮 */
+  text-align: center;
+}
+
+.promo-text {
+  color: #fbbf24;  /* 金色 */
+  font-weight: 600;
+}
+
+.top-right {
+  flex: 0 0 auto;  /* 右側不伸縮 */
+}
+\\\
+
+### 響應式處理
+
+**1024px 以下：** 隱藏促銷訊息
+\\\css
+@media (max-width: 1024px) {
+  .top-center {
+    display: none;
+  }
+}
+\\\
+
+═══════════════════════════════════════════════════════════════════
+
+## 完整排版效果（全螢幕）
+
+### 第一行（top-bar）
+\\\
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+賣家中心    🎉 全站滿千免運中    👤 使用者名稱 ▼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+\\\
+
+### 第二行（main-header）
+\\\
+┌──────────────────────────────────────┐
+│ 🧡 HowBuy  [🔍 搜尋框(600px)] 🛒    │
+│            🔥 熱搜: iPhone 16...     │
+└──────────────────────────────────────┘
+\\\
+
+### 視覺比例
+- Logo: 約 15%
+- 搜尋框: 約 50%（固定 600px）
+- 購物車: 約 10%
+- 兩側留白: 約 25%
+
+═══════════════════════════════════════════════════════════════════
+
+## 修改摘要
+
+### 修改檔案
+**src/layouts/DefaultLayout.vue**
+
+### Template 變更
+1. 在 \	op-bar-inner\ 中新增 \	op-center\ 區塊
+2. 加入促銷訊息：\🎉 全站滿千免運中\
+
+### CSS 變更
+
+#### 1. 頂部公告列（top-bar）
+- \max-width: 1400px → 1280px\
+- 新增 \.top-left\, \.top-center\, \.top-right\ 樣式
+- 新增 \.promo-text\ 金色文字樣式
+
+#### 2. 主 Header（main-header-inner）
+- \max-width: 1400px → 1280px\
+- 新增 \justify-content: space-between\
+- \gap: 40px → 32px\
+
+#### 3. 搜尋框（search-box）
+- \lex: 1 → flex: 0 1 600px\
+- \max-width: 650px → 600px\
+
+#### 4. 右側購物車（header-actions）
+- 新增樣式定義（之前在其他地方）
+- 確保 \lex-shrink: 0\
+
+#### 5. 響應式（1024px 以下）
+- 隱藏 \.top-center\ 促銷訊息
+- 調整 \	op-bar-inner\ padding
+
+═══════════════════════════════════════════════════════════════════
+
+## 測試建議
+
+### 全螢幕測試（1920px）
+- ✅ 確認搜尋框不會太寬
+- ✅ 確認購物車在搜尋框右側
+- ✅ 確認促銷訊息置中顯示
+- ✅ 確認熱搜關鍵字對齊搜尋框
+
+### 中等螢幕（1280px）
+- ✅ 確認整體排版緊湊
+- ✅ 確認搜尋框寬度適中
+
+### 小螢幕（1024px）
+- ✅ 確認促銷訊息已隱藏
+- ✅ 確認搜尋框可以縮小
+
+### 手機（768px）
+- ✅ 確認手機版排版正常
+- ✅ Logo + 使用者第一行
+- ✅ 搜尋框 + 購物車第二行
+
+═══════════════════════════════════════════════════════════════════

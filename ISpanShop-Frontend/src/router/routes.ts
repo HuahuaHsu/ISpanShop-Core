@@ -210,6 +210,11 @@ export const routes: RouteRecordRaw[] = [
         name: 'SellerProductEdit',
         component: () => import('../views/seller/ProductEditView.vue'),
       },
+      {
+        path: 'products/:id/preview',
+        name: 'SellerProductPreview',
+        component: () => import('../views/seller/ProductPreviewView.vue'),
+      },
       // ── 訂單管理 ──
       { path: 'orders', name: 'SellerOrders', component: () => import('../views/seller/OrderListView.vue') },
       { path: 'orders/:id', name: 'SellerOrderDetail', component: () => import('../views/seller/OrderDetailView.vue') },

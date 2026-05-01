@@ -1,3 +1,5 @@
+using ISpanShop.Models.DTOs.Products;
+
 namespace ISpanShop.MVC.Models.Dto
 {
     /// <summary>前台商品列表項目（API 回傳用）</summary>
@@ -17,6 +19,8 @@ namespace ISpanShop.MVC.Models.Dto
         public int      CategoryId    { get; set; }
         /// <summary>平均評分（目前無評分聚合，固定 null）</summary>
         public decimal? Rating        { get; set; }
+        /// <summary>商品的進行中活動資訊（沒有活動時為 null）</summary>
+        public ProductPromotionInfoDto? Promotion { get; set; }
     }
 
     /// <summary>前台商品列表分頁回傳（data 區塊）</summary>

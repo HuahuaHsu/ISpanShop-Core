@@ -11,6 +11,7 @@ using ISpanShop.Common.Enums;
 using ISpanShop.Services.Coupons;
 using ISpanShop.Services.Payments;
 using ISpanShop.Models.DTOs.Members;
+using ISpanShop.Repositories.Products;
 
 namespace ISpanShop.Services.Stores
 {
@@ -19,15 +20,18 @@ namespace ISpanShop.Services.Stores
         private readonly ISpanShopDBContext _context;
         private readonly ICouponService _couponService;
         private readonly PointService _pointService;
+        private readonly IProductRepository _productRepository;
 
         public FrontStoreService(
             ISpanShopDBContext context,
             ICouponService couponService,
-            PointService pointService)
+            PointService pointService,
+            IProductRepository productRepository)
         {
             _context = context;
             _couponService = couponService;
             _pointService = pointService;
+            _productRepository = productRepository;
         }
 
         public async Task<FrontSellerDashboardDto> GetDashboardDataAsync(int userId, int days = 7)
@@ -365,13 +369,23 @@ namespace ISpanShop.Services.Stores
             var productCount = await _context.Products
                 .CountAsync(p => p.StoreId == storeId && p.Status == 1 && p.IsDeleted != true);
 
+            // 計算賣場平均星等
+            var ratingQuery = _context.OrderReviews
+                .Where(r => r.Order.StoreId == storeId);
+
+            decimal? averageRating = null;
+            if (await ratingQuery.AnyAsync())
+            {
+                averageRating = (decimal)await ratingQuery.AverageAsync(r => (double)r.Rating);
+            }
+
             return new StorePublicProfileDto
             {
                 Id = store.Id,
                 Name = store.StoreName ?? string.Empty,
                 Description = store.Description,
                 LogoUrl = store.LogoUrl,
-                Rating = null,
+                Rating = averageRating,
                 ProductCount = productCount,
                 FollowerCount = 0,
                 CreatedAt = store.CreatedAt
@@ -770,6 +784,17 @@ namespace ISpanShop.Services.Stores
 
                 // 同意退貨時，才退回點數與優惠券
                 await ReturnOrderAssetsAsync(order);
+
+                // 同意退貨時，歸還庫存 (考慮部分退貨，從最新申請的明細中抓取)
+                var returnItems = await _context.ReturnRequestItems
+                    .Include(ri => ri.OrderDetail)
+                    .Where(ri => ri.ReturnRequestId == latestReturn.Id)
+                    .ToListAsync();
+
+                foreach (var ri in returnItems)
+                {
+                    await _productRepository.UpdateStockAsync(ri.OrderDetail.ProductId, ri.OrderDetail.VariantId, ri.Quantity);
+                }
             }
             else
             {

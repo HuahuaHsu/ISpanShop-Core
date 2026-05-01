@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using ISpanShop.Repositories.Products;
 
 namespace ISpanShop.Services.Payments
 {
@@ -17,17 +18,20 @@ namespace ISpanShop.Services.Payments
 		private readonly PointService _pointService;
 		private readonly PaymentService _paymentService;
 		private readonly ICouponService _couponService;
+		private readonly IProductRepository _productRepository;
 
 		public CheckoutService(
 			ISpanShopDBContext context, 
 			PointService pointService, 
 			PaymentService paymentService,
-			ICouponService couponService)
+			ICouponService couponService,
+			IProductRepository productRepository)
 		{
 			_context = context;
 			_pointService = pointService;
 			_paymentService = paymentService;
 			_couponService = couponService;
+			_productRepository = productRepository;
 		}
 
 		public async Task<(bool IsSuccess, string Message, string? OrderNumber)> CreateOrderAsync(CheckoutRequestDto dto)
@@ -51,7 +55,17 @@ namespace ISpanShop.Services.Payments
 
 						var orderNumber = "ORD" + DateTime.Now.ToString("yyyyMMddHHmmss");
 
-						// --- B. 處理優惠券驗證與試算 ---
+						// --- B. 庫存檢查與扣除 (預扣) ---
+						foreach (var item in dto.Items)
+						{
+							bool stockUpdated = await _productRepository.UpdateStockAsync(item.ProductId, item.VariantId, -item.Quantity);
+							if (!stockUpdated)
+							{
+								return (false, $"商品「{item.ProductName}」庫存不足，無法建立訂單", null);
+							}
+						}
+
+						// --- C. 處理優惠券驗證與試算 ---
 						if (dto.CouponId.HasValue)
 						{
 							var productIds = dto.Items.Select(i => i.ProductId).Distinct().ToList();
@@ -182,7 +196,8 @@ namespace ISpanShop.Services.Payments
 								ProductName = item.ProductName ?? "未知商品",
 								VariantName = item.VariantName ?? "預設規格",
 								SkuCode = "", // 補上空字串避免資料庫 Not Null 報錯
-								CoverImage = "" // 補上空字串避免資料庫 Not Null 報錯
+								CoverImage = "", // 補上空字串避免資料庫 Not Null 報錯
+								AllocatedDiscountAmount = allocatedDiscount // 修正：將計算好的分攤折扣存入
 							});
 						}
 

@@ -28,8 +28,6 @@
       <div class="top-bar-inner">
         <div class="top-left">
           <a href="#" @click.prevent="handleSellerCenterClick">賣家中心</a>
-          <span class="divider">|</span>
-          <span class="welcome">🎉 全站滿千免運中</span>
         </div>
         <div class="top-right">
           <template v-if="!authStore.isLoggedIn">
@@ -304,7 +302,20 @@ onMounted(() => {
 
 /* 頂部公告列 */
 .top-bar { background: #0f172a; color: #cbd5e1; font-size: 13px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.top-bar-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; padding: 0 30px; }
+.top-bar-inner { 
+  max-width: 1400px; /* 與下方內容區對齊 */
+  margin: 0 auto; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  padding: 0 30px; /* 與 HomeView 的 padding 一致 */
+}
+.top-left {
+  flex: 0 0 auto;
+}
+.top-right {
+  flex: 0 0 auto;
+}
 .top-bar a { color: #cbd5e1; text-decoration: none; margin: 0 10px; transition: color 0.2s; }
 .top-bar a:hover { color: #EE4D2D; }
 .divider { opacity: 0.3; margin: 0 5px; }
@@ -318,9 +329,26 @@ onMounted(() => {
   padding: 24px 0 20px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
-.main-header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 40px; padding: 0 30px; }
 
-.logo { display: flex; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.3s; }
+.main-header-inner { 
+  max-width: 1400px; /* 與下方內容區對齊 */
+  margin: 0 auto; 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; /* 改用 space-between */
+  gap: 20px; /* 減小間距讓搜尋框更長 */
+  padding: 0 30px; /* 與 HomeView 的 padding 一致 */
+  flex-wrap: nowrap; /* 防止換行 */
+}
+
+.logo { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  cursor: pointer; 
+  transition: transform 0.3s;
+  flex-shrink: 0; /* Logo 不縮小 */
+}
 .logo:hover { transform: scale(1.05); }
 .logo-icon { height: 70px; width: auto; object-fit: contain; }
 .logo-text {
@@ -329,24 +357,135 @@ onMounted(() => {
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-.search-box { flex: 1; }
+.search-box { 
+  flex: 1; /* 佔滿剩餘空間 */
+  min-width: 300px; /* 最小寬度防止太小 */
+}
 .search-bar-container {
   display: flex; width: 100%; height: 44px; border: 2px solid #EE4D2D;
   border-radius: 4px; background: white; overflow: hidden;
 }
-.seamless-input { flex: 1; }
+.seamless-input { flex: 1; min-width: 0; }
 .seamless-input :deep(.el-input__wrapper) { box-shadow: none !important; background: transparent; padding-left: 16px; }
 .seamless-btn {
   background: #EE4D2D; color: white; border: none; padding: 0 40px;
   font-size: 16px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  flex-shrink: 0; /* 按鈕不縮小 */
 }
 .seamless-btn:hover { background: #BE3E24; }
-.hot-keywords { margin-top: 10px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
-.hot-label { color: #fbbf24; margin-right: 6px; }
-.hot-keywords a { color: #cbd5e1; text-decoration: none; margin-right: 12px; }
+.hot-keywords { margin-top: 10px; font-size: 12px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.hot-label { color: #fbbf24; margin-right: 6px; white-space: nowrap; }
+.hot-keywords a { color: #cbd5e1; text-decoration: none; margin-right: 12px; white-space: nowrap; margin-bottom: 4px; }
 .hot-keywords a:hover { color: #EE4D2D; }
 
-.header-actions { display: flex; gap: 30px; color: white; }
+.header-actions { 
+  display: flex; 
+  gap: 30px; 
+  color: white;
+  flex-shrink: 0; /* 右側不縮小 */
+}
+
+/* 響應式：中等螢幕 (1024px ~ 768px) */
+@media (max-width: 1024px) {
+  .top-bar-inner {
+    padding: 0 20px;
+  }
+  
+  .main-header-inner {
+    gap: 20px;
+    padding: 0 20px;
+  }
+  .logo-icon { height: 50px; }
+  .logo-text { font-size: 24px; }
+  .search-box {
+    max-width: none; /* 移除最大寬度限制 */
+  }
+  .seamless-btn { padding: 0 20px; font-size: 14px; }
+  .hot-keywords { font-size: 11px; }
+}
+
+/* 響應式：小螢幕 (平板/手機) */
+@media (max-width: 768px) {
+  .top-bar {
+    font-size: 11px;
+    padding: 4px 0;
+  }
+  
+  .top-bar-inner {
+    padding: 0 12px;
+  }
+  
+  .main-header-inner {
+    flex-wrap: wrap; /* 允許換行 */
+    padding: 12px 15px;
+    gap: 10px;
+  }
+  
+  /* 第一行：Logo (左) + 使用者名稱 (右) */
+  .logo { 
+    order: 1; 
+    flex: 0 0 auto;
+  }
+  .logo-icon { height: 40px; }
+  .logo-text { font-size: 20px; }
+  
+  .top-right,
+  .user-dropdown-trigger {
+    order: 2;
+    flex: 0 0 auto;
+    margin-left: auto; /* 推到右邊 */
+  }
+  
+  /* 第二行：搜尋框 (左，佔大部分) + 購物車 (右) */
+  .search-box { 
+    order: 3;
+    flex: 1 1 auto;
+    width: calc(100% - 60px); /* 為購物車預留空間 */
+    max-width: none;
+    margin-top: 0;
+    margin-right: 0;
+  }
+  
+  .header-actions { 
+    order: 4;
+    flex: 0 0 auto;
+    margin-left: 10px; /* 與搜尋框間隔 */
+    gap: 16px;
+  }
+  
+  .search-bar-container {
+    height: 40px;
+  }
+  
+  .seamless-btn { 
+    padding: 0 16px; 
+    font-size: 14px; 
+  }
+  
+  /* 熱搜關鍵字在小螢幕隱藏 */
+  .hot-keywords {
+    display: none;
+  }
+  
+  /* 購物車圖標和文字調整 */
+  .action-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  
+  .action-label {
+    font-size: 10px;
+  }
+}
+
+.header-actions { 
+  display: flex; 
+  gap: 30px; 
+  color: white;
+  flex-shrink: 0; /* 右側不縮小 */
+}
 .action-icon { cursor: pointer; text-align: center; transition: transform 0.2s; }
 .action-icon:hover { transform: translateY(-3px); color: #EE4D2D; }
 .action-label { font-size: 12px; margin-top: 4px; }
@@ -366,7 +505,102 @@ onMounted(() => {
 .footer-col h4 { color: white; font-size: 15px; margin-bottom: 18px; position: relative; padding-bottom: 10px; }
 .footer-col h4::after { content: ''; position: absolute; bottom: 0; left: 0; width: 30px; height: 2px; background: #EE4D2D; }
 .footer-col a { display: block; color: #94a3b8; text-decoration: none; font-size: 13px; margin-bottom: 10px; }
+.footer-col p { color: #94a3b8; font-size: 13px; margin: 8px 0; }
 .footer-bottom { text-align: center; padding: 20px; background: #020617; color: #64748b; font-size: 13px; }
+
+/* Footer 手機版 RWD */
+@media (max-width: 768px) {
+  /* 保障區塊：改成 2x2 排列 */
+  .footer-top {
+    padding: 20px 0;
+  }
+  
+  .footer-features {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+    padding: 0 16px !important;
+  }
+  
+  .feature-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px !important;
+    padding: 12px 8px;
+  }
+  
+  .feature-item :deep(.el-icon) {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 32px !important;
+  }
+  
+  .feature-item h4 {
+    font-size: 13px !important;
+    line-height: 1.3;
+    margin: 0 !important;
+  }
+  
+  .feature-item p {
+    font-size: 11px !important;
+    line-height: 1.4;
+    margin: 0 !important;
+    color: #cbd5e1;
+  }
+  
+  /* Footer 主容器改成單欄垂直 */
+  .footer-inner {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    padding: 30px 20px 20px !important;
+  }
+  
+  /* Logo 區塊置中 */
+  .footer-brand {
+    text-align: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .footer-brand .footer-logo {
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  
+  .footer-logo-img {
+    height: 26px;
+  }
+  
+  .footer-brand p {
+    font-size: 12px !important;
+    color: #94a3b8;
+  }
+  
+  /* 各欄標題 */
+  .footer-col h4 {
+    font-size: 14px !important;
+    margin-bottom: 12px !important;
+  }
+  
+  /* 連結和文字 */
+  .footer-col a {
+    font-size: 12px !important;
+    line-height: 1.8 !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .footer-col p {
+    font-size: 12px !important;
+    margin: 6px 0 !important;
+    word-break: break-all;
+  }
+  
+  /* 底部版權文字 */
+  .footer-bottom {
+    font-size: 11px !important;
+    padding: 16px 20px !important;
+  }
+}
 
 :global(.cart-popover) { padding: 0 !important; border-radius: 4px; }
 .cart-preview { display: flex; flex-direction: column; }

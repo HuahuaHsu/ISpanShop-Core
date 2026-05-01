@@ -76,6 +76,23 @@ export interface ProductDetail {
 
 // ─── 商品列表相關型別 ───────────────────────────────────────────
 
+/** 商品活動資訊（列表用） */
+export interface ProductPromotionInfo {
+  promotionId: number
+  promotionName: string
+  type: 'flashSale' | 'discount' | 'limitedBuy' | 'other'
+  typeLabel: string
+  discountPrice: number | null
+  discountPercent: number | null
+  originalPrice: number
+  endDate: string
+  rule: {
+    threshold: number
+    discountType: number
+    discountValue: number
+  } | null
+}
+
 /** 對應後端 ProductListItemDto */
 export interface ProductListItem {
   id: number
@@ -91,6 +108,8 @@ export interface ProductListItem {
   categoryId: number
   /** 平均評分（目前後端固定回傳 null） */
   rating: number | null
+  /** 商品的進行中活動資訊（沒有活動時為 null） */
+  promotion: ProductPromotionInfo | null
 }
 
 /** 對應後端 ProductListResponseDto */

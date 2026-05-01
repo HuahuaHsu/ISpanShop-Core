@@ -48,7 +48,7 @@ export const useCartStore = defineStore('cart', () => {
   const init = () => {
     try {
       const stored = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]') as CartItem[]
-      items.value = stored.map(item => ({ ...item, selected: item.selected ?? true }))
+      items.value = stored.map(item => ({ ...item, selected: item.selected ?? false }))
     } catch {
       items.value = []
     }
@@ -72,7 +72,7 @@ export const useCartStore = defineStore('cart', () => {
         price: item.unitPrice,
         promoPrice: item.promotionPrice,
         quantity: item.quantity,
-        selected: true, // 預設選中
+        selected: false, // 預設不選中
         specLabel: item.variantName || '',
         storeId: item.storeId,
         storeName: item.storeName,
@@ -112,7 +112,7 @@ export const useCartStore = defineStore('cart', () => {
         price: item.unitPrice,
         promoPrice: item.promotionPrice,
         quantity: item.quantity,
-        selected: true,
+        selected: false, // 預設不選中
         specLabel: item.variantName || '',
         storeId: item.storeId,
         storeName: item.storeName,

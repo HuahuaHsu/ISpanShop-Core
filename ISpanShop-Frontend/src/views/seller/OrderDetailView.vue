@@ -45,39 +45,9 @@
 
         <!-- 商品明細 -->
         <el-card class="items-card" shadow="never" header="商品明細">
-          <el-table :data="order.items" style="width: 100%">
-            <el-table-column label="商品資訊" min-width="300">
-              <template #default="{ row }">
-                <div class="product-info">
-                  <el-image 
-                    :src="row.coverImage" 
-                    class="product-img" 
-                    fit="cover"
-                  >
-                    <template #error><div class="image-slot"><el-icon><Picture /></el-icon></div></template>
-                  </el-image>
-                  <div class="product-text">
-                    <div class="name">{{ row.productName }}</div>
-                    <div class="variant" v-if="row.variantName">規格：{{ row.variantName }}</div>
-                    <div class="sku">SKU: {{ row.skuCode }}</div>
-                  </div>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column label="單價" width="120" align="center">
-              <template #default="{ row }">
-                NT$ {{ row.price.toLocaleString() }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="quantity" label="數量" width="100" align="center" />
-            <el-table-column label="小計" width="120" align="right">
-              <template #default="{ row }">
-                <span class="subtotal">NT$ {{ row.subtotal.toLocaleString() }}</span>
-              </template>
-            </el-table-column>
-          </el-table>
+          <OrderItemsTable :items="order.items" />
 
-          <!-- 價格結算 (使用抽取的組件) -->
+          <!-- 價格結算 -->
           <div class="seller-summary-wrapper">
             <OrderSummary 
               v-if="order"
@@ -93,7 +63,7 @@
           </div>
         </el-card>
 
-        <!-- 評價資訊 -->
+        <!-- 買家評價 -->
         <el-card v-if="order?.review" class="review-card" shadow="never" header="買家評價">
           <div class="review-content">
             <div class="review-header">
@@ -129,36 +99,8 @@
         </el-card>
       </el-col>
 
-      <!-- 評價回覆對話框 -->
-      <el-dialog
-        v-model="replyDialogVisible"
-        title="回應買家評價"
-        width="500px"
-        destroy-on-close
-      >
-        <el-form :model="replyForm" label-position="top">
-          <el-form-item label="您的回覆：">
-            <el-input
-              v-model="replyForm.replyText"
-              type="textarea"
-              :rows="4"
-              placeholder="請輸入您對買家評價的回應..."
-            />
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <span class="dialog-footer">
-            <el-button @click="replyDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="submitReply" :loading="submittingReply">
-              提交回覆
-            </el-button>
-          </span>
-        </template>
-      </el-dialog>
-
-      <!-- 右側：訂單狀態、買家與收件資訊 -->
+      <!-- 右側：資訊欄 -->
       <el-col :span="8">
-        <!-- 精簡版訂單狀態 -->
         <el-card class="info-card condensed-status-card" shadow="never">
           <div class="status-box">
             <div class="status-label">目前訂單狀態</div>
@@ -205,6 +147,33 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 評價回覆對話框 -->
+    <el-dialog
+      v-model="replyDialogVisible"
+      title="回應買家評價"
+      width="500px"
+      destroy-on-close
+    >
+      <el-form :model="replyForm" label-position="top">
+        <el-form-item label="您的回覆：">
+          <el-input
+            v-model="replyForm.replyText"
+            type="textarea"
+            :rows="4"
+            placeholder="請輸入您對買家評價的回應..."
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="replyDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitReply" :loading="submittingReply">
+            提交回覆
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -212,12 +181,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Picture, ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { getSellerOrderDetailApi, updateSellerOrderStatusApi, replyToReviewApi } from '@/api/store'
 import type { SellerOrderDetail } from '@/types/store'
 import { useChatStore } from '@/stores/chat'
 import OrderSteps from '@/components/order/OrderSteps.vue'
 import OrderSummary from '@/components/order/OrderSummary.vue'
+import OrderItemsTable from '@/components/order/OrderItemsTable.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -255,7 +225,7 @@ const submitReply = async () => {
     })
     ElMessage.success('回覆成功')
     replyDialogVisible.value = false
-    fetchDetail() // 重新獲取詳情以顯示回覆內容
+    fetchDetail()
   } catch (error) {
     ElMessage.error('回覆失敗')
   } finally {
@@ -287,39 +257,34 @@ const formatDate = (dateStr: string) => {
     minute: '2-digit'
   })
 }
+
 const statusClass = computed(() => {
   if (!order.value) return ''
   const statusMap: Record<number, string> = {
-    0: 'status-pending',    // 待付款
-    1: 'status-processing', // 待出貨
-    2: 'status-shipped',    // 運送中
-    3: 'status-completed',  // 已完成
-    4: 'status-cancelled',  // 已取消
-    5: 'status-refunding',  // 退貨/款中
+    0: 'status-pending',
+    1: 'status-processing',
+    2: 'status-shipped',
+    3: 'status-completed',
+    4: 'status-cancelled',
+    5: 'status-refunding',
   }
   return statusMap[order.value.status] || ''
 })
 
 const handleShip = async () => {
   if (!order.value) return
-  
   try {
     await ElMessageBox.confirm('確定要將此訂單標記為「出貨中」嗎？', '確認出貨', {
       confirmButtonText: '確定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-    
     loading.value = true
-    // 假設 3 代表運送中 (需對應後端 OrderStatus Enum)
     await updateSellerOrderStatusApi(order.value.id, 3)
     ElMessage.success('訂單已標記為出貨中')
     fetchDetail()
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('出貨操作失敗', error)
-      ElMessage.error('操作失敗')
-    }
+    if (error !== 'cancel') ElMessage.error('操作失敗')
   } finally {
     loading.value = false
   }
@@ -333,12 +298,10 @@ const contactBuyer = () => {
   }
 }
 
-onMounted(() => {
-  fetchDetail()
-})
+onMounted(fetchDetail)
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .order-detail-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -350,12 +313,12 @@ onMounted(() => {
   align-items: center;
   gap: 20px;
   margin-bottom: 24px;
-}
-.page-header .title {
-  margin: 0;
-  flex: 1;
-  font-size: 20px;
-  color: #1e293b;
+  .title {
+    margin: 0;
+    flex: 1;
+    font-size: 20px;
+    color: #1e293b;
+  }
 }
 
 .steps-card {
@@ -363,10 +326,6 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-.status-card {
-  margin-bottom: 20px;
-  border-radius: 8px;
-}
 .status-box {
   display: flex;
   flex-direction: column;
@@ -379,58 +338,17 @@ onMounted(() => {
 .status-value {
   font-size: 24px;
   font-weight: 700;
-}
-.status-value.status-pending { color: #ee4d2d; }
-.status-value.status-processing { color: #26aa99; }
-.status-value.status-shipped { color: #26aa99; }
-.status-value.status-completed { color: #ee4d2d; }
-.status-value.status-cancelled { color: #929292; }
-.status-value.status-refunding { color: #ee4d2d; }
-
-.timeline {
-  font-size: 13px;
-  color: #94a3b8;
-  display: flex;
-  gap: 24px;
+  &.status-pending { color: #ee4d2d; }
+  &.status-processing { color: #26aa99; }
+  &.status-shipped { color: #26aa99; }
+  &.status-completed { color: #ee4d2d; }
+  &.status-cancelled { color: #929292; }
+  &.status-refunding { color: #ee4d2d; }
 }
 
 .items-card {
   margin-bottom: 20px;
   border-radius: 8px;
-}
-
-.product-info {
-  display: flex;
-  gap: 12px;
-}
-.product-img {
-  width: 60px;
-  height: 60px;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-.product-text .name {
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 4px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.product-text .variant {
-  font-size: 12px;
-  color: #64748b;
-}
-.product-text .sku {
-  font-size: 11px;
-  color: #94a3b8;
-  font-family: monospace;
-}
-
-.subtotal {
-  font-weight: 600;
-  color: #1e293b;
 }
 
 .seller-summary-wrapper {
@@ -443,29 +361,21 @@ onMounted(() => {
 }
 .info-group {
   margin-bottom: 16px;
-}
-.info-group:last-child {
-  margin-bottom: 0;
-}
-.info-group .label {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-bottom: 4px;
-}
-.info-group .value {
-  font-size: 14px;
-  color: #1e293b;
-  font-weight: 500;
-}
-.info-group .value.note {
-  background: #f8fafc;
-  padding: 8px;
-  border-radius: 4px;
-  color: #64748b;
-  font-style: italic;
+  .label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .value {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+    &.note {
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: 4px;
+      color: #64748b;
+      font-style: italic;
+    }
+  }
 }
 
-/* 評價卡片樣式 */
 .review-card {
   margin-top: 20px;
   border-radius: 8px;
@@ -476,10 +386,7 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 12px;
 }
-.review-date {
-  font-size: 13px;
-  color: #94a3b8;
-}
+.review-date { font-size: 13px; color: #94a3b8; }
 .buyer-comment {
   font-size: 15px;
   color: #1e293b;
@@ -493,12 +400,7 @@ onMounted(() => {
   flex-wrap: wrap;
   margin-bottom: 20px;
 }
-.review-img {
-  width: 80px;
-  height: 80px;
-  border-radius: 4px;
-  cursor: zoom-in;
-}
+.review-img { width: 80px; height: 80px; border-radius: 4px; cursor: zoom-in; }
 
 .store-reply-section {
   border-top: 1px solid #f1f5f9;
@@ -511,22 +413,8 @@ onMounted(() => {
   border-left: 3px solid #ee4d2d;
   position: relative;
 }
-.reply-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ee4d2d;
-  margin-bottom: 4px;
-}
-.reply-content {
-  font-size: 14px;
-  color: #1e293b;
-  line-height: 1.5;
-}
-.edit-reply-btn {
-  margin-top: 8px;
-  padding: 0;
-}
-.no-reply {
-  text-align: right;
-}
+.reply-label { font-size: 13px; font-weight: 600; color: #ee4d2d; margin-bottom: 4px; }
+.reply-content { font-size: 14px; color: #1e293b; line-height: 1.5; }
+.edit-reply-btn { margin-top: 8px; padding: 0; }
+.no-reply { text-align: right; }
 </style>

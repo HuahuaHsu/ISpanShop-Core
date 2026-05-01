@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using ISpanShop.Models.EfModels;
+using ISpanShop.Models.DTOs.Products;
 using ISpanShop.Repositories.Promotions;
+using Microsoft.EntityFrameworkCore;
 
 namespace ISpanShop.Services.Promotions
 {
@@ -10,8 +13,88 @@ namespace ISpanShop.Services.Promotions
     public class PromotionService
     {
         private readonly IPromotionRepository _repo;
+        private readonly ISpanShopDBContext _context;
 
-        public PromotionService(IPromotionRepository repo) => _repo = repo;
+        public PromotionService(IPromotionRepository repo, ISpanShopDBContext context)
+        {
+            _repo = repo;
+            _context = context;
+        }
+
+        /// <summary>
+        /// 批量取得商品的進行中活動資訊（每個商品只取第一個活動）
+        /// </summary>
+        public async Task<Dictionary<int, ProductPromotionInfoDto>> GetActivePromotionsForProductsAsync(List<int> productIds)
+        {
+            if (productIds == null || productIds.Count == 0)
+                return new Dictionary<int, ProductPromotionInfoDto>();
+
+            var now = DateTime.Now;
+
+            var promotionItems = await _context.PromotionItems
+                .AsNoTracking()
+                .Include(pi => pi.Promotion)
+                    .ThenInclude(p => p.PromotionRules)
+                .Include(pi => pi.Product)
+                    .ThenInclude(p => p.ProductVariants)
+                .Where(pi => productIds.Contains(pi.ProductId)
+                           && pi.Promotion != null
+                           && !pi.Promotion.IsDeleted
+                           && pi.Promotion.Status == 1
+                           && pi.Promotion.StartTime <= now
+                           && pi.Promotion.EndTime >= now
+                           && pi.Promotion.Seller.IsBlacklisted != true
+                           && !_context.Stores.Any(s => s.UserId == pi.Promotion.SellerId && s.StoreStatus == 3))
+                .ToListAsync();
+
+            // 批量查詢所有商品的有庫存最低價
+            var minPrices = await _context.ProductVariants
+                .Where(v => productIds.Contains(v.ProductId) 
+                         && v.IsDeleted != true 
+                         && (v.Stock ?? 0) > 0)
+                .GroupBy(v => v.ProductId)
+                .Select(g => new { ProductId = g.Key, MinPrice = g.Min(v => v.Price) })
+                .ToDictionaryAsync(x => x.ProductId, x => x.MinPrice);
+
+            var result = new Dictionary<int, ProductPromotionInfoDto>();
+
+            foreach (var pi in promotionItems)
+            {
+                if (result.ContainsKey(pi.ProductId)) continue; // 每個商品只取第一個活動
+
+                var promotion = pi.Promotion;
+                var rule = promotion.PromotionRules?.FirstOrDefault();
+
+                // 取得有庫存最低價，回退至 OriginalPrice
+                var minAvailablePrice = minPrices.ContainsKey(pi.ProductId)
+                    ? minPrices[pi.ProductId]
+                    : pi.OriginalPrice;
+
+                var discountPrice = pi.DiscountPercent != null && pi.DiscountPercent > 0
+                    ? (decimal?)Math.Round(minAvailablePrice * pi.DiscountPercent.Value / 100m, 0)
+                    : pi.DiscountPrice;
+
+                result[pi.ProductId] = new ProductPromotionInfoDto
+                {
+                    PromotionId     = promotion.Id,
+                    PromotionName   = promotion.Name,
+                    Type            = GetTypeCode(promotion.PromotionType),
+                    TypeLabel       = GetTypeLabel(promotion.PromotionType),
+                    DiscountPrice   = discountPrice,
+                    DiscountPercent = pi.DiscountPercent,
+                    OriginalPrice   = minAvailablePrice,
+                    EndDate         = promotion.EndTime,
+                    Rule            = rule != null ? new PromotionRuleInfoDto
+                    {
+                        Threshold     = rule.Threshold,
+                        DiscountType  = rule.DiscountType,
+                        DiscountValue = rule.DiscountValue
+                    } : null
+                };
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// 取得目前進行中的活動。

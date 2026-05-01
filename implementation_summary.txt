@@ -1,0 +1,132 @@
+完成！前台商品列表 API 已新增活動折扣資訊
+
+═══════════════════════════════════════════════════════════════════
+
+## (a) 修改的 API Endpoints
+
+### 1. GET /api/products
+   - 功能：商品總覽 / 搜尋 / 篩選
+   - 位置：ProductsApiController.GetProducts()
+   - 修改：回傳資料中每個商品新增 promotion 欄位
+
+### 2. GET /api/products/{id}/related
+   - 功能：相關商品推薦
+   - 位置：ProductsApiController.GetRelatedAsync()
+   - 修改：回傳資料中每個商品新增 promotion 欄位
+
+### 3. GET /api/stores/{storeId}/products
+   - 功能：賣場商品列表
+   - 位置：StoresApiController.GetStoreProducts()
+   - 修改：回傳資料中每個商品新增 promotion 欄位
+
+═══════════════════════════════════════════════════════════════════
+
+## (b) promotion 欄位結構
+
+`json
+{
+  "id": 123,
+  "name": "iPhone 15 Pro",
+  "price": 35900,
+  "imageUrl": "...",
+  "soldCount": 1234,
+  "totalStock": 50,
+  "categoryId": 1,
+  
+  "promotion": {
+    "promotionId": 5,
+    "promotionName": "雙11特賣",
+    "type": "flashSale",
+    "typeLabel": "限時特賣",
+    "discountPrice": 32310,
+    "discountPercent": 90,
+    "originalPrice": 35900,
+    "endDate": "2024-11-11T23:59:59",
+    "rule": {
+      "threshold": 0,
+      "discountType": 1,
+      "discountValue": 10
+    }
+  }
+}
+`
+
+### 欄位說明：
+- **promotionId**: 活動 ID
+- **promotionName**: 活動名稱
+- **type**: 活動類型代碼（flashSale / discount / limitedBuy）
+- **typeLabel**: 活動類型顯示名稱
+- **discountPrice**: 折扣後價格（計算後）
+- **discountPercent**: 折扣百分比（如 90 = 9折）
+- **originalPrice**: 原價（有庫存規格的最低價）
+- **endDate**: 活動結束時間
+- **rule**: 活動規則（滿額折扣等，可為 null）
+
+**注意：** 沒有活動時 promotion 欄位為 null
+
+═══════════════════════════════════════════════════════════════════
+
+## (c) 活動價計算邏輯
+
+✅ **是的，已使用有庫存最低價計算**
+
+### 實作細節：
+
+1. **批量查詢有庫存最低價**（效能最佳化）
+   `csharp
+   var minPrices = await _context.ProductVariants
+       .Where(v => productIds.Contains(v.ProductId) 
+                && v.IsDeleted != true 
+                && (v.Stock ?? 0) > 0)
+       .GroupBy(v => v.ProductId)
+       .Select(g => new { ProductId = g.Key, MinPrice = g.Min(v => v.Price) })
+       .ToDictionaryAsync(x => x.ProductId, x => x.MinPrice);
+   `
+
+2. **折扣價計算**
+   - 如果是百分比折扣：有庫存最低價 × 折扣百分比
+   - 如果是固定折扣價：直接使用 DiscountPrice
+   - 回退機制：若商品無庫存，使用 PromotionItem.OriginalPrice
+
+3. **只顯示進行中活動**
+   - Status = 1（已啟用）
+   - StartTime ≤ 現在 ≤ EndTime
+   - 排除已刪除活動
+   - 排除黑名單賣家和停權商店的活動
+
+═══════════════════════════════════════════════════════════════════
+
+## 新增檔案
+
+1. **ISpanShop.Models/DTOs/Products/ProductPromotionInfoDto.cs**
+   - ProductPromotionInfoDto: 商品活動資訊
+   - PromotionRuleInfoDto: 活動規則資訊
+
+═══════════════════════════════════════════════════════════════════
+
+## 修改檔案
+
+1. **ISpanShop.Services/Promotions/PromotionService.cs**
+   - 新增 GetActivePromotionsForProductsAsync() 方法
+   - 批量查詢商品活動資訊，效能最佳化
+
+2. **ISpanShop.MVC/Models/Dto/ProductListItemDto.cs**
+   - 新增 Promotion 屬性
+
+3. **ISpanShop.MVC/Controllers/Api/Products/ProductsApiController.cs**
+   - 注入 PromotionService
+   - GetProducts() 和 GetRelatedAsync() 加入活動查詢
+
+4. **ISpanShop.MVC/Controllers/Api/Stores/StoresApiController.cs**
+   - 注入 PromotionService
+   - GetStoreProducts() 加入活動查詢
+
+═══════════════════════════════════════════════════════════════════
+
+## 建置結果
+
+✅ ISpanShop.Models 建置成功（226 warnings，全為既有）
+✅ ISpanShop.Services 建置成功（322 warnings，全為既有）
+✅ 無新增錯誤或警告
+
+═══════════════════════════════════════════════════════════════════

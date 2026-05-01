@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getTrafficAnalyticsApi } from '@/api/seller'
 import { ElMessage } from 'element-plus'
 import { View, ShoppingCart, PieChart, TrendCharts, QuestionFilled } from '@element-plus/icons-vue'
+
+const router = useRouter()
 
 interface TrafficSummary {
   totalViews: number
@@ -126,7 +129,7 @@ onMounted(() => {
             </el-table-column>
             <el-table-column label="商品資訊" min-width="250">
               <template #default="{ row }">
-                <div class="product-info">
+                <div class="product-info clickable" @click="router.push(`/product/${row.productId}`)">
                   <el-image :src="row.productImage" fit="cover" class="product-img">
                     <template #error>
                       <div class="image-placeholder">🖼️</div>
@@ -279,6 +282,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+.product-info.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.product-info.clickable:hover {
+  opacity: 0.8;
 }
 .product-img {
   width: 40px;

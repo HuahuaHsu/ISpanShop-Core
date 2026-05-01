@@ -42,6 +42,12 @@ namespace ISpanShop.Models.DTOs.Products
 
         /// <summary>屬性列表 JSON</summary>
         public string? AttributesJson { get; set; }
+
+        /// <summary>無規格商品的單一價格</summary>
+        public decimal? Price { get; set; }
+
+        /// <summary>無規格商品的庫存數量</summary>
+        public int? Stock { get; set; }
     }
 
     /// <summary>更新商品基本資料（JSON）</summary>

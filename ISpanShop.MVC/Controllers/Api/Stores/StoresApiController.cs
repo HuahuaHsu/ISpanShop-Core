@@ -2,6 +2,7 @@ using ISpanShop.Models.DTOs.Products;
 using ISpanShop.Models.DTOs.Stores;
 using ISpanShop.MVC.Models.Dto;
 using ISpanShop.Services.Products;
+using ISpanShop.Services.Promotions;
 using ISpanShop.Services.Stores;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,13 +18,16 @@ namespace ISpanShop.MVC.Controllers.Api.Stores
     {
         private readonly IFrontStoreService _frontStoreService;
         private readonly IProductService    _productService;
+        private readonly PromotionService   _promotionService;
 
         public StoresApiController(
             IFrontStoreService frontStoreService,
-            IProductService    productService)
+            IProductService    productService,
+            PromotionService   promotionService)
         {
             _frontStoreService = frontStoreService;
             _productService    = productService;
+            _promotionService  = promotionService;
         }
 
         // ──────────────────────────────────────────────────────────
@@ -82,6 +86,10 @@ namespace ISpanShop.MVC.Controllers.Api.Stores
 
             var result = _productService.GetProductsPaged(criteria);
 
+            // 批量取得活動資訊
+            var productIds = result.Data.Select(p => p.Id).ToList();
+            var promotions = await _promotionService.GetActivePromotionsForProductsAsync(productIds);
+
             var items = result.Data.Select(p => new ProductListItemDto
             {
                 Id            = p.Id,
@@ -93,7 +101,8 @@ namespace ISpanShop.MVC.Controllers.Api.Stores
                 TotalStock    = p.TotalStock,
                 Location      = string.Empty,
                 CategoryId    = p.CategoryId,
-                Rating        = null
+                Rating        = null,
+                Promotion     = promotions.ContainsKey(p.Id) ? promotions[p.Id] : null
             }).ToList();
 
             return Ok(new

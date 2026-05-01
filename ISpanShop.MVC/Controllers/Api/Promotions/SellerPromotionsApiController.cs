@@ -248,11 +248,11 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
 
         // ──────────────────────────────────────────────────────────
         // PUT /api/seller/promotions/{id}
-        // 編輯活動（只能編輯待審核或已拒絕的活動）
+        // 編輯活動（已拒絕：完整編輯；即將開始：僅限名稱和描述）
         // ──────────────────────────────────────────────────────────
 
         /// <summary>
-        /// 編輯促銷活動（只能編輯待審核或已拒絕的活動）
+        /// 編輯促銷活動（已拒絕：完整編輯並重新送審；即將開始：僅更新名稱與描述）
         /// </summary>
         [HttpPut("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -281,11 +281,25 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                     return StatusCode(403, new { success = false, message = "無權編輯此活動" });
                 }
 
-                if (promotion.Status != 0 && promotion.Status != 2)
+                var now = DateTime.Now;
+                bool isRejected = promotion.Status == 2;
+                bool isUpcoming = promotion.Status == 1 && promotion.StartTime > now;
+
+                if (!isRejected && !isUpcoming)
                 {
-                    return BadRequest(new { success = false, message = "只能編輯待審核或已拒絕的活動" });
+                    return BadRequest(new { success = false, message = "只能編輯已拒絕或即將開始的活動" });
                 }
 
+                if (isUpcoming)
+                {
+                    // 即將開始：僅允許更新描述，保持 status=1 不重新送審
+                    // 名稱、時間、類型、折扣一律不可修改（保障買家期待）
+                    promotion.Description = dto.Description ?? string.Empty;
+                    await _promotionService.UpdatePromotionAsync(promotion);
+                    return Ok(new { success = true, message = "活動描述已更新" });
+                }
+
+                // 已拒絕：完整編輯，重新送審（status → 0）
                 if (dto.EndTime <= dto.StartTime)
                 {
                     return BadRequest(new { success = false, message = "結束時間必須晚於開始時間" });
@@ -326,11 +340,11 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
 
         // ──────────────────────────────────────────────────────────
         // DELETE /api/seller/promotions/{id}
-        // 刪除活動（只能刪除待審核的活動）
+        // 刪除活動（已拒絕、即將開始、已結束可刪除；進行中、待審核不可刪除）
         // ──────────────────────────────────────────────────────────
 
         /// <summary>
-        /// 刪除促銷活動（只能刪除待審核的活動）
+        /// 刪除促銷活動（已拒絕、即將開始、已結束可刪除）
         /// </summary>
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -354,14 +368,123 @@ namespace ISpanShop.MVC.Controllers.Api.Promotions
                     return StatusCode(403, new { success = false, message = "無權刪除此活動" });
                 }
 
-                if (promotion.Status != 0)
+                var now = DateTime.Now;
+                bool isRejected = promotion.Status == 2;
+                bool isForceEnded = promotion.Status == 3;
+                bool isUpcoming = promotion.Status == 1 && promotion.StartTime > now;
+                bool isExpired = promotion.Status == 1 && promotion.EndTime <= now;
+
+                if (!isRejected && !isForceEnded && !isUpcoming && !isExpired)
                 {
-                    return BadRequest(new { success = false, message = "只能刪除待審核的活動" });
+                    return BadRequest(new { success = false, message = "待審核的活動請使用「撤銷送審」，進行中的活動請先提早結束後再刪除" });
                 }
 
                 await _promotionService.DeletePromotionAsync(id);
 
                 return Ok(new { success = true, message = "活動已刪除" });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        // ──────────────────────────────────────────────────────────
+        // DELETE /api/seller/promotions/{id}/cancel-review
+        // 撤銷送審（待審核 → 刪除）
+        // ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// 撤銷待審核活動（等同刪除，僅允許 status=0 的活動）
+        /// </summary>
+        [HttpDelete("{id:int}/cancel-review")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> CancelReview(int id)
+        {
+            try
+            {
+                var sellerId = GetCurrentUserId();
+                var promotion = await _promotionService.GetPromotionByIdAsync(id);
+
+                if (promotion == null)
+                {
+                    return NotFound(new { success = false, message = "找不到此活動" });
+                }
+
+                if (promotion.SellerId != sellerId)
+                {
+                    return StatusCode(403, new { success = false, message = "無權操作此活動" });
+                }
+
+                if (promotion.Status != 0)
+                {
+                    return BadRequest(new { success = false, message = "只能撤銷「待審核」的活動" });
+                }
+
+                await _promotionService.DeletePromotionAsync(id);
+
+                return Ok(new { success = true, message = "已撤銷送審，活動已刪除" });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        // ──────────────────────────────────────────────────────────
+        // PUT /api/seller/promotions/{id}/end-early
+        // 提早結束（進行中 → 已結束）
+        // ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// 提早結束進行中的活動（status=1 進行中 → status=3 已結束）
+        /// </summary>
+        [HttpPut("{id:int}/end-early")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> EndEarly(int id)
+        {
+            try
+            {
+                var sellerId = GetCurrentUserId();
+                var promotion = await _promotionService.GetPromotionByIdAsync(id);
+
+                if (promotion == null)
+                {
+                    return NotFound(new { success = false, message = "找不到此活動" });
+                }
+
+                if (promotion.SellerId != sellerId)
+                {
+                    return StatusCode(403, new { success = false, message = "無權操作此活動" });
+                }
+
+                var now = DateTime.Now;
+                bool isActive = promotion.Status == 1 && promotion.StartTime <= now && promotion.EndTime > now;
+
+                if (!isActive)
+                {
+                    return BadRequest(new { success = false, message = "只能提早結束「進行中」的活動" });
+                }
+
+                promotion.Status = 3;
+                promotion.EndTime = now;
+                await _promotionService.UpdatePromotionAsync(promotion);
+
+                return Ok(new { success = true, message = "活動已提早結束" });
             }
             catch (UnauthorizedAccessException ex)
             {

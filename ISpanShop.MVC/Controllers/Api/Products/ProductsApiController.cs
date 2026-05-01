@@ -1,4 +1,5 @@
 ﻿using ISpanShop.Services.Products;
+using ISpanShop.Services.Promotions;
 using ISpanShop.MVC.Models.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,11 +17,16 @@ namespace ISpanShop.MVC.Controllers.Api.Products
     public class ProductsApiController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly PromotionService _promotionService;
         private readonly ILogger<ProductsApiController> _logger;
 
-        public ProductsApiController(IProductService productService, ILogger<ProductsApiController> logger)
+        public ProductsApiController(
+            IProductService productService, 
+            PromotionService promotionService,
+            ILogger<ProductsApiController> logger)
         {
             _productService = productService;
+            _promotionService = promotionService;
             _logger = logger;
         }
 
@@ -62,6 +68,10 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 categoryId, keyword, sortBy ?? "latest", page, pageSize,
                 subCategoryId, brandIds, minPrice, maxPrice);
 
+            // 批量取得活動資訊
+            var productIds = result.Data.Select(p => p.Id).ToList();
+            var promotions = await _promotionService.GetActivePromotionsForProductsAsync(productIds);
+
             var items = result.Data.Select(p => new ProductListItemDto
             {
                 Id            = p.Id,
@@ -73,7 +83,8 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 TotalStock    = p.TotalStock,
                 Location      = string.Empty,
                 CategoryId    = p.CategoryId,
-                Rating        = null
+                Rating        = null,
+                Promotion     = promotions.ContainsKey(p.Id) ? promotions[p.Id] : null
             }).ToList();
 
             return Ok(new
@@ -105,7 +116,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetByIdAsync(int id)
         {
-            var (product, rating, reviewCount, storeProductCount) =
+            var (product, rating, reviewCount, storeProductCount, storeRating) =
                 await _productService.GetProductDetailAsync(id);
 
             if (product == null)
@@ -145,7 +156,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 Name           = product.Store?.StoreName ?? string.Empty,
                 Status         = product.Store?.StoreStatus ?? 1,
                 LogoUrl        = product.Store?.LogoUrl,
-                Rating         = null,
+                Rating         = storeRating,
                 ProductCount   = storeProductCount,
                 FollowerCount  = null,
                 Location       = null,
@@ -292,12 +303,16 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetRelatedAsync(int id, [FromQuery] int limit = 12)
         {
-            // 先確認商品存在且上架（借用詳情方法的 null 判斷）
-            var (product, _, _, _) = await _productService.GetProductDetailAsync(id);
+			// 先確認商品存在且上架（借用詳情方法的 null 判斷）
+			var (product, _, _, _, _) = await _productService.GetProductDetailAsync(id);
             if (product == null)
                 return NotFound(new { success = false, data = (object?)null, message = "商品不存在或已下架" });
 
             var related = await _productService.GetRelatedProductsAsync(id, product.CategoryId, limit);
+
+            // 批量取得活動資訊
+            var productIds = related.Select(p => p.Id).ToList();
+            var promotions = await _promotionService.GetActivePromotionsForProductsAsync(productIds);
 
             var items = related.Select(p => new ProductListItemDto
             {
@@ -310,7 +325,8 @@ namespace ISpanShop.MVC.Controllers.Api.Products
                 TotalStock    = p.TotalStock,
                 Location      = string.Empty,
                 CategoryId    = p.CategoryId,
-                Rating        = null
+                Rating        = null,
+                Promotion     = promotions.ContainsKey(p.Id) ? promotions[p.Id] : null
             }).ToList();
 
             return Ok(new { success = true, data = items, message = "" });

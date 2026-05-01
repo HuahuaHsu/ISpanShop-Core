@@ -1,0 +1,235 @@
+完成！首頁 RWD 響應式問題已修復
+
+═══════════════════════════════════════════════════════════════════
+
+## (a) Header 的實際 class 名
+
+### DefaultLayout.vue
+
+**頂部公告列：**
+- .top-bar
+- .top-bar-inner
+
+**主 Header：**
+- .main-header
+- .main-header-inner
+- .logo (flex-shrink: 0，不縮小)
+- .logo-icon
+- .logo-text
+- .search-box (flex: 1，可縮放)
+- .search-bar-container
+- .seamless-input
+- .seamless-btn (flex-shrink: 0，不縮小)
+- .hot-keywords (小螢幕隱藏)
+- .header-actions (flex-shrink: 0，不縮小)
+
+═══════════════════════════════════════════════════════════════════
+
+## (b) Banner 區塊的實際 class 名
+
+### HomeView.vue
+
+**Banner 容器：**
+- .banner-section (grid，2fr 1fr)
+- .main-carousel
+- .side-banners-grid
+- .side-banners
+
+**輪播內容：**
+- .carousel-slide
+- .slide-bg-blur (模糊背景圖)
+- .slide-overlay (漸層遮罩)
+- .slide-content (左側文字區)
+- .slide-header
+- .slide-tag (活動標籤)
+- .slide-countdown-inline (倒數計時)
+- .slide-title
+- .slide-desc
+- .slide-products (右側商品圖拼貼)
+- .slide-product-card
+- .slide-main-img (單張主圖)
+
+**右側小卡片：**
+- .side-banner-dynamic
+- .sb-bg-img
+- .sb-overlay
+- .sb-content
+- .sb-tag
+- .sb-title
+- .sb-subtitle
+- .sb-countdown-bar
+
+═══════════════════════════════════════════════════════════════════
+
+## (c) 商品列表的實際 class 名
+
+### HomeView.vue
+
+**商品區塊：**
+- .products-section
+- .discovery-header
+- .discovery-title
+- .products-layout (無邊欄)
+- .products-layout.with-sidebar (有邊欄)
+- .filter-aside (邊欄，小螢幕隱藏)
+- .products-main
+
+**商品格線：**
+- .product-grid
+  - 無邊欄：6 欄
+  - 有邊欄：5 欄
+  
+**其他：**
+- .sort-bar (排序列)
+- .sort-btn
+- .view-more-wrap (查看更多按鈕)
+
+**分類：**
+- .category-section
+- .category-grid (7 欄)
+- .category-item
+- .cat-image
+- .cat-emoji
+- .cat-name
+
+**快捷功能：**
+- .quick-icons (10 欄)
+- .quick-item
+- .quick-circle
+- .quick-label
+
+═══════════════════════════════════════════════════════════════════
+
+## (d) 在各斷點的顯示效果
+
+### 1920px（全螢幕桌機）
+✅ Header：Logo + 搜尋框 + 熱搜 + 購物車，一行排列
+✅ Banner：2:1 分欄，主輪播 + 2 張右側卡片
+✅ 商品列表：6 欄（無邊欄）/ 5 欄（有邊欄）
+✅ 分類：7 欄
+✅ 快捷功能：10 欄
+
+### 1280px（一般筆電）
+✅ Header：同上，搜尋框稍微縮小
+✅ Banner：同上
+✅ 商品列表：5 欄（無邊欄）/ 4 欄（有邊欄）
+✅ 分類：7 欄
+✅ 快捷功能：10 欄
+
+### 1024px（小筆電/平板橫向）
+✅ Header：Logo + 搜尋框 + 購物車，一行排列
+  - Logo 縮小至 50px
+  - 搜尋按鈕文字縮小
+  - 熱搜關鍵字保留
+
+✅ Banner：改為單欄
+  - 右側 2 張卡片改為橫排（1 行 2 欄）
+  
+✅ 商品列表：4 欄（無邊欄）/ 3 欄（有邊欄）
+✅ 分類：6 欄
+✅ 快捷功能：5 欄（可橫向捲動）
+
+### 768px（平板直向）
+✅ Header：換行排列
+  - 第 1 行：Logo（左）+ 購物車（右）
+  - 第 2 行：搜尋框（佔滿）
+  - Logo 縮小至 40px
+  - **熱搜關鍵字隱藏**
+
+✅ Banner：
+  - 輪播高度降至 280px
+  - 文字置中
+  - 標題 20px
+  - 描述 13px，最多 2 行
+  - 右側商品圖移到下方，縮小至 70px
+  - **單張主圖隱藏**
+  - 右側卡片改為單欄（2 張上下排列）
+
+✅ 商品列表：3 欄（無邊欄）/ 2 欄（有邊欄）
+  - **邊欄隱藏，改用抽屜**
+  
+✅ 分類：4 欄，圖示縮小至 56px
+✅ 快捷功能：4 欄
+
+### 576px（大手機）
+✅ Header：同 768px
+✅ Banner：同 768px
+✅ 商品列表：**全部改為 2 欄**
+✅ 分類：4 欄
+✅ 快捷功能：4 欄
+
+### 375px（小手機）
+✅ Header：同上
+✅ Banner：同上
+✅ 商品列表：2 欄
+✅ 分類：3 欄
+✅ 快捷功能：4 欄
+
+═══════════════════════════════════════════════════════════════════
+
+## 核心修復重點
+
+### 1. Header 不換行問題
+**問題：** 瀏覽器縮小時購物車跑到搜尋列下方
+
+**解決方案：**
+- 使用 \lex-wrap: nowrap\ 防止意外換行
+- Logo、購物車設定 \lex-shrink: 0\ 不縮小
+- 搜尋框 \lex: 1\ 彈性調整寬度
+- 搜尋按鈕 \lex-shrink: 0\ 不縮小
+- 768px 以下才允許 \lex-wrap: wrap\ 並指定 order
+
+### 2. Banner 文字擠壓問題
+**問題：** 縮小視窗時文字擠在一起
+
+**解決方案：**
+- 1024px 以下：Banner 改單欄，右側卡片橫排
+- 768px 以下：
+  - 降低輪播高度至 280px
+  - 文字使用 clamp() 響應式字體
+  - 描述文字 2 行截斷
+  - 右側圖片移到下方或隱藏
+
+### 3. 商品列表欄數調整
+**解決方案：**
+- 1200px: 5 欄 / 4 欄（有邊欄）
+- 1024px: 4 欄 / 3 欄（有邊欄）
+- 768px: 3 欄 / 2 欄（有邊欄，邊欄隱藏）
+- 576px: **統一 2 欄**
+
+### 4. 其他改進
+- 快捷功能列支援橫向捲動（1024px 以下）
+- 分類格線根據螢幕調整欄數
+- 熱搜關鍵字在小螢幕隱藏節省空間
+- 所有間距在小螢幕縮小（padding/gap）
+
+═══════════════════════════════════════════════════════════════════
+
+## 修改的檔案
+
+1. **src/layouts/DefaultLayout.vue**
+   - 修改 .main-header-inner RWD
+   - 新增 1024px 斷點
+   - 優化 768px 以下的 flex 排版
+
+2. **src/views/HomeView.vue**
+   - 修改 .banner-section RWD
+   - 新增 1024px 斷點處理
+   - 優化輪播高度和文字大小
+   - 改進 .product-grid 響應式
+   - 新增 576px 斷點
+   - 優化 .category-grid RWD
+
+═══════════════════════════════════════════════════════════════════
+
+## 測試建議
+
+請在以下寬度測試：
+1. ✅ 1920px - 完整桌面體驗
+2. ✅ 1280px - 一般筆電
+3. ✅ 1024px - Banner 改單欄，快捷功能可捲動
+4. ✅ 768px - Header 換行，熱搜隱藏
+5. ✅ 576px - 商品統一 2 欄
+6. ✅ 375px - 手機小螢幕
+
+═══════════════════════════════════════════════════════════════════

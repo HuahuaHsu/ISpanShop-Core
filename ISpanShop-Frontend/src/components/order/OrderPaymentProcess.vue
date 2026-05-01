@@ -42,7 +42,7 @@ const fetchOrderData = async () => {
 const handlePayment = async () => {
   const load = ElLoading.service({ text: '正在準備支付頁面...' })
   try {
-    const res = await checkoutApi.getRepaymentUrl(Number(props.orderId))
+    const res = await checkoutApi.getRepaymentUrl(Number(props.orderId), paymentMethod.value)
     if (res.data.success) {
       const backendBase = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7125'
       const targetUrl = res.data.paymentUrl.startsWith('http') 

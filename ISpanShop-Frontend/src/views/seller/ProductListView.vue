@@ -201,6 +201,7 @@
                 </template>
                 <template v-else>
                   <button
+                    v-if="product.status !== 'review'"
                     class="card-action-btn edit-btn"
                     :class="{ 'resubmit-btn': product.status === 'rejected' }"
                     @click="handleEdit(product.id)"
@@ -217,33 +218,49 @@
                     </button>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <!-- 即時預覽：已上架、未上架、審核中可預覽 -->
+                        <!-- 即時預覽：非刪除狀態皆可預覽 -->
                         <el-dropdown-item
-                          v-if="product.status === 'on' || product.status === 'draft' || product.status === 'review'"
+                          v-if="product.status !== 'deleted'"
                           command="preview"
                         >
                           即時預覽
                         </el-dropdown-item>
 
-                        <!-- 上架/下架：只有已上架和未上架可以切換 -->
+                        <!-- 送出審核：只有草稿才需要送審流程 -->
                         <el-dropdown-item
-                          v-if="product.status === 'on' || product.status === 'draft'"
+                          v-if="product.status === 'draft'"
+                          command="submitReview"
+                        >
+                          送出審核
+                        </el-dropdown-item>
+
+                        <!-- 上架：只有曾審核通過後下架的商品才能直接上架 -->
+                        <el-dropdown-item
+                          v-if="product.status === 'off'"
                           command="shelf"
                         >
-                          {{ product.status === 'on' ? '下架' : '上架' }}
+                          上架
+                        </el-dropdown-item>
+
+                        <!-- 下架：只有已上架才能下架 -->
+                        <el-dropdown-item
+                          v-if="product.status === 'on'"
+                          command="shelf"
+                        >
+                          下架
                         </el-dropdown-item>
 
                         <!-- 低庫存提醒：已上架和未上架可設定 -->
                         <el-dropdown-item
-                          v-if="product.status === 'on' || product.status === 'draft'"
+                          v-if="product.status === 'on' || product.status === 'off'"
                           command="stock"
                         >
                           低庫存提醒
                         </el-dropdown-item>
 
-                        <!-- 刪除：只有未上架和已退回可刪除 -->
+                        <!-- 刪除：草稿、未上架、已退回可刪除 -->
                         <el-dropdown-item
-                          v-if="product.status === 'draft' || product.status === 'rejected'"
+                          v-if="product.status === 'draft' || product.status === 'off' || product.status === 'rejected'"
                           command="delete"
                           divided
                         >
@@ -345,6 +362,7 @@
               <template #default="{ row }">
                 <template v-if="!row.isDeleted">
                   <el-button
+                    v-if="row.status !== 'review'"
                     text
                     :type="row.status === 'rejected' ? 'warning' : 'primary'"
                     size="small"
@@ -452,7 +470,7 @@ import {
   ArrowDown, ArrowUp, DCaret, CaretTop, CaretBottom,
   MoreFilled, WarningFilled, View, ChatDotRound,
 } from '@element-plus/icons-vue'
-import { fetchSellerProducts, updateProductStatus, deleteSellerProduct } from '@/api/product'
+import { fetchSellerProducts, updateProductStatus, deleteSellerProduct, submitProductForReview } from '@/api/product'
 import { fetchMainCategories } from '@/api/category'
 import { useSellerStore } from '@/stores/seller'
 import type { SellerProductListItem } from '@/types/product'
@@ -482,16 +500,20 @@ function getProductPrice(product: SellerProduct): string {
 
 // ── 型別定義 ──────────────────────────────────────────────────────
 type ProductStatus = 'on' | 'off' | 'deleted' | 'review' | 'rejected' | 'draft'
-type TabKey = 'all' | 'on' | 'deleted' | 'review' | 'rejected' | 'draft'
+type TabKey = 'all' | 'on' | 'off' | 'deleted' | 'review' | 'rejected' | 'draft'
 type SortField = 'minPrice' | 'createdAt'
 type SortDir = 'asc' | 'desc' | null
 
-/** 將後端 status 數字對應至 tab key 字串 */
-function mapStatusToKey(status: number): ProductStatus {
+/** 將後端 status 數字 + reviewStatus 對應至 tab key 字串
+ *  status=0 + reviewStatus=1(通過) → 'off'（審核通過但賣家下架）
+ *  status=0 + 其他              → 'draft'（草稿，從未通過審核）
+ */
+function mapStatusToKey(status: number, reviewStatus: number): ProductStatus {
   switch (status) {
     case 1: return 'on'
     case 2: return 'review'
-    case 3: return 'rejected'  // 審核退回
+    case 3: return 'rejected'
+    case 0: return reviewStatus === 1 ? 'off' : 'draft'
     default: return 'draft'
   }
 }
@@ -545,9 +567,10 @@ const stockForm = reactive({ threshold: 0, enabled: false })
 const level1Tabs: Array<{ key: TabKey; label: string }> = [
   { key: 'all',      label: '全部' },
   { key: 'on',       label: '架上商品' },
+  { key: 'off',      label: '未上架' },
   { key: 'rejected', label: '已退回' },
   { key: 'review',   label: '審核中' },
-  { key: 'draft',    label: '未上架/尚未刊登' },
+  { key: 'draft',    label: '草稿' },
   { key: 'deleted',  label: '違規/刪除' },
 ]
 
@@ -606,7 +629,7 @@ const pagedProducts = computed<SellerProduct[]>(() => {
 
 /** 各 Tab 計數 */
 const tabCounts = computed<Record<TabKey, number>>(() => {
-  const c: Record<string, number> = { all: 0, on: 0, deleted: 0, review: 0, rejected: 0, draft: 0 }
+  const c: Record<string, number> = { all: 0, on: 0, off: 0, deleted: 0, review: 0, rejected: 0, draft: 0 }
   allProducts.value.forEach((p) => {
     c['all'] = (c['all'] ?? 0) + 1
     const prev = c[p.status]
@@ -711,7 +734,7 @@ async function loadProducts(): Promise<void> {
       const isDeleted = p.isDeleted ?? false
       return {
         ...rest,
-        status: isDeleted ? 'deleted' : mapStatusToKey(status),
+        status: isDeleted ? 'deleted' : mapStatusToKey(status, p.reviewStatus ?? 0),
         statusText: isDeleted ? '已刪除' : p.statusText,
         isDeleted,
         lowStockAlert: false,
@@ -797,8 +820,15 @@ function handleEdit(id: number): void {
 // ── 卡片更多選單 ──────────────────────────────────────────────────
 async function handleCardCommand(cmd: string, product: SellerProduct): Promise<void> {
   switch (cmd) {
-    case 'preview':
-      window.open(`/product/${product.id}`, '_blank')
+    case 'preview': {
+      const previewUrl = product.status === 'on'
+        ? router.resolve({ name: 'ProductDetail', params: { id: product.id } }).href
+        : router.resolve({ name: 'SellerProductPreview', params: { id: product.id } }).href
+      window.open(previewUrl, '_blank')
+      break
+    }
+    case 'submitReview':
+      await handleSubmitReview(product)
       break
     case 'shelf':
       await handleToggleShelf(product)
@@ -832,12 +862,7 @@ async function handleDeleteProduct(product: SellerProduct): Promise<void> {
     // 不重新呼叫 API，因為後端可能過濾掉已刪除商品，導致商品從所有 tab 消失
     const idx = allProducts.value.findIndex(p => p.id === product.id)
     if (idx !== -1) {
-      allProducts.value[idx] = {
-        ...allProducts.value[idx],
-        isDeleted: true,
-        status: 'deleted',
-        statusText: '已刪除',
-      }
+      allProducts.value.splice(idx, 1, { ...allProducts.value[idx]!, isDeleted: true, status: 'deleted', statusText: '已刪除' })
     }
   } catch (error) {
     if (error !== 'cancel') {
@@ -849,16 +874,14 @@ async function handleDeleteProduct(product: SellerProduct): Promise<void> {
 
 // ── 上/下架切換 ───────────────────────────────────────────────────
 async function handleToggleShelf(product: SellerProduct): Promise<void> {
-  // 只有已上架('on') 或 未上架('draft', 對應後端 status=0) 可以切換
-  // 'off' 在本系統不使用（mapStatusToKey: 0 → 'draft'）
-  if (product.status !== 'on' && product.status !== 'draft') {
+  // 只有已上架('on') 或 未上架-已審核('off') 可以切換
+  // 草稿('draft') 必須先送審，不能直接上架
+  if (product.status !== 'on' && product.status !== 'off') {
     ElMessage.warning('此商品狀態無法進行上下架操作')
     return
   }
 
-  // 下架後 status key 必須用 'draft'（對應後端 status=0），而非 'off'
-  // 否則 tabCounts['draft'] 不會增加，商品也不會出現在「未上架」tab
-  const newStatus: ProductStatus = product.status === 'on' ? 'draft' : 'on'
+  const newStatus: ProductStatus = product.status === 'on' ? 'off' : 'on'
   const newStatusNumber = newStatus === 'on' ? 1 : 0
   const actionText = newStatus === 'on' ? '上架' : '下架'
 
@@ -875,14 +898,9 @@ async function handleToggleShelf(product: SellerProduct): Promise<void> {
 
     await updateProductStatus(product.id, newStatusNumber)
 
-    // 本地即時更新：替換陣列元素，確保 tabFiltered / tabCounts 兩個 computed 正確重算
     const idx = allProducts.value.findIndex(p => p.id === product.id)
     if (idx !== -1) {
-      allProducts.value[idx] = {
-        ...allProducts.value[idx],
-        status: newStatus,
-        statusText: newStatus === 'on' ? '上架' : '下架',
-      }
+      allProducts.value.splice(idx, 1, { ...allProducts.value[idx]!, status: newStatus, statusText: newStatus === 'on' ? '已上架' : '未上架' })
     }
 
     ElMessage.success(`商品已${actionText}`)
@@ -890,6 +908,35 @@ async function handleToggleShelf(product: SellerProduct): Promise<void> {
     if (error !== 'cancel') {
       console.error(`${actionText}失敗:`, error)
       ElMessage.error(`${actionText}失敗，請稍後再試`)
+    }
+  }
+}
+
+// ── 草稿送審 ──────────────────────────────────────────────────────
+async function handleSubmitReview(product: SellerProduct): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      `確定要送出「${product.name}」審核嗎？審核期間將無法編輯商品。`,
+      '送審確認',
+      {
+        confirmButtonText: '送出審核',
+        cancelButtonText: '取消',
+        type: 'info',
+      }
+    )
+
+    await submitProductForReview(product.id)
+
+    const idx = allProducts.value.findIndex(p => p.id === product.id)
+    if (idx !== -1) {
+      allProducts.value.splice(idx, 1, { ...allProducts.value[idx]!, status: 'review', statusText: '審核中' })
+    }
+
+    ElMessage.success('已送出審核，請等待管理員審核')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('送審失敗:', error)
+      ElMessage.error('送審失敗，請稍後再試')
     }
   }
 }
@@ -923,7 +970,7 @@ function formatDate(dateString: string | undefined): string {
 }
 
 const STATUS_LABEL: Record<ProductStatus, string> = {
-  on: '架上', off: '下架', deleted: '已刪除', review: '審核中', rejected: '已退回', draft: '草稿',
+  on: '架上', off: '未上架', deleted: '已刪除', review: '審核中', rejected: '已退回', draft: '草稿',
 }
 function statusLabel(status: ProductStatus): string {
   return STATUS_LABEL[status] ?? status

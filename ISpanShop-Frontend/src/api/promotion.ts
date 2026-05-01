@@ -65,6 +65,18 @@ export async function deleteSellerPromotion(id: number) {
   return response.data
 }
 
+/** 撤銷送審（待審核活動 → 刪除） */
+export async function cancelSellerPromotion(id: number) {
+  const response = await request.delete(`/api/seller/promotions/${id}/cancel-review`)
+  return response.data
+}
+
+/** 提早結束進行中的活動 */
+export async function endSellerPromotionEarly(id: number) {
+  const response = await request.put(`/api/seller/promotions/${id}/end-early`)
+  return response.data
+}
+
 // ─── 活動商品綁定 ────────────────────────────────────────────────
 
 /** 取得活動已綁定商品列表 */

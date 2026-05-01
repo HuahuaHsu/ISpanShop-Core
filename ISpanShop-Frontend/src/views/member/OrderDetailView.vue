@@ -50,7 +50,7 @@
         </div>
         
         <div v-for="item in order?.items" :key="item.id" class="order-item">
-          <div class="item-main">
+          <div class="item-main" @click="router.push(`/product/${item.productId}`)" style="cursor: pointer;">
             <el-image :src="item.coverImage || '/placeholder.png'" class="item-image" fit="cover" />
             <div class="item-info">
               <h4 class="item-name">{{ item.productName }}</h4>
@@ -265,6 +265,11 @@ onMounted(() => {
     .item-main {
       display: flex;
       gap: 15px;
+      transition: opacity 0.2s;
+
+      &:hover {
+        opacity: 0.8;
+      }
 
       .item-image {
         width: 80px;

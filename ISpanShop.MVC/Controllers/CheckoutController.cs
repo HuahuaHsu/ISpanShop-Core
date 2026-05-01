@@ -24,7 +24,7 @@ namespace ISpanShop.WebAPI.Controllers
 		}
 
 		[HttpGet("repay/{orderId}")]
-		public async Task<IActionResult> GetRepaymentUrl(long orderId)
+		public async Task<IActionResult> GetRepaymentUrl(long orderId, [FromQuery] string paymentMethod = "ECPay")
 		{
 			// 1. 強制身分驗證
 			var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -38,9 +38,10 @@ namespace ISpanShop.WebAPI.Controllers
 			if ((int)order.Status != 0) // 只有待付款能再次獲取支付連結
 				return BadRequest(new { message = "該訂單目前的狀態無法進行支付" });
 
-			// 3. 根據支付方式產生跳轉路徑 (目前預設 ECPay，可擴充)
-			// 這裡預留邏輯，未來可根據 order.PaymentMethod 分流
-			string paymentUrl = "/Payment/Pay?orderNumber=" + order.OrderNumber;
+			// 3. 根據支付方式產生跳轉路徑
+			string paymentUrl = paymentMethod == "NewebPay"
+				? "/PaymentNewebPay/Pay?orderNumber=" + order.OrderNumber
+				: "/Payment/Pay?orderNumber=" + order.OrderNumber;
 
 			return Ok(new
 			{

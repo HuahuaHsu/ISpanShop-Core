@@ -140,6 +140,17 @@ export async function updateSellerProduct(
 }
 
 /**
+ * 草稿商品送出審核
+ * PUT /api/seller/products/{id}/submit-review
+ */
+export async function submitProductForReview(id: number): Promise<ApiResponse<unknown>> {
+  const response = await request.put<ApiResponse<unknown>>(
+    `/api/seller/products/${id}/submit-review`,
+  )
+  return response.data
+}
+
+/**
  * 更新商品狀態（上架/下架）
  * PATCH /api/seller/products/{id}/status
  */
