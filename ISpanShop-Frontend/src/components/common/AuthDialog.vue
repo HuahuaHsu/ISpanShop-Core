@@ -154,6 +154,15 @@ const quickFill = () => {
   loginForm.password = 'Fuen49.02';
 };
 
+const quickFillRegister = () => {
+  registerForm.account = 'fuen49';
+  registerForm.password = 'Test123456';
+  registerForm.confirmPassword = 'Test123456';
+  registerForm.email = 'fuen49.02@gmail.com';
+  registerForm.fullName = '測試帳號';
+  registerForm.phoneNumber = '0912345678';
+};
+
 const goToForgotPassword = () => {
   authStore.closeLoginDialog();
   router.push('/forgot-password');
@@ -300,6 +309,9 @@ watch(() => authStore.authDialogMode, () => {
             placeholder="帳號 (英文與數字，至少 6 碼)" 
             :prefix-icon="User"
             size="large"
+            autocomplete="off"
+            readonly
+            @focus="$event.target.removeAttribute('readonly')"
           />
         </el-form-item>
 
@@ -311,6 +323,9 @@ watch(() => authStore.authDialogMode, () => {
             :prefix-icon="Lock"
             show-password
             size="large"
+            autocomplete="new-password"
+            readonly
+            @focus="$event.target.removeAttribute('readonly')"
           />
         </el-form-item>
 
@@ -322,6 +337,9 @@ watch(() => authStore.authDialogMode, () => {
             :prefix-icon="Lock"
             show-password
             size="large"
+            autocomplete="new-password"
+            readonly
+            @focus="$event.target.removeAttribute('readonly')"
           />
         </el-form-item>
 
@@ -381,6 +399,8 @@ watch(() => authStore.authDialogMode, () => {
 
         <div class="footer-links">
           已有帳號？ <span class="link-btn" @click="authStore.switchDialogMode('login')">返回登入</span>
+          <span class="mx-2">|</span>
+          <span class="link-btn secondary" @click="quickFillRegister">自動填入</span>
         </div>
       </el-form>
     </template>
@@ -493,6 +513,15 @@ watch(() => authStore.authDialogMode, () => {
 
 .link-btn:hover {
   text-decoration: underline;
+}
+
+.link-btn.secondary {
+  color: #67c23a;
+}
+
+.mx-2 {
+  margin-left: 8px;
+  margin-right: 8px;
 }
 
 :deep(.el-dialog__header) {

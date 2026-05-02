@@ -118,13 +118,35 @@ const handleRegister = async (formEl: FormInstance | undefined) => {
         label-position="top"
       >
         <el-form-item label="帳號" prop="account">
-          <el-input v-model="registerForm.account" placeholder="請輸入帳號" />
+          <el-input 
+            v-model="registerForm.account" 
+            placeholder="請輸入帳號" 
+            autocomplete="off"
+            readonly
+            @focus="$event.target.removeAttribute('readonly')"
+          />
         </el-form-item>
         <el-form-item label="密碼" prop="password">
-          <el-input v-model="registerForm.password" type="password" placeholder="至少 6 個字元" show-password />
+          <el-input 
+            v-model="registerForm.password" 
+            type="password" 
+            placeholder="至少 6 個字元" 
+            show-password 
+            autocomplete="new-password"
+            readonly
+            @focus="$event.target.removeAttribute('readonly')"
+          />
         </el-form-item>
         <el-form-item label="確認密碼" prop="confirmPassword">
-          <el-input v-model="registerForm.confirmPassword" type="password" placeholder="請再次輸入密碼" show-password />
+          <el-input 
+            v-model="registerForm.confirmPassword" 
+            type="password" 
+            placeholder="請再次輸入密碼" 
+            show-password 
+            autocomplete="new-password"
+            readonly
+            @focus="$event.target.removeAttribute('readonly')"
+          />
         </el-form-item>
         <el-form-item label="Email" prop="email">
           <el-input v-model="registerForm.email" placeholder="example@ispan.com" />
