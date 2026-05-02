@@ -103,6 +103,14 @@ const handleRegister = async (formEl: FormInstance | undefined) => {
     ElMessage.error(backendMsg);
   }
 };
+
+const quickRegister = () => {
+  registerForm.account = 'fuen49';
+  registerForm.password = 'Test123456';
+  registerForm.confirmPassword = 'Test123456';
+  registerForm.email = 'fuen49.02@gmail.com';
+  registerForm.fullName = '好買會員';
+};
 </script>
 
 <template>
@@ -118,13 +126,13 @@ const handleRegister = async (formEl: FormInstance | undefined) => {
         label-position="top"
       >
         <el-form-item label="帳號" prop="account">
-          <el-input v-model="registerForm.account" placeholder="請輸入帳號" />
+          <el-input v-model="registerForm.account" placeholder="請輸入帳號" autocomplete="new-account"/>
         </el-form-item>
         <el-form-item label="密碼" prop="password">
-          <el-input v-model="registerForm.password" type="password" placeholder="至少 6 個字元" show-password />
+          <el-input v-model="registerForm.password" type="password" placeholder="至少 6 個字元" show-password autocomplete="new-password" />
         </el-form-item>
         <el-form-item label="確認密碼" prop="confirmPassword">
-          <el-input v-model="registerForm.confirmPassword" type="password" placeholder="請再次輸入密碼" show-password />
+          <el-input v-model="registerForm.confirmPassword" type="password" placeholder="請再次輸入密碼" show-password autocomplete="new-password" />
         </el-form-item>
         <el-form-item label="Email" prop="email">
           <el-input v-model="registerForm.email" placeholder="example@ispan.com" />
@@ -158,6 +166,8 @@ const handleRegister = async (formEl: FormInstance | undefined) => {
         </el-form-item>
         <div class="text-center">
           已有帳號？ <router-link to="/login">返回登入</router-link>
+          <span style="margin: 0 8px; color: #ccc;">|</span>
+          <a href="javascript:void(0)" class="quick-register-link" @click="quickRegister">快速註冊</a>
         </div>
       </el-form>
     </el-card>
@@ -180,5 +190,13 @@ const handleRegister = async (formEl: FormInstance | undefined) => {
 }
 .text-center {
   text-align: center;
+}
+.quick-register-link {
+  color: #409eff;
+  text-decoration: none;
+  font-weight: 500;
+}
+.quick-register-link:hover {
+  text-decoration: underline;
 }
 </style>

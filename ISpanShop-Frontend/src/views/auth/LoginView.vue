@@ -45,7 +45,7 @@ const handleLogin = async (formEl: FormInstance | undefined) => {
 
 const quickFill = () => {
   loginForm.account = 'fuen49';
-  loginForm.password = 'Fuen49.02';
+  loginForm.password = 'Test123456';
 };
 
 const handleForgotPassword = () => {

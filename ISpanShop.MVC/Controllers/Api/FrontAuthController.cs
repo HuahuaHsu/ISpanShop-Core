@@ -166,5 +166,7 @@ namespace ISpanShop.MVC.Controllers.Api
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+       
     }
 }
