@@ -29,14 +29,14 @@ namespace ISpanShop.MVC.Controllers.Api
         /// 取得賣場訂單列表 (支援分頁)
         /// </summary>
         [HttpGet("orders")]
-        public async Task<IActionResult> GetSellerOrders([FromQuery] OrderStatus? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetSellerOrders([FromQuery] OrderStatus? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string keyword = null)
         {
             try
             {
                 var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
 
-                var pagedResult = await _storeService.GetSellerOrdersAsync(userId, status, page, pageSize);
+                var pagedResult = await _storeService.GetSellerOrdersAsync(userId, status, page, pageSize, keyword);
                 return Ok(pagedResult);
             }
             catch (Exception ex)

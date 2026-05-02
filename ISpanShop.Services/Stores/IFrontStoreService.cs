@@ -20,7 +20,7 @@ namespace ISpanShop.Services.Stores
 		Task<StorePublicProfileDto?> GetPublicStoreProfileAsync(int storeId);
 
         // 賣家訂單管理 (支援分頁)
-        Task<PagedResultDto<SellerOrderListDto>> GetSellerOrdersAsync(int userId, OrderStatus? status = null, int page = 1, int pageSize = 10);
+        Task<PagedResultDto<SellerOrderListDto>> GetSellerOrdersAsync(int userId, OrderStatus? status = null, int page = 1, int pageSize = 10, string keyword = null);
         Task<SellerOrderDetailDto> GetSellerOrderDetailAsync(int userId, long orderId);
         Task<bool> UpdateOrderStatusAsync(int userId, long orderId, OrderStatus newStatus);
 

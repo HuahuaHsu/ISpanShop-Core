@@ -85,6 +85,7 @@
           :order-number="order.orderNumber"
           :status="order.status" 
           :is-reviewed="order.isReviewed || (order as any).IsReviewed"
+          :has-appealed="order.hasAppealed || (order as any).HasAppealed"
           :is-detail="true"
           @refresh="fetchOrderDetail"
         />

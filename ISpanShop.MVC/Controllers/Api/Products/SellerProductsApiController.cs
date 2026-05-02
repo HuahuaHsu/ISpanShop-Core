@@ -498,7 +498,7 @@ namespace ISpanShop.MVC.Controllers.Api.Products
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult SubmitProductForReview(int id)
+        public async Task<IActionResult> SubmitProductForReview(int id)
         {
             var storeIdClaim = User.FindFirst("StoreId")?.Value
                             ?? User.FindFirst(c => c.Type.EndsWith("/StoreId"))?.Value;
@@ -518,7 +518,9 @@ namespace ISpanShop.MVC.Controllers.Api.Products
             if (existing.Status == 2)
                 return BadRequest(new { success = false, message = "商品已在審核中" });
 
-            _productService.ChangeProductStatus(id, 2);
+            // 使用正確的方法：同時設定 Status=2 AND ReviewStatus=0
+            // 舊的 ChangeProductStatus(id, 2) 只更新 Status，ReviewStatus 維持草稿值(4)，導致管理後台看不到
+            await _productService.SubmitProductForReviewAsync(id);
             return Ok(new { success = true, message = "商品已送出審核，請等待管理員審核" });
         }
 

@@ -392,7 +392,7 @@ namespace ISpanShop.Services.Stores
             };
         }
 
-        public async Task<PagedResultDto<SellerOrderListDto>> GetSellerOrdersAsync(int userId, OrderStatus? status = null, int page = 1, int pageSize = 10)
+        public async Task<PagedResultDto<SellerOrderListDto>> GetSellerOrdersAsync(int userId, OrderStatus? status = null, int page = 1, int pageSize = 10, string keyword = null)
         {
             var store = await _context.Stores
                 .AsNoTracking()
@@ -409,6 +409,13 @@ namespace ISpanShop.Services.Stores
             if (status.HasValue)
             {
                 query = query.Where(o => o.Status == (byte)status.Value);
+            }
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                query = query.Where(o => o.OrderNumber.Contains(keyword) 
+                                      || o.User.Account.Contains(keyword)
+                                      || o.OrderDetails.Any(od => od.ProductName.Contains(keyword)));
             }
 
             var totalCount = await query.CountAsync();

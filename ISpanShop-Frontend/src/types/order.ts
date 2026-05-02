@@ -14,6 +14,7 @@ export interface OrderListItem {
   sellerId: number;
   firstProductName: string;
   firstProductImage: string;
+  productNames: string;
   totalItemCount: number;
   isReviewed: boolean;
 }
@@ -56,6 +57,7 @@ export interface OrderDetail {
   note: string;
   items: OrderItem[];
   isReviewed: boolean;
+  hasAppealed: boolean;
   returnInfo?: ReturnDetail;
 }
 

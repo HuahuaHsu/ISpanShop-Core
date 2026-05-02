@@ -37,7 +37,7 @@ export const getSellerDashboardApi = (params: { days?: number } = {}) => {
 /**
  * 取得賣場訂單列表
  */
-export const getSellerOrdersApi = (params: { status?: number, page?: number, pageSize?: number } = {}) => {
+export const getSellerOrdersApi = (params: { status?: number, page?: number, pageSize?: number, keyword?: string } = {}) => {
   return axios.get<{ items: SellerOrder[], totalCount: number }>('/api/front/store/orders', {
     params
   })

@@ -23,7 +23,9 @@ namespace ISpanShop.Models.DTOs.Orders
         // 用於列表顯示的第一個商品資訊
         public string FirstProductName { get; set; }
         public string FirstProductImage { get; set; }
+        public string ProductNames { get; set; } // 所有商品名稱，用於搜尋
         public int TotalItemCount { get; set; }
         public bool IsReviewed { get; set; }
+        public bool HasAppealed { get; set; }
     }
 }

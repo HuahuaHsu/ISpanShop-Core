@@ -35,6 +35,7 @@ namespace ISpanShop.Models.DTOs.Orders
         
         public List<FrontOrderItemDto> Items { get; set; } = new List<FrontOrderItemDto>();
         public bool IsReviewed { get; set; }
+        public bool HasAppealed { get; set; }
 
         // 退貨退款資訊快照
         public FrontReturnDetailDto ReturnInfo { get; set; }

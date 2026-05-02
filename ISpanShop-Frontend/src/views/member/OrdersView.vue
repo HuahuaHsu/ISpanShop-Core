@@ -19,7 +19,7 @@
       <div class="search-section">
         <el-input
           v-model="searchQuery"
-          placeholder="您可以透過訂單編號或商品名稱進行搜尋"
+          placeholder="您可以透過訂單編號、商品名稱或賣場名稱進行搜尋"
           prefix-icon="Search"
           class="order-search"
         />
@@ -84,6 +84,7 @@
                 :order-number="order.orderNumber"
                 :status="order.status" 
                 :is-reviewed="order.isReviewed || (order as any).IsReviewed"
+                :has-appealed="order.hasAppealed || (order as any).HasAppealed"
                 @refresh="fetchOrders"
               />
             </div>
@@ -169,7 +170,8 @@ const filteredOrders = computed(() => {
     const q = searchQuery.value.toLowerCase();
     result = result.filter(o => 
       o.orderNumber.toLowerCase().includes(q) || 
-      o.firstProductName.toLowerCase().includes(q)
+      o.productNames.toLowerCase().includes(q) ||
+      o.storeName.toLowerCase().includes(q)
     );
   }
   

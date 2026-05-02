@@ -24,7 +24,7 @@
           <el-col :xs="24" :sm="10">
             <el-input
               v-model="searchQuery"
-              placeholder="搜尋 訂單編號, 買家名稱"
+              placeholder="搜尋 訂單編號, 買家名稱, 商品名稱"
               clearable
               @keyup.enter="handleSearch"
               @clear="handleSearch"
@@ -255,7 +255,8 @@ const fetchOrders = async () => {
     const res = await getSellerOrdersApi({
       status,
       page: currentPage.value,
-      pageSize: pageSize.value
+      pageSize: pageSize.value,
+      keyword: searchQuery.value
     });
     
     orders.value = res.data.items;
