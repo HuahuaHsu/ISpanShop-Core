@@ -162,6 +162,15 @@ const quickRegister = () => {
   registerForm.fullName = '好買會員';
 };
 
+const quickFillRegister = () => {
+  registerForm.account = 'fuen49';
+  registerForm.password = 'Test123456';
+  registerForm.confirmPassword = 'Test123456';
+  registerForm.email = 'fuen49.02@gmail.com';
+  registerForm.fullName = '測試帳號';
+  registerForm.phoneNumber = '0912345678';
+};
+
 const goToForgotPassword = () => {
   authStore.closeLoginDialog();
   router.push('/forgot-password');
@@ -332,6 +341,9 @@ watch(() => authStore.authDialogMode, () => {
             :prefix-icon="Lock"
             show-password
             size="large"
+            autocomplete="new-password"
+            readonly
+            @focus="$event.target.removeAttribute('readonly')"
           />
         </el-form-item>
 
@@ -505,6 +517,15 @@ watch(() => authStore.authDialogMode, () => {
 
 .link-btn:hover {
   text-decoration: underline;
+}
+
+.link-btn.secondary {
+  color: #67c23a;
+}
+
+.mx-2 {
+  margin-left: 8px;
+  margin-right: 8px;
 }
 
 :deep(.el-dialog__header) {
