@@ -65,5 +65,28 @@ namespace ISpanShop.Repositories.Members
                 .Include(u => u.MemberProfile)
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
+
+        public async Task<bool> ConfirmCodeExistsAsync(string confirmCode)
+        {
+            return await _db.Users.AnyAsync(u => u.ConfirmCode == confirmCode);
+        }
+
+        public async Task<User?> GetPendingUserByConfirmCodeAsync(string confirmCode)
+        {
+            return await _db.Users
+                .FirstOrDefaultAsync(u => u.ConfirmCode == confirmCode && u.IsConfirmed != true);
+        }
+
+        public async Task<bool> ConfirmEmailAsync(int userId)
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return false;
+
+            user.IsConfirmed = true;
+            user.ConfirmCode = null;
+            user.UpdatedAt = DateTime.Now;
+            await _db.SaveChangesAsync();
+            return true;
+        }
     }
 }

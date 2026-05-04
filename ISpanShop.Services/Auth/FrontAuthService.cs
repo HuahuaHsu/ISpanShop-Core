@@ -3,8 +3,10 @@ using ISpanShop.Models.EfModels;
 using ISpanShop.Common.Helpers;
 using ISpanShop.Common.Enums;
 using ISpanShop.Repositories.Members;
+using ISpanShop.Services.Communication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System.Net;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -16,16 +18,19 @@ namespace ISpanShop.Services.Auth
     {
         private readonly IUserRepository _userRepository;
         private readonly ILoginHistoryRepository _loginHistoryRepository;
+        private readonly IEmailService _emailService;
         private readonly IConfiguration _config;
         private readonly HttpClient _httpClient;
 
         public FrontAuthService(
             IUserRepository userRepository, 
             ILoginHistoryRepository loginHistoryRepository,
+            IEmailService emailService,
             IConfiguration config)
         {
             _userRepository = userRepository;
             _loginHistoryRepository = loginHistoryRepository;
+            _emailService = emailService;
             _config = config;
             _httpClient = new HttpClient();
         }
@@ -33,22 +38,50 @@ namespace ISpanShop.Services.Auth
         public async Task<FrontLoginResponseDto?> LoginAsync(FrontLoginRequestDto request, string ipAddress)
         {
             var user = await _userRepository.GetByEmailOrAccountAsync(request.Account);
-            bool isPasswordCorrect = user != null && SecurityHelper.Verify(request.Password, user.Password);
+            bool isPasswordCorrect = user != null &&
+                !string.IsNullOrEmpty(user.Password) &&
+                SecurityHelper.Verify(request.Password, user.Password);
+
+            if (!isPasswordCorrect)
+            {
+                _loginHistoryRepository.Add(new ISpanShop.Models.DTOs.Members.LoginHistoryDto
+                {
+                    UserId = null,
+                    AttemptedAccount = request.Account,
+                    LoginTime = DateTime.Now,
+                    Ipaddress = ipAddress,
+                    IsSuccess = false
+                });
+
+                throw new Exception("帳號或密碼錯誤");
+            }
+
+            if (user!.IsConfirmed != true)
+            {
+                _loginHistoryRepository.Add(new ISpanShop.Models.DTOs.Members.LoginHistoryDto
+                {
+                    UserId = user.Id,
+                    AttemptedAccount = request.Account,
+                    LoginTime = DateTime.Now,
+                    Ipaddress = ipAddress,
+                    IsSuccess = false
+                });
+
+                throw new Exception("請先至信箱完成 Email 驗證");
+            }
 
             _loginHistoryRepository.Add(new ISpanShop.Models.DTOs.Members.LoginHistoryDto
             {
-                UserId = isPasswordCorrect ? user!.Id : null,
+                UserId = user.Id,
                 AttemptedAccount = request.Account,
                 LoginTime = DateTime.Now,
                 Ipaddress = ipAddress,
-                IsSuccess = isPasswordCorrect
+                IsSuccess = true
             });
-
-            if (!isPasswordCorrect) throw new Exception("帳號或密碼錯誤");
 
             return new FrontLoginResponseDto
             {
-                Token = GenerateJwtToken(user!),
+                Token = GenerateJwtToken(user),
                 MemberId = user.Id,
                 Email = user.Email,
                 Account = user.Account,
@@ -64,6 +97,7 @@ namespace ISpanShop.Services.Auth
         {
             if (await _userRepository.ExistsAsync(request.Email, request.Account)) throw new Exception("Email 或 帳號已存在");
 
+            var confirmCode = await GenerateUniqueConfirmCodeAsync();
             var user = new User
             {
                 Account = request.Account,
@@ -71,7 +105,8 @@ namespace ISpanShop.Services.Auth
                 Email = request.Email,
                 RoleId = (int)RoleEnum.Member,
                 CreatedAt = DateTime.Now,
-                IsConfirmed = true
+                IsConfirmed = false,
+                ConfirmCode = confirmCode
             };
 
             user.MemberProfile = new MemberProfile
@@ -84,7 +119,27 @@ namespace ISpanShop.Services.Auth
             };
 
             await _userRepository.CreateAsync(user);
+            await SendVerificationEmailAsync(user, confirmCode);
             return true;
+        }
+
+        public async Task<(bool IsSuccess, string Message)> VerifyEmailAsync(string confirmCode)
+        {
+            if (string.IsNullOrWhiteSpace(confirmCode))
+            {
+                return (false, "驗證連結無效");
+            }
+
+            var user = await _userRepository.GetPendingUserByConfirmCodeAsync(confirmCode);
+            if (user == null)
+            {
+                return (false, "驗證連結無效或帳號已啟用");
+            }
+
+            var result = await _userRepository.ConfirmEmailAsync(user.Id);
+            return result
+                ? (true, "Email 驗證成功，請登入")
+                : (false, "Email 驗證失敗，請稍後再試");
         }
 
         public async Task<OAuthResultDto> OAuthLoginAsync(string code, string redirectUri)
@@ -209,6 +264,40 @@ namespace ISpanShop.Services.Auth
                 Email = token.Claims.First(c => c.Type == "email").Value,
                 DisplayName = token.Claims.FirstOrDefault(c => c.Type == "name")?.Value
             };
+        }
+
+        private async Task<string> GenerateUniqueConfirmCodeAsync()
+        {
+            string code;
+            do
+            {
+                code = Guid.NewGuid().ToString("N");
+            }
+            while (await _userRepository.ConfirmCodeExistsAsync(code));
+
+            return code;
+        }
+
+        private async Task SendVerificationEmailAsync(User user, string confirmCode)
+        {
+            var frontendBaseUrl = _config["Frontend:BaseUrl"] ?? "http://localhost:5173";
+            var verifyLink = $"{frontendBaseUrl.TrimEnd('/')}/verify-email?code={confirmCode}";
+            var safeAccount = WebUtility.HtmlEncode(user.Account);
+            var subject = "HowBuy好買 - 請完成 Email 驗證";
+            var body = $@"
+                <div style='font-family: sans-serif; padding: 20px; color: #333;'>
+                    <h2>您好，{safeAccount}</h2>
+                    <p>感謝您註冊 HowBuy好買。請點擊下方按鈕完成 Email 驗證並啟用帳號：</p>
+                    <div style='margin: 30px 0;'>
+                        <a href='{verifyLink}' style='background-color: #ee4d2d; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold;'>完成 Email 驗證</a>
+                    </div>
+                    <p>如果按鈕無法運作，請複製並貼上以下連結至瀏覽器：</p>
+                    <p><a href='{verifyLink}'>{verifyLink}</a></p>
+                    <hr style='border: none; border-top: 1px solid #eee; margin-top: 30px;'>
+                    <p style='font-size: 12px; color: #999;'>如果您並未註冊 HowBuy好買，請忽略此電子郵件。</p>
+                </div>";
+
+            await _emailService.SendEmailAsync(user.Email, subject, body);
         }
 
         private string GenerateJwtToken(User user)

@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { registerApi } from '../../api/auth';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus';
 
 const router = useRouter();
@@ -86,7 +86,14 @@ const handleRegister = async (formEl: FormInstance | undefined) => {
   try {
     const response = await registerApi(payload);
     console.log('註冊成功', response);
-    ElMessage.success('註冊成功，請登入');
+    await ElMessageBox.alert(
+      '註冊成功！請至信箱完成開通帳號，完成後即可登入。',
+      '請完成帳號開通',
+      {
+        confirmButtonText: '前往登入',
+        type: 'success'
+      }
+    );
     await router.push('/login');
   } catch (error: unknown) {
     console.error('註冊失敗完整錯誤', error);

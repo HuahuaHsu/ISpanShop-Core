@@ -12,6 +12,11 @@ export const registerApi = (data: RegisterRequest) => {
   return axios.post('/api/front/auth/register', data);
 };
 
+// Email 驗證 API
+export const verifyEmailApi = (code: string) => {
+  return axios.get<{ isSuccess: boolean; message: string }>('/api/front/auth/verify-email', { params: { code } });
+};
+
 // 忘記密碼 API
 export const forgotPasswordApi = (data: ForgotPasswordRequest) => {
   return axios.post<ApiResponse>('/api/front/auth/forgot-password', data);

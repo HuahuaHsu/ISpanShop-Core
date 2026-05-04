@@ -167,6 +167,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/verify-email',
+    name: 'verify-email',
+    component: () => import('../views/auth/VerifyEmailView.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/auth/callback',
     name: 'oauth-callback',
     component: () => import('../views/auth/OAuthCallbackView.vue'),
