@@ -22,6 +22,7 @@
         <template #header>
           <div class="card-header">
             <span>{{ status === 'Rejected' ? '重新申請成為賣家' : '申請成為賣家' }}</span>
+            <el-button type="info" size="small" plain @click="quickFill">快速填入(Demo)</el-button>
           </div>
         </template>
 
@@ -104,6 +105,11 @@ const form = reactive({
   logoUrl: ''
 })
 
+const quickFill = () => {
+  form.storeName = '好好買'
+  form.description = '讓你絕對【好買】不需要知道Howbuy'
+}
+
 const rules = reactive<FormRules>({
   storeName: [
     { required: true, message: '請輸入賣場名稱', trigger: 'blur' },
@@ -184,6 +190,12 @@ onMounted(() => {
 
 .status-card, .apply-card {
   border-radius: 8px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .reject-alert {
